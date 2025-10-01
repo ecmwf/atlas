@@ -288,7 +288,8 @@ private:
         return md.cell_data ? get_polygons_celldata(fs, md) : get_polygons_nodedata(fs, md);
     }
 
-    PointXYZ src_gradient(idx_t scell, const array::ArrayView<double, 1>& src_vals) const;
+    PointXYZ src_gradient_celldata(idx_t scell, const array::ArrayView<double, 1>& src_vals) const;
+    PointXYZ src_gradient_nodedata(idx_t snode, const array::ArrayView<double, 1>& src_vals) const;
     int next_index(int current_index, int size) const;
     int prev_index(int current_index, int size) const;
 

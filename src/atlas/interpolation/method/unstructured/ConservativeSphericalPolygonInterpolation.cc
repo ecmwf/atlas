@@ -1923,11 +1923,7 @@ void ConservativeSphericalPolygonInterpolation::do_execute(const FieldSet& src_f
 }
 
 
-PointXYZ ConservativeSphericalPolygonInterpolation::src_gradient(idx_t scell, const array::ArrayView<double, 1>& src_vals) const{
-    if (! src_cell_data_) {
-        Log::error() << "src_gradient works only on source cell data." << std::endl;
-        ATLAS_NOTIMPLEMENTED;
-    }
+PointXYZ ConservativeSphericalPolygonInterpolation::src_gradient_celldata(idx_t scell, const array::ArrayView<double, 1>& src_vals) const{
     const auto& src = data_->src_;
     const auto& src_points = src.points;
     PointXYZ grad            = {0., 0., 0.};
@@ -1951,6 +1947,30 @@ PointXYZ ConservativeSphericalPolygonInterpolation::src_gradient(idx_t scell, co
 }
 
 
+PointXYZ ConservativeSphericalPolygonInterpolation::src_gradient_nodedata(idx_t snode, const array::ArrayView<double, 1>& src_vals) const{
+    const auto& src = data_->src_;
+    const auto& src_points = src.points;
+    PointXYZ grad            = {0., 0., 0.};
+    Workspace_get_node_neighbours w_node;
+    auto nb_nodes = get_node_neighbours(src_mesh_, snode, w_node);
+    volatile double dual_area_inv     = 0.;
+    const PointXYZ& Cs       = src_points[snode]; // TODO: this is not a good barycentre
+    for (idx_t j = 0; j < nb_nodes.size(); ++j) {
+        idx_t nj    = next_index(j, nb_nodes.size());
+        idx_t sj     = nb_nodes[j];
+        idx_t nsj    = nb_nodes[nj];
+        const auto& Csj  = src_points[sj];
+        const auto& Cnsj = src_points[nsj];
+        double val = 0.5 * (src_vals(nj) + src_vals(nsj)) - src_vals(j);
+        bool left_orientation = Polygon::GreatCircleSegment(Cs, Csj).inLeftHemisphere(Cnsj, -1e-16);
+        dual_area_inv += (left_orientation ? Polygon({Cs, Csj, Cnsj}).area() : Polygon({Cs, Cnsj, Csj}).area());
+        grad = grad + PointXYZ::mul(PointXYZ::cross(Csj, Cnsj), val);
+    }
+    dual_area_inv = ((dual_area_inv > 0.) ? 1. / dual_area_inv : 0.);
+    return PointXYZ::mul(grad, dual_area_inv);
+}
+
+
 void ConservativeSphericalPolygonInterpolation::do_execute(const Field& src_field, Field& tgt_field,
                                                            Metadata& metadata) const {
     ATLAS_TRACE("ConservativeMethod: do_execute");
@@ -1962,6 +1982,9 @@ void ConservativeSphericalPolygonInterpolation::do_execute(const Field& src_fiel
     }
     StopWatch stopwatch;
     stopwatch.start();
+
+    std::vector<PointXYZ> src_grads;
+
     if (order_ == 1) {
         if (matrix_free_) {
             ATLAS_TRACE("matrix_free_order_1");
@@ -2054,91 +2077,164 @@ void ConservativeSphericalPolygonInterpolation::do_execute(const Field& src_fiel
         }
     }
     else if (order_ == 2) {
+        const auto src_vals = array::make_view<double, 1>(src_field);
+        auto tgt_vals = array::make_view<double, 1>(tgt_field);
+        if (matrix_free_ || limit_) {
+            ATLAS_TRACE("Compute source gradients");
+            src_grads.resize(src_vals.size());
+            if (src_cell_data_) {
+                for (idx_t scell = 0; scell < src_vals.size(); ++scell) {
+                    src_grads[scell] = src_gradient_celldata(scell, src_vals);
+                }
+            }
+            else {
+                for (idx_t snode = 0; snode < src_vals.size(); ++snode) {
+                    src_grads[snode] = src_gradient_nodedata(snode, src_vals);
+                }
+            }
+        }
         if (matrix_free_) {
             ATLAS_TRACE("matrix_free_order_2");
-            if (! (tgt_cell_data_ && src_cell_data_) ){
-                Log::error() << "2nd order matrix free is only available for cell centred data." << std::endl;
-                ATLAS_NOTIMPLEMENTED;
-            }
-            const auto src_vals = array::make_view<double, 1>(src_field);
-            auto tgt_vals       = array::make_view<double, 1>(tgt_field);
             const auto& tgt_iparam = data_->tgt_iparam_;
             const auto& tgt_areas = data_->tgt_.areas;
             auto& src_points = data_->src_.points;
-            const auto tgt_halo     = array::make_view<int, 1>(tgt_mesh_.cells().halo());
             for (idx_t tcell = 0; tcell < tgt_vals.size(); ++tcell) {
                 tgt_vals(tcell) = 0.;
             }
-            std::vector<PointXYZ> src_grads(src_vals.size());
-            ATLAS_TRACE_SCOPE("Compute source cell gradients") {
-                for (idx_t scell = 0; scell < src_vals.size(); ++scell) {
-                    src_grads[scell] = src_gradient(scell, src_vals);
+
+            // CASE: CELL TO CELL
+            if (tgt_cell_data_ && src_cell_data_){
+                for (idx_t tcell = 0; tcell < tgt_vals.size(); ++tcell) {
+                    const auto& iparam = tgt_iparam[tcell];
+                    double tgt_val = 0.;
+                    for (idx_t i_scsp = 0; i_scsp < iparam.csp_ids.size(); ++i_scsp) {
+                        idx_t scsp_id = iparam.csp_ids[i_scsp];
+                        idx_t scell = csp_to_cell(scsp_id, data_->src_);
+                        const PointXYZ& src_barycentre = src_points[scell]; // TODO: this is a bad barycentre numerically
+                        PointXYZ grad  = src_grads[scell];
+                        grad           = grad - PointXYZ::mul(src_barycentre, PointXYZ::dot(grad, src_barycentre));
+                        tgt_val += iparam.weights[i_scsp] * (src_vals(scell) + PointXYZ::dot(grad, iparam.centroids[i_scsp] - src_barycentre));
+                    }
+                    if (tgt_areas[tcell] > 0.) {
+                        tgt_val /= tgt_areas[tcell];
+                    }
+                    tgt_vals(tcell) = tgt_val;;
                 }
             }
-            for (idx_t tcell = 0; tcell < tgt_vals.size(); ++tcell) {
-                const auto& iparam = tgt_iparam[tcell];
-                if (iparam.csp_ids.size() == 0 or tgt_halo(tcell)) {
-                    continue;
+
+            // CASE: NODE TO CELL
+            else if (not tgt_cell_data_ && src_cell_data_) {
+                auto& tgt_node2csp = data_->tgt_.node2csp;
+                for (idx_t tnode = 0; tnode < n_tpoints_; ++tnode) {
+                    double tgt_val = 0.;
+                    for( const auto& tcsp_id: tgt_node2csp[tnode]) {
+                        const auto& iparam  = tgt_iparam[tcsp_id];
+                        for (idx_t i_scsp = 0; i_scsp < iparam.csp_ids.size(); ++i_scsp) {
+                            idx_t scsp_id = iparam.csp_ids[i_scsp];
+                            idx_t scell   = csp_to_cell(scsp_id, data_->src_);
+                            const PointXYZ& src_barycentre = src_points[scell]; // TODO: this is a bad barycentre numerically
+                            PointXYZ grad  = src_grads[scell];
+                            grad           = grad - PointXYZ::mul(src_barycentre, PointXYZ::dot(grad, src_barycentre));
+                            tgt_val += iparam.weights[i_scsp] * (src_vals(scell) + PointXYZ::dot(grad, iparam.centroids[i_scsp] - src_barycentre));
+                            // tgt_val += iparam.weights[i_scsp] * src_vals(scell);
+                        }
+                    }
+                    if (tgt_areas[tnode] > 0.) {
+                        tgt_val /= tgt_areas[tnode];
+                    }
+                    tgt_vals(tnode) = tgt_val;
                 }
-                for (idx_t iscell = 0; iscell < iparam.csp_ids.size(); ++iscell) {
-                    idx_t scell = iparam.csp_ids[iscell];
-                    const PointXYZ& src_barycentre       = src_points[scell];
-                    PointXYZ grad            = src_grads[scell];
-                    // PointXYZ src_barycenter  = {0., 0., 0.};
-                    // for (idx_t iscell = 0; iscell < iparam.csp_ids.size(); ++iscell) {
-                    //     src_barycentre = src_barycenter + PointXYZ::mul(iparam.centroids[iscell], iparam.weights[iscell]);
-                    // }
-                    // src_barycentre = PointXYZ::normalize(src_barycentre);
-                    grad           = grad - PointXYZ::mul(src_barycentre, PointXYZ::dot(grad, src_barycentre));
-#if ATLAS_BUILD_DEBUG_TYPE
-                    ATLAS_ASSERT(std::abs(PointXYZ::dot(grad, src_barycenter)) < 1e-14);
-#endif
-                    tgt_vals(tcell) += iparam.weights[iscell] * (src_vals(scell) + PointXYZ::dot(grad, iparam.centroids[iscell] - src_barycentre));
+            }
+
+            // CASE: CELL TO NODE
+            else if (tgt_cell_data_ && not src_cell_data_) {
+                const auto& src_csp2node = data_->src_.csp2node;
+                for (idx_t tcsp_id = 0; tcsp_id < data_->tgt_.csp_size; ++tcsp_id) {
+                    idx_t tcell = csp_to_cell(tcsp_id, data_->tgt_);
+                    double tgt_val = 0.;
+                    const auto& iparam  = tgt_iparam[tcsp_id];
+                    for (idx_t i_scsp = 0; i_scsp < iparam.csp_ids.size(); ++i_scsp) {
+                        idx_t scsp_id = iparam.csp_ids[i_scsp];
+                        idx_t snode   = src_csp2node[scsp_id];
+                        const PointXYZ& src_barycentre = src_points[snode]; // TODO: this is a bad barycentre numerically
+                        PointXYZ grad  = src_grads[snode];
+                        grad           = grad - PointXYZ::mul(src_barycentre, PointXYZ::dot(grad, src_barycentre));
+                        tgt_val += iparam.weights[i_scsp] * (src_vals(snode) + PointXYZ::dot(grad, iparam.centroids[i_scsp] - src_barycentre));
+                        // tgt_val += iparam.weights[i_scsp] * src_vals(snode);
+                    }
+                    if (tgt_areas[tcell] > 0.) {
+                        tgt_val /= tgt_areas[tcell];
+                    }
+                    tgt_vals(tcell) = tgt_val;
                 }
-                tgt_vals[tcell] /= tgt_areas[tcell];
+            }
+
+            // CASE: NODE TO NODE
+            else if (not tgt_cell_data_ && not src_cell_data_) {
+                const auto& tgt_node2csp = data_->tgt_.node2csp;
+                const auto& src_csp2node = data_->src_.csp2node;
+                for (idx_t tnode = 0; tnode < n_tpoints_; ++tnode) {
+                    double tgt_val = 0.;
+                    for( const auto& tcsp_id: tgt_node2csp[tnode]) {
+                        const auto& iparam = tgt_iparam[tcsp_id];
+                        for (idx_t i_scsp = 0; i_scsp < iparam.csp_ids.size(); ++i_scsp) {
+                            idx_t scsp_id = iparam.csp_ids[i_scsp];
+                            idx_t snode   = src_csp2node[scsp_id];
+                            const PointXYZ& src_barycentre = src_points[snode]; // TODO: this is a bad barycentre numerically
+                            PointXYZ grad  = src_grads[snode];
+                            grad           = grad - PointXYZ::mul(src_barycentre, PointXYZ::dot(grad, src_barycentre));
+                            tgt_val += iparam.weights[i_scsp] * (src_vals(snode) + PointXYZ::dot(grad, iparam.centroids[i_scsp] - src_barycentre));
+                            // tgt_val += iparam.weights[i_scsp] * src_vals(snode);
+                        }
+                    }
+                    if (tgt_areas[tnode] > 0.) {
+                        tgt_val /= tgt_areas[tnode];
+                    }
+                    tgt_vals(tnode) = tgt_val;
+                }
             }
         }
         else {
             ATLAS_TRACE("matrix_order_2");
             Method::do_execute(src_field, tgt_field, metadata);
+        }
 
-            if (limit_) {
-                const auto src_vals = array::make_view<double, 1>(src_field);
-                auto tgt_vals       = array::make_view<double, 1>(tgt_field);
-                const auto& tgt_iparam = data_->tgt_iparam_;
-                const auto& src_iparam = data_->src_iparam_;
-                if (tgt_cell_data_ && src_cell_data_) {
-                    for (idx_t tcsp_id = 0; tcsp_id < data_->tgt_.csp_size; ++tcsp_id) {
-                        idx_t tcell = csp_to_cell(tcsp_id, data_->tgt_);
-                        const auto& iparam = tgt_iparam[tcsp_id];
-                        double smax = std::numeric_limits<double>::min();
-                        double smin = std::numeric_limits<double>::max();
-                        double eps = 1e4 * std::numeric_limits<double>::epsilon();
+        if (limit_) {
+            const auto src_vals = array::make_view<double, 1>(src_field);
+            auto tgt_vals       = array::make_view<double, 1>(tgt_field);
+            const auto& tgt_iparam = data_->tgt_iparam_;
+            const auto& src_iparam = data_->src_iparam_;
+            if (tgt_cell_data_ && src_cell_data_) {
+                for (idx_t tcsp_id = 0; tcsp_id < data_->tgt_.csp_size; ++tcsp_id) {
+                    idx_t tcell = csp_to_cell(tcsp_id, data_->tgt_);
+                    const auto& iparam = tgt_iparam[tcsp_id];
+                    double smax = std::numeric_limits<double>::min();
+                    double smin = std::numeric_limits<double>::max();
+                    double eps = 1e4 * std::numeric_limits<double>::epsilon();
+                    for (idx_t i_scsp = 0; i_scsp < iparam.csp_ids.size(); ++i_scsp) {
+                        idx_t scsp_id = iparam.csp_ids[i_scsp];
+                        idx_t scell   = csp_to_cell(scsp_id, data_->src_);
+                        smax = std::max(smax, src_vals(scell));
+                        smin = std::min(smin, src_vals(scell));
+                    }
+                    if (tgt_vals(tcell) < smin - eps || tgt_vals(tcell) > smax + eps) {
+                        tgt_vals(tcell) = -100.;
                         for (idx_t i_scsp = 0; i_scsp < iparam.csp_ids.size(); ++i_scsp) {
                             idx_t scsp_id = iparam.csp_ids[i_scsp];
                             idx_t scell   = csp_to_cell(scsp_id, data_->src_);
-                            smax = std::max(smax, src_vals(scell));
-                            smin = std::min(smin, src_vals(scell));
-                        }
-                        if (tgt_vals(tcell) < smin - eps || tgt_vals(tcell) > smax + eps) {
-                            tgt_vals(tcell) = -100.;
-                            for (idx_t i_scsp = 0; i_scsp < iparam.csp_ids.size(); ++i_scsp) {
-                                idx_t scsp_id = iparam.csp_ids[i_scsp];
-                                idx_t scell   = csp_to_cell(scsp_id, data_->src_);
-                                auto& siparam = src_iparam[scsp_id];
-                                for (idx_t i_tcsp = 0; i_tcsp < siparam.csp_ids.size(); ++i_tcsp) {
-                                    auto tcsp_id_2 = siparam.csp_ids[i_tcsp];
-                                    auto tcell_2 = csp_to_cell(tcsp_id_2, data_->tgt_);
-                                    double scell_grad_contribution = 0; // TODO: to be computed via source cell gradient
-                                    tgt_vals(tcell_2) += (iparam.weights[scsp_id] - scell_grad_contribution) * src_vals(scell);
-                                }
+                            auto& siparam = src_iparam[scsp_id];
+                            for (idx_t i_tcsp = 0; i_tcsp < siparam.csp_ids.size(); ++i_tcsp) {
+                                auto tcsp_id_2 = siparam.csp_ids[i_tcsp];
+                                auto tcell_2 = csp_to_cell(tcsp_id_2, data_->tgt_);
+                                double scell_grad_contribution = 0; // TODO: to be computed via source cell gradient
+                                tgt_vals(tcell_2) += (iparam.weights[scsp_id] - scell_grad_contribution) * src_vals(scell);
                             }
                         }
                     }
                 }
-                else {
-                    ATLAS_NOTIMPLEMENTED;
-                }
+            }
+            else {
+                ATLAS_NOTIMPLEMENTED;
             }
         }
     }

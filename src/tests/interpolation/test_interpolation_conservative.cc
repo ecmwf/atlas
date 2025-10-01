@@ -129,7 +129,7 @@ void do_remapping_test(Grid src_grid, Grid tgt_grid, std::function<double(const 
             cache_2 = interpolation.createCache();
             Log::info() << std::endl;
         }
-        if (src_cell_data and tgt_cell_data) {
+        {
             ATLAS_TRACE("cached -> 2nd order matrix-free");
             cfg.set("matrix_free", true);
             cfg.set("order", 2);
