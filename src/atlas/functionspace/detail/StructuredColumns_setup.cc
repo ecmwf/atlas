@@ -327,10 +327,19 @@ void StructuredColumns::setup(const grid::Distribution& distribution, const ecki
         ii = compute_i(i, jj);
         if (!periodic_y) {
             if (jj != j) {
-                ATLAS_ASSERT(grid_->nx(jj) % 2 == 0);  // assert even number of points
-                ii = (ii < grid_->nx(jj) / 2)    ? ii + grid_->nx(jj) / 2
-                     : (ii >= grid_->nx(jj) / 2) ? ii - grid_->nx(jj) / 2
-                                                 : ii;
+                if (grid_->nx(jj) % 2 == 0) {
+                    ii = (ii <  grid_->nx(jj) / 2) ? ii + grid_->nx(jj) / 2
+                       : (ii >= grid_->nx(jj) / 2) ? ii - grid_->nx(jj) / 2
+                       : ii;
+                }
+                else {
+                    if (ii < grid_->nx(jj)/2 + 1) {
+                        ii += grid_->nx(jj) / 2 + 1;
+                    }
+                    else if (ii >= grid_->nx(jj)/2 + 1) {
+                        ii -= grid_->nx(jj) / 2 + 1;
+                    }
+                }
             }
         }
         g = global_offsets[jj] + ii + 1;
