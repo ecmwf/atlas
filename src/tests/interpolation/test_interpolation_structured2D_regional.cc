@@ -106,29 +106,29 @@ CASE("test_interpolation_structured2D_regional_1d") {
     auto targetField = targetFs.createField<double>(Config("name", "target"));
 
     // Accuracy test
-    const auto sourceIView = array::make_view<idx_t, 1>(sourceFs.index_i());
-    const auto sourceJView = array::make_view<idx_t, 1>(sourceFs.index_j());
+    const auto sourceIView = array::make_indexview<idx_t, 1>(sourceFs.index_i());
+    const auto sourceJView = array::make_indexview<idx_t, 1>(sourceFs.index_j());
     auto sourceView = array::make_view<double, 1>(sourceField);
     const auto sourceGhostView = atlas::array::make_view<int, 1>(sourceFs.ghost());
+    const double source_normalization = static_cast<double>(gridConfigs().getInt("source normalization"));
     sourceView.assign(0.0);
     for (idx_t i = 0; i < sourceFs.size(); ++i) {
       if (sourceGhostView(i) == 0) {
-        sourceView(i) = static_cast<double>((sourceIView(i)-1)*(sourceJView(i)-1))
-                       /static_cast<double>(gridConfigs().getInt("source normalization"));
+        sourceView(i) = static_cast<double>(sourceIView(i)*sourceJView(i)) / source_normalization;
       }
     }
 
     interpolation.execute(sourceField, targetField);
 
-    const auto targetIView = array::make_view<idx_t, 1>(targetFs.index_i());
-    const auto targetJView = array::make_view<idx_t, 1>(targetFs.index_j());
+    const auto targetIView = array::make_indexview<idx_t, 1>(targetFs.index_i());
+    const auto targetJView = array::make_indexview<idx_t, 1>(targetFs.index_j());
     const auto targetView = array::make_view<double, 1>(targetField);
     const auto targetGhostView = atlas::array::make_view<int, 1>(targetFs.ghost());
     const double tolerance = 1.e-12;
+    const double target_normalization = static_cast<double>(gridConfigs().getInt("target normalization"));
     for (idx_t i = 0; i < targetFs.size(); ++i) {
       if (targetGhostView(i) == 0) {
-        const double targetTest = static_cast<double>((targetIView(i)-1)*(targetJView(i)-1))
-                                 /static_cast<double>(gridConfigs().getInt("target normalization"));
+        const double targetTest = static_cast<double>(targetIView(i)*targetJView(i)) / target_normalization;
         EXPECT_APPROX_EQ(targetView(i), targetTest, tolerance);
       }
     }
@@ -163,31 +163,31 @@ CASE("test_interpolation_structured2D_regional_2d") {
     auto targetField = targetFs.createField<double>(Config("name", "target"));
 
     // Accuracy test
-    const auto sourceIView = array::make_view<idx_t, 1>(sourceFs.index_i());
-    const auto sourceJView = array::make_view<idx_t, 1>(sourceFs.index_j());
+    const auto sourceIView = array::make_indexview<idx_t, 1>(sourceFs.index_i());
+    const auto sourceJView = array::make_indexview<idx_t, 1>(sourceFs.index_j());
     auto sourceView = array::make_view<double, 2>(sourceField);
     const auto sourceGhostView = atlas::array::make_view<int, 1>(sourceFs.ghost());
+    const double source_normalization = static_cast<double>(gridConfigs().getInt("source normalization"));
     sourceView.assign(0.0);
     for (idx_t i = 0; i < sourceFs.size(); ++i) {
       if (sourceGhostView(i) == 0) {
         for (idx_t k = 0; k < nlevs; ++k) {
-          sourceView(i, k) = static_cast<double>((sourceIView(i)-1)*(sourceJView(i)-1))
-                           /static_cast<double>(gridConfigs().getInt("source normalization"));
+          sourceView(i, k) = static_cast<double>(sourceIView(i)*sourceJView(i)) / source_normalization;
         }
       }
     }
 
     interpolation.execute(sourceField, targetField);
 
-    const auto targetIView = array::make_view<idx_t, 1>(targetFs.index_i());
-    const auto targetJView = array::make_view<idx_t, 1>(targetFs.index_j());
+    const auto targetIView = array::make_indexview<idx_t, 1>(targetFs.index_i());
+    const auto targetJView = array::make_indexview<idx_t, 1>(targetFs.index_j());
     const auto targetView = array::make_view<double, 2>(targetField);
     const auto targetGhostView = atlas::array::make_view<int, 1>(targetFs.ghost());
     const double tolerance = 1.e-12;
+    const double target_normalization = static_cast<double>(gridConfigs().getInt("target normalization"));
     for (idx_t i = 0; i < targetFs.size(); ++i) {
       if (targetGhostView(i) == 0) {
-        const double targetTest = static_cast<double>((targetIView(i)-1)*(targetJView(i)-1))
-                                 /static_cast<double>(gridConfigs().getInt("target normalization"));
+        const double targetTest = static_cast<double>(targetIView(i)*targetJView(i)) / target_normalization;
         for (idx_t k = 0; k < nlevs; ++k) {
           EXPECT_APPROX_EQ(targetView(i, k), targetTest, tolerance);
         }
