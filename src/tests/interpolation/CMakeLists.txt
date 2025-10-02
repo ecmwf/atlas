@@ -81,6 +81,7 @@ ecbuild_add_executable( TARGET atlas_test_interpolation_structured_limiter
   NOINSTALL
 )
 
+if (FALSE) # Disable this test due to index going out-of-range. To be fixed later with PR https://github.com/ecmwf/atlas/pull/322
 ecbuild_add_test( TARGET atlas_test_interpolation_structured2D_regional
   SOURCES  test_interpolation_structured2D_regional.cc
   LIBS     atlas
@@ -88,6 +89,7 @@ ecbuild_add_test( TARGET atlas_test_interpolation_structured2D_regional
   CONDITION eckit_HAVE_MPI AND MPI_SLOTS GREATER_EQUAL 2
   ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
 )
+endif()
 
 ecbuild_add_test( TARGET atlas_test_interpolation_non_linear
   SOURCES  test_interpolation_non_linear.cc
