@@ -1941,7 +1941,7 @@ void ConservativeSphericalPolygonInterpolation::do_execute(const Field& src_fiel
     const auto& tgt_iparam = data_->tgt_iparam_;
     std::vector<PointXYZ> src_grads;
     const auto& tgt_areas = data_->tgt_.areas;
-    const auto& src_iparam = data_->src_iparam_;
+    auto& src_iparam = data_->src_iparam_; // will be modified by the limiter
     const auto& src_points = data_->src_.points;
     const auto src_vals = array::make_view<double, 1>(src_field);
     auto tgt_vals       = array::make_view<double, 1>(tgt_field);
@@ -2140,13 +2140,19 @@ void ConservativeSphericalPolygonInterpolation::do_execute(const Field& src_fiel
         }
     }
 
+    struct SrcActed {
+        Indices tcells_done;
+    };
+
     if (order_ == 2 && limit_) {
-        Log::info() << "LIMITING" << std::endl;
         Field tgt_lim_field = tgt_fs_.createField<double>();
         auto tgt_lim_vals   = array::make_view<double, 1>(tgt_lim_field);
         for (idx_t tcell = 0; tcell < tgt_lim_vals.size(); ++tcell) {
-            tgt_lim_vals(tcell) = tgt_vals(tcell);
+            tgt_lim_vals(tcell) = 0.; //tgt_vals(tcell);
         }
+
+        std::vector<SrcActed> src_acted_tgt;
+        src_acted_tgt.resize(src_vals.size());
 
         if (tgt_cell_data_ && src_cell_data_) {
             for (idx_t tcsp = 0; tcsp < data_->tgt_.csp_size; ++tcsp) {
@@ -2162,6 +2168,10 @@ void ConservativeSphericalPolygonInterpolation::do_execute(const Field& src_fiel
                 double eps = std::numeric_limits<double>::epsilon();
                 idx_t tcell = csp_to_cell(tcsp, data_->tgt_);
                 if (tgt_vals(tcell) < smin - (1e6 + 1e12 * std::abs(smin)) * eps || tgt_vals(tcell) > smax + (1e6 + 1e12 * std::abs(smin)) * eps) {
+                    if (tcell == 280) {
+                        Log::info() << " TCELL : " << tcell << std::endl;
+                        Log::info() << " TCELL sources covering: " << iparam.csp_ids << std::endl;
+                    }
                     for (idx_t i_scsp = 0; i_scsp < iparam.csp_ids.size(); ++i_scsp) {
                         idx_t scsp_id = iparam.csp_ids[i_scsp];
                         idx_t scell   = csp_to_cell(scsp_id, data_->src_);
@@ -2182,13 +2192,17 @@ void ConservativeSphericalPolygonInterpolation::do_execute(const Field& src_fiel
                             if (tgt_areas[tcell_collateral] > 0.) {
                                 tgt_lim_val /= tgt_areas[tcell_collateral];
                             }
-                            tgt_lim_vals(tcell_collateral) -= tgt_lim_val;
+                            SrcActed& it = src_acted_tgt[scell];
+                            if (std::find(it.tcells_done.begin(), it.tcells_done.end(), tcell_collateral) == it.tcells_done.end()) {
+                                it.tcells_done.push_back(tcell_collateral);
+                                tgt_lim_vals(tcell_collateral) -= tgt_lim_val;
+                            }
                         }
                     }
                 }
             }
             for (idx_t tcell = 0; tcell < tgt_vals.size(); ++tcell) {
-                tgt_vals(tcell) = tgt_lim_vals(tcell);
+                tgt_vals(tcell) += tgt_lim_vals(tcell);
             }
         }
         else {

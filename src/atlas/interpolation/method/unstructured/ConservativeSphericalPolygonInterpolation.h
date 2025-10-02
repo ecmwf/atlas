@@ -224,6 +224,7 @@ public:
     interpolation::Cache createCache() const override;
 
 private:
+
     using Polygon = util::ConvexSphericalPolygon;
     using PolygonArray = std::vector<util::ConvexSphericalPolygon>;
 
