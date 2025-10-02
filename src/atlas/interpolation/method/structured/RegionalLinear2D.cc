@@ -87,7 +87,11 @@ void RegionalLinear2D::do_setup(const FunctionSpace& source,
   std::vector<int> mpiTask(sourceNx*sourceNy, 0);
   for (size_t sourceJnode = 0; sourceJnode < sourceSize_; ++sourceJnode) {
     if (sourceGhostView(sourceJnode) == 0) {
-      mpiTask[(sourceIndexIView(sourceJnode)-1)*sourceNy+sourceIndexJView(sourceJnode)-1] = comm_.rank();
+      idx_t idx = (sourceIndexIView(sourceJnode)-1)*static_cast<idx_t>(sourceNy)+sourceIndexJView(sourceJnode)-1;
+      if (idx < 0 || idx >= mpiTask.size()) {
+        throw_OutOfRange("mpiTask", idx, mpiTask.size(), Here());
+      }
+      mpiTask[idx] = comm_.rank();
     }
   }
   comm_.allReduceInPlace(mpiTask.begin(), mpiTask.end(), eckit::mpi::sum());
