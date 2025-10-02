@@ -1284,19 +1284,18 @@ void ConservativeSphericalPolygonInterpolation::intersect_polygons(const Polygon
                     }
                 }
 #endif
-                if (csp_i_area > 0) {
+                if (csp_i_area > 0.) {
                     intersection_scsp_ids.emplace_back(scsp_id);
                     intersection_weights.emplace_back(csp_i_area);
                     if (order_ == 2 or not matrix_free_ or not matrixAllocated()) {
                         intersection_src_centroids.emplace_back(csp_i.centroid());
                     }
                     tgt_cover_area += csp_i_area;
-                    if (std::abs(1. - tgt_cover_area / tgt_csp.area()) <= 1e-10) {
-                        break;
-                    }
                     if (validate_ || limit_) {
                         src_iparam_[scsp_id].csp_ids.emplace_back(tcsp_id);
-                        src_iparam_[scsp_id].weights.emplace_back(csp_i_area);
+                        if (validate_) {
+                            src_iparam_[scsp_id].weights.emplace_back(csp_i_area);
+                        }
 #if ATLAS_BUILD_TYPE_DEBUG
                         if (csp_i_area > 1.1 * t_csp.area()) {
                             dump_intersection("Intersection larger than target", t_csp, src_csp, scsp_ids);
@@ -1305,6 +1304,9 @@ void ConservativeSphericalPolygonInterpolation::intersect_polygons(const Polygon
                             dump_intersection("Intersection larger than source", t_csp, src_csp, scsp_ids);
                         }
 #endif
+                    }
+                    if (std::abs(1. - tgt_cover_area / tgt_csp.area()) <= 1e-10) {
+                        break;
                     }
                 }
             }
@@ -1411,53 +1413,6 @@ void ConservativeSphericalPolygonInterpolation::intersect_polygons(const Polygon
             }
             remap_stat_.errors[Statistics::ERR_TGT_INTERSECTPLG_L1]   = geo_err_l1 / unit_sphere_area();
             remap_stat_.errors[Statistics::ERR_TGT_INTERSECTPLG_LINF] = geo_err_linf;
-        }
-
-        ATLAS_TRACE_SCOPE("compute errors in covering source cells with intersections") {
-            // NOTE: source cell at process boundary will not be covered by target cells, skip if MPI > 1
-            // TODO: mark these source cells beforehand and compute error in them among the processes
-            if (remap_stat_.intersection) {
-                // ATLAS_TRACE("computing covering source cells errors");
-                // double geo_err_l1   = 0.;
-                // double geo_err_linf = -1.;
-                // for (idx_t scell = 0; scell < src_csp.size(); ++scell) {
-                //     if (src_csp[scell].halo_type != 0) {
-                //         continue; // skip periodic & halo cells
-                //     }
-                //     const auto& s_csp     = src_csp[scell];
-                //     auto diff_cell = s_csp.area();
-                //     const auto& siparam   = src_iparam_[scell];
-                //     for (idx_t icell = 0; icell < siparam.weights.size(); ++icell) {
-                //         diff_cell -= siparam.weights[icell];
-                //     }
-                //     geo_err_l1 += std::abs(diff_cell);
-                //     geo_err_linf = std::max(geo_err_linf, std::abs(diff_cell));
-                // }
-            }
-#if PRINT_BAD_POLYGONS
-            // TODO: need environment variable to print out intersection of source cell with target polygons     
-
-            // dump polygons in json format
-            idx_t scell_printout = 120;
-            if (scell == scell_printout) {
-                dump_polygons_to_json(t_csp, 1.e-14, src_csp, siparam.csp_ids, "polygon_dump", "scell" + std::to_string(scell_printout));
-            }
-#endif
-            /*
-            // TODO: normalise to source cell
-            double normm = s_csp.area() / (src_cover_area > 0. ? src_cover_area : s_csp.area());
-            for (idx_t icell = 0; icell < siparam.csp_ids.size(); ++icell) {
-                idx_t scell = siparam.csp_ids[icell];
-                auto siparam = src_iparam_[scell];
-                size_t src_intersectors = siparam.csp_ids.size();
-                for (idx_t ticell = 0; ticell < src_intersectors; ticell++ ) {
-                    if (siparam.csp_ids[icell] == ticell) {;
-                        siparam.weights[icell] *= normm;
-                        siparam.tgt_weights[icell] *= normm;
-                    }
-                }
-            }
-            */
         }
     }
 
@@ -2108,7 +2063,7 @@ void ConservativeSphericalPolygonInterpolation::do_execute(const Field& src_fiel
                     if (tgt_areas[tcell] > 0.) {
                         tgt_val /= tgt_areas[tcell];
                     }
-                    tgt_vals(tcell) = tgt_val;;
+                    tgt_vals(tcell) = tgt_val;
                 }
             }
 
@@ -2126,7 +2081,6 @@ void ConservativeSphericalPolygonInterpolation::do_execute(const Field& src_fiel
                             PointXYZ grad  = src_grads[scell];
                             grad           = grad - PointXYZ::mul(src_barycentre, PointXYZ::dot(grad, src_barycentre));
                             tgt_val += iparam.weights[i_scsp] * (src_vals(scell) + PointXYZ::dot(grad, iparam.centroids[i_scsp] - src_barycentre));
-                            // tgt_val += iparam.weights[i_scsp] * src_vals(scell);
                         }
                     }
                     if (tgt_areas[tnode] > 0.) {
@@ -2186,34 +2140,55 @@ void ConservativeSphericalPolygonInterpolation::do_execute(const Field& src_fiel
         }
     }
 
-    if (limit_) {
+    if (order_ == 2 && limit_) {
+        Log::info() << "LIMITING" << std::endl;
+        Field tgt_lim_field = tgt_fs_.createField<double>();
+        auto tgt_lim_vals   = array::make_view<double, 1>(tgt_lim_field);
+        for (idx_t tcell = 0; tcell < tgt_lim_vals.size(); ++tcell) {
+            tgt_lim_vals(tcell) = tgt_vals(tcell);
+        }
+
         if (tgt_cell_data_ && src_cell_data_) {
-            for (idx_t tcsp_id = 0; tcsp_id < data_->tgt_.csp_size; ++tcsp_id) {
-                idx_t tcell = csp_to_cell(tcsp_id, data_->tgt_);
-                const auto& iparam = tgt_iparam[tcsp_id];
+            for (idx_t tcsp = 0; tcsp < data_->tgt_.csp_size; ++tcsp) {
+                const auto& iparam = tgt_iparam[tcsp];
                 double smax = std::numeric_limits<double>::min();
                 double smin = std::numeric_limits<double>::max();
-                double eps = 1e4 * std::numeric_limits<double>::epsilon();
                 for (idx_t i_scsp = 0; i_scsp < iparam.csp_ids.size(); ++i_scsp) {
                     idx_t scsp_id = iparam.csp_ids[i_scsp];
                     idx_t scell   = csp_to_cell(scsp_id, data_->src_);
                     smax = std::max(smax, src_vals(scell));
                     smin = std::min(smin, src_vals(scell));
                 }
-                if (tgt_vals(tcell) < smin - eps || tgt_vals(tcell) > smax + eps) {
-                    tgt_vals(tcell) = -100.;
+                double eps = std::numeric_limits<double>::epsilon();
+                idx_t tcell = csp_to_cell(tcsp, data_->tgt_);
+                if (tgt_vals(tcell) < smin - (1e6 + 1e12 * std::abs(smin)) * eps || tgt_vals(tcell) > smax + (1e6 + 1e12 * std::abs(smin)) * eps) {
                     for (idx_t i_scsp = 0; i_scsp < iparam.csp_ids.size(); ++i_scsp) {
                         idx_t scsp_id = iparam.csp_ids[i_scsp];
                         idx_t scell   = csp_to_cell(scsp_id, data_->src_);
+                        const PointXYZ& src_barycentre = src_points[scell];
+                        PointXYZ scell_grad  = src_grads[scell];
+                        scell_grad           = scell_grad - PointXYZ::mul(src_barycentre, PointXYZ::dot(scell_grad, src_barycentre));
+
                         auto& siparam = src_iparam[scsp_id];
-                        for (idx_t i_tcsp = 0; i_tcsp < siparam.csp_ids.size(); ++i_tcsp) {
-                            auto tcsp_id_2 = siparam.csp_ids[i_tcsp];
-                            auto tcell_2 = csp_to_cell(tcsp_id_2, data_->tgt_);
-                            double scell_grad_contribution = 0; // TODO: to be computed via source cell gradient
-                            tgt_vals(tcell_2) += (iparam.weights[scsp_id] - scell_grad_contribution) * src_vals(scell);
+                        for (idx_t i_tcsp_collateral = 0; i_tcsp_collateral < siparam.csp_ids.size(); ++i_tcsp_collateral) {
+                            auto tcsp_collateral = siparam.csp_ids[i_tcsp_collateral];
+                            const auto& iparam_collateral = tgt_iparam[tcsp_collateral];
+                            auto tcell_collateral = csp_to_cell(tcsp_collateral, data_->tgt_);
+                            // find the index of scell entry in iparam_collateral.csp_ids
+                            auto scell_it = std::find(iparam_collateral.csp_ids.begin(), iparam_collateral.csp_ids.end(), scell);
+                            idx_t scell_idx = scell_it - iparam_collateral.csp_ids.begin();
+                            ATLAS_ASSERT(iparam_collateral.csp_ids[scell_idx] == scell);
+                            double tgt_lim_val = iparam_collateral.weights[scell_idx] * PointXYZ::dot(scell_grad, iparam_collateral.centroids[scell_idx] - src_barycentre);
+                            if (tgt_areas[tcell_collateral] > 0.) {
+                                tgt_lim_val /= tgt_areas[tcell_collateral];
+                            }
+                            tgt_lim_vals(tcell_collateral) -= tgt_lim_val;
                         }
                     }
                 }
+            }
+            for (idx_t tcell = 0; tcell < tgt_vals.size(); ++tcell) {
+                tgt_vals(tcell) = tgt_lim_vals(tcell);
             }
         }
         else {

@@ -260,7 +260,7 @@ private:
 
     std::pair<idx_t, idx_t> csp_to_cell_and_subcell(idx_t csp_id, const Data::PolygonsData& md) const {
         auto iterator_upper_bound = std::upper_bound(md.csp_index.begin(), md.csp_index.end(), csp_id);
-        idx_t idx     = iterator_upper_bound-1 - md.csp_index.begin();
+        idx_t idx     = iterator_upper_bound - 1 - md.csp_index.begin();
         idx_t cell    = md.csp_cell_index[idx];
         idx_t subcell = csp_id - md.csp_index[idx];
         return std::make_pair(cell, subcell);
