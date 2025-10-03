@@ -19,4 +19,14 @@ if (HAVE_HDF5)
         INCLUDES  ${HDF5_C_INCLUDE_DIRS}
         NOINSTALL
     )
+
+    ecbuild_add_executable(
+        TARGET    atlas-radintg
+        SOURCES   atlas-radintg.cc
+        LIBS      atlas
+                  ${HDF5_C_LIBRARIES}
+        INCLUDES  ${HDF5_C_INCLUDE_DIRS}
+        NOINSTALL
+    )
+
 endif()

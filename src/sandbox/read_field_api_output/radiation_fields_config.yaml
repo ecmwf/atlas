@@ -1,0 +1,208 @@
+# IFS radiation fields definition for RADINTG
+
+# List of variables groups mapping into ZRGP allocation
+- type: group
+  name: ZRGP_IN
+  short: ZRGP_IN
+  dimension: 3
+  comment: Input fields collated into ZRGP in RADINTG
+  variables:
+  - name: igi
+    dim: [1]
+    condition: ldebug
+  - name: imu0
+    dim: [1]
+  - name: iamu0
+    dim: [1]
+  - name: iemiss
+    dim: [nlwemiss]
+  - name: its
+    dim: [1]
+  - name: islm
+    dim: [1]
+  - name: iccnl
+    dim: [1]
+  - name: iccno
+    dim: [1]
+  - name: ibas
+    dim: [1]
+  - name: itop
+    dim: [1]
+  - name: igelam
+    dim: [1]
+  - name: igemu
+    dim: [1]
+  - name: iclon
+    dim: [1]
+  - name: islon
+    dim: [1]
+  - name: iald
+    dim: [nsw]
+  - name: ialp
+    dim: [nsw]
+  - name: iti
+    dim: [nlev]
+  - name: ipr
+    dim: [nlev]
+  - name: iqs
+    dim: [nlev]
+  - name: iwv
+    dim: [nlev]
+  - name: iclc
+    dim: [nlev]
+  - name: ilwa
+    dim: [nlev]
+  - name: iiwa
+    dim: [nlev]
+  - name: iswa
+    dim: [nlev]
+  - name: irwa
+    dim: [nlev]
+  - name: irra
+    dim: [nlev]
+  - name: idp
+    dim: [nlev]
+  - name: ifsd
+    dim: [nlev]
+    condition: nfsd>0
+  - name: ioz
+    dim: [nlev]
+    condition: lrayfm
+  - name: iecpo3
+    dim: [nlev]
+    condition: .not.lrayfm.and.lepo3ra
+  - name: ihpr
+    dim: [nlev+1]
+  - name: iaprs
+    dim: [nlev+1]
+  - name: ihti
+    dim: [nlev+1]
+  - name: ipert
+    dim: [nrftotal_radgrid]
+    condition: lspprad
+  - name: iprogaero
+    dim: [nprogaer, nlev]
+    condition: .not.lrayfm.and.nradaer>0
+
+- type: group
+  name: ZRGP_OUT
+  short: ZRGP_OUT
+  dimension: 3
+  comment: Output fields collated into ZRGP in RADINTG
+  variables:
+  - name: iaero
+    dim: [nradaer, nlev]
+  - name: ifrsod
+    dim: [1]
+  - name: ifrted
+    dim: [nlwout]
+  - name: ifrsodc
+    dim: [1]
+  - name: ifrtedc
+    dim: [1]
+  - name: iemit
+    dim: [1]
+  - name: isudu
+    dim: [1]
+  - name: iuvdf
+    dim: [1]
+  - name: iparf
+    dim: [1]
+  - name: iparcf
+    dim: [1]
+  - name: itincf
+    dim: [1]
+  - name: ifdir
+    dim: [1]
+  - name: ifdif
+    dim: [1]
+  - name: icdir
+    dim: [1]
+  - name: ilwderivative
+    dim: [nlev+1]
+    condition: lapproxlwupdate
+  - name: iswdirectband
+    dim: [nsw]
+    condition: lapproxswupdate
+  - name: iswdiffuseband
+    dim: [nsw]
+    condition: lapproxswupdate
+  - name: ifrso
+    dim: [nlev+1]
+  - name: iswfc
+    dim: [nlev+1]
+  - name: ifrth
+    dim: [nlev+1]
+  - name: ilwfc
+    dim: [nlev+1]
+  - name: iaer
+    dim: [6, nlev]
+    condition: ldiagforcing
+  - name: ioz
+    dim: [nlev]
+    condition: ldiagforcing
+  - name: iico2
+    dim: [nlev]
+    condition: ldiagforcing
+  - name: iich4
+    dim: [nlev]
+    condition: ldiagforcing
+  - name: iin2o
+    dim: [nlev]
+    condition: ldiagforcing
+  - name: ino2
+    dim: [nlev]
+    condition: ldiagforcing
+  - name: ic11
+    dim: [nlev]
+    condition: ldiagforcing
+  - name: ic12
+    dim: [nlev]
+    condition: ldiagforcing
+  - name: ic22
+    dim: [nlev]
+    condition: ldiagforcing
+  - name: icl4
+    dim: [nlev]
+    condition: ldiagforcing
+  - name: igix
+    dim: [1]
+    condition: ldebug
+
+- type: group
+  name: ZRGP_LOCAL
+  short: ZRGP_LOCAL
+  dimension: 3
+  comment: Local variables collated into ZRGP in RADINTG
+  variables:
+  - name: iaer
+    dim: [6, nlev]
+    condition: .not.ldiagforcing
+  - name: ioz
+    dim: [nlev]
+    condition: .not.(ldiagforcing.or.lrayfm)
+  - name: iico2
+    dim: [nlev]
+    condition: .not.ldiagforcing
+  - name: iich4
+    dim: [nlev]
+    condition: .not.ldiagforcing
+  - name: iin2o
+    dim: [nlev]
+    condition: .not.ldiagforcing
+  - name: ino2
+    dim: [nlev]
+    condition: .not.ldiagforcing
+  - name: ic11
+    dim: [nlev]
+    condition: .not.ldiagforcing
+  - name: ic12
+    dim: [nlev]
+    condition: .not.ldiagforcing
+  - name: ic22
+    dim: [nlev]
+    condition: .not.ldiagforcing
+  - name: icl4
+    dim: [nlev]
+    condition: .not.ldiagforcing
+
