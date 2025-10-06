@@ -8,7 +8,7 @@
 
 cmake_minimum_required( VERSION 3.18 FATAL_ERROR )
 
-find_package( ecbuild 3.8 REQUIRED HINTS ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/../ecbuild ${CMAKE_CURRENT_SOURCE_DIR}/../../ecbuild )
+find_package( ecbuild 3.4 REQUIRED HINTS ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/../ecbuild ${CMAKE_CURRENT_SOURCE_DIR}/../../ecbuild )
 
 if( NOT DEFINED atlas_VERSION )
   set( atlas_VERSION 0.0.0 )
@@ -21,6 +21,11 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 ecbuild_add_option( FEATURE PMR DESCRIPTION "Compatibility with std::pmr in C++" DEFAULT OFF )
 set(PLUTO_HAVE_PMR ${HAVE_PMR})
+
+ecbuild_add_option( FEATURE MDSPAN DESCRIPTION "Compatibility with std::mdspan in C++" DEFAULT OFF )
+set(PLUTO_HAVE_MDSPAN ${HAVE_MDSPAN})
+
+option(PLUTO_MDSPAN_USE_PAREN_OPERATOR "Enable pluto::mdspan multidimensional paren operator" ON)
 
 find_package(hic QUIET)
 if( NOT hic_FOUND )

@@ -233,6 +233,16 @@ std::string expect_message(const std::string& condition, const T1& lhs, const T2
     return msg.str();
 }
 
+template <typename T1, typename T2, typename T3>
+std::string expect_message(const std::string& condition, const T1& lhs, const T2& rhs, const T3& tol, const eckit::CodeLocation& loc) {
+    std::stringstream msg;
+    msg << eckit::Colour::red << condition << " FAILED @ " << print(loc) << eckit::Colour::reset << "\n"
+        << eckit::Colour::red << " --> lhs = " << print(lhs) << eckit::Colour::reset << "\n"
+        << eckit::Colour::red << " --> rhs = " << print(rhs) << eckit::Colour::reset << "\n"
+        << eckit::Colour::red << " --> tol = " << print(tol) << eckit::Colour::reset;
+    return msg.str();
+}
+
 #define EXPECT_EQ(lhs, rhs)                                                                                            \
     do {                                                                                                               \
         if (!(lhs == rhs)) {                                                                                           \
@@ -248,12 +258,12 @@ std::string expect_message(const std::string& condition, const T1& lhs, const T2
         }                                                                                                            \
     } while (false)
 
-#define __EXPECT_APPROX_EQ_TOL(lhs, rhs, tol)                                                                  \
-    do {                                                                                                       \
-        if (!(approx_eq(lhs, rhs, tol))) {                                                                     \
-            current_test().expect_failed(                                                                      \
-                expect_message("EXPECT_APPROX_EQ( " #lhs ", " #rhs ", " #tol " )", lhs, rhs, Here()), Here()); \
-        }                                                                                                      \
+#define __EXPECT_APPROX_EQ_TOL(lhs, rhs, tol)                                                                       \
+    do {                                                                                                            \
+        if (!(approx_eq(lhs, rhs, tol))) {                                                                          \
+            current_test().expect_failed(                                                                           \
+                expect_message("EXPECT_APPROX_EQ( " #lhs ", " #rhs ", " #tol " )", lhs, rhs, tol, Here()), Here()); \
+        }                                                                                                           \
     } while (false)
 
 #define EXPECT_APPROX_EQ(...) __ATLAS_SPLICE(__EXPECT_APPROX_EQ__, __ATLAS_NARG(__VA_ARGS__))(__VA_ARGS__)

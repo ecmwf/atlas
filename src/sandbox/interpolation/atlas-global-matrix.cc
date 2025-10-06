@@ -256,7 +256,11 @@ int AtlasGlobalMatrix::execute(const AtlasTool::Args& args) {
             auto tgt = eckit::linalg::Vector(tgt_data.data(), tgt_data.size());
             auto eckit_matrix = atlas::linalg::make_non_owning_eckit_sparse_matrix(matrix);
             timers.global_matrix_exe.start();
+#if ATLAS_ECKIT_VERSION_AT_LEAST(1, 19, 0)
             eckit::linalg::LinearAlgebraSparse::backend().spmv(eckit_matrix, src, tgt);
+#else
+            eckit::linalg::LinearAlgebra::backend().spmv(eckit_matrix, src, tgt);
+#endif
             timers.global_matrix_exe.stop();
             Log::info() << "Global matrix-multiply timer  \t: " << 1000.*timers.global_matrix_exe.elapsed()  << " [ms]" << std::endl;
             Log::info() << "Global matrix non-zero entries\t: " << matrix.nnz() << std::endl;

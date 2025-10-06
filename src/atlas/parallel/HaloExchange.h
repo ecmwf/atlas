@@ -18,8 +18,7 @@
 #include <string>
 #include <vector>
 
-#include "atlas/parallel/HaloAdjointExchangeImpl.h"
-#include "atlas/parallel/HaloExchangeImpl.h"
+#include "atlas/parallel/detail/Packer.h"
 #include "atlas/parallel/mpi/Statistics.h"
 #include "atlas/parallel/mpi/mpi.h"
 
@@ -31,11 +30,8 @@
 #include "atlas/library/config.h"
 #include "atlas/library/defines.h"
 #include "atlas/runtime/Exception.h"
+#include "atlas/runtime/Log.h"
 #include "atlas/util/Object.h"
-
-#if ATLAS_HAVE_GPU
-#include "atlas/parallel/HaloExchangeGPU.h"
-#endif
 
 namespace atlas {
 namespace parallel {
@@ -93,28 +89,29 @@ private:  // methods
     void deallocate_buffer(DATA_TYPE* buffer, const int buffer_size, const bool on_device) const;
 
     template <int ParallelDim, typename DATA_TYPE, int RANK>
-    void pack_send_buffer(const array::ArrayView<DATA_TYPE, RANK>& hfield,
-                          const array::ArrayView<DATA_TYPE, RANK>& dfield, DATA_TYPE* send_buffer, int send_buffer_size,
+    void pack_send_buffer(const array::ArrayView<DATA_TYPE, RANK>& array,
+                          DATA_TYPE* send_buffer, int send_buffer_size,
                           const bool on_device) const;
 
     template <int ParallelDim, typename DATA_TYPE, int RANK>
     void unpack_recv_buffer(const DATA_TYPE* recv_buffer, int recv_buffer_size,
-                            array::ArrayView<DATA_TYPE, RANK>& hfield, array::ArrayView<DATA_TYPE, RANK>& dfield,
+                            array::ArrayView<DATA_TYPE, RANK>& array,
                             const bool on_device) const;
 
     template <int ParallelDim, typename DATA_TYPE, int RANK>
-    void pack_recv_adjoint_buffer(const array::ArrayView<DATA_TYPE, RANK>& hfield,
-                                  const array::ArrayView<DATA_TYPE, RANK>& dfield, DATA_TYPE* recv_buffer,
-                                  int recv_buffer_size, const bool on_device) const;
+    void pack_recv_adjoint_buffer(const array::ArrayView<DATA_TYPE, RANK>& array,
+                                  DATA_TYPE* recv_buffer, int recv_buffer_size,
+                                  const bool on_device) const;
 
     template <int ParallelDim, typename DATA_TYPE, int RANK>
     void unpack_send_adjoint_buffer(const DATA_TYPE* send_buffer, int send_buffer_size,
-                                    array::ArrayView<DATA_TYPE, RANK>& hfield,
-                                    array::ArrayView<DATA_TYPE, RANK>& dfield, const bool on_device) const;
+                                    array::ArrayView<DATA_TYPE, RANK>& array,
+                                    const bool on_device) const;
 
     template <int ParallelDim, typename DATA_TYPE, int RANK>
-    void zero_halos(const array::ArrayView<DATA_TYPE, RANK>& hfield, array::ArrayView<DATA_TYPE, RANK>& dfield,
-                    DATA_TYPE* recv_buffer, int recv_buffer_size, const bool on_device) const;
+    void zero_halos(array::ArrayView<DATA_TYPE, RANK>& array,
+                    DATA_TYPE* recv_buffer, int recv_buffer_size,
+                    const bool on_device) const;
 
     template <typename DATA_TYPE, int RANK>
     void var_info(const array::ArrayView<DATA_TYPE, RANK>& arr, std::vector<idx_t>& varstrides,
@@ -125,6 +122,7 @@ private:  // methods
     }
 
     int devices() const;
+    bool is_device_accessible(const void* ptr) const;
 
 private:  // data
     std::string name_;
@@ -152,19 +150,36 @@ public:
 
 template <typename DATA_TYPE, int RANK, typename ParallelDim>
 void HaloExchange::execute(array::Array& field, bool on_device) const {
-    ATLAS_TRACE("HaloExchange", {"halo-exchange"});
+    ATLAS_TRACE(std::string("HaloExchange::execute")+(on_device?"[device]":"[host]"), {std::string("halo-exchange"), std::string("halo-exchange")+(on_device?".device":".host")});
     if (!is_setup_) {
         throw_Exception("HaloExchange was not setup", Here());
     }
 
     on_device = on_device && devices() > 0;
 
-    auto field_hv = array::make_host_view<DATA_TYPE, RANK>(field);
-    auto field_dv =
+    bool update_device_at_end = false;
+    if (on_device) {
+        ATLAS_ASSERT(field.deviceNeedsUpdate() == false);
+
+        if (not ATLAS_HAVE_GPU_AWARE_MPI) {
+            // Without GPU aware MPI, we need to do halo exchange on host and copy back to device
+            update_device_at_end = on_device;
+            on_device = false;
+            field.syncHost();
+        }
+        else {
+            field.syncDevice();
+        }
+    }
+    else {
+        field.syncHost();
+    }
+
+    auto array_view =
         on_device ? array::make_device_view<DATA_TYPE, RANK>(field) : array::make_host_view<DATA_TYPE, RANK>(field);
 
-    constexpr int parallelDim = array::get_parallel_dim<ParallelDim>(field_hv);
-    idx_t var_size            = array::get_var_size<parallelDim>(field_hv);
+    constexpr int parallelDim = array::get_parallel_dim<ParallelDim>(array_view);
+    idx_t var_size            = array::get_var_size<parallelDim>(array_view);
 
     int tag(1);
     std::size_t nproc_loc(static_cast<std::size_t>(nproc));
@@ -178,13 +193,11 @@ void HaloExchange::execute(array::Array& field, bool on_device) const {
     DATA_TYPE* inner_buffer = allocate_buffer<DATA_TYPE>(inner_size, on_device);
     DATA_TYPE* halo_buffer  = allocate_buffer<DATA_TYPE>(halo_size, on_device);
 
-#if ATLAS_HAVE_GPU
     if (on_device) {
         ATLAS_ASSERT( is_device_accessible(inner_buffer) );
         ATLAS_ASSERT( is_device_accessible(halo_buffer) );
-        ATLAS_ASSERT( is_device_accessible(field_dv.data()) );
+        ATLAS_ASSERT( is_device_accessible(array_view.data()) );
     }
-#endif
 
     counts_displs_setup<DATA_TYPE>(var_size, inner_counts_init, halo_counts_init, inner_counts, halo_counts,
                                    inner_displs, halo_displs);
@@ -192,18 +205,23 @@ void HaloExchange::execute(array::Array& field, bool on_device) const {
     ireceive<DATA_TYPE>(tag, halo_displs, halo_counts, halo_req, halo_buffer);
 
     /// Pack
-    pack_send_buffer<parallelDim>(field_hv, field_dv, inner_buffer, inner_size, on_device);
+    pack_send_buffer<parallelDim>(array_view, inner_buffer, inner_size, on_device);
 
     isend_and_wait_for_receive<DATA_TYPE>(tag, halo_counts_init, halo_req, inner_displs, inner_counts, inner_req,
                                           inner_buffer);
 
     /// Unpack
-    unpack_recv_buffer<parallelDim>(halo_buffer, halo_size, field_hv, field_dv, on_device);
+    unpack_recv_buffer<parallelDim>(halo_buffer, halo_size, array_view, on_device);
 
     wait_for_send(inner_counts_init, inner_req);
 
     deallocate_buffer<DATA_TYPE>(inner_buffer, inner_size, on_device);
     deallocate_buffer<DATA_TYPE>(halo_buffer, halo_size, on_device);
+
+    on_device ? field.setHostNeedsUpdate(true) : field.setDeviceNeedsUpdate(true);
+    if (update_device_at_end) {
+        field.syncDevice();
+    }
 }
 
 template <typename DATA_TYPE, int RANK, typename ParallelDim>
@@ -211,17 +229,24 @@ void HaloExchange::execute_adjoint(array::Array& field, bool on_device) const {
     if (!is_setup_) {
         throw_Exception("HaloExchange was not setup", Here());
     }
-
-    ATLAS_TRACE("HaloExchange", {"halo-exchange-adjoint"});
+    ATLAS_TRACE(std::string("HaloExchange::execute_adjoint")+(on_device?"[device]":"[host]"), {std::string("halo-exchange-adjoint"),std::string("halo-exchange-adjoint")+(on_device?".device":".host")});
 
     on_device = on_device && devices() > 0;
 
-    auto field_hv = array::make_host_view<DATA_TYPE, RANK>(field);
-    auto field_dv =
+    // adjoint on device is not yet implemented!
+    // So copy to host and do halo-exchange there, and copy back to device
+    bool update_device_at_end = on_device;
+    if (on_device) {
+        ATLAS_ASSERT(field.deviceNeedsUpdate() == false);
+        field.syncHost();
+        on_device = false;
+    }
+
+    auto array_view =
         on_device ? array::make_device_view<DATA_TYPE, RANK>(field) : array::make_host_view<DATA_TYPE, RANK>(field);
 
-    constexpr int parallelDim = array::get_parallel_dim<ParallelDim>(field_hv);
-    idx_t var_size            = array::get_var_size<parallelDim>(field_hv);
+    constexpr int parallelDim = array::get_parallel_dim<ParallelDim>(array_view);
+    idx_t var_size            = array::get_var_size<parallelDim>(array_view);
 
     int tag(1);
     std::size_t nproc_loc(static_cast<std::size_t>(nproc));
@@ -241,22 +266,27 @@ void HaloExchange::execute_adjoint(array::Array& field, bool on_device) const {
     ireceive<DATA_TYPE>(tag, halo_displs, halo_counts, halo_req, halo_buffer);
 
     /// Pack
-    pack_recv_adjoint_buffer<parallelDim>(field_hv, field_dv, inner_buffer, inner_size, on_device);
+    pack_recv_adjoint_buffer<parallelDim>(array_view, inner_buffer, inner_size, on_device);
 
     /// Send
     isend_and_wait_for_receive<DATA_TYPE>(tag, halo_counts_init, halo_req, inner_displs, inner_counts, inner_req,
                                           inner_buffer);
 
     /// Unpack
-    unpack_send_adjoint_buffer<parallelDim>(halo_buffer, halo_size, field_hv, field_dv, on_device);
+    unpack_send_adjoint_buffer<parallelDim>(halo_buffer, halo_size, array_view, on_device);
 
     /// Wait for sending to finish
     wait_for_send(inner_counts_init, inner_req);
 
-    zero_halos<parallelDim>(field_hv, field_dv, halo_buffer, halo_size, on_device);
+    zero_halos<parallelDim>(array_view, halo_buffer, halo_size, on_device);
 
     deallocate_buffer<DATA_TYPE>(halo_buffer, halo_size, on_device);
     deallocate_buffer<DATA_TYPE>(inner_buffer, inner_size, on_device);
+
+    on_device ? field.setHostNeedsUpdate(true) : field.setDeviceNeedsUpdate(true);
+    if (update_device_at_end) {
+        field.syncDevice();
+    }
 }
 
 template <typename DATA_TYPE>
@@ -338,131 +368,44 @@ void HaloExchange::isend_and_wait_for_receive(int tag, std::vector<int>& recv_co
     }
 }
 
-template <int ParallelDim, int RANK>
-struct halo_packer {
-    template <typename DATA_TYPE>
-    static void pack(const int sendcnt, array::SVector<int> const& sendmap,
-                     const array::ArrayView<DATA_TYPE, RANK>& field, DATA_TYPE* send_buffer, int /*send_buffer_size*/) {
-        idx_t ibuf = 0;
-        for (int node_cnt = 0; node_cnt < sendcnt; ++node_cnt) {
-            const idx_t node_idx = sendmap[node_cnt];
-            halo_packer_impl<ParallelDim, RANK, 0>::apply(ibuf, node_idx, field, send_buffer);
-        }
-    }
-
-    template <typename DATA_TYPE>
-    static void unpack(const int recvcnt, array::SVector<int> const& recvmap, const DATA_TYPE* recv_buffer,
-                       int /*recv_buffer_size*/, array::ArrayView<DATA_TYPE, RANK>& field) {
-        idx_t ibuf = 0;
-        for (int node_cnt = 0; node_cnt < recvcnt; ++node_cnt) {
-            const idx_t node_idx = recvmap[node_cnt];
-            halo_unpacker_impl<ParallelDim, RANK, 0>::apply(ibuf, node_idx, recv_buffer, field);
-        }
-    }
-};
-
-template <int ParallelDim, int RANK>
-struct halo_adjoint_packer {
-    template <typename DATA_TYPE>
-    static void unpack(const int recvcnt, array::SVector<int> const& recvmap, const DATA_TYPE* recv_buffer,
-                       int /*recv_buffer_size*/, array::ArrayView<DATA_TYPE, RANK>& field) {
-        idx_t ibuf = 0;
-        for (int node_cnt = 0; node_cnt < recvcnt; ++node_cnt) {
-            const idx_t node_idx = recvmap[node_cnt];
-            halo_adjoint_unpacker_impl<ParallelDim, RANK, 0>::apply(ibuf, node_idx, recv_buffer, field);
-        }
-    }
-};
-
-
-template <int ParallelDim, int RANK>
-struct halo_zeroer {
-    template <typename DATA_TYPE>
-    static void zeroer(const int sendcnt, array::SVector<int> const& sendmap, array::ArrayView<DATA_TYPE, RANK>& field,
-                       DATA_TYPE* recv_buffer, int /*recv_buffer_size*/) {
-        idx_t ibuf = 0;
-        for (int node_cnt = 0; node_cnt < sendcnt; ++node_cnt) {
-            const idx_t node_idx = sendmap[node_cnt];
-            halo_zeroer_impl<ParallelDim, RANK, 0>::apply(ibuf, node_idx, field, recv_buffer);
-        }
-    }
-};
-
-
 template <int ParallelDim, typename DATA_TYPE, int RANK>
-void HaloExchange::zero_halos(ATLAS_MAYBE_UNUSED const array::ArrayView<DATA_TYPE, RANK>& hfield,
-                              array::ArrayView<DATA_TYPE, RANK>& dfield, DATA_TYPE* recv_buffer, int recv_size,
+void HaloExchange::zero_halos(array::ArrayView<DATA_TYPE, RANK>& array,
+                              DATA_TYPE* recv_buffer, int recv_size,
                               ATLAS_MAYBE_UNUSED const bool on_device) const {
     ATLAS_TRACE();
-#if ATLAS_HAVE_GPU
-    if (on_device) {
-        ATLAS_NOTIMPLEMENTED;
-    }
-    else
-#endif
-        halo_zeroer<ParallelDim, RANK>::zeroer(recvcnt_, recvmap_, dfield, recv_buffer, recv_size);
+    detail::Zeroer<ParallelDim, DATA_TYPE, RANK>::zero(recvcnt_, recvmap_, array, recv_buffer, recv_size, on_device);
 }
 
 template <int ParallelDim, typename DATA_TYPE, int RANK>
-void HaloExchange::pack_send_buffer(ATLAS_MAYBE_UNUSED const array::ArrayView<DATA_TYPE, RANK>& hfield,
-                                    const array::ArrayView<DATA_TYPE, RANK>& dfield, DATA_TYPE* send_buffer,
-                                    int send_size, ATLAS_MAYBE_UNUSED const bool on_device) const {
+void HaloExchange::pack_send_buffer(const array::ArrayView<DATA_TYPE, RANK>& array,
+                                    DATA_TYPE* send_buffer, int send_size,
+                                    const bool on_device) const {
     ATLAS_TRACE();
-#if ATLAS_HAVE_GPU
-    if (on_device) {
-        halo_packer_hic<ParallelDim, DATA_TYPE, RANK>::pack(sendcnt_, sendmap_, hfield, dfield, send_buffer,
-                                                             send_size);
-    }
-    else
-#endif
-        halo_packer<ParallelDim, RANK>::pack(sendcnt_, sendmap_, dfield, send_buffer, send_size);
+    detail::Packer<ParallelDim, DATA_TYPE, RANK>::pack(sendcnt_, sendmap_, array, send_buffer,
+                                                       send_size, on_device);
 }
 
 template <int ParallelDim, typename DATA_TYPE, int RANK>
 void HaloExchange::unpack_recv_buffer(const DATA_TYPE* recv_buffer, int recv_size,
-                                      ATLAS_MAYBE_UNUSED array::ArrayView<DATA_TYPE, RANK>& hfield,
-                                      array::ArrayView<DATA_TYPE, RANK>& dfield,
-                                      ATLAS_MAYBE_UNUSED const bool on_device) const {
+                                      array::ArrayView<DATA_TYPE, RANK>& array,
+                                      const bool on_device) const {
     ATLAS_TRACE();
-#if ATLAS_HAVE_GPU
-    if (on_device) {
-        halo_packer_hic<ParallelDim, DATA_TYPE, RANK>::unpack(recvcnt_, recvmap_, recv_buffer, recv_size, hfield,
-                                                               dfield);
-    }
-    else
-#endif
-        halo_packer<ParallelDim, RANK>::unpack(recvcnt_, recvmap_, recv_buffer, recv_size, dfield);
+    detail::Packer<ParallelDim, DATA_TYPE, RANK>::unpack(recvcnt_, recvmap_, recv_buffer, recv_size, array, on_device);
 }
 
 template <int ParallelDim, typename DATA_TYPE, int RANK>
-void HaloExchange::pack_recv_adjoint_buffer(ATLAS_MAYBE_UNUSED const array::ArrayView<DATA_TYPE, RANK>& hfield,
-                                            const array::ArrayView<DATA_TYPE, RANK>& dfield, DATA_TYPE* recv_buffer,
-                                            int recv_size, ATLAS_MAYBE_UNUSED const bool on_device) const {
+void HaloExchange::pack_recv_adjoint_buffer(const array::ArrayView<DATA_TYPE, RANK>& array,
+                                            DATA_TYPE* recv_buffer, int recv_size, const bool on_device) const {
     ATLAS_TRACE();
-#if ATLAS_HAVE_GPU
-    if (on_device) {
-        halo_packer_hic<ParallelDim, DATA_TYPE, RANK>::pack(recvcnt_, recvmap_, hfield, dfield, recv_buffer,
-                                                             recv_size);
-    }
-    else
-#endif
-        halo_packer<ParallelDim, RANK>::pack(recvcnt_, recvmap_, dfield, recv_buffer, recv_size);
+    detail::AdjointPacker<ParallelDim, DATA_TYPE, RANK>::pack(recvcnt_, recvmap_, array, recv_buffer, recv_size, on_device);
 }
 
 template <int ParallelDim, typename DATA_TYPE, int RANK>
 void HaloExchange::unpack_send_adjoint_buffer(const DATA_TYPE* send_buffer, int send_size,
-                                              ATLAS_MAYBE_UNUSED array::ArrayView<DATA_TYPE, RANK>& hfield,
-                                              array::ArrayView<DATA_TYPE, RANK>& dfield,
+                                              array::ArrayView<DATA_TYPE, RANK>& array,
                                               ATLAS_MAYBE_UNUSED const bool on_device) const {
     ATLAS_TRACE();
-#if ATLAS_HAVE_GPU
-    if (on_device) {
-        halo_packer_hic<ParallelDim, DATA_TYPE, RANK>::unpack(sendcnt_, sendmap_, send_buffer, send_size, hfield,
-                                                               dfield);
-    }
-    else
-#endif
-        halo_adjoint_packer<ParallelDim, RANK>::unpack(sendcnt_, sendmap_, send_buffer, send_size, dfield);
+    detail::AdjointPacker<ParallelDim, DATA_TYPE, RANK>::unpack(sendcnt_, sendmap_, send_buffer, send_size, array, on_device);
 }
 
 // template<typename DATA_TYPE>

@@ -18,6 +18,7 @@
 #include "atlas/array.h"
 #include "atlas/linalg/sparse/SparseMatrixToTriplets.h"
 #include "atlas/functionspace/StructuredColumns.h"
+#include "atlas/functionspace/NodeColumns.h"
 
 namespace atlas::interpolation {
 
@@ -139,7 +140,13 @@ linalg::SparseMatrixStorage assemble_global_matrix(const Interpolation& interpol
                 max_gidx = std::max(max_gidx, global_index(i));
             }
         }
+#if ATLAS_ECKIT_VERSION_AT_LEAST(1, 22, 2)
+        // eckit::mpi::Comm::reduceInPlace() was only added in eckit 1.22.2
         mpi_comm.reduceInPlace(max_gidx, eckit::mpi::max(), mpi_root);
+#else
+        mpi_comm.allReduceInPlace(max_gidx, eckit::mpi::max());
+        (void)mpi_root; // to silence unused lambda capture warning
+#endif
         return max_gidx;
     };
 
@@ -176,9 +183,16 @@ void distribute_global_matrix(const linalg::SparseMatrixView<ViewValue,ViewIndex
     const auto outer  = global_matrix.outer();
     const auto inner  = global_matrix.inner();
     const auto value  = global_matrix.value();
-    if (mpi_rank == mpi_root) {        
+    if (mpi_rank == mpi_root) {
 
+        ATLAS_ASSERT(global_matrix.rows() <= tgt_part_glb.size());
         for(std::size_t r = 0; r < global_matrix.rows(); ++r) {
+            if (tgt_part_glb(r) >= mpi_size) {
+                    ATLAS_DEBUG_VAR(r);
+                    ATLAS_DEBUG_VAR(mpi_size);
+                    ATLAS_DEBUG_VAR(tgt_part_glb(r));
+                    ATLAS_ASSERT(tgt_part_glb(r) < nnz_per_task.size());
+            }
             nnz_per_task[tgt_part_glb(r)] += outer[r+1] - outer[r];
         }
         for (int jproc = 0; jproc < mpi::comm().size(); ++jproc) {
@@ -237,10 +251,19 @@ void distribute_global_matrix(const linalg::SparseMatrixView<ViewValue,ViewIndex
 linalg::SparseMatrixStorage distribute_global_matrix(const FunctionSpace& src_fs, const FunctionSpace& tgt_fs, const linalg::SparseMatrixStorage& gmatrix, int mpi_root) {
     ATLAS_TRACE("distribute_global_matrix");
     Field field_tgt_part_glb = tgt_fs.createField(tgt_fs.partition(), option::global(mpi_root));
+
+    // This should not be needed, but there's a problem with the NodeColumns functionspace for ORCA grids leading to uninitialized partitions
+    if (functionspace::NodeColumns(tgt_fs)) {
+        if (auto grid = functionspace::NodeColumns(tgt_fs).mesh().grid()) {
+            if (grid.type() == "ORCA") {
+                array::make_view<int,1>(field_tgt_part_glb).assign(0);
+            }
+        }
+    }
+
     ATLAS_TRACE_SCOPE("gather partition") {
         tgt_fs.gather(tgt_fs.partition(), field_tgt_part_glb);
     }
-
     using Index = eckit::linalg::Index;
     using Value = eckit::linalg::Scalar;
     std::vector<Index> rows, cols;

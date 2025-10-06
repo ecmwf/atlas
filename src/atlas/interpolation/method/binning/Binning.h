@@ -7,12 +7,14 @@
 
 #pragma once
 
-#include <string>
 #include <vector>
 
 #include "atlas/functionspace/FunctionSpace.h"
 #include "atlas/interpolation/Cache.h"
+#include "atlas/interpolation/method/Intersect.h"
 #include "atlas/interpolation/method/Method.h"
+#include "atlas/linalg/sparse/SparseMatrixStorage.h"
+#include "atlas/linalg/sparse/SparseMatrixView.h"
 #include "atlas/grid/Grid.h"
 
 #include "eckit/config/Configuration.h"
@@ -42,11 +44,15 @@ class Binning : public Method {
   ///                       value: 'binning'
   ///                    <scheme>: method used to evaluate the 'A' matrix;
   ///                       value: 'cubedsphere-bilinear', 'structured-bilinear', ...
-  ///             <halo_exchange>: flag to control the halo exchange procedure
-  ///                       value: 'true', 'false'
   ///                   <adjoint>: flag to control the adjoint operation
   ///                       value: 'true', 'false'
   ///
+
+  using ValueType = double;
+  using IndexType = int;
+  using SparseMatrixStorage = linalg::SparseMatrixStorage;
+  using SparseMatrixView = linalg::SparseMatrixView<ValueType, IndexType>;
+
   Binning(const Config& config);
   ~Binning() override {}
 
@@ -61,7 +67,8 @@ class Binning : public Method {
   void do_setup(const Grid& source, const Grid& target, const Cache&) override;
   void do_setup(const FunctionSpace& source, const FunctionSpace& target, const Cache&) override;
 
-  std::vector<double> getAreaWeights(const FunctionSpace& source) const;
+  SparseMatrixStorage transposeAndHaloExchange(const SparseMatrixView& interpMatrix) const;
+  std::vector<double> getAreaWeights() const;
 
   eckit::LocalConfiguration interpAncillaryScheme_{};
 

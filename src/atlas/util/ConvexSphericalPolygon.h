@@ -18,7 +18,7 @@
 #include "atlas/util/Polygon.h"
 #include "atlas/runtime/Log.h"
 
-#define DEBUG_OUTPUT 1
+#define DEBUG_OUTPUT 0
 
 namespace atlas {
 namespace util {
@@ -43,7 +43,7 @@ public:
                    << (PointXYZ::dot(cross(), P) >= offset) << std::endl;
            }
 #endif
-            return (PointXYZ::dot(cross(), P) >= offset); // has to have = included
+            return (cross_[0] * P[0] + cross_[1] * P[1] + cross_[2] * P[2]) >= offset; // has to have = included
         }
 
         PointXYZ intersect(const GreatCircleSegment&, std::ostream* f = NULL, double pointsSameEPS = std::numeric_limits<double>::epsilon()) const;
@@ -88,14 +88,14 @@ public:
 
     double area() const {
         if (not computed_area_) {
-            compute_centroid();
+            compute_centroid_and_area();
         }
         return area_;
     }
 
     const PointXYZ& centroid() const {
         if (not computed_centroid_) {
-            compute_centroid();
+            compute_centroid_and_area();
         }
         return centroid_;
     }
@@ -130,6 +130,8 @@ public:
 
     int next(const int index) const { return (index == size_ - 1) ? 0 : index + 1; };
 
+    static void fpe(bool v) { fpe_ = v; }
+    static bool fpe() { return fpe_; }
 private:
     struct SubTriangle {
         PointXYZ centroid;
@@ -146,13 +148,14 @@ private:
         size_t size_{0};
     };
 
-    void compute_centroid() const;
+    void compute_centroid_and_area() const;
 
     double compute_radius() const;
 
     SubTriangles triangulate() const;
 
-    void clip(const GreatCircleSegment&, std::ostream* f = nullptr, double pointsSameEPS = std::numeric_limits<double>::epsilon());
+    template <class ClippedCoords>
+    void clip(const GreatCircleSegment&, ClippedCoords&, const double& pointsSameEPS = std::numeric_limits<double>::epsilon(), std::ostream* out = nullptr);
 
     // Set valid_ to true when polygon is convex
     void validate();
@@ -167,6 +170,8 @@ private:
     mutable bool computed_centroid_{false};
     mutable bool computed_radius_{false};
     mutable bool computed_area_{false};
+
+    static bool fpe_;
 };
 
 //------------------------------------------------------------------------------------------------------

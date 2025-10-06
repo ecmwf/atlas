@@ -18,6 +18,7 @@
 #define ATLAS_OMP_TASK_SUPPORTED             @ATLAS_OMP_TASK_SUPPORTED@
 #define ATLAS_OMP_TASK_UNTIED_SUPPORTED      @ATLAS_OMP_TASK_UNTIED_SUPPORTED@
 #define ATLAS_HAVE_GPU                       @atlas_HAVE_GPU@
+#define ATLAS_HAVE_GPU_AWARE_MPI             @atlas_HAVE_GPU_AWARE_MPI@
 #define ATLAS_HAVE_ACC                       @atlas_HAVE_ACC@
 #define ATLAS_HAVE_QHULL                     @atlas_HAVE_QHULL@
 #define ATLAS_HAVE_CGAL                      @atlas_HAVE_CGAL@
@@ -25,6 +26,7 @@
 #define ATLAS_HAVE_FORTRAN                   @atlas_HAVE_FORTRAN@
 #define ATLAS_HAVE_EIGEN                     @atlas_HAVE_EIGEN@
 #define ATLAS_HAVE_FFTW                      @atlas_HAVE_FFTW@
+#define ATLAS_HAVE_POCKETFFT                 @atlas_HAVE_POCKETFFT@
 #define ATLAS_HAVE_MPI                       @atlas_HAVE_MPI@
 #define ATLAS_HAVE_PROJ                      @atlas_HAVE_PROJ@
 #define ATLAS_BITS_GLOBAL                    @ATLAS_BITS_GLOBAL@
@@ -70,6 +72,11 @@
 #    define ATLAS_SUPPRESS_WARNINGS_PUSH                 _Pragma( "warning push" )
 #    define ATLAS_SUPPRESS_WARNINGS_POP                  _Pragma( "warning pop" )
 #    define ATLAS_SUPPRESS_WARNINGS_INTEGER_SIGN_CHANGE  _Pragma( "warning disable 68" )
+#    define ATLAS_SUPPRESS_WARNINGS_BOTH_INLINE_NOINLINE _Pragma( "warning disable 2196" )
+#elif defined(__clang__)
+#    define ATLAS_SUPPRESS_WARNINGS_PUSH                      _Pragma( "clang diagnostic push")
+#    define ATLAS_SUPPRESS_WARNINGS_POP                       _Pragma( "clang diagnostic pop" )
+#    define ATLAS_SUPPRESS_WARNINGS_UNUSED_BUT_SET_VARIABLE   _Pragma( "clang diagnostic ignored \"-Wunused-but-set-variable\"")
 #elif defined(__GNUC__)
 #    define ATLAS_SUPPRESS_WARNINGS_PUSH                 _Pragma( "GCC diagnostic push" ) \
                                                          _Pragma( "GCC diagnostic ignored \"-Wpragmas\"" ) \
@@ -97,5 +104,9 @@
 #if !defined(ATLAS_SUPPRESS_WARNINGS_UNUSED_BUT_SET_VARIABLE)
 #    define ATLAS_SUPPRESS_WARNINGS_UNUSED_BUT_SET_VARIABLE
 #endif
+#if !defined(ATLAS_SUPPRESS_WARNINGS_BOTH_INLINE_NOINLINE)
+#    define ATLAS_SUPPRESS_WARNINGS_BOTH_INLINE_NOINLINE
+#endif
 
 #endif
+

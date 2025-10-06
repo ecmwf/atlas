@@ -94,11 +94,11 @@ protected:
 
     static void normalise(Triplets& triplets);
 
-    void haloExchange(const FieldSet&) const;
-    void haloExchange(const Field&) const;
+    void haloExchange(const FieldSet&, bool on_device = false) const;
+    void haloExchange(const Field&, bool on_device = false) const;
 
-    void adjointHaloExchange(const FieldSet&) const;
-    void adjointHaloExchange(const Field&) const;
+    void adjointHaloExchange(const FieldSet&, bool on_device = false) const;
+    void adjointHaloExchange(const Field&, bool on_device = false) const;
 
     // NOTE : Matrix-free or non-linear interpolation operators do not have matrices, so do not expose here
     friend class atlas::test::Access;
@@ -133,7 +133,12 @@ protected:
 
     bool matrixAllocated() const { return matrix_shared_.use_count(); }
 
-    const Matrix& matrix() const { return *matrix_; }
+    const Matrix& matrix() const {
+        ATLAS_ASSERT(matrix_ != nullptr);
+        return *matrix_;
+    }
+
+    const Matrix& adjoint_matrix() const;
 
     virtual void do_setup(const FunctionSpace& source, const FunctionSpace& target) = 0;
     virtual void do_setup(const Grid& source, const Grid& target, const Cache&)     = 0;
@@ -174,10 +179,10 @@ private:
     interpolation::MatrixCache matrix_cache_;
     NonLinear nonLinear_;
     std::string linalg_backend_;
-    Matrix matrix_transpose_;
+    bool adjoint_{false};
+    mutable std::unique_ptr<Matrix> matrix_transpose_;
 
 protected:
-    bool adjoint_{false};
     bool allow_halo_exchange_{true};
     std::vector<idx_t> missing_;
 };

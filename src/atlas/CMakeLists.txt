@@ -73,6 +73,7 @@ parallel/omp/sort.h
 util/Config.cc
 util/Config.h
 
+mdspan.h
 )
 
 list( APPEND atlas_grid_srcs
@@ -513,6 +514,8 @@ functionspace/EdgeColumns.cc
 functionspace/FunctionSpace.h
 functionspace/FunctionSpace.cc
 functionspace/HaloDescription.h
+functionspace/Locate.cc
+functionspace/Locate.h
 functionspace/NodeColumns.h
 functionspace/NodeColumns.cc
 functionspace/StructuredColumns.h
@@ -729,6 +732,7 @@ linalg/sparse/SparseMatrixStorage.cc
 linalg/sparse/SparseMatrixStorage.h
 linalg/sparse/SparseMatrixToTriplets.h
 linalg/sparse/SparseMatrixView.h
+linalg/sparse/SparseMatrixTriplet.h
 linalg/dense.h
 linalg/dense/Backend.h
 linalg/dense/Backend.cc
@@ -736,6 +740,10 @@ linalg/dense/MatrixMultiply.h
 linalg/dense/MatrixMultiply.tcc
 linalg/dense/MatrixMultiply_EckitLinalg.h
 linalg/dense/MatrixMultiply_EckitLinalg.cc
+linalg/fft.h
+linalg/fft/FFT.h
+linalg/fft/FFTW.cc
+linalg/fft/pocketfft.cc
 )
 
 
@@ -818,13 +826,20 @@ endif()
 list( APPEND atlas_parallel_srcs
   parallel/Checksum.cc
   parallel/Checksum.h
+  parallel/Collect.cc
+  parallel/Collect.h
   parallel/GatherScatter.cc
   parallel/GatherScatter.h
   parallel/HaloExchange.cc
   parallel/HaloExchange.h
-  parallel/HaloAdjointExchangeImpl.h
-  parallel/HaloExchangeImpl.h
+  parallel/Locate.cc
+  parallel/Locate.h
   parallel/mpi/Buffer.h
+  parallel/detail/Packer.h
+  parallel/detail/Packer.cc
+  parallel/detail/pack_index.h
+  parallel/detail/adjoint_unpack_index.h
+  parallel/detail/zero_index.h
 )
 
 list( APPEND atlas_util_srcs
@@ -875,8 +890,6 @@ util/SphericalPolygon.cc
 util/SphericalPolygon.h
 util/UnitSphere.h
 util/vector.h
-util/mdspan.h
-util/detail/mdspan/mdspan.hpp
 util/VectorOfAbstract.h
 util/QhullSphericalTriangulation.h
 util/QhullSphericalTriangulation.cc
@@ -884,6 +897,8 @@ util/CGALSphericalTriangulation.h
 util/CGALSphericalTriangulation.cc
 util/detail/Cache.h
 util/detail/KDTree.h
+util/detail/filesystem.cc
+util/detail/filesystem.h
 util/function/MDPI_functions.h
 util/function/MDPI_functions.cc
 util/function/SolidBodyRotation.h
@@ -966,12 +981,11 @@ list( APPEND source_list
 if( atlas_HAVE_GPU )
   include( atlas_host_device )
   list( APPEND source_list
-    parallel/HaloExchangeGPU.h
-    parallel/HaloExchangeGPU.hic
+    parallel/detail/DevicePacker.hic
   )
   atlas_host_device( source_list
     SOURCES
-      parallel/HaloExchangeGPU.hic
+      parallel/detail/DevicePacker.hic
       mesh/Connectivity.cc
   )
 
@@ -1028,6 +1042,7 @@ ecbuild_add_library( TARGET atlas
   PRIVATE_INCLUDES
     ${CGAL_INCLUDE_DIRS}
     ${FFTW_INCLUDES}
+    ${POCKETFFT_INCLUDE_DIRS}
     ${PROJ_INCLUDE_DIRS}
 
   PUBLIC_INCLUDES

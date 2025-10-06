@@ -643,6 +643,16 @@ CASE("test_SpectralFunctionSpace_norm") {
         }
     }
 }
+
+template <typename T>
+mdspan<T,dims<1>> make_mdspan(std::vector<T>& v) {
+    return mdspan<T,dims<1>>{v.data(), v.size()};
+}
+template <typename T, size_t N>
+mdspan<T,extents<size_t,dynamic_extent,N>> make_mdspan(std::vector<std::array<T,N>>& v) {
+    return mdspan<T,extents<size_t,dynamic_extent,N>>{reinterpret_cast<T*>(v.data()), v.size()};
+}
+
 CASE("test_functionspace_grid") {
     // Create list of points and construct Grid from them
     std::vector<PointXY> points = {
@@ -660,6 +670,7 @@ CASE("test_functionspace_grid") {
         lons.push_back(point.x());
         lats.push_back(point.y());
     }
+    constexpr gidx_t global_index_base = 1;
     std::vector<int> ghosts(6, 0);
     std::vector<gidx_t> global_indices(6);
     std::iota(global_indices.begin(), global_indices.end(), 1);
@@ -673,9 +684,13 @@ CASE("test_functionspace_grid") {
     std::vector<gidx_t> quad_global_indices                = {3};
     const mesh::MeshBuilder mesh_builder{};
     const Mesh mesh_from_meshbuilder = mesh_builder(
-        lons, lats, ghosts, global_indices, remote_indices, remote_index_base, partitions,
-        tri_boundary_nodes, tri_global_indices, quad_boundary_nodes, quad_global_indices);
-
+            make_mdspan(global_indices),
+            make_mdspan(lons), make_mdspan(lats),
+            make_mdspan(lons), make_mdspan(lats),
+            make_mdspan(ghosts), make_mdspan(partitions), make_mdspan(remote_indices), remote_index_base,
+            make_mdspan(tri_global_indices), make_mdspan(tri_boundary_nodes),
+            make_mdspan(quad_global_indices), make_mdspan(quad_boundary_nodes),
+            global_index_base);
     // Create Cell/Edge/NodeColumns and PointCloud FunctionSpaces that will save the Grid on construction
     functionspace::CellColumns cells_from_grid(mesh_from_grid);
     functionspace::EdgeColumns edges_from_grid(mesh_from_grid);

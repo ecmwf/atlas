@@ -88,6 +88,9 @@ public:
     /// Copy assign from other SparseMatrixStorage, takes ownership!
     SparseMatrixStorage& operator=(const SparseMatrixStorage& other);
 
+    // Remove all storage, make empty
+    void clear();
+
     /// Empty if rows and cols are zero.
     bool empty() const { return rows_ == 0 && cols_ == 0; }
 
@@ -109,15 +112,19 @@ public:
 
     bool deviceNeedsUpdate() const;
 
-    void setHostNeedsUpdate(bool v) const;
+    void setHostNeedsUpdate(bool) const;
 
-    void setDeviceNeedsUpdate(bool v) const;
+    void setDeviceNeedsUpdate(bool) const;
 
     bool deviceAllocated() const;
 
     void allocateDevice() const;
 
     void deallocateDevice() const;
+
+    void syncHost() const;
+
+    void syncDevice() const;
 
     static SparseMatrixStorage make(
         std::size_t rows,

@@ -47,11 +47,10 @@ namespace atlas {
 
 class AtlasParallelInterpolation : public AtlasTool {
     int execute(const AtlasTool::Args& args) override;
-    std::string briefDescription() override { return "Demonstration of parallel interpolation"; }
+    std::string briefDescription() override { return "Demonstration of parallel conservative interpolation"; }
     std::string usage() override {
         return name() +
-               " [--source.grid=gridname] "
-               "[--target.grid=gridname] [OPTION]... [--help]";
+               "[OPTIONS]... [--help]";
     }
 
     int numberOfPositionalArguments() override { return -1; }
@@ -59,8 +58,8 @@ class AtlasParallelInterpolation : public AtlasTool {
 
 public:
     AtlasParallelInterpolation(int argc, char* argv[]): AtlasTool(argc, argv) {
-        add_option(new eckit::option::Separator("Source/Target options"));
-
+        // Grid options
+        add_option(new eckit::option::Separator("Grid options"));
         add_option(new SimpleOption<std::string>("source.grid", "source gridname"));
         add_option(new SimpleOption<std::string>("source.partitioner", "source partitioner name (spherical-polygon, lonlat-polygon, brute-force)"));
         add_option(new SimpleOption<std::string>("target.grid", "target gridname"));
@@ -69,9 +68,10 @@ public:
                                                  "source functionspace, to override source grid default"));
         add_option(new SimpleOption<std::string>("target.functionspace",
                                                  "target functionspace, to override target grid default"));
-        add_option(new SimpleOption<long>("source.halo", "default=2"));
+        add_option(new SimpleOption<long>("source.halo", "default=1"));
         add_option(new SimpleOption<long>("target.halo", "default=0 for CellColumns and 1 for NodeColumns"));
 
+        // Interpolation options
         add_option(new eckit::option::Separator("Interpolation options"));
         add_option(new SimpleOption<long>("order", "Interpolation order. Supported: 1, 2 (default=1)"));
         add_option(new SimpleOption<bool>("normalise_intersections",
@@ -80,15 +80,20 @@ public:
                                           "Enable extra validations at cost of performance. For debugging purpose."));
         add_option(new SimpleOption<bool>("matrix_free", "Do not store matrix for consecutive interpolations"));
 
+        // Interpolation statistics options
+        add_option(new eckit::option::Separator("Interpolation statistics options"));
+        add_option(new SimpleOption<bool>("statistics.all", "Enable all statistics"));
         add_option(
-            new SimpleOption<bool>("statistics.intersection", "Enable extra statistics on polygon intersections"));
+            new SimpleOption<bool>("statistics.timings", "Enable statistics on interpolation setup and execution timings"));
+        add_option(
+            new SimpleOption<bool>("statistics.intersection", "Enable statistics on polygon intersections"));
         add_option(new SimpleOption<bool>("statistics.accuracy",
-                                          "Enable extra statistics, comparing result with initial condition"));
+                                          "Enable statistics w.r.t. an analytical solution"));
         add_option(
-            new SimpleOption<bool>("statistics.conservation", "Enable extra statistics computing mass conservation"));
+            new SimpleOption<bool>("statistics.conservation", "Enable statistics on mass conservation"));
 
+        // Output options
         add_option(new eckit::option::Separator("Output options"));
-
         add_option(new SimpleOption<bool>(
             "output-gmsh", "Output gmsh files src_mesh.msh, tgt_mesh.msh, src_field.msh, tgt_field.msh"));
         add_option(new SimpleOption<std::string>("gmsh.coordinates", "Mesh coordinates [xy,lonlat,xyz]"));
@@ -97,8 +102,8 @@ public:
         add_option(new SimpleOption<bool>("output-json", "Output json file with run information"));
         add_option(new SimpleOption<std::string>("json.file", "File path for json output"));
 
+        // Initial condition options
         add_option(new eckit::option::Separator("Initial condition options"));
-
         add_option(new SimpleOption<std::string>(
             "init", "Setup initial source field [ constant, spherical_harmonic, vortex_rollup (default), solid_body_rotation_wind_magnitude ]"));
         add_option(new SimpleOption<double>("solid_body_rotation.angle", "Angle of solid body rotation (default = 0.)"));
@@ -118,7 +123,7 @@ public:
     } timers;
 };
 
-std::function<double(const PointLonLat&)> get_init(const AtlasTool::Args& args) {
+std::function<double(const PointLonLat&)> get_init(const eckit::LocalConfiguration& args) {
     std::string init;
     args.get("init", init = "vortex_rollup");
     if (init == "vortex_rollup") {
@@ -172,7 +177,9 @@ std::function<double(const PointLonLat&)> get_init(const AtlasTool::Args& args) 
     ATLAS_THROW_EXCEPTION("Should not be here");
 }
 
-int AtlasParallelInterpolation::execute(const AtlasTool::Args& args) {
+int AtlasParallelInterpolation::execute(const AtlasTool::Args& args) {\
+    eckit::LocalConfiguration config(args);
+
     auto get_grid = [](std::string grid_name) {
         int grid_number = std::atoi( grid_name.substr(1, grid_name.size()).c_str() );
         if (grid_name.at(0) == 'P') {
@@ -187,8 +194,8 @@ int AtlasParallelInterpolation::execute(const AtlasTool::Args& args) {
             return StructuredGrid{grid_name};
         }
     };
-    auto src_grid = get_grid(args.getString("source.grid", "H32"));
-    auto tgt_grid = get_grid(args.getString("target.grid", "H32"));
+    auto src_grid = get_grid(config.getString("source.grid", "H32"));
+    auto tgt_grid = get_grid(config.getString("target.grid", "H32"));
 
     auto create_functionspace = [&](Mesh& mesh, int halo, std::string type) -> FunctionSpace {
         if (type.empty()) {
@@ -198,31 +205,34 @@ int AtlasParallelInterpolation::execute(const AtlasTool::Args& args) {
             }
         }
         if (type == "CellColumns") {
-            if (!mesh.cells().has_field("lonlat")) {
+            auto fspace = functionspace::CellColumns(mesh, option::halo(halo));
+            if (! mesh.cells().has_field("lonlat")) {
                 mesh::actions::Build2DCellCentres{"lonlat"}(mesh);
             }
-            return functionspace::CellColumns(mesh, option::halo(halo));
+            return fspace;
         }
         else if (type == "NodeColumns") {
-            return functionspace::NodeColumns(mesh, option::halo(std::max(1,halo)));
+            return functionspace::NodeColumns(mesh, option::halo(std::max(1, halo)));
         }
         ATLAS_THROW_EXCEPTION("FunctionSpace " << type << " is not recognized.");
     };
 
     timers.target_setup.start();
-    auto tgt_mesh = Mesh{tgt_grid, grid::Partitioner(args.getString("target.partitioner", "regular_bands"))};
+    int tgt_halo = config.getLong("target.halo", 0);
+    auto tgt_mesh = Mesh{tgt_grid, grid::Partitioner(config.getString("target.partitioner", "regular_bands"))};
     auto tgt_functionspace =
-        create_functionspace(tgt_mesh, args.getLong("target.halo", 0), args.getString("target.functionspace", ""));
+        create_functionspace(tgt_mesh, tgt_halo, config.getString("target.functionspace", ""));
     auto tgt_field = tgt_functionspace.createField<double>();
     timers.target_setup.stop();
 
     timers.source_setup.start();
+    int src_halo = config.getLong("source.halo", 1);
     auto src_meshgenerator =
-        MeshGenerator{src_grid.meshgenerator() | option::halo(2) | util::Config("pole_elements", "")};
-    auto src_partitioner = grid::MatchingPartitioner{tgt_mesh, util::Config("partitioner",args.getString("source.partitioner", "spherical-polygon"))};
+        MeshGenerator{src_grid.meshgenerator() | option::halo(src_halo) | util::Config("pole_elements", "")};
+    auto src_partitioner = grid::MatchingPartitioner{tgt_mesh, util::Config("partitioner", config.getString("source.partitioner", "spherical-polygon"))};
     auto src_mesh        = src_meshgenerator.generate(src_grid, src_partitioner);
     auto src_functionspace =
-        create_functionspace(src_mesh, args.getLong("source.halo", 2), args.getString("source.functionspace", ""));
+        create_functionspace(src_mesh, src_halo, config.getString("source.functionspace", ""));
     auto src_field = src_functionspace.createField<double>();
     timers.source_setup.stop();
 
@@ -231,41 +241,33 @@ int AtlasParallelInterpolation::execute(const AtlasTool::Args& args) {
         timers.initial_condition.start();
         const auto lonlat = array::make_view<double, 2>(src_functionspace.lonlat());
         auto src_view     = array::make_view<double, 1>(src_field);
-        auto f            = get_init(args);
+        auto f            = get_init(config);
         for (idx_t n = 0; n < lonlat.shape(0); ++n) {
             src_view(n) = f(PointLonLat{lonlat(n, LON), lonlat(n, LAT)});
         }
         src_field.set_dirty(true);
-        timers.initial_condition.start();
+        timers.initial_condition.stop();
     }
 
     timers.interpolation_setup.start();
     auto interpolation =
-        Interpolation(option::type("conservative-spherical-polygon") | args, src_functionspace, tgt_functionspace);
+        Interpolation(option::type("conservative-spherical-polygon") | config, src_functionspace, tgt_functionspace);
     Log::info() << interpolation << std::endl;
     timers.interpolation_setup.stop();
 
-
     timers.interpolation_execute.start();
     auto metadata = interpolation.execute(src_field, tgt_field);
+    tgt_field.haloExchange();
     timers.interpolation_execute.stop();
 
-    // API not yet acceptable
     Field src_conservation_field;
     {
         using Statistics = interpolation::method::ConservativeSphericalPolygonInterpolation::Statistics;
         Statistics stats(metadata);
-        if (args.getBool("statistics.accuracy", false)) {
-            metadata.set( stats.accuracy(interpolation, tgt_field, get_init(args) ) );
-        }
-        if (args.getBool("statistics.conservation", false)) {
-            // compute difference field
-            src_conservation_field = stats.diff(interpolation, src_field, tgt_field);
-            src_conservation_field.set_dirty(true);
-            src_conservation_field.haloExchange();
+        if (config.getBool("statistics.accuracy", false) || config.getBool("statistics.all", false)) {
+            stats.compute_accuracy(interpolation, tgt_field, get_init(config), &metadata);
         }
     }
-
 
     Log::info() << "interpolation metadata: \n";
     {
@@ -274,34 +276,34 @@ int AtlasParallelInterpolation::execute(const AtlasTool::Args& args) {
     }
     Log::info() << std::endl;
 
-    if (args.getBool("output-gmsh", false)) {
-        if (args.getBool("gmsh.ghost", false)) {
+    if (config.getBool("output-gmsh", false)) {
+        if (config.getBool("gmsh.ghost", false)) {
             ATLAS_TRACE("halo exchange target");
             tgt_field.haloExchange();
         }
-        util::Config config(args.getSubConfiguration("gmsh"));
-        output::Gmsh{"src_mesh.msh", config}.write(src_mesh);
-        output::Gmsh{"src_field.msh", config}.write(src_field);
-        output::Gmsh{"tgt_mesh.msh", config}.write(tgt_mesh);
-        output::Gmsh{"tgt_field.msh", config}.write(tgt_field);
+        util::Config gmsh_config(config.getSubConfiguration("gmsh"));
+        output::Gmsh{"src_mesh.msh", gmsh_config}.write(src_mesh);
+        output::Gmsh{"src_field.msh", gmsh_config}.write(src_field);
+        output::Gmsh{"tgt_mesh.msh", gmsh_config}.write(tgt_mesh);
+        output::Gmsh{"tgt_field.msh", gmsh_config}.write(tgt_field);
         if (src_conservation_field) {
             output::Gmsh{"src_conservation_field.msh", config}.write(src_conservation_field);
         }
     }
 
-    if (args.getBool("output-json", false)) {
+    if (config.getBool("output-json", false)) {
         util::Config output;
-        output.set("setup.source.grid", args.getString("source.grid"));
-        output.set("setup.target.grid", args.getString("target.grid"));
+        output.set("setup.source.grid", config.getString("source.grid"));
+        output.set("setup.target.grid", config.getString("target.grid"));
         output.set("setup.source.functionspace", src_functionspace.type());
         output.set("setup.target.functionspace", tgt_functionspace.type());
-        output.set("setup.source.halo", args.getLong("source.halo", 2));
-        output.set("setup.target.halo", args.getLong("target.halo", 0));
-        output.set("setup.interpolation.order", args.getInt("order", 1));
-        output.set("setup.interpolation.normalise_intersections", args.getBool("normalise_intersections", false));
-        output.set("setup.interpolation.validate", args.getBool("validate", false));
-        output.set("setup.interpolation.matrix_free", args.getBool("matrix-free", false));
-        output.set("setup.init", args.getString("init", "vortex_rollup"));
+        output.set("setup.source.halo", config.getLong("source.halo", 1));
+        output.set("setup.target.halo", config.getLong("target.halo", 0));
+        output.set("setup.interpolation.order", config.getInt("order", 1));
+        output.set("setup.interpolation.normalise_intersections", config.getBool("normalise_intersections", false));
+        output.set("setup.interpolation.validate", config.getBool("validate", false));
+        output.set("setup.interpolation.matrix_free", config.getBool("matrix-free", false));
+        output.set("setup.init", config.getString("init", "vortex_rollup"));
 
         output.set("runtime.mpi", mpi::size());
         output.set("runtime.omp", atlas_omp_get_max_threads());
@@ -315,7 +317,7 @@ int AtlasParallelInterpolation::execute(const AtlasTool::Args& args) {
 
         output.set("interpolation", metadata);
 
-        eckit::PathName json_filepath(args.getString("json.file", "out.json"));
+        eckit::PathName json_filepath(config.getString("json.file", "out.json"));
         std::ostringstream ss;
         eckit::JSON json(ss, eckit::JSON::Formatting::indent(4));
         json << output;

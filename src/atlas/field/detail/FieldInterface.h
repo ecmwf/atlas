@@ -72,6 +72,8 @@ void atlas__Field__set_host_needs_update(const FieldImpl* This, int value);
 void atlas__Field__set_device_needs_update(const FieldImpl* This, int value);
 void atlas__Field__update_device(FieldImpl* This);
 void atlas__Field__update_host(FieldImpl* This);
+void atlas__Field__sync_device(FieldImpl* This);
+void atlas__Field__sync_host(FieldImpl* This);
 void atlas__Field__sync_host_device(FieldImpl* This);
 void atlas__Field__allocate_device(FieldImpl* This);
 void atlas__Field__deallocate_device(FieldImpl* This);

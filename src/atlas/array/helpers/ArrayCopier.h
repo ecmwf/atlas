@@ -58,6 +58,11 @@ struct array_copier {
         array_copier_impl<Value, Rank, 0u>::apply(sourceArr, targetArr, shape(sourceArr, targetArr));
     }
 
+    template <typename SourceView, typename TargetView>
+    static void apply(const SourceView& sourceArr, TargetView& targetArr) {
+        array_copier_impl<Value, Rank, 0u>::apply(sourceArr, targetArr, shape(sourceArr, targetArr));
+    }
+
 private:
     // Make an array shape that is compatible with sourceArr and targetArr.
     // This is useful for arrays from fields with different sized halos.

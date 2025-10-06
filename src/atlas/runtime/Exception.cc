@@ -77,8 +77,14 @@ void throw_OutOfRange(const std::string& varname, idx_t index, idx_t size) {
 
 void throw_OutOfRange(const std::string& varname, idx_t index, idx_t size, const eckit::CodeLocation& loc) {
     std::ostringstream ss;
-    ss << "OutOfRange: Tried to access " << varname << " index " << index << " but maximum allowed index is "
-       << size - 1;
+    if (index < 0) {
+        ss << "OutOfRange: Tried to access index " << index << " of " << varname << " of size " << size
+           << ". Negative index is invalid.";
+    }
+    else {
+        ss << "OutOfRange: Tried to access index " << index << " of " << varname << " of size " << size
+           << ". The index exceeds the maximum value " << size-1;
+    }
     throw eckit::Exception(ss.str(), loc);
 }
 
