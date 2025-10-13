@@ -78,7 +78,7 @@ public:
         add_option(new SimpleOption<long>("order", "Interpolation order. Supported: 1, 2 (default=1)"));
         add_option(new SimpleOption<bool>("normalise_intersections",
                                           "Normalize polygon intersections so that interpolation weights sum to 1."));
-        add_option(new SimpleOption<std::string>("limit",
+        add_option(new SimpleOption<std::string>("limiter",
                                           "Use monotone limiter to prevent under-/overshoots of the 2nd order interpolation. Supported: none, zeroslope, clip"));
         add_option(new SimpleOption<bool>("validate",
                                           "Enable extra validations at cost of performance. For debugging purpose."));
@@ -313,7 +313,7 @@ int AtlasParallelInterpolation::execute(const AtlasTool::Args& args) {\
         output.set("setup.target.halo", config.getLong("target.halo", 0));
         output.set("setup.interpolation.order", config.getInt("order", 1));
         output.set("setup.interpolation.normalise_intersections", config.getBool("normalise_intersections", false));
-        output.set("setup.interpolation.limit", config.getString("limit", "none"));
+        output.set("setup.interpolation.limiter", config.getString("limiter", "none"));
         output.set("setup.interpolation.validate", config.getBool("validate", false));
         output.set("setup.interpolation.matrix_free", config.getBool("matrix-free", false));
         output.set("setup.init", config.getString("init", "vortex_rollup"));

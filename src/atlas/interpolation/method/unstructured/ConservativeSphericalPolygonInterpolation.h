@@ -73,7 +73,7 @@ private:
         } timings;
 
         std::vector<InterpolationParameters> tgt_iparam_;
-        std::vector<InterpolationParameters> src_iparam_; // only for validate_ and limit_
+        std::vector<InterpolationParameters> src_iparam_; // only for validate_ and limiter_
 
         // Reconstructible if need be
         FunctionSpace src_fs_;
@@ -305,7 +305,7 @@ private:
     mutable Mesh src_mesh_;
     mutable Mesh tgt_mesh_;
     bool normalise_;
-    std::string limit_;
+    std::string limiter_;
     int order_;
     bool matrix_free_;
 
