@@ -2169,7 +2169,9 @@ void ConservativeSphericalPolygonInterpolation::do_execute(const Field& src_fiel
                 idx_t tcell = csp_to_cell(tcsp, data_->tgt_);
                 double smin_numadj = smin - (1e6 + 1e12 * std::abs(smin)) * eps;
                 double smax_numadj = smax + (1e6 + 1e12 * std::abs(smin)) * eps;
-                if (tgt_vals(tcell) < smin_numadj || tgt_vals(tcell) > smax_numadj) {
+                bool undershoot = (tgt_vals(tcell) < smin_numadj);
+                bool overshoot = (tgt_vals(tcell) > smax_numadj);
+                if (undershoot || overshoot) {
                     if (limiter_ == "zeroslope") {
                         for (idx_t i_scsp = 0; i_scsp < iparam.csp_ids.size(); ++i_scsp) {
                             idx_t scsp_id = iparam.csp_ids[i_scsp];
@@ -2199,8 +2201,12 @@ void ConservativeSphericalPolygonInterpolation::do_execute(const Field& src_fiel
                         }
                     }
                     else if (limiter_ == "clip") {
-                        tgt_vals(tcell) = std::max(smin, tgt_vals(tcell));
-                        tgt_vals(tcell) = std::min(smax, tgt_vals(tcell));
+                        if (overshoot) {
+                            tgt_vals(tcell) = smax;
+                        }
+                        else if (undershoot) {
+                            tgt_vals(tcell) = smin;
+                        }
                     }
                 }
             }
