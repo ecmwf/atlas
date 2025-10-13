@@ -222,12 +222,12 @@ inline bool valid_point(idx_t node_idx, const array::ArrayView<int, 1>& node_fla
 
 
 ConservativeSphericalPolygonInterpolation::ConservativeSphericalPolygonInterpolation(const Config& config):
-    Method(config), validate_(false), src_cell_data_(true), tgt_cell_data_(true), normalise_(false), limit_(false),
+    Method(config), validate_(false), src_cell_data_(true), tgt_cell_data_(true), normalise_(false), limit_("none"),
     order_(1), matrix_free_(false), n_spoints_(0), n_tpoints_(0) {
     config.get("validate", validate_ = false);
     config.get("order", order_ = 1);
     config.get("normalise", normalise_ = false);
-    config.get("limit", limit_ = false);
+    config.get("limit", limit_ = "none");
     config.get("matrix_free", matrix_free_ = false);
     config.get("src_cell_data", src_cell_data_ = true);
     config.get("tgt_cell_data", tgt_cell_data_ = true);
@@ -1209,7 +1209,7 @@ void ConservativeSphericalPolygonInterpolation::intersect_polygons(const Polygon
     auto& tgt_csp_size = tgt.csp_size;
     tgt_iparam_.resize(tgt_csp_size);
 
-    if (validate_ || limit_) {
+    if (validate_ || (limit_ != "none")) {
         src_iparam_.resize(src_csp.size());
     }
 
@@ -1291,7 +1291,7 @@ void ConservativeSphericalPolygonInterpolation::intersect_polygons(const Polygon
                         intersection_src_centroids.emplace_back(csp_i.centroid());
                     }
                     tgt_cover_area += csp_i_area;
-                    if (validate_ || limit_) {
+                    if (validate_ || (limit_ != "none")) {
                         src_iparam_[scsp_id].csp_ids.emplace_back(tcsp_id);
                         if (validate_) {
                             src_iparam_[scsp_id].weights.emplace_back(csp_i_area);
@@ -2144,15 +2144,16 @@ void ConservativeSphericalPolygonInterpolation::do_execute(const Field& src_fiel
         Indices tcells_done;
     };
 
-    if (order_ == 2 && limit_) {
+    if (order_ == 2 && (limit_ != "none")) {
         Field tgt_lim_field = tgt_fs_.createField<double>();
         auto tgt_lim_vals   = array::make_view<double, 1>(tgt_lim_field);
         for (idx_t tcell = 0; tcell < tgt_lim_vals.size(); ++tcell) {
-            tgt_lim_vals(tcell) = 0.; //tgt_vals(tcell);
+            tgt_lim_vals(tcell) = 0.;
         }
 
         std::vector<SrcActed> src_acted_tgt;
         src_acted_tgt.resize(src_vals.size());
+        double eps = std::numeric_limits<double>::epsilon();
 
         if (tgt_cell_data_ && src_cell_data_) {
             for (idx_t tcsp = 0; tcsp < data_->tgt_.csp_size; ++tcsp) {
@@ -2165,49 +2166,56 @@ void ConservativeSphericalPolygonInterpolation::do_execute(const Field& src_fiel
                     smax = std::max(smax, src_vals(scell));
                     smin = std::min(smin, src_vals(scell));
                 }
-                double eps = std::numeric_limits<double>::epsilon();
                 idx_t tcell = csp_to_cell(tcsp, data_->tgt_);
-                if (tgt_vals(tcell) < smin - (1e6 + 1e12 * std::abs(smin)) * eps || tgt_vals(tcell) > smax + (1e6 + 1e12 * std::abs(smin)) * eps) {
-                    if (tcell == 280) {
-                        Log::info() << " TCELL : " << tcell << std::endl;
-                        Log::info() << " TCELL sources covering: " << iparam.csp_ids << std::endl;
-                    }
-                    for (idx_t i_scsp = 0; i_scsp < iparam.csp_ids.size(); ++i_scsp) {
-                        idx_t scsp_id = iparam.csp_ids[i_scsp];
-                        idx_t scell   = csp_to_cell(scsp_id, data_->src_);
-                        const PointXYZ& src_barycentre = src_points[scell];
-                        PointXYZ scell_grad  = src_grads[scell];
-                        scell_grad           = scell_grad - PointXYZ::mul(src_barycentre, PointXYZ::dot(scell_grad, src_barycentre));
-
-                        auto& siparam = src_iparam[scsp_id];
-                        for (idx_t i_tcsp_collateral = 0; i_tcsp_collateral < siparam.csp_ids.size(); ++i_tcsp_collateral) {
-                            auto tcsp_collateral = siparam.csp_ids[i_tcsp_collateral];
-                            const auto& iparam_collateral = tgt_iparam[tcsp_collateral];
-                            auto tcell_collateral = csp_to_cell(tcsp_collateral, data_->tgt_);
-                            // find the index of scell entry in iparam_collateral.csp_ids
-                            auto scell_it = std::find(iparam_collateral.csp_ids.begin(), iparam_collateral.csp_ids.end(), scell);
-                            idx_t scell_idx = scell_it - iparam_collateral.csp_ids.begin();
-                            ATLAS_ASSERT(iparam_collateral.csp_ids[scell_idx] == scell);
-                            double tgt_lim_val = iparam_collateral.weights[scell_idx] * PointXYZ::dot(scell_grad, iparam_collateral.centroids[scell_idx] - src_barycentre);
-                            if (tgt_areas[tcell_collateral] > 0.) {
-                                tgt_lim_val /= tgt_areas[tcell_collateral];
-                            }
-                            SrcActed& it = src_acted_tgt[scell];
-                            if (std::find(it.tcells_done.begin(), it.tcells_done.end(), tcell_collateral) == it.tcells_done.end()) {
-                                it.tcells_done.push_back(tcell_collateral);
-                                tgt_lim_vals(tcell_collateral) -= tgt_lim_val;
+                double smin_numadj = smin - (1e6 + 1e12 * std::abs(smin)) * eps;
+                double smax_numadj = smax + (1e6 + 1e12 * std::abs(smin)) * eps;
+                if (tgt_vals(tcell) < smin_numadj || tgt_vals(tcell) > smax_numadj) {
+                    if (limit_ == "zeroslope") {
+                        for (idx_t i_scsp = 0; i_scsp < iparam.csp_ids.size(); ++i_scsp) {
+                            idx_t scsp_id = iparam.csp_ids[i_scsp];
+                            idx_t scell   = csp_to_cell(scsp_id, data_->src_);
+                            const PointXYZ& src_barycentre = src_points[scell];
+                            PointXYZ scell_grad  = src_grads[scell];
+                            scell_grad           = scell_grad - PointXYZ::mul(src_barycentre, PointXYZ::dot(scell_grad, src_barycentre));
+                            auto& siparam = src_iparam[scsp_id];
+                            for (idx_t i_tcsp_collateral = 0; i_tcsp_collateral < siparam.csp_ids.size(); ++i_tcsp_collateral) {
+                                auto tcsp_collateral = siparam.csp_ids[i_tcsp_collateral];
+                                const auto& iparam_collateral = tgt_iparam[tcsp_collateral];
+                                auto tcell_collateral = csp_to_cell(tcsp_collateral, data_->tgt_);
+                                // find the index of scell entry in iparam_collateral.csp_ids
+                                auto scell_it = std::find(iparam_collateral.csp_ids.begin(), iparam_collateral.csp_ids.end(), scell);
+                                idx_t scell_idx = scell_it - iparam_collateral.csp_ids.begin();
+                                ATLAS_ASSERT(iparam_collateral.csp_ids[scell_idx] == scell);
+                                double tgt_lim_val = iparam_collateral.weights[scell_idx] * PointXYZ::dot(scell_grad, iparam_collateral.centroids[scell_idx] - src_barycentre);
+                                if (tgt_areas[tcell_collateral] > 0.) {
+                                    tgt_lim_val /= tgt_areas[tcell_collateral];
+                                }
+                                SrcActed& it = src_acted_tgt[scell];
+                                if (std::find(it.tcells_done.begin(), it.tcells_done.end(), tcell_collateral) == it.tcells_done.end()) {
+                                    it.tcells_done.push_back(tcell_collateral);
+                                    tgt_lim_vals(tcell_collateral) -= tgt_lim_val;
+                                }
                             }
                         }
                     }
+                    else if (limit_ == "clip") {
+                        tgt_vals(tcell) = std::max(smin, tgt_vals(tcell));
+                        tgt_vals(tcell) = std::min(smax, tgt_vals(tcell));
+                    }
                 }
             }
-            for (idx_t tcell = 0; tcell < tgt_vals.size(); ++tcell) {
-                tgt_vals(tcell) += tgt_lim_vals(tcell);
+            if (limit_ == "zeroslope") {
+                for (idx_t tcell = 0; tcell < tgt_vals.size(); ++tcell) {
+                    tgt_vals(tcell) += tgt_lim_vals(tcell);
+                }
             }
         }
         else {
             ATLAS_NOTIMPLEMENTED;
         }
+    }
+    else if (limit_ == "none") {
+        Log::info() << "No remapping limiter applied." << std::endl;
     }
 
     stopwatch.stop();

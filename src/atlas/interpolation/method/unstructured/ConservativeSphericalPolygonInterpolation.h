@@ -305,7 +305,7 @@ private:
     mutable Mesh src_mesh_;
     mutable Mesh tgt_mesh_;
     bool normalise_;
-    bool limit_;
+    std::string limit_;
     int order_;
     bool matrix_free_;
 
