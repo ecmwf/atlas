@@ -1027,8 +1027,6 @@ void ConservativeSphericalPolygonInterpolation::do_setup(const FunctionSpace& sr
         }
     }
 
-    data_->print(Log::debug());
-
     if (remap_stat_.intersection) {
         setup_stat();
     }
@@ -2556,29 +2554,11 @@ size_t ConservativeSphericalPolygonInterpolation::Data::footprint() const {
     mem_total += memory_of(src_.node2csp);
     mem_total += memory_of(tgt_.node2csp);
     mem_total += memory_of(tgt_iparam_);
-    // mem_total += memory_of(src_.csp_index); // TODO need to be added
-    // mem_total += memory_of(src_.csp_cell_index);
-    // mem_total += memory_of(tgt_.csp_index);
-    // mem_total += memory_of(src_.csp_cell_index);
+    mem_total += memory_of(src_.csp_index);
+    mem_total += memory_of(src_.csp_cell_index);
+    mem_total += memory_of(tgt_.csp_index);
+    mem_total += memory_of(src_.csp_cell_index);
     return mem_total;
-}
-
-
-void ConservativeSphericalPolygonInterpolation::Data::print(std::ostream& out) const {
-    out << "Memory usage of ConservativeMethod: " << eckit::Bytes(footprint()) << "\n";
-    out << "- src_.points   \t" << eckit::Bytes(memory_of(src_.points)) << "\n";
-    out << "- tgt_.points   \t" << eckit::Bytes(memory_of(tgt_.points)) << "\n";
-    out << "- src_.areas    \t" << eckit::Bytes(memory_of(src_.areas)) << "\n";
-    out << "- tgt_.areas    \t" << eckit::Bytes(memory_of(tgt_.areas)) << "\n";
-    out << "- src_.csp2node \t" << eckit::Bytes(memory_of(src_.csp2node)) << "\n";
-    out << "- tgt_.csp2node \t" << eckit::Bytes(memory_of(tgt_.csp2node)) << "\n";
-    out << "- src_.node2csp \t" << eckit::Bytes(memory_of(src_.node2csp)) << "\n";
-    out << "- tgt_.node2csp \t" << eckit::Bytes(memory_of(tgt_.node2csp)) << "\n";
-    // out << "- src_.csp_index \t" << eckit::Bytes(memory_of(src_.csp_index)) << "\n";
-    // out << "- src_csp_cellindex_ \t" << eckit::Bytes(memory_of(src_.csp_cell_index)) << "\n";
-    // out << "- tgt_.csp_index \t" << eckit::Bytes(memory_of(tgt_.csp_index)) << "\n";
-    // out << "- tgt_csp_cellindex_ \t" << eckit::Bytes(memory_of(tgt_.csp_cell_index)) << "\n";
-    out << "- tgt_iparam_   \t" << eckit::Bytes(memory_of(tgt_iparam_)) << "\n";
 }
 
 

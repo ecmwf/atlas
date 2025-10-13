@@ -37,7 +37,6 @@ private:
         size_t footprint() const override;
         static std::string static_type() { return "ConservativeSphericalPolygonInterpolation"; }
         std::string type() const override { return static_type(); }
-        void print(std::ostream& out) const;
 
     private:
         friend class ConservativeSphericalPolygonInterpolation;
