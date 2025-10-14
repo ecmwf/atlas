@@ -146,6 +146,7 @@ public:
             ERR_TGT_INTERSECTPLG_LINF,    // see above
             ERR_SRCTGT_INTERSECTPLG_DIFF,    // index, 1/(unit_sphere.area) ( \sum_{scell} scell.area - \sum{tcell} tcell.area )
             ERR_REMAP_CONS,  // index, error in mass conservation
+            ERR_REMAP_RELCONS,  // index, error in mass conservation as percentage of source mass
             ERR_REMAP_L2,    // index, error accuracy for given analytical function
             ERR_REMAP_LINF,  // index, like REMAP_L2 but in L_infinity norm
             ERR_ENUM_SIZE
