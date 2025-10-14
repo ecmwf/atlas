@@ -79,7 +79,7 @@ public:
         add_option(new SimpleOption<bool>("normalise_intersections",
                                           "Normalize polygon intersections so that interpolation weights sum to 1."));
         add_option(new SimpleOption<std::string>("limiter",
-                                          "Use monotone limiter to prevent under-/overshoots of the 2nd order interpolation [none, zeroslope, clip]");
+                                          "Use monotone limiter to prevent under-/overshoots of the 2nd order interpolation [none, zeroslope, clip]"));
         add_option(new SimpleOption<bool>("validate",
                                           "Enable extra validations at cost of performance. For debugging purpose."));
         add_option(new SimpleOption<bool>("matrix_free", "Do not store matrix for consecutive interpolations"));
@@ -109,12 +109,13 @@ public:
         // Initial condition options
         add_option(new eckit::option::Separator("Initial condition options"));
         add_option(new SimpleOption<std::string>(
-            "init", "Setup initial source field [constant, spherical_harmonic, vortex_rollup (default), solid_body_rotation_wind_magnitude, xstep, slotted_cylinder ]"));
-        add_option(new SimpleOption<double>("solid_body_rotation.angle", "Angle of solid body rotation (default = 0.)"));
-        add_option(new SimpleOption<double>("vortex_rollup.t", "Value that controls vortex rollup (default = 0.5)"));
+            "init", "Setup initial source field [constant, slotted_cylinder, solid_body_rotation_wind_magnitude, spherical_harmonic, vortex_rollup (default), xstep ]"));
         add_option(new SimpleOption<double>("constant.value", "Value that is assigned in case init==constant)"));
-        add_option(new SimpleOption<long>("spherical_harmonic.n", "total wave number 'n' of a spherical harmonic"));
+        add_option(new SimpleOption<double>("slotted_cylinder.scale", "scaling of the slotted cylinder size"));
+        add_option(new SimpleOption<double>("solid_body_rotation.angle", "Angle of solid body rotation (default = 0.)"));
         add_option(new SimpleOption<long>("spherical_harmonic.m", "zonal wave number 'm' of a spherical harmonic"));
+        add_option(new SimpleOption<long>("spherical_harmonic.n", "total wave number 'n' of a spherical harmonic"));
+        add_option(new SimpleOption<double>("vortex_rollup.t", "Value that controls vortex rollup (default = 0.5)"));
     }
 
     struct Timers {
@@ -178,7 +179,9 @@ std::function<double(const PointLonLat&)> get_init(const eckit::LocalConfigurati
     }
     else if (init == "slotted_cylinder") {
         auto sbr = util::function::SlottedCylinder;
-        return [sbr](const PointLonLat& p) { return sbr(p.lon(), p.lat()); };
+        double scale;
+        args.get("slotted_cylinder.scale", scale = 1.);
+        return [sbr, scale](const PointLonLat& p) { return sbr(p.lon(), p.lat(), scale); };
     }
     else {
         if (args.has("init")) {
