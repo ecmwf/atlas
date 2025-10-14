@@ -42,10 +42,7 @@ public:
         add_option(new SimpleOption<std::string>("file", "input file"));
         add_option(new SimpleOption<std::string>("dataset", "dataset"));
         add_option(new SimpleOption<long>("index", "dataset"));
-        add_option(new SimpleOption<std::string>("rad.grid", "target grid to interpolate to"));
-        add_option(new SimpleOption<std::string>("rad.nproma", "target grid to nproma interpolate to"));
         add_option(new SimpleOption<std::string>("gmsh.coordinates", "coordinates for gmsh output [lonlat, xyz]"));
-        add_option(new SimpleOption<std::string>("interpolation", "coordinates for gmsh output [lonlat, xyz]"));
     }
 };
 
@@ -64,42 +61,21 @@ int Program::execute(const AtlasTool::Args& args) {
 
     std::string name = metadata.getString("name");
     int nproma       = metadata.getLong("nproma");
-    int nflds        = metadata.getLong("nflds");
+    int nflds        = metadata.getLong("nfld");
     DataType datatype(metadata.getString("datatype"));
     Grid IFS_grid(metadata.getString("grid"));
 
     functionspace::BlockStructuredColumns IFS_blocked_fs(IFS_grid, util::Config("nproma",nproma));
     
-    Field IFS_blocked_f = IFS_blocked_fs.createField(option::name(name)|option::datatype(datatype)|option::levels(nflds));
-    hdf5_reader.read_field(IFS_blocked_f);
-
-    output_gmsh(IFS_blocked_f, "ifs.msh", get_subconfiguration(args, "gmsh"));
-
-    // Now this needs to go to different grid with different nproma
-    functionspace::BlockStructuredColumns rad_blocked_fs;
-    Field rad_blocked_f;
-    {
-        auto rad_grid   = Grid(args.getString("rad.grid",IFS_grid.name()));
-        auto rad_nproma = args.getLong("rad.nproma",nproma);
-        if (rad_grid == IFS_grid && rad_nproma == nproma) {
-            rad_blocked_fs = IFS_blocked_fs;
-            rad_blocked_f = IFS_blocked_f;
-        }
-        else {
-            rad_blocked_fs = functionspace::BlockStructuredColumns(rad_grid, grid::MatchingPartitioner(IFS_blocked_fs), util::Config("nproma",rad_nproma));
-            rad_blocked_f = rad_blocked_fs.createField(IFS_blocked_f);
-            if (rad_grid == IFS_grid) {
-                copy_blocked_to_blocked(IFS_blocked_f, rad_blocked_f);
-            }
-            else {
-                // Interpolation
-                std::string interpolation_method = args.getString("interpolation","bicubic");
-                interpolate(interpolation_method, IFS_blocked_f, rad_blocked_f);
-            }
-        }
+    Field IFS_blocked_f;
+    if (nflds == 1) {
+        IFS_blocked_f = IFS_blocked_fs.createField(option::name(name)|option::datatype(datatype));
     }
-
-    output_gmsh(rad_blocked_f, "rad.msh", get_subconfiguration(args,"gmsh"));
+    else {
+        IFS_blocked_f = IFS_blocked_fs.createField(option::name(name)|option::datatype(datatype)|option::levels(nflds));
+    }
+    hdf5_reader.read_field(IFS_blocked_f);
+    output_gmsh(IFS_blocked_f, "ifs.msh", get_subconfiguration(args, "gmsh"));
     return success();
 }
 
