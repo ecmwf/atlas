@@ -273,6 +273,13 @@ public:
         return shape_[idx];
     }
 
+    /// @brief Return number of values in dimension idx, equivalent to shape(idx)
+    template <typename Int>
+    ATLAS_HOST_DEVICE
+    idx_t extent(Int idx) const {
+        return shape(idx);
+    }
+
     /// @brief Return stride for values in dimension idx
     template <typename Int>
     ATLAS_HOST_DEVICE
