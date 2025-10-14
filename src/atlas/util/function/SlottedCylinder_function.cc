@@ -22,13 +22,13 @@ namespace util {
 
 namespace function {
 
-double SlottedCylinder(double lon, double lat) {
+double SlottedCylinder(double lon, double lat, double scale) {
     lon *= Constants::degreesToRadians();
     lat *= Constants::degreesToRadians();
     double x = lon - M_PI;
     double y = lat;
     double r2 = x * x + y * y;
-    if (r2 <= 1.5 && (std::abs(x) >= 0.25 || y >= 1.)) {
+    if (r2 <= 1.5 * scale && (std::abs(x) >= 0.25 * scale || y >= scale)) {
         return 1.;
     }
     return 0.;
@@ -36,8 +36,8 @@ double SlottedCylinder(double lon, double lat) {
 
 
 extern "C" {
-    double atlas__functions__SlottedCylinder(double& lon, double& lat) {
-        return SlottedCylinder(lon, lat);
+    double atlas__functions__SlottedCylinder(double& lon, double& lat, double& scale) {
+        return SlottedCylinder(lon, lat, scale);
     }
 }
 

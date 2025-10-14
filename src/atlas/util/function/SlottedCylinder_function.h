@@ -25,11 +25,11 @@ namespace function {
 ///           as given in Fig. 11
 ///           The longitude (lon) and latitude (lat) are assumed to be in radians.
 ///
-double SlottedCylinder(double lon, double lat);
+double SlottedCylinder(double lon, double lat, double scale = 1.);
 
 
 extern "C" {
-    double atlas__functions__SlottedCylinder(double& lon, double& lat);
+    double atlas__functions__SlottedCylinder(double& lon, double& lat, double& scale);
 }
 
 }  // namespace function
