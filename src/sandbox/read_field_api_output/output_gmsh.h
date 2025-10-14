@@ -12,6 +12,7 @@
 
 #include "atlas/array.h"
 #include "atlas/field/Field.h"
+#include "atlas/field/FieldSet.h"
 #include "atlas/grid.h"
 #include "atlas/mesh.h"
 #include "atlas/output/Gmsh.h"
@@ -21,16 +22,43 @@
 
 namespace atlas {
 
+//-----------------------------------------------------------------------------
+
 inline void output_gmsh(Field& field, const std::string& gmsh_file, const util::Config& gmsh_config) {
     if (auto blocked_fs = functionspace::BlockStructuredColumns(field.functionspace())) {
         auto mesh = Mesh(blocked_fs.grid(), grid::MatchingPartitioner(blocked_fs));
         auto nonblocked_fs = functionspace::NodeColumns{mesh};
         auto nonblocked_field = nonblocked_fs.createField(field);
-        copy_blocked_to_nonblocked(field, nonblocked_field);
+        field.syncHost();
+        copy_blocked_to_nonblocked(field, nonblocked_field, false);
         nonblocked_field.haloExchange();
         auto gmsh = output::Gmsh(gmsh_file, gmsh_config);
         gmsh.write(mesh);
         gmsh.write(nonblocked_field);
+    }
+};
+
+inline void output_gmsh(const FieldSet& fieldset, const std::string& gmsh_file, const util::Config& gmsh_config) {
+    if (fieldset.empty()) {
+        return;
+    }
+    if (auto blocked_fs = functionspace::BlockStructuredColumns(fieldset[0].functionspace())) {
+        auto gmsh = output::Gmsh(gmsh_file, gmsh_config);
+
+        auto mesh = Mesh(blocked_fs.grid(), grid::MatchingPartitioner(blocked_fs));
+        gmsh.write(mesh);
+
+        auto nonblocked_fs = functionspace::NodeColumns{mesh};
+        for(const auto& field: fieldset) {
+            if (field.size()) {
+                auto nonblocked_field = nonblocked_fs.createField(field);
+                field.syncHost();
+                copy_blocked_to_nonblocked(field, nonblocked_field, false);
+                nonblocked_field.haloExchange();
+                gmsh.write(nonblocked_field);
+            }
+
+        }
     }
 };
 
