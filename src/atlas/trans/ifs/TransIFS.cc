@@ -1173,6 +1173,8 @@ void TransIFS::ctor_rgg(const long nlat, const idx_t pl[], long truncation, cons
     for (long jlat = 0; jlat < nlat; ++jlat) {
         nloen[jlat] = pl[jlat];
     }
+    // Set MPI communicator to the same as Atlas. Must be set prior to MPL_INIT in ectrans/fiat.
+    TRANS_CHECK(::trans_set_mpi_comm(atlas::mpi::comm().communicator()));
     TRANS_CHECK(::trans_new(trans_.get()));
     TRANS_CHECK(::trans_use_mpi(mpi::size() > 1));
     TRANS_CHECK(::trans_set_resol(trans_.get(), nlat, nloen.data()));
