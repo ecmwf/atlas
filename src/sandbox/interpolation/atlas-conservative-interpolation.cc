@@ -63,9 +63,9 @@ public:
         // Grid options
         add_option(new eckit::option::Separator("Grid options"));
         add_option(new SimpleOption<std::string>("source.grid", "source gridname"));
-        add_option(new SimpleOption<std::string>("source.partitioner", "source partitioner name (spherical-polygon, lonlat-polygon, brute-force)"));
+        add_option(new SimpleOption<std::string>("source.partitioner", "source partitioner name [spherical-polygon, lonlat-polygon, brute-force]"));
         add_option(new SimpleOption<std::string>("target.grid", "target gridname"));
-        add_option(new SimpleOption<std::string>("target.partitioner", "target partitioner name (equal_regions, regular_bands, equal_bands)"));
+        add_option(new SimpleOption<std::string>("target.partitioner", "target partitioner name [equal_regions, regular_bands, equal_bands]"));
         add_option(new SimpleOption<std::string>("source.functionspace",
                                                  "source functionspace, to override source grid default"));
         add_option(new SimpleOption<std::string>("target.functionspace",
@@ -75,11 +75,11 @@ public:
 
         // Interpolation options
         add_option(new eckit::option::Separator("Interpolation options"));
-        add_option(new SimpleOption<long>("order", "Interpolation order. Supported: 1, 2 (default=1)"));
+        add_option(new SimpleOption<long>("order", "Interpolation order [1, 2] (default=1)"));
         add_option(new SimpleOption<bool>("normalise_intersections",
                                           "Normalize polygon intersections so that interpolation weights sum to 1."));
         add_option(new SimpleOption<std::string>("limiter",
-                                          "Use monotone limiter to prevent under-/overshoots of the 2nd order interpolation. Supported: none, zeroslope, clip"));
+                                          "Use monotone limiter to prevent under-/overshoots of the 2nd order interpolation [none, zeroslope, clip]");
         add_option(new SimpleOption<bool>("validate",
                                           "Enable extra validations at cost of performance. For debugging purpose."));
         add_option(new SimpleOption<bool>("matrix_free", "Do not store matrix for consecutive interpolations"));
@@ -100,7 +100,7 @@ public:
         add_option(new eckit::option::Separator("Output options"));
         add_option(new SimpleOption<bool>(
             "output-gmsh", "Output gmsh files src_mesh.msh, tgt_mesh.msh, src_field.msh, tgt_field.msh"));
-        add_option(new SimpleOption<std::string>("gmsh.coordinates", "Mesh coordinates [xy,lonlat,xyz]"));
+        add_option(new SimpleOption<std::string>("gmsh.coordinates", "Mesh coordinates [xy, lonlat, xyz]"));
         add_option(new SimpleOption<bool>("gmsh.ghost", "output of ghost"));
 
         add_option(new SimpleOption<bool>("output-json", "Output json file with run information"));
@@ -109,7 +109,7 @@ public:
         // Initial condition options
         add_option(new eckit::option::Separator("Initial condition options"));
         add_option(new SimpleOption<std::string>(
-            "init", "Setup initial source field [ constant, spherical_harmonic, vortex_rollup (default), solid_body_rotation_wind_magnitude, xstep, slotted_cylinder ]"));
+            "init", "Setup initial source field [constant, spherical_harmonic, vortex_rollup (default), solid_body_rotation_wind_magnitude, xstep, slotted_cylinder ]"));
         add_option(new SimpleOption<double>("solid_body_rotation.angle", "Angle of solid body rotation (default = 0.)"));
         add_option(new SimpleOption<double>("vortex_rollup.t", "Value that controls vortex rollup (default = 0.5)"));
         add_option(new SimpleOption<double>("constant.value", "Value that is assigned in case init==constant)"));
