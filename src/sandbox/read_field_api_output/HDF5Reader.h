@@ -139,6 +139,10 @@ public:
 
     template<class T, class Extents, class Layout = layout_right, class Accessor = default_accessor<T>>
     void read(mdspan<T,Extents,Layout,Accessor> data) {
+        ATLAS_TRACE("read(mdspan)");
+        if (data.size() == 0) {
+            return;
+        }
         ATLAS_ASSERT( datatype() == make_datatype<T>());
         ATLAS_ASSERT( rank() == data.rank() );
         ATLAS_ASSERT( size() == data.size() );
@@ -158,76 +162,86 @@ public:
         }();
 
         if (contiguous) {
-           auto status = H5Dread(dataset_id, to_h5_datatype(make_datatype<T>()), H5S_ALL, H5S_ALL, H5P_DEFAULT, data.data_handle());
-           ATLAS_ASSERT(status >= 0);
+            ATLAS_TRACE("H5Dread");
+            auto status = H5Dread(dataset_id, to_h5_datatype(make_datatype<T>()), H5S_ALL, H5S_ALL, H5P_DEFAULT, data.data_handle());
+            ATLAS_ASSERT(status >= 0);
         }
         else {
             pluto::allocator<T> allocator;
-            T* raw = allocator.allocate(size());
-            auto status = H5Dread(dataset_id, to_h5_datatype(make_datatype<T>()), H5S_ALL, H5S_ALL, H5P_DEFAULT, raw);
-            ATLAS_ASSERT(status >= 0);
-            auto extent = extents();
-            if constexpr (data.rank() == 1) {
-                ATLAS_ASSERT( extent[0] == data.extent(0));
-                size_t Ni = data.extent(0);
-                for( size_t i=0; i<Ni; ++i ) {
-                    data(i) = raw[i];
-                }
+            T* raw;
+            ATLAS_TRACE_SCOPE("allocate temporary buffer") {
+                raw = allocator.allocate(size());
             }
-            else if constexpr (data.rank() == 2) {
-                ATLAS_ASSERT( extent[0] == data.extent(0));
-                ATLAS_ASSERT( extent[1] == data.extent(1));
-                size_t Ni = data.extent(0);
-                size_t Nj = data.extent(1);
-                size_t stride_i = Nj;
-                for( size_t i=0; i<Ni; ++i ) {
-                    for( size_t j=0; j<Nj; ++j ) {
-                        data(i,j) = raw[i*stride_i + j];
+            herr_t status;
+            ATLAS_TRACE_SCOPE("H5Dread into temporary buffer") {
+                status = H5Dread(dataset_id, to_h5_datatype(make_datatype<T>()), H5S_ALL, H5S_ALL, H5P_DEFAULT, raw);
+            }
+            ATLAS_TRACE_SCOPE("Copy temporary buffer to mdspan") {
+                ATLAS_ASSERT(status >= 0);
+                auto extent = extents();
+                if constexpr (data.rank() == 1) {
+                    ATLAS_ASSERT( extent[0] == data.extent(0));
+                    size_t Ni = data.extent(0);
+                    for( size_t i=0; i<Ni; ++i ) {
+                        data(i) = raw[i];
                     }
                 }
-            }
-            else if constexpr (data.rank() == 3) {
-                ATLAS_ASSERT( extent[0] == data.extent(0));
-                ATLAS_ASSERT( extent[1] == data.extent(1));
-                ATLAS_ASSERT( extent[2] == data.extent(2));
-                size_t Ni = data.extent(0);
-                size_t Nj = data.extent(1);
-                size_t Nk = data.extent(2);
-                size_t stride_i = Nj*Nk;
-                size_t stride_j = Nk;
-                for( size_t i=0; i<Ni; ++i ) {
-                    for( size_t j=0; j<Nj; ++j ) {
-                        for( size_t k=0; k<Nk; ++k ) {
-                            data(i,j,k) = raw[i*stride_i + j*stride_j + k];
+                else if constexpr (data.rank() == 2) {
+                    ATLAS_ASSERT( extent[0] == data.extent(0));
+                    ATLAS_ASSERT( extent[1] == data.extent(1));
+                    size_t Ni = data.extent(0);
+                    size_t Nj = data.extent(1);
+                    size_t stride_i = Nj;
+                    for( size_t i=0; i<Ni; ++i ) {
+                        for( size_t j=0; j<Nj; ++j ) {
+                            data(i,j) = raw[i*stride_i + j];
                         }
                     }
                 }
-            }
-            else if constexpr (data.rank() == 4) {
-                ATLAS_ASSERT( extent[0] == data.extent(0));
-                ATLAS_ASSERT( extent[1] == data.extent(1));
-                ATLAS_ASSERT( extent[2] == data.extent(2));
-                ATLAS_ASSERT( extent[4] == data.extent(4));
-                size_t Ni = data.extent(0);
-                size_t Nj = data.extent(1);
-                size_t Nk = data.extent(2);
-                size_t Nl = data.extent(3);
-                size_t stride_i = Nj*Nk*Nl;
-                size_t stride_j = Nk*Nl;
-                size_t stride_k = Nl;
-                for( size_t i=0; i<Ni; ++i ) {
-                    for( size_t j=0; j<Nj; ++j ) {
-                        for( size_t k=0; k<Nk; ++k ) {
-                            for( size_t l=0; l<Nl; ++l ) {
-                                data(i,j,k,l) = raw[i*stride_i + j*stride_j + k*stride_k + l];
+                else if constexpr (data.rank() == 3) {
+                    ATLAS_ASSERT( extent[0] == data.extent(0));
+                    ATLAS_ASSERT( extent[1] == data.extent(1));
+                    ATLAS_ASSERT( extent[2] == data.extent(2));
+                    size_t Ni = data.extent(0);
+                    size_t Nj = data.extent(1);
+                    size_t Nk = data.extent(2);
+                    size_t stride_i = Nj*Nk;
+                    size_t stride_j = Nk;
+                    for( size_t i=0; i<Ni; ++i ) {
+                        for( size_t j=0; j<Nj; ++j ) {
+                            for( size_t k=0; k<Nk; ++k ) {
+                                data(i,j,k) = raw[i*stride_i + j*stride_j + k];
                             }
                         }
                     }
                 }
+                else if constexpr (data.rank() == 4) {
+                    ATLAS_ASSERT( extent[0] == data.extent(0));
+                    ATLAS_ASSERT( extent[1] == data.extent(1));
+                    ATLAS_ASSERT( extent[2] == data.extent(2));
+                    ATLAS_ASSERT( extent[4] == data.extent(4));
+                    size_t Ni = data.extent(0);
+                    size_t Nj = data.extent(1);
+                    size_t Nk = data.extent(2);
+                    size_t Nl = data.extent(3);
+                    size_t stride_i = Nj*Nk*Nl;
+                    size_t stride_j = Nk*Nl;
+                    size_t stride_k = Nl;
+                    for( size_t i=0; i<Ni; ++i ) {
+                        for( size_t j=0; j<Nj; ++j ) {
+                            for( size_t k=0; k<Nk; ++k ) {
+                                for( size_t l=0; l<Nl; ++l ) {
+                                    data(i,j,k,l) = raw[i*stride_i + j*stride_j + k*stride_k + l];
+                                }
+                            }
+                        }
+                    }
+                }
+                else {
+                    ATLAS_NOTIMPLEMENTED;
+                }
             }
-            else {
-                ATLAS_NOTIMPLEMENTED;
-            }
+            ATLAS_TRACE_SCOPE("deallocate temporary buffer");
             allocator.deallocate(raw, size());
         }
     }
@@ -323,20 +337,41 @@ public:
             goto endif;
         }
         int nproma = h5_dataset.extents()[h5_dataset.rank()-1];
-        int nblks  = h5_dataset.extents()[0];
-        int nflds  = h5_dataset.rank() == 3 ? h5_dataset.extents()[1] : 1;
-        auto grid = infer_grid_from_nproma_and_nblks(nproma, nblks);
+        int nblk  = h5_dataset.extents()[0];
+        int size = h5_dataset.size();
+        int nfld;
+        if (size == 0) {
+            nfld = 0;
+        }
+        else if (h5_dataset.rank() == 2) {
+            nfld = 1;
+        }
+        else if (h5_dataset.rank() == 3) {
+            nfld = int(h5_dataset.extents()[1]);
+        }
+        else if (h5_dataset.rank() == 4) {
+            nfld = int(h5_dataset.extents()[1] * h5_dataset.extents()[2]);
+        }
+        else if (h5_dataset.rank() == 5) {
+            nfld = int(h5_dataset.extents()[1] * h5_dataset.extents()[2] * h5_dataset.extents()[3]);
+        }
+        else {
+            ATLAS_NOTIMPLEMENTED;
+        }
+        // int nflds  = h5_dataset.rank() == 3 ? h5_dataset.extents()[1] : 1;
+        auto grid = infer_grid_from_nproma_and_nblks(nproma, nblk);
         if (grid.empty()) {
             Log::error() << "ERROR: Could not detect grid" << std::endl;
             error = 1;
             goto endif;
         }
-        metadata.set("name",   h5_dataset.name());
-        metadata.set("datatype",   h5_dataset.datatype().str());
-        metadata.set("nblks",  nblks);
+        metadata.set("name", h5_dataset.name());
+        metadata.set("datatype", h5_dataset.datatype().str());
+        metadata.set("nblk",  nblk);
         metadata.set("nproma", nproma);
-        metadata.set("nflds",  nflds);
-        metadata.set("grid",   grid);
+        metadata.set("nfld", nfld);
+        metadata.set("size", size);
+        metadata.set("grid", grid);
     } endif:
     mpi::comm().broadcast(error, mpi_root);
     if (error) {
@@ -348,10 +383,17 @@ public:
 
   void read_field(Field& field) {
     ATLAS_TRACE();
+    if (field.size() == 0) {
+        return;
+    }
     int mpi_root = 0;
     functionspace::BlockStructuredColumns fs{field.functionspace()};
-    Field field_glb = fs.createField(option::name(field.name()) | option::levels(field.levels()) | option::datatype(field.datatype()) | option::global(mpi_root));
-
+    pluto::scope::push();
+    pluto::host::set_default_resource(pluto::host_pool_resource());
+    Field field_glb;
+    ATLAS_TRACE_SCOPE("allocate field_glb") {
+        field_glb = fs.createField(option::name(field.name()) | option::levels(field.levels()) | option::datatype(field.datatype()) | option::global(mpi_root));
+    }
     int error = 0;
     if (mpi::rank() == mpi_root) {
         // Get the dataset from the file
@@ -366,19 +408,20 @@ public:
 
         switch( dataset_field.datatype().kind() ) {
             case DataType::KIND_REAL64 : {
-                auto glb_view = array::make_view<double,2>(field_glb);
                 if (dataset_field.rank() == 2) {
+                    auto glb_view = array::make_view<double,1>(field_glb);
                     auto dataset_view =array::make_view<double,2>(dataset_field);
                     idx_t n = 0;
                     for (idx_t jblk=0; jblk < dataset_view.shape(0); ++jblk) {
                         for (idx_t jrof=0; jrof < dataset_view.shape(1); ++jrof, ++n) {
                             if (n < glb_view.shape(0)) {
-                                glb_view(n, 0) = dataset_view(jblk, jrof);
+                                glb_view(n) = dataset_view(jblk, jrof);
                             }
                         }
                     }
                 }
                 else if (dataset_field.rank() == 3) {
+                    auto glb_view = array::make_view<double,2>(field_glb);
                     auto dataset_view =array::make_view<double,3>(dataset_field);
                     idx_t n = 0;
                     for (idx_t jblk=0; jblk < dataset_view.shape(0); ++jblk) {
@@ -404,7 +447,10 @@ public:
     if (error) {
         ATLAS_THROW_EXCEPTION("Could not extract field data from HDF5(file="<<file_<<", dataset="<<dataset_<<")");
     }
-    fs.scatter(field_glb, field);
+    ATLAS_TRACE_SCOPE("scatter") {
+        fs.scatter(field_glb, field);
+    }
+    pluto::scope::pop();
 }
 
 

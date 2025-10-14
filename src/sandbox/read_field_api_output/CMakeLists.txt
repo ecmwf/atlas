@@ -22,7 +22,7 @@ if (HAVE_HDF5)
 
     ecbuild_add_executable(
         TARGET    atlas-radintg
-        SOURCES   atlas-radintg.cc
+        SOURCES   atlas-radintg.cc MultiFieldCreatorRad.h MultiFieldCreatorRad.cc
         LIBS      atlas
                   ${HDF5_C_LIBRARIES}
         INCLUDES  ${HDF5_C_INCLUDE_DIRS}
