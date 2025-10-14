@@ -2106,7 +2106,6 @@ void ConservativeSphericalPolygonInterpolation::do_execute(const Field& src_fiel
                         PointXYZ grad  = src_grads[snode];
                         grad           = grad - PointXYZ::mul(src_barycentre, PointXYZ::dot(grad, src_barycentre));
                         tgt_val += iparam.weights[i_scsp] * (src_vals(snode) + PointXYZ::dot(grad, iparam.centroids[i_scsp] - src_barycentre));
-                        // tgt_val += iparam.weights[i_scsp] * src_vals(snode);
                     }
                     if (tgt_areas[tcell] > 0.) {
                         tgt_val /= tgt_areas[tcell];
@@ -2130,7 +2129,6 @@ void ConservativeSphericalPolygonInterpolation::do_execute(const Field& src_fiel
                             PointXYZ grad  = src_grads[snode];
                             grad           = grad - PointXYZ::mul(src_barycentre, PointXYZ::dot(grad, src_barycentre));
                             tgt_val += iparam.weights[i_scsp] * (src_vals(snode) + PointXYZ::dot(grad, iparam.centroids[i_scsp] - src_barycentre));
-                            // tgt_val += iparam.weights[i_scsp] * src_vals(snode);
                         }
                     }
                     if (tgt_areas[tnode] > 0.) {
@@ -2183,8 +2181,8 @@ void ConservativeSphericalPolygonInterpolation::do_execute(const Field& src_fiel
                     smin = std::min(smin, src_vals(scell));
                 }
                 idx_t tcell = csp_to_cell(tcsp, data_->tgt_);
-                double smin_numadj = smin - (1e6 + 1e12 * std::abs(smin)) * eps;
-                double smax_numadj = smax + (1e6 + 1e12 * std::abs(smin)) * eps;
+                double smin_numadj = smin - (1e6 + 1e8 * std::abs(smin)) * eps;
+                double smax_numadj = smax + (1e6 + 1e8 * std::abs(smin)) * eps;
                 bool undershoot = (tgt_vals(tcell) < smin_numadj);
                 bool overshoot = (tgt_vals(tcell) > smax_numadj);
                 if (undershoot || overshoot) {
