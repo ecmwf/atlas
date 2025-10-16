@@ -2594,12 +2594,12 @@ void ConservativeSphericalPolygonInterpolation::Statistics::fillMetadata(Metadat
         metadata.set("errors.sum_src_.areasminus_sum_tgt_areas", errors[ERR_SRCTGT_INTERSECTPLG_DIFF]);
     }
     if (conservation) {
-        metadata.set("errors.conservation_error", errors[ERR_REMAP_CONS]);
-        metadata.set("errors.conservation_error_percent_of_source", errors[ERR_REMAP_RELCONS]);
+        metadata.set("errors.conservation", errors[ERR_REMAP_CONS]);
+        metadata.set("errors.conservation_as_percent_of_source", errors[ERR_REMAP_RELCONS]);
     }
     if (accuracy) {
-        metadata.set("errors.to_solution_sum", errors[ERR_REMAP_L2]);
-        metadata.set("errors.to_solution_max", errors[ERR_REMAP_LINF]);
+        metadata.set("errors.to_exact_solution_sum", errors[ERR_REMAP_L2]);
+        metadata.set("errors.to_exact_solution_max", errors[ERR_REMAP_LINF]);
     }
 }
 
