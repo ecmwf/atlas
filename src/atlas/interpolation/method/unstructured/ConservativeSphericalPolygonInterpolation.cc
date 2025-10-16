@@ -248,6 +248,10 @@ ConservativeSphericalPolygonInterpolation::ConservativeSphericalPolygonInterpola
         Log::warning() << "statistics.intersection required. Enabling validate." << std::endl;
         validate_ = true;
     }
+    if (limiter_ != "none" && limiter_ != "zeroslope" && limiter_ != "clip") {
+        Log::error() << "configure option -limiter- can only be: none, zeroslope, clip. Exiting." << std::endl;
+        ATLAS_ASSERT(false);
+    }
 
     sharable_data_ = std::make_shared<Data>();
     cache_         = Cache(sharable_data_);
@@ -2143,6 +2147,20 @@ void ConservativeSphericalPolygonInterpolation::do_execute(const Field& src_fiel
     };
 
     if (order_ == 2 && (limiter_ != "none")) {
+        // set this environment variable to replace target_field with values showing
+        //   0: target_field as it is
+        //   1: values corrections from the limiter
+        unsigned int limiter_override_tgt = 0;
+        const char* ATLAS_INTERPOLATION_LIMITER = ::getenv("ATLAS_INTERPOLATION_LIMITER");
+        if (ATLAS_INTERPOLATION_LIMITER != nullptr) {
+                limiter_override_tgt = std::atof(ATLAS_INTERPOLATION_LIMITER);
+        }
+        if (limiter_override_tgt > 1) {
+            Log::error() << "ATLAS_INTERPOLATION_LIMITER can be 0 (default) or 1.\n";
+            Log::error() << "   0: default, show target values after a limiter.\n";
+            Log::error() << "   1: show limiter correction values" << std::endl;
+            ATLAS_ASSERT(false);
+        }
         Field tgt_lim_field = tgt_fs_.createField<double>();
         auto tgt_lim_vals   = array::make_view<double, 1>(tgt_lim_field);
         for (idx_t tcell = 0; tcell < tgt_lim_vals.size(); ++tcell) {
@@ -2200,17 +2218,22 @@ void ConservativeSphericalPolygonInterpolation::do_execute(const Field& src_fiel
                     }
                     else if (limiter_ == "clip") {
                         if (overshoot) {
-                            tgt_vals(tcell) = smax;
+                            tgt_lim_vals(tcell) = smax - tgt_vals(tcell);
                         }
                         else if (undershoot) {
-                            tgt_vals(tcell) = smin;
+                            tgt_lim_vals(tcell) = smin - tgt_vals(tcell);
                         }
                     }
                 }
             }
-            if (limiter_ == "zeroslope") {
+            if (! limiter_override_tgt) {
                 for (idx_t tcell = 0; tcell < tgt_vals.size(); ++tcell) {
                     tgt_vals(tcell) += tgt_lim_vals(tcell);
+                }
+            }
+            else {
+                for (idx_t tcell = 0; tcell < tgt_vals.size(); ++tcell) {
+                    tgt_vals(tcell) = tgt_lim_vals(tcell);
                 }
             }
         }
