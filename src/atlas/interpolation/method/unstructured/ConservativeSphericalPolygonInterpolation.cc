@@ -1943,7 +1943,7 @@ void ConservativeSphericalPolygonInterpolation::do_execute(const Field& src_fiel
     const auto& tgt_iparam = data_->tgt_iparam_;
     std::vector<PointXYZ> src_grads;
     const auto& tgt_areas = data_->tgt_.areas;
-    auto& src_iparam = data_->src_iparam_; // will be modified by the limiter
+    const auto& src_iparam = data_->src_iparam_;
     const auto& src_points = data_->src_.points;
     const auto src_vals = array::make_view<double, 1>(src_field);
     auto tgt_vals       = array::make_view<double, 1>(tgt_field);
