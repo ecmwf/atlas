@@ -27,10 +27,10 @@ double XStep(double lon, double lat) {
     lat *= Constants::degreesToRadians();
     double x1 = lon - M_PI;
     double x2 = -lon + M_PI;
-    if ((lat > x1) && (lat < x2)) {
+    if ((lat > x1) && (lat < x2) && std::abs(lat) < 0.4 * M_PI) {
         return 1.;
     }
-    if ((lat < x1) && (lat > x2)) {
+    if ((lat < x1) && (lat > x2) && std::abs(lat) < 0.4 * M_PI) {
         return -1.;
     }
     return 0.;
