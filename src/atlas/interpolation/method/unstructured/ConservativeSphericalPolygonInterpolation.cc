@@ -1894,7 +1894,7 @@ PointXYZ ConservativeSphericalPolygonInterpolation::src_gradient_celldata(idx_t 
         idx_t nsj    = nb_cells[nj];
         const auto& Csj  = src_points[sj];
         const auto& Cnsj = src_points[nsj];
-        double val = 0.5 * (src_vals(nj) + src_vals(nsj)) - src_vals(j);
+        double val = 0.5 * (src_vals(sj) + src_vals(nsj)) - src_vals(scell);
         bool left_orientation = Polygon::GreatCircleSegment(Cs, Csj).inLeftHemisphere(Cnsj, -1e-16);
         dual_area_inv += (left_orientation ? Polygon({Cs, Csj, Cnsj}).area() : Polygon({Cs, Cnsj, Csj}).area());
         grad = grad + PointXYZ::mul(PointXYZ::cross(Csj, Cnsj), val);
@@ -1918,7 +1918,7 @@ PointXYZ ConservativeSphericalPolygonInterpolation::src_gradient_nodedata(idx_t 
         idx_t nsj    = nb_nodes[nj];
         const auto& Csj  = src_points[sj];
         const auto& Cnsj = src_points[nsj];
-        double val = 0.5 * (src_vals(nj) + src_vals(nsj)) - src_vals(j);
+        double val = 0.5 * (src_vals(sj) + src_vals(nsj)) - src_vals(snode);
         bool left_orientation = Polygon::GreatCircleSegment(Cs, Csj).inLeftHemisphere(Cnsj, -1e-16);
         dual_area_inv += (left_orientation ? Polygon({Cs, Csj, Cnsj}).area() : Polygon({Cs, Cnsj, Csj}).area());
         grad = grad + PointXYZ::mul(PointXYZ::cross(Csj, Cnsj), val);
@@ -2051,7 +2051,8 @@ void ConservativeSphericalPolygonInterpolation::do_execute(const Field& src_fiel
 
             // CASE: CELL TO CELL
             if (tgt_cell_data_ && src_cell_data_){
-                for (idx_t tcell = 0; tcell < tgt_vals.size(); ++tcell) {
+                for (idx_t tcsp_id = 0; tcsp_id < data_->tgt_.csp_size; ++tcsp_id) {
+                    idx_t tcell = csp_to_cell(tcsp_id, data_->tgt_);
                     const auto& iparam = tgt_iparam[tcell];
                     double tgt_val = 0.;
                     for (idx_t i_scsp = 0; i_scsp < iparam.csp_ids.size(); ++i_scsp) {
