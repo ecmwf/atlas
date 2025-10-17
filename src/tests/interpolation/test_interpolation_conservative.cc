@@ -180,10 +180,10 @@ void check(const Metadata remap_stat_1, Metadata remap_stat_2, std::array<double
     EXPECT(std::abs(err) < tol[3]);
 
     // check mass conservation
-    remap_stat_1.get("errors.conservation_error", err);
+    remap_stat_1.get("errors.conservation", err);
     Log::info() << "1st order conservation (new < ref) =  (" << std::abs(err) << " < " << tol[4] << ")" << std::endl;
     EXPECT(std::abs(err) < tol[4]);
-    remap_stat_2.get("errors.conservation_error", err);
+    remap_stat_2.get("errors.conservation", err);
     Log::info() << "2nd order conservation (new < ref) =  (" << std::abs(err) << " < " << tol[5] << ")" << std::endl;
     EXPECT(std::abs(err) < tol[5]);
     Log::info().unindent();
