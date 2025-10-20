@@ -18,7 +18,7 @@ namespace atlas {
 
 #define USE_MDSPAN 0 // Using mdspan is slower on macos!
 
-template <class Blocked, class Nonblocked>
+template <class Nonblocked, class Blocked>
 void host_copy_nonblocked_to_blocked_mdspan(const Nonblocked nonblocked, Blocked blocked) {
     auto np     = nonblocked.extent(0);
     auto nblks  = blocked.extent(0);
@@ -162,7 +162,8 @@ void host_copy_blocked_to_blocked_mdspan(const BlockedIn blocked_in, BlockedOut 
     }
 }
 
-template <class Blocked, class Nonblocked>
+#if ATLAS_HAVE_GPU
+template <class Nonblocked, class Blocked>
 void device_copy_nonblocked_to_blocked_mdspan(const Nonblocked nonblocked, Blocked blocked) {
     if (pluto::devices() == 0) {
         return host_copy_nonblocked_to_blocked_mdspan(nonblocked, blocked);
@@ -185,10 +186,21 @@ void device_copy_blocked_to_blocked_mdspan(const BlockedIn blocked_in, BlockedOu
     }
     ATLAS_NOTIMPLEMENTED;
 }
+#else
+// Implementation in transpositions_on_device.hic
+template <class Nonblocked, class Blocked>
+void device_copy_nonblocked_to_blocked_mdspan(const Nonblocked nonblocked, Blocked blocked);
+
+template <class Blocked, class Nonblocked>
+void device_copy_blocked_to_nonblocked_mdspan(const Blocked blocked, Nonblocked nonblocked);
+
+template <class BlockedIn, class BlockedOut>
+void device_copy_blocked_to_blocked_mdspan(const BlockedIn blocked_in, BlockedOut blocked_out);
+#endif
 
 //
 
-template <class Blocked, class Nonblocked>
+template <class Nonblocked, class Blocked>
 void copy_nonblocked_to_blocked_mdspan(const Nonblocked nonblocked, Blocked blocked, bool on_device) {
     ATLAS_TRACE("copy_nonblocked_to_blocked_mdspan "+std::string(on_device?"[device]":"[host]"));
     if (on_device) {
