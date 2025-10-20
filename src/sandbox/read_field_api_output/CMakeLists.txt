@@ -20,11 +20,12 @@ if (HAVE_HDF5)
         NOINSTALL
     )
 
-    set (hic_sources transpositions_on_device.hic)
-    if( HAVE_CUDA )
-      set_source_files_properties(${hic_sources} PROPERTIES LANGUAGE CUDA)
-    elseif( HAVE_HIP )
-      set_source_files_properties(${hic_sources} PROPERTIES LANGUAGE HIP)
+    if (HAVE_GPU)
+      set (hic_sources transpositions_on_device.hic)
+      set_source_files_properties(${hic_sources} PROPERTIES LANGUAGE ${HIC_LANGUAGE})
+    else()
+      file(CREATE_LINK ${CMAKE_CURRENT_SOURCE_DIR}/transpositions_on_device.hic ${CMAKE_CURRENT_BINARY_DIR}/transpositions_on_device.cc SYMBOLIC)
+      set (hic_sources ${CMAKE_CURRENT_BINARY_DIR}/transpositions_on_device.cc)
     endif()
 
     ecbuild_add_executable(
