@@ -20,9 +20,16 @@ if (HAVE_HDF5)
         NOINSTALL
     )
 
+    set (hic_sources transpositions_on_device.hic)
+    if( HAVE_CUDA )
+      set_source_files_properties(${hic_sources} PROPERTIES LANGUAGE CUDA)
+    elseif( HAVE_HIP )
+      set_source_files_properties(${hic_sources} PROPERTIES LANGUAGE HIP)
+    endif()
+
     ecbuild_add_executable(
         TARGET    atlas-radintg
-        SOURCES   atlas-radintg.cc MultiFieldCreatorRad.h MultiFieldCreatorRad.cc
+        SOURCES   atlas-radintg.cc MultiFieldCreatorRad.h MultiFieldCreatorRad.cc ${hic_sources}
         LIBS      atlas
                   ${HDF5_C_LIBRARIES}
         INCLUDES  ${HDF5_C_INCLUDE_DIRS}
