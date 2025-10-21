@@ -39,12 +39,13 @@ inline void output_gmsh(Field& field, const std::string& gmsh_file, const util::
 };
 
 inline void output_gmsh(const FieldSet& fieldset, const std::string& gmsh_file, const util::Config& gmsh_config) {
+    ATLAS_TRACE("output_gmsh");
     if (fieldset.empty()) {
         return;
     }
     if (auto blocked_fs = functionspace::BlockStructuredColumns(fieldset[0].functionspace())) {
         auto gmsh = output::Gmsh(gmsh_file, gmsh_config);
-
+        grid::Partitioner partitioner = mpi::size() > 1 ? grid::MatchingPartitioner(blocked_fs) : grid::Partitioner("serial");
         auto mesh = Mesh(blocked_fs.grid(), grid::MatchingPartitioner(blocked_fs));
         gmsh.write(mesh);
 

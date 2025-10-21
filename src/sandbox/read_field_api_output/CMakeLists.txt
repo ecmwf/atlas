@@ -11,14 +11,7 @@ ecbuild_add_option( FEATURE HDF5
                     REQUIRED_PACKAGES "HDF5 COMPONENTS C" )
 
 if (HAVE_HDF5)
-    ecbuild_add_executable(
-        TARGET    atlas-read-field-api-output
-        SOURCES   atlas-read-field-api-output.cc
-        LIBS      atlas
-                  ${HDF5_C_LIBRARIES}
-        INCLUDES  ${HDF5_C_INCLUDE_DIRS}
-        NOINSTALL
-    )
+
 
     if (HAVE_GPU)
       set (hic_sources transpositions_on_device.hic)
@@ -28,6 +21,14 @@ if (HAVE_HDF5)
       set (hic_sources ${CMAKE_CURRENT_BINARY_DIR}/transpositions_on_device.cc)
     endif()
 
+    ecbuild_add_executable(
+        TARGET    atlas-read-field-api-output
+        SOURCES   atlas-read-field-api-output.cc ${hic_sources}
+        LIBS      atlas
+                  ${HDF5_C_LIBRARIES}
+        INCLUDES  ${HDF5_C_INCLUDE_DIRS}
+        NOINSTALL
+    )
     ecbuild_add_executable(
         TARGET    atlas-radintg
         SOURCES   atlas-radintg.cc MultiFieldCreatorRad.h MultiFieldCreatorRad.cc ${hic_sources}
