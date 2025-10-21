@@ -120,7 +120,8 @@ void device_copy_nonblocked_to_blocked_mdspan(Nonblocked nonblocked, Blocked blo
         ATLAS_ASSERT(nonblocked.extent(1) == blocked.extent(1));
     }
     #if HIC_COMPILER
-    HIC_CALL( kernel_copy_nonblocked_to_blocked_mdspan<<<1,1>>>(nonblocked, blocked) );
+    kernel_copy_nonblocked_to_blocked_mdspan<<<1,1>>>(nonblocked, blocked);
+    HIC_CHECK_KERNEL_LAUNCH();
     #else
     kernel_copy_nonblocked_to_blocked_mdspan(nonblocked, blocked);
     #endif
@@ -142,7 +143,8 @@ void device_copy_blocked_to_nonblocked_mdspan(Blocked blocked, Nonblocked nonblo
         ATLAS_THROW_EXCEPTION("transposition not implemented");
     }
     #if HIC_COMPILER
-    HIC_CALL( kernel_copy_blocked_to_nonblocked_mdspan<<<1,1>>>(blocked, nonblocked) );
+    kernel_copy_blocked_to_nonblocked_mdspan<<<1,1>>>(blocked, nonblocked);
+    HIC_CHECK_KERNEL_LAUNCH();
     #else
     kernel_copy_blocked_to_nonblocked_mdspan(blocked, nonblocked);
     #endif
@@ -194,7 +196,8 @@ void device_copy_blocked_to_blocked_mdspan(BlockedIn blocked_in, BlockedOut bloc
         ATLAS_ASSERT(blocked_in.extent(1) == blocked_out.extent(1));
     }
     #if HIC_COMPILER
-    HIC_CALL(kernel_copy_blocked_to_blocked_mdspan<<<1,1>>>(blocked_in, blocked_out));
+    kernel_copy_blocked_to_blocked_mdspan<<<1,1>>>(blocked_in, blocked_out);
+    HIC_CHECK_KERNEL_LAUNCH();
     #else
     kernel_copy_blocked_to_blocked_mdspan(blocked_in, blocked_out);
     #endif

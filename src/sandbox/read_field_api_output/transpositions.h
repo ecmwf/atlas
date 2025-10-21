@@ -163,6 +163,16 @@ void host_copy_blocked_to_blocked_mdspan(const BlockedIn blocked_in, BlockedOut 
 }
 
 #if ATLAS_HAVE_GPU
+// Implementation in transpositions_on_device.hic
+template <class Nonblocked, class Blocked>
+void device_copy_nonblocked_to_blocked_mdspan(const Nonblocked nonblocked, Blocked blocked);
+
+template <class Blocked, class Nonblocked>
+void device_copy_blocked_to_nonblocked_mdspan(const Blocked blocked, Nonblocked nonblocked);
+
+template <class BlockedIn, class BlockedOut>
+void device_copy_blocked_to_blocked_mdspan(const BlockedIn blocked_in, BlockedOut blocked_out);
+#else
 template <class Nonblocked, class Blocked>
 void device_copy_nonblocked_to_blocked_mdspan(const Nonblocked nonblocked, Blocked blocked) {
     if (pluto::devices() == 0) {
@@ -186,16 +196,6 @@ void device_copy_blocked_to_blocked_mdspan(const BlockedIn blocked_in, BlockedOu
     }
     ATLAS_NOTIMPLEMENTED;
 }
-#else
-// Implementation in transpositions_on_device.hic
-template <class Nonblocked, class Blocked>
-void device_copy_nonblocked_to_blocked_mdspan(const Nonblocked nonblocked, Blocked blocked);
-
-template <class Blocked, class Nonblocked>
-void device_copy_blocked_to_nonblocked_mdspan(const Blocked blocked, Nonblocked nonblocked);
-
-template <class BlockedIn, class BlockedOut>
-void device_copy_blocked_to_blocked_mdspan(const BlockedIn blocked_in, BlockedOut blocked_out);
 #endif
 
 //
@@ -271,6 +271,8 @@ void copy_blocked_to_nonblocked_T(const array::Array& blocked, array::Array& non
     else {
         ATLAS_THROW_EXCEPTION("transposition not implemented");
     }
+    nonblocked.setHostNeedsUpdate(on_device);
+    nonblocked.setDeviceNeedsUpdate(!on_device);
 }
 
 template <class ValueType>
@@ -309,6 +311,8 @@ void copy_nonblocked_to_blocked_T(const array::Array& nonblocked, array::Array& 
     else {
         ATLAS_THROW_EXCEPTION("transposition not implemented");
     }
+    blocked.setHostNeedsUpdate(on_device);
+    blocked.setDeviceNeedsUpdate(!on_device);
 }
 
 template <class ValueType>
@@ -347,6 +351,8 @@ void copy_blocked_to_blocked_T(const array::Array& blocked_in, array::Array& blo
     else {
         ATLAS_THROW_EXCEPTION("transposition not implemented");
     }
+    blocked_out.setHostNeedsUpdate(on_device);
+    blocked_out.setDeviceNeedsUpdate(!on_device);
 }
 
 
