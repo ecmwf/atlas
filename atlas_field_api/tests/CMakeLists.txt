@@ -1,0 +1,16 @@
+
+foreach( prec sp dp )
+    add_library( atlas_field_api_parkind_${prec} SHARED parkind1.F90 )
+    if( prec STREQUAL "sp" )
+        target_compile_definitions( atlas_field_api_parkind_${prec} PRIVATE SINGLE_PRECISION )
+    endif()
+endforeach()
+
+foreach( prec sp dp )
+    foreach( program init_owner_gpu init_wrapper_gpu init_wrapper_non_contiguous test_last_dim )
+        add_executable( ${program}_${prec} )
+        target_sources( ${program}_${prec} PUBLIC ${program}.F90 )
+        target_link_libraries( ${program}_${prec} PUBLIC atlas_field_api_${prec} atlas_field_api_parkind_${prec} )
+        add_test(${program}_${prec} ${program}_${prec})
+    endforeach()
+endforeach()

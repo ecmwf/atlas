@@ -1,0 +1,92 @@
+! (C) Copyright 2025- ECMWF.
+!
+! This software is licensed under the terms of the Apache Licence Version 2.0
+! which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
+! In applying this licence, ECMWF does not waive the privileges and immunities
+! granted to it by virtue of its status as an intergovernmental organisation
+! nor does it submit to any jurisdiction.
+
+module field_factory_module
+
+#:set ranks  = [1,2,3,4]
+#:set dim    = ['',':',':,:',':,:,:',':,:,:,:',':,:,:,:,:']
+#:set dimr   = ['','',':',':,:',':,:,:',':,:,:,:']
+#:set range  = ['','self%lbounds(1):', 'self%lbounds(1):,self%lbounds(2):', 'self%lbounds(1):,self%lbounds(2):,self%lbounds(3):', 'self%lbounds(1):,self%lbounds(2):,self%lbounds(3):,self%lbounds(4):']
+#:set dtypes = ['RM','RD']
+#:set ftypes = ['real(4)','real(8)']
+#:set atlas_kinds = ['atlas_real(4)','atlas_real(8)']
+
+interface FIELD_NEW
+#:for dtype in dtypes
+#:for rank in ranks
+    module procedure :: FIELD_NEW_${rank}$${dtype}$
+    module procedure :: FIELD_NEW_WRAP_${rank}$${dtype}$
+#:endfor
+#:endfor
+end interface
+
+interface FIELD_DELETE
+#:for dtype in dtypes
+#:for rank in ranks
+    module procedure :: FIELD_DELETE_${rank}$${dtype}$
+#:endfor
+#:endfor
+end interface
+
+contains
+
+#:for dtype, ftype, atlas_kind in zip(dtypes, ftypes, atlas_kinds)
+#:for rank in ranks
+subroutine FIELD_NEW_${rank}$${dtype}$(field, LBOUNDS, UBOUNDS, PERSISTENT)
+    use atlas_module
+    use field_ranksuff_module, only : FIELD_${rank}$${dtype}$, field_threads
+    implicit none
+    class(FIELD_${rank}$${dtype}$), pointer, intent(inout) :: field
+    integer, intent(in), optional :: LBOUNDS(:)
+    integer, intent(in) :: UBOUNDS(:)
+    logical, optional :: persistent
+    integer :: extents(${rank}$)
+    allocate(field)
+    field%lbounds    = 1
+    field%persistent = .false.
+    if (present(LBOUNDS)) then
+        field%lbounds = lbounds
+    endif
+    if (present(PERSISTENT)) then
+        field%persistent = persistent
+    endif
+    extents = ubounds - field%lbounds + 1
+    if (field%persistent) then
+        field%f = atlas_Field("persistent", ${atlas_kind}$, extents)
+    else
+        extents(size(extents)) = field_threads()
+        field%f = atlas_Field("thread_blocks", ${atlas_kind}$, extents)
+    endif
+end subroutine
+
+subroutine FIELD_NEW_WRAP_${rank}$${dtype}$(field, LBOUNDS, DATA)
+    use atlas_module
+    use field_ranksuff_module, only : FIELD_${rank}$${dtype}$
+    implicit none
+    class(FIELD_${rank}$${dtype}$), pointer, intent(inout) :: field
+    integer, intent(in), optional :: LBOUNDS(:)
+    ${ftype}$, intent(in) :: DATA(${dim[rank]}$)
+    allocate(field)
+    field%lbounds    = 1
+    field%persistent = .true.
+    if (present(LBOUNDS)) then
+        field%lbounds = lbounds
+    endif
+    field%f = atlas_Field("wrapped", DATA)
+end subroutine
+
+subroutine FIELD_DELETE_${rank}$${dtype}$(field)
+    use field_ranksuff_module, only : FIELD_${rank}$${dtype}$
+    implicit none
+    class(FIELD_${rank}$${dtype}$), pointer, intent(inout) :: field
+    deallocate(field)
+end subroutine
+#:endfor
+#:endfor
+
+end module

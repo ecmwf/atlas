@@ -1,0 +1,131 @@
+! (C) Copyright 2025- ECMWF.
+!
+! This software is licensed under the terms of the Apache Licence Version 2.0
+! which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
+! In applying this licence, ECMWF does not waive the privileges and immunities
+! granted to it by virtue of its status as an intergovernmental organisation
+! nor does it submit to any jurisdiction.
+
+module field_ranksuff_module
+use atlas_module, only : atlas_field
+
+#:set ranks  = [1,2,3,4]
+#:set dim    = ['',':',':,:',':,:,:',':,:,:,:',':,:,:,:,:']
+#:set range  = ['','self%lbounds(1):', 'self%lbounds(1):,self%lbounds(2):', 'self%lbounds(1):,self%lbounds(2):,self%lbounds(3):', 'self%lbounds(1):,self%lbounds(2):,self%lbounds(3):,self%lbounds(4):']
+#:set dtypes = ['RM','RD']
+#:set ftypes = ['real(4)','real(8)']
+#:set atlas_kinds = ['atlas_real(4)','atlas_real(8)']
+
+#:for dtype in dtypes
+#:for rank in ranks
+TYPE :: FIELD_${rank}$${dtype}$
+   TYPE(ATLAS_FIELD) :: f
+   integer :: lbounds(${rank}$)
+   logical :: persistent
+CONTAINS
+   procedure :: get_host_data_rdwr     => get_host_data_rdwr_${rank}$${dtype}$
+   procedure :: get_host_data_rdonly   => get_host_data_rdonly_${rank}$${dtype}$
+   procedure :: get_device_data_rdwr   => get_device_data_rdwr_${rank}$${dtype}$
+   procedure :: get_device_data_rdonly => get_device_data_rdonly_${rank}$${dtype}$
+   procedure :: get_device_data_wronly => get_device_data_wronly_${rank}$${dtype}$
+#:if rank > 1
+   procedure :: get_view => get_view_${rank}$${dtype}$
+#:endif
+END TYPE
+#:endfor
+#:endfor
+
+contains
+
+function field_threads()
+#ifdef _OPENMP
+    use omp_lib
+    integer :: field_threads
+    field_threads = omp_get_max_threads()
+#else
+    integer :: field_threads
+    field_threads = 1
+#endif
+end function
+
+function field_my_thread()
+#ifdef _OPENMP
+    use omp_lib
+    integer :: field_my_thread
+    field_my_thread = omp_get_thread_num()
+#else
+    integer :: field_my_thread
+    field_my_thread = 1
+#endif
+end function
+
+#:for dtype, ftype in zip(dtypes, ftypes)
+#:for rank in ranks
+subroutine get_host_data_rdwr_${rank}$${dtype}$(self, ptr)
+    class(FIELD_${rank}$${dtype}$), intent(inout) :: self
+    ${ftype}$, pointer :: f_data(${dim[rank]}$)
+    ${ftype}$, pointer :: ptr(${dim[rank]}$)
+    call self%f%sync_host()
+    call self%f%set_device_needs_update(.true.) ! Because we will write to host
+    call self%f%data(f_data)
+    ptr(${range[rank]}$) => f_data
+end subroutine
+
+subroutine get_host_data_rdonly_${rank}$${dtype}$(self, ptr)
+    class(FIELD_${rank}$${dtype}$), intent(inout) :: self
+    ${ftype}$, pointer :: f_data(${dim[rank]}$)
+    ${ftype}$, pointer :: ptr(${dim[rank]}$)
+    call self%f%sync_host()
+    call self%f%data(f_data)
+    ptr(${range[rank]}$) => f_data
+end subroutine
+
+subroutine get_device_data_rdwr_${rank}$${dtype}$(self, ptr)
+    class(FIELD_${rank}$${dtype}$), intent(inout) :: self
+    ${ftype}$, pointer :: f_data(${dim[rank]}$)
+    ${ftype}$, pointer :: ptr(${dim[rank]}$)
+    call self%f%sync_device()
+    call self%f%set_host_needs_update(.true.) ! Because we will write to device
+    call self%f%data(f_data)
+    ptr(${range[rank]}$) => f_data
+end subroutine
+
+subroutine get_device_data_rdonly_${rank}$${dtype}$(self, ptr)
+    class(FIELD_${rank}$${dtype}$), intent(inout) :: self
+    ${ftype}$, pointer :: f_data(${dim[rank]}$)
+    ${ftype}$, pointer :: ptr(${dim[rank]}$)
+    call self%f%sync_device()
+    call self%f%data(f_data)
+    ptr(${range[rank]}$) => f_data
+end subroutine
+
+subroutine get_device_data_wronly_${rank}$${dtype}$(self, ptr)
+    class(FIELD_${rank}$${dtype}$), intent(inout) :: self
+    ${ftype}$, pointer :: f_data(${dim[rank]}$)
+    ${ftype}$, pointer :: ptr(${dim[rank]}$)
+    call self%f%allocate_device()
+    call self%f%set_host_needs_update(.true.) ! Because we will write to device
+    call self%f%data(f_data)
+    ptr(${range[rank]}$) => f_data
+end subroutine
+
+#:if rank > 1
+function get_view_${rank}$${dtype}$(self, BLOCK_INDEX) result(view)
+    class(FIELD_${rank}$${dtype}$), intent(inout) :: self
+    ${ftype}$, pointer :: f_data(${dim[rank]}$)
+    ${ftype}$, pointer :: view(${dim[rank-1]}$)
+    integer :: BLOCK_INDEX
+    integer :: JBLK
+    call self%f%data(f_data)
+    if (self%persistent) then
+        JBLK = BLOCK_INDEX - self%lbounds(${rank}$) + 1
+    else
+        JBLK = field_my_thread()
+    endif
+    view(${range[rank-1]}$) => f_data(${dim[rank-1]}$,JBLK)
+end function
+#:endif
+#:endfor
+#:endfor
+
+end module
