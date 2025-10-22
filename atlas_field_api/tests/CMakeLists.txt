@@ -1,0 +1,22 @@
+
+foreach( prec sp dp )
+    set( atlas_field_api_parkind atlas_field_api_parkind_${prec} )
+    add_library( ${atlas_field_api_parkind} SHARED parkind1.F90 )
+    set_target_properties( ${atlas_field_api_parkind} PROPERTIES Fortran_MODULE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/module/${atlas_field_api_parkind} )
+    target_include_directories( ${atlas_field_api_parkind} PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/module/${atlas_field_api_parkind}>)
+    if( prec STREQUAL "sp" )
+        target_compile_definitions( ${atlas_field_api_parkind} PRIVATE SINGLE_PRECISION )
+    endif()
+endforeach()
+
+set(CMAKE_Fortran_MODULE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
+
+foreach( program init_owner_gpu init_wrapper_gpu init_wrapper_non_contiguous init_wrapper_non_contiguous_gpu test_last_dim )
+    foreach( prec sp dp )
+        set( target ${program}_${prec} )
+        add_executable( ${target} )
+        target_sources( ${target} PUBLIC ${program}.F90 )
+        target_link_libraries( ${target} PUBLIC atlas_field_api_${prec} atlas_field_api_parkind_${prec} )
+        add_test(${target} ${target})
+    endforeach()
+endforeach()

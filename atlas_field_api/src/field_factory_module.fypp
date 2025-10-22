@@ -1,0 +1,126 @@
+! (C) Copyright 2025- ECMWF.
+!
+! This software is licensed under the terms of the Apache Licence Version 2.0
+! which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
+! In applying this licence, ECMWF does not waive the privileges and immunities
+! granted to it by virtue of its status as an intergovernmental organisation
+! nor does it submit to any jurisdiction.
+
+module field_factory_module
+
+private
+public :: FIELD_NEW, FIELD_DELETE
+
+#:set ranks  = [1,2,3,4]
+#:set dim    = ['',':',':,:',':,:,:',':,:,:,:',':,:,:,:,:']
+#:set dtypes = ['RM','RD']
+#:set ftypes = ['real(4)','real(8)']
+#:set atlas_kinds = ['atlas_real(4)','atlas_real(8)']
+
+interface FIELD_NEW
+#:for dtype in dtypes
+#:for rank in ranks
+    module procedure :: FIELD_NEW_${rank}$${dtype}$
+    module procedure :: FIELD_NEW_WRAP_${rank}$${dtype}$
+#:endfor
+#:endfor
+end interface
+
+interface FIELD_DELETE
+#:for dtype in dtypes
+#:for rank in ranks
+    module procedure :: FIELD_DELETE_${rank}$${dtype}$
+#:endfor
+#:endfor
+end interface
+
+contains
+
+#:for dtype, ftype, atlas_kind in zip(dtypes, ftypes, atlas_kinds)
+#:for rank in ranks
+subroutine FIELD_NEW_${rank}$${dtype}$(FIELD_PTR, UBOUNDS, LBOUNDS, PERSISTENT, DELAYED, INIT_VALUE, PINNED, MAP_DEVPTR, POOLED)
+    use pluto_module
+    use atlas_module, only : atlas_Field, atlas_real
+    use field_ranksuff_module, only : FIELD_${rank}$${dtype}$
+    use field_util_module, only : set_host_resource, optional_arg, field_threads
+    implicit none
+    class(FIELD_${rank}$${dtype}$), pointer, intent(inout) :: FIELD_PTR
+    integer,   intent(in)           :: UBOUNDS(:)
+    integer,   intent(in), optional :: LBOUNDS(:)
+    logical,   intent(in), optional :: PERSISTENT
+    logical,   intent(in), optional :: DELAYED
+    ${ftype}$, intent(in), optional :: INIT_VALUE
+    logical,   intent(in), optional :: PINNED
+    logical,   intent(in), optional :: MAP_DEVPTR
+    logical,   intent(in), optional :: POOLED
+
+    ! Local variables
+    integer :: extents(${rank}$)
+
+    ! Start of routine
+    allocate(FIELD_PTR)
+    FIELD_PTR%persistent    = optional_arg(PERSISTENT, DEFAULT=.true.)
+    FIELD_PTR%map_devptr    = optional_arg(MAP_DEVPTR, DEFAULT=.true.)
+    FIELD_PTR%sync_on_final = .false.
+    FIELD_PTR%lbounds       = 1
+    if (present(LBOUNDS)) then
+        FIELD_PTR%lbounds = lbounds
+    endif
+
+    call pluto%scope%push()
+
+    call set_host_resource(PINNED, POOLED)
+
+    extents = ubounds - FIELD_PTR%lbounds + 1
+
+    if (FIELD_PTR%persistent) then
+        FIELD_PTR%f = atlas_Field("persistent", ${atlas_kind}$, extents)
+    else
+        extents(size(extents)) = field_threads()
+        FIELD_PTR%f = atlas_Field("thread_blocks", ${atlas_kind}$, extents)
+    endif
+
+    call pluto%scope%pop()
+
+end subroutine
+
+subroutine FIELD_NEW_WRAP_${rank}$${dtype}$(FIELD_PTR, LBOUNDS, PERSISTENT, DATA, MAP_DEVPTR, SYNC_ON_FINAL, INITIALIZED)
+    use pluto_module, only : pluto
+    use atlas_module, only : atlas_field
+    use field_ranksuff_module, only : FIELD_${rank}$${dtype}$
+    use field_util_module, only : optional_arg, set_device_mapped_host_resource
+    implicit none
+    class(FIELD_${rank}$${dtype}$), pointer, intent(inout) :: FIELD_PTR
+    integer,   intent(in), optional :: LBOUNDS(:)
+    logical,   intent(in), optional :: PERSISTENT
+    ${ftype}$, intent(in), target   :: DATA(${dim[rank]}$)
+    logical,   intent(in), optional :: MAP_DEVPTR
+    logical,   intent(in), optional :: SYNC_ON_FINAL
+    logical,   intent(in), optional :: INITIALIZED
+    allocate(FIELD_PTR)
+    FIELD_PTR%persistent    = optional_arg(PERSISTENT,    DEFAULT=.true.)
+    FIELD_PTR%map_devptr    = optional_arg(MAP_DEVPTR,    DEFAULT=.true.)
+    FIELD_PTR%sync_on_final = optional_arg(SYNC_ON_FINAL, DEFAULT=.true.)
+    FIELD_PTR%lbounds       = 1
+    if (present(LBOUNDS)) then
+        FIELD_PTR%lbounds = lbounds
+    endif
+    if (FIELD_PTR%map_devptr) then
+        call set_device_mapped_host_resource()
+    endif
+    FIELD_PTR%f = atlas_Field("wrapped", DATA)
+end subroutine
+
+subroutine FIELD_DELETE_${rank}$${dtype}$(FIELD_PTR)
+    use field_ranksuff_module, only : FIELD_${rank}$${dtype}$
+    implicit none
+    class(FIELD_${rank}$${dtype}$), pointer, intent(inout) :: FIELD_PTR
+    if (FIELD_PTR%sync_on_final) then
+        call FIELD_PTR%f%sync_host()
+    endif
+    deallocate(FIELD_PTR)
+end subroutine
+#:endfor
+#:endfor
+
+end module
