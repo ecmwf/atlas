@@ -206,7 +206,7 @@ void copy_host_to_device_2D(
     std::size_t width, std::size_t height) {
 
     if (trace::enabled()) {
-        trace::log::copy_host_to_device(label, host, device, height * width * sizeof(T));
+        trace::log::copy_host_to_device(label, device, host, height * width * sizeof(T));
     }
 
     memcpy_host_to_device_2D(
