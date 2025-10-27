@@ -31,6 +31,7 @@ private:
 #if PLUTO_DEBUGGING
         std::cout << "Registering pluto resources" << std::endl;
 #endif
+        auto register_resource = [](std::string_view name, memory_resource* mr) { Registry<memory_resource>::instance().enregister(name, *mr); };
         register_resource("pluto::null_memory_resource", null_memory_resource());
         register_resource("pluto::new_delete_resource", new_delete_resource());
         register_resource("pluto::host_resource", host_resource());
@@ -77,10 +78,12 @@ namespace pluto {
 using MemoryResourceRegistry = Registry<memory_resource>;
 
 memory_resource* register_resource(std::string_view name, memory_resource* mr) {
+    RegisterPlutoResources::once();
     return &MemoryResourceRegistry::instance().enregister(name, *mr);
 }
 
 memory_resource* register_resource(std::string_view name, std::unique_ptr<memory_resource>&& mr) {
+    RegisterPlutoResources::once();
     return &MemoryResourceRegistry::instance().enregister(name, std::move(mr));
 }
 

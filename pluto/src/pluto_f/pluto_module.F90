@@ -37,12 +37,29 @@ interface
         use iso_c_binding, only: c_ptr
         type(c_ptr) :: memory_resource
     end function
+    function c_pluto_has_registered_resource(name, name_size) result(has_resource) bind(c)
+        use iso_c_binding, only: c_ptr, c_int
+        integer(c_int) :: has_resource
+        type(c_ptr), value, intent(in) :: name
+        integer(c_int), value, intent(in) :: name_size
+    end function
     function c_pluto_get_registered_resource(name, name_size) result(memory_resource) bind(c)
         use iso_c_binding, only: c_ptr, c_int
         type(c_ptr) :: memory_resource
         type(c_ptr), value, intent(in) :: name
         integer(c_int), value, intent(in) :: name_size
     end function
+    subroutine c_pluto_register_resource(name, name_size, memory_resource) bind(c)
+        use iso_c_binding, only: c_ptr, c_int
+        type(c_ptr), value, intent(in) :: name
+        integer(c_int), value, intent(in) :: name_size
+        type(c_ptr), value, intent(in) :: memory_resource
+    end subroutine
+    subroutine c_pluto_unregister_resource(name, name_size) bind(c)
+        use iso_c_binding, only: c_ptr, c_int
+        type(c_ptr), value, intent(in) :: name
+        integer(c_int), value, intent(in) :: name_size
+    end subroutine
     function c_pluto_new_delete_resource() result(memory_resource) bind(c)
         use iso_c_binding, only: c_ptr
         type(c_ptr) :: memory_resource
@@ -254,7 +271,10 @@ type pluto_t
     type(pluto_trace_t)  :: trace
 contains
     procedure, nopass :: devices => pluto_devices
+    procedure, nopass :: has_registered_resource => pluto_has_registered_resource
     procedure, nopass :: get_registered_resource => pluto_get_registered_resource
+    procedure, nopass :: register_resource => pluto_register_resource
+    procedure, nopass :: unregister_resource => pluto_unregister_resource
     procedure, nopass :: new_delete_resource => pluto_new_delete_resource
     procedure, nopass :: null_memory_resource => pluto_null_memory_resource
     procedure, nopass :: host_resource => pluto_host_resource
@@ -338,12 +358,31 @@ function pluto_devices()
     pluto_devices = c_pluto_devices()
 end function
 
+function pluto_has_registered_resource(name)
+    logical :: pluto_has_registered_resource
+    character(len=*), target, intent(in) :: name
+    integer(c_int) :: has_resource
+    has_resource = &
+        & c_pluto_has_registered_resource(c_loc(name), len(name,kind=c_int))
+end function
+
 function pluto_get_registered_resource(name) result(memory_resource)
     type(pluto_memory_resource) :: memory_resource
     character(len=*), target, intent(in) :: name
     memory_resource%c_memory_resource = &
         & c_pluto_get_registered_resource(c_loc(name), len(name,kind=c_int))
 end function
+
+subroutine pluto_register_resource(name, memory_resource)
+    character(len=*), target, intent(in) :: name
+    type(pluto_memory_resource), intent(in) :: memory_resource
+    call c_pluto_register_resource(c_loc(name), len(name,kind=c_int), memory_resource%c_memory_resource)
+end subroutine
+
+subroutine pluto_unregister_resource(name)
+    character(len=*), target, intent(in) :: name
+    call c_pluto_unregister_resource(c_loc(name), len(name,kind=c_int))
+end subroutine
 
 function pluto_host_get_default_resource() result(memory_resource)
     type(pluto_memory_resource) :: memory_resource

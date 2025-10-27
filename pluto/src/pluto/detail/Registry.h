@@ -52,6 +52,9 @@ public:
         if (registered_.erase(key) == 0) {
             throw std::runtime_error("Could not unregister " + key);
         }
+        if (original_name_.erase(key) == 0) {
+            throw std::runtime_error("Could not unregister " + key);
+        }
         if (owned_.erase(key)) {
             ordered_keys_.erase(std::find(ordered_keys_.begin(), ordered_keys_.end(), key));
         }
@@ -77,14 +80,7 @@ public:
 
     std::string_view name(void* mr) const {
         std::lock_guard guard(mutex_);
-        std::string_view name;
-        for (auto& [key, val] : registered_) {
-            if (val == mr) {
-                name = key;
-                break;
-            }
-        }
-        return name;
+        return do_name(mr);
     }
 
 private:
@@ -103,11 +99,18 @@ private:
             owned_.erase(key);
         }
         registered_.clear();
+        original_name_.clear();
         owned_.clear();
         ordered_keys_.clear();
     }
 
     value_type& do_register(std::string_view name, value_type& mr) {
+        if (do_has(mr)) {
+            original_name_[std::string(name)] = std::string(do_name(&mr));
+        }
+        else {
+            original_name_[std::string(name)] = std::string(name);
+        }
         bool inserted = registered_.try_emplace(std::string(name), &mr).second;
         if (not inserted) {
             throw std::runtime_error("Could not register " + std::string(name));
@@ -125,6 +128,26 @@ private:
         return true;
     }
 
+    bool do_has(value_type& mr) const {
+        for (auto& key_val : registered_) {
+            if (key_val.second == &mr) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    std::string_view do_name(void *mr) const {
+        std::string_view name;
+        for (auto& [key, val] : registered_) {
+            if (val == mr) {
+                name = original_name_.at(std::string(key));
+                break;
+            }
+        }
+        return name;
+    }
+
     value_type& do_get(std::string_view name) const {
         if (registered_.find(name) != registered_.end()) {
             return *registered_.at(std::string(name));
@@ -137,6 +160,7 @@ private:
     std::map<std::string, std::unique_ptr<value_type>, std::less<>> owned_;
     std::list<std::string> ordered_keys_;
     std::map<std::string, value_type*, std::less<>> registered_;
+    std::map<std::string, std::string> original_name_;
 };
 
 }  // namespace pluto
