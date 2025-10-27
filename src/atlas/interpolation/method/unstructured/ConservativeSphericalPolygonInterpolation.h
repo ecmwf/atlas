@@ -134,22 +134,27 @@ public:
 
     struct Statistics {
         enum Counts {
-            NUM_SRC_PLG = 0,  // index, number of source polygons
-            NUM_TGT_PLG,      // index, number of target polygons
-            NUM_INT_PLG,      // index, number of intersection polygons
-            NUM_UNCVR_FULL_TGT,    // index, number of completely non covered target polygons
-            NUM_UNCVR_PART_TGT,    // index, number of partially non covered target polygons
+            NUM_SRC_PLG = 0,        // index, number of source polygons
+            NUM_TGT_PLG,            // index, number of target polygons
+            NUM_INT_PLG,            // index, number of intersection polygons
+            NUM_UNCVR_FULL_TGT,     // index, number of completely non covered target polygons
+            NUM_UNCVR_PART_TGT,     // index, number of partially non covered target polygons
             NUM_ENUM_SIZE
         };
         enum Errors {
-            ERR_TGT_INTERSECTPLG_L1 = 0,      // see above
-            ERR_TGT_INTERSECTPLG_LINF,    // see above
-            ERR_SRCTGT_INTERSECTPLG_DIFF,    // index, 1/(unit_sphere.area) ( \sum_{scell} scell.area - \sum{tcell} tcell.area )
-            ERR_REMAP_CONS,  // index, error in mass conservation
-            ERR_REMAP_RELCONS,  // index, error in mass conservation as percentage of source mass
-            ERR_REMAP_L2,    // index, error accuracy for given analytical function
-            ERR_REMAP_LINF,  // index, like REMAP_L2 but in L_infinity norm
+            ERR_TGT_INTERSECTPLG_L1 = 0,    // see above
+            ERR_TGT_INTERSECTPLG_LINF,      // see above
+            ERR_SRCTGT_INTERSECTPLG_DIFF,   // index, 1/(unit_sphere.area) ( \sum_{scell} scell.area - \sum{tcell} tcell.area )
+            ERR_REMAP_CONS,                 // index, error in mass conservation
+            ERR_REMAP_RELCONS,              // index, error in mass conservation as percentage of source mass
+            ERR_REMAP_L2,                   // index, error accuracy for given analytical function
+            ERR_REMAP_LINF,                 // index, like REMAP_L2 but in L_infinity norm
             ERR_ENUM_SIZE
+        };
+        enum Mass {
+            MASS_SRC = 0,       // total source mass
+            MASS_TGT,
+            MASS_ENUM_SIZE
         };
         enum Timings {
             TIME_SRC_PLG = 0,   // index, max time in second per task to build source polygons
@@ -181,6 +186,7 @@ public:
         };
         std::array<int, NUM_ENUM_SIZE> counts;
         std::array<double, ERR_ENUM_SIZE> errors;
+        std::array<double, MASS_ENUM_SIZE> mass;
         std::array<size_t, MEM_ENUM_SIZE> memory;
         std::array<double, TIME_ENUM_SIZE> time;
 
