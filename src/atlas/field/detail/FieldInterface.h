@@ -60,6 +60,15 @@ void atlas__Field__device_data_float_specf(FieldImpl* This, float*& field_data, 
                                     int*& field_stridesf);
 void atlas__Field__device_data_double_specf(FieldImpl* This, double*& field_data, int& rank, int*& field_shapef,
                                      int*& field_stridesf);
+void atlas__Field__device_mapped_host_data_int_specf(FieldImpl* This, int*& field_data, int& rank, int*& field_shapef,
+                                  int*& field_stridesf);
+void atlas__Field__device_mapped_host_data_long_specf(FieldImpl* This, long*& field_data, int& rank, int*& field_shapef,
+                                   int*& field_stridesf);
+void atlas__Field__device_mapped_host_data_float_specf(FieldImpl* This, float*& field_data, int& rank, int*& field_shapef,
+                                    int*& field_stridesf);
+void atlas__Field__device_mapped_host_data_double_specf(FieldImpl* This, double*& field_data, int& rank, int*& field_shapef,
+                                     int*& field_stridesf);
+
 util::Metadata* atlas__Field__metadata(FieldImpl* This);
 const functionspace::FunctionSpaceImpl* atlas__Field__functionspace(FieldImpl* This);
 void atlas__Field__rename(FieldImpl* This, const char* name);

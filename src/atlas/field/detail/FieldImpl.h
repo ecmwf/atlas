@@ -194,6 +194,14 @@ public:  // Destructor
         return array_->device_data<DATATYPE>();
     }
     template <typename DATATYPE>
+    DATATYPE* device_mapped_host_data() const {
+        return array_->device_mapped_host_data<DATATYPE>();
+    }
+    template <typename DATATYPE>
+    DATATYPE* device_mapped_host_data() {
+        return array_->device_mapped_host_data<DATATYPE>();
+    }
+    template <typename DATATYPE>
     DATATYPE const* data() const {
         return array_->host_data<DATATYPE>();
     }

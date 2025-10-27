@@ -182,6 +182,14 @@ public:
         return data_store_->deviceData<DATATYPE>();
     }
     template <typename DATATYPE>
+    DATATYPE const* device_mapped_host_data() const {
+        return data_store_->deviceMappedHostData<DATATYPE>();
+    }
+    template <typename DATATYPE>
+    DATATYPE* device_mapped_host_data() {
+        return data_store_->deviceMappedHostData<DATATYPE>();
+    }
+    template <typename DATATYPE>
     DATATYPE const* data() const {
         return data_store_->hostData<DATATYPE>();
     }
