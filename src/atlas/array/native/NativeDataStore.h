@@ -25,6 +25,9 @@
 #include "atlas/runtime/Exception.h"
 #include "atlas/runtime/Trace.h"
 
+#include "atlas/runtime/Log.h"
+
+
 #define ATLAS_ACC_DEBUG 0
 
 //------------------------------------------------------------------------------
@@ -96,6 +99,12 @@ static pluto::memory_resource* device_resource(bool shared) {
     }
 }
 
+static pluto::memory_resource* device_mapped_host_resource() {
+    if (pluto::has_registered_resource("atlas::array::device_mapped_host_resource")) {
+        return pluto::get_registered_resource("atlas::array::device_mapped_host_resource");
+    }
+    return pluto::host::get_default_resource();
+}
 
 template <typename Value>
 class DataStore final : public ArrayDataStore {
@@ -253,6 +262,8 @@ public:
 
     void* voidDeviceData() override { return static_cast<void*>(device_data_); }
 
+    void* voidDeviceMappedHostData() override { return static_cast<void*>(host_data_); }
+
     void accMap() const override {
         if ((not acc_mapped_ && acc::devices())) {
             if (is_shared_data_) {
@@ -354,7 +365,8 @@ public:
     }
 
     WrappedDataStore(Value* host_data, size_t size): host_data_(host_data), size_(size),
-        device_allocator_{pluto::device::get_default_resource()} {
+        device_allocator_{pluto::device::get_default_resource()},
+        device_mapped_host_allocator_{device_mapped_host_resource()} {
         label_ = array::label::get();
         init_device();
     }
@@ -362,7 +374,8 @@ public:
     WrappedDataStore(Value* host_data, const ArraySpec& spec):
         host_data_(host_data),
         size_(spec.size()),
-        device_allocator_{pluto::device::get_default_resource()} {
+        device_allocator_{pluto::device::get_default_resource()},
+        device_mapped_host_allocator_{device_mapped_host_resource()} {
         label_ = array::label::get();
         init_device();
         contiguous_ = spec.contiguous();
@@ -494,7 +507,7 @@ public:
 #if ATLAS_HAVE_TRACE
                 std::unique_ptr<atlas::Trace> trace;
                 if (atlas::Library::instance().traceMemory()) {
-                            trace.reset(new atlas::Trace(Here(), "allocate_device [host=wrapped]", {"memory","memory.allocator","memory.allocator.device","memory.allocator.device.allocate"}));
+                    trace.reset(new atlas::Trace(Here(), "allocate_device [host=wrapped]", {"memory","memory.allocator","memory.allocator.device","memory.allocator.device.allocate"}));
                 }
 #endif
                 device_data_ = device_allocator_.allocate(label_, size_);
@@ -508,9 +521,7 @@ public:
 
     void deallocateDevice() const override {
         if (device_allocated_) {
-            if (contiguous_) {
-                accUnmap();
-            }
+            accUnmap();
 #if ATLAS_HAVE_TRACE
             std::unique_ptr<atlas::Trace> trace;
             if (atlas::Library::instance().traceMemory()) {
@@ -542,17 +553,37 @@ public:
 
     void* voidDeviceData() override { return static_cast<void*>(device_data_); }
 
+    void* voidDeviceMappedHostData() override {
+        if (contiguous_) {
+            return static_cast<void*>(host_data_);
+        }
+        if (not acc_mapped_) {
+            accMap();
+        }
+        ATLAS_ASSERT(device_mapped_host_data_ != nullptr);
+        return static_cast<void*>(device_mapped_host_data_);
+    }
+
     void accMap() const override {
         if (not acc_mapped_ && acc::devices()) {
-            ATLAS_ASSERT(deviceAllocated(),"Could not accMap as device data is not allocated");
-            ATLAS_ASSERT(!atlas::acc::is_present(host_data_, size_ * sizeof(Value)));
-            if constexpr(ATLAS_ACC_DEBUG) {
-                std::cout << "               + acc_map_data(hostptr:"<<host_data_<<", device:"<<device_data_<<", bytes:"<<size_ * sizeof(Value)<<")" <<std::endl;
+            auto do_acc_map = [&](void* hostptr, void* deviceptr) {
+                ATLAS_ASSERT(deviceAllocated(),"Could not accMap as device data is not allocated");
+                ATLAS_ASSERT(!atlas::acc::is_present(hostptr, size_ * sizeof(Value)));
+                if constexpr(ATLAS_ACC_DEBUG) {
+                    std::cout << "               + acc_map_data(hostptr:"<<hostptr<<", deviceptr:"<<deviceptr<<", bytes:"<<size_ * sizeof(Value)<<")" <<std::endl;
+                }
+                atlas::acc::map((void*)hostptr, (void*)deviceptr, size_ * sizeof(Value));
+                ATLAS_ASSERT(atlas::acc::is_present(hostptr, size_ * sizeof(Value)));
+                ATLAS_ASSERT(atlas::acc::deviceptr(hostptr) == deviceptr);
+                acc_mapped_ = true;
+            };
+            if (contiguous_) {
+                do_acc_map(host_data_, device_data_);
             }
-            atlas::acc::map((void*)host_data_, (void*)device_data_, size_ * sizeof(Value));
-            ATLAS_ASSERT(atlas::acc::is_present(host_data_, size_ * sizeof(Value)));
-            ATLAS_ASSERT(atlas::acc::deviceptr(host_data_) == device_data_);
-            acc_mapped_ = true;
+            else {
+                device_mapped_host_data_ = device_mapped_host_allocator_.allocate("device_mapped_host("+label_+")",size_);
+                do_acc_map(device_mapped_host_data_, device_data_);
+            }
         }
     }
 
@@ -562,12 +593,27 @@ public:
 
     void accUnmap() const override {
         if (acc_mapped_) {
-            ATLAS_ASSERT(atlas::acc::is_present(host_data_, size_ * sizeof(Value)));
-            if constexpr(ATLAS_ACC_DEBUG) {
-                std::cout << "               - acc_unmap_data(hostptr:"<<host_data_<<", device:"<<device_data_<<", bytes:"<<size_ * sizeof(Value)<<")" <<std::endl;
+            auto do_acc_unmap = [&](void* hostptr, void* deviceptr) {
+                ATLAS_ASSERT(atlas::acc::is_present(hostptr, size_ * sizeof(Value)));
+                if constexpr(ATLAS_ACC_DEBUG) {
+                    std::cout << "               - acc_unmap_data(hostptr:"<<hostptr<<", deviceptr:"<<deviceptr<<", bytes:"<<size_ * sizeof(Value)<<")" <<std::endl;
+                }
+                atlas::acc::unmap(hostptr);
+                if constexpr(ATLAS_ACC_DEBUG) {
+                    std::cout << "               - acc_unmap_data(hostptr:"<<hostptr<<", deviceptr:"<<deviceptr<<", bytes:"<<size_ * sizeof(Value)<<") ... done" <<std::endl;
+                }
+                acc_mapped_ = false;
+            };
+            if (contiguous_) {
+                do_acc_unmap(host_data_, device_data_);
             }
-            atlas::acc::unmap(host_data_);
-            acc_mapped_ = false;
+            else {
+                if (device_mapped_host_data_) {
+                    do_acc_unmap(device_mapped_host_data_, device_data_);
+                    device_mapped_host_allocator_.deallocate("device_mapped_host("+label_+")",device_mapped_host_data_, size_);
+                    device_mapped_host_data_ = nullptr;
+                }
+            }
         }
     }
 
@@ -575,6 +621,7 @@ private:
     Value* host_data_;
     size_t size_;
     mutable Value* device_data_;
+    mutable Value* device_mapped_host_data_{nullptr};
 
     bool contiguous_{true};
     size_t memcpy_h2d_pitch_;
@@ -588,6 +635,7 @@ private:
     mutable bool acc_mapped_{false};
 
     mutable pluto::allocator<Value> device_allocator_;
+    mutable pluto::allocator<Value> device_mapped_host_allocator_;
 
     std::string label_;
 };

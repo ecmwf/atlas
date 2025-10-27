@@ -46,13 +46,30 @@ void atlas__Field__device_data_specf(FieldImpl* This, Value*& data, int& rank, i
     }
     data     = This->array().device_data<Value>();
     shapef   = const_cast<int*>(This->shapef().data());
+    rank     = This->shapef().size();
     if (data == This->array().host_data<Value>()) {
         stridesf = const_cast<int*>(This->stridesf().data());
     }
     else {
         stridesf = const_cast<int*>(This->device_stridesf().data());
     }
+}
+
+template <typename Value>
+void atlas__Field__device_mapped_host_data_specf(FieldImpl* This, Value*& data, int& rank, int*& shapef, int*& stridesf) {
+    ATLAS_ASSERT(This != nullptr, "Cannot access data of uninitialised atlas_Field");
+    if (This->datatype() != array::make_datatype<Value>()) {
+        throw_Exception("Datatype mismatch for accessing field data");
+    }
+    data     = This->device_mapped_host_data<Value>();
+    shapef   = const_cast<int*>(This->shapef().data());
     rank     = This->shapef().size();
+    if (data == This->array().host_data<Value>()) {
+        stridesf = const_cast<int*>(This->stridesf().data());
+    }
+    else {
+        stridesf = const_cast<int*>(This->device_stridesf().data());
+    }
 }
 
 template <typename Value>
@@ -220,6 +237,22 @@ void atlas__Field__device_data_float_specf(FieldImpl* This, float*& data, int& r
 
 void atlas__Field__device_data_double_specf(FieldImpl* This, double*& data, int& rank, int*& shapef, int*& stridesf) {
     atlas__Field__device_data_specf(This, data, rank, shapef, stridesf);
+}
+
+void atlas__Field__device_mapped_host_data_int_specf(FieldImpl* This, int*& data, int& rank, int*& shapef, int*& stridesf) {
+    atlas__Field__device_mapped_host_data_specf(This, data, rank, shapef, stridesf);
+}
+
+void atlas__Field__device_mapped_host_data_long_specf(FieldImpl* This, long*& data, int& rank, int*& shapef, int*& stridesf) {
+    atlas__Field__device_mapped_host_data_specf(This, data, rank, shapef, stridesf);
+}
+
+void atlas__Field__device_mapped_host_data_float_specf(FieldImpl* This, float*& data, int& rank, int*& shapef, int*& stridesf) {
+    atlas__Field__device_mapped_host_data_specf(This, data, rank, shapef, stridesf);
+}
+
+void atlas__Field__device_mapped_host_data_double_specf(FieldImpl* This, double*& data, int& rank, int*& shapef, int*& stridesf) {
+    atlas__Field__device_mapped_host_data_specf(This, data, rank, shapef, stridesf);
 }
 
 int atlas__Field__host_needs_update(const FieldImpl* This) {
