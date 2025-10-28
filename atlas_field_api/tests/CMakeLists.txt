@@ -9,8 +9,6 @@ foreach( prec sp dp )
     endif()
 endforeach()
 
-set(CMAKE_Fortran_MODULE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
-
 foreach( program init_owner_gpu init_wrapper_gpu init_wrapper_non_contiguous init_wrapper_non_contiguous_gpu test_last_dim )
     foreach( prec sp dp )
         set( target ${program}_${prec} )
