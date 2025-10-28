@@ -9,7 +9,16 @@ foreach( prec sp dp )
     endif()
 endforeach()
 
-foreach( program init_owner_gpu init_wrapper_gpu init_wrapper_non_contiguous init_wrapper_non_contiguous_gpu test_last_dim test_field_tracking )
+list( APPEND programs
+    init_owner_gpu
+    init_wrapper_gpu
+    init_wrapper_non_contiguous
+    init_wrapper_non_contiguous_gpu
+    test_last_dim
+    test_field_tracking
+    test_sync_on_final
+)
+foreach( program ${programs} )
     foreach( prec sp dp )
         set( target ${program}_${prec} )
         add_executable( ${target} )
