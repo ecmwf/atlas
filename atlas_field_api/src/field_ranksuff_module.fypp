@@ -96,6 +96,7 @@ subroutine get_device_data_wronly_${rank}$${dtype}$(self, ptr)
     ${ftype}$, pointer, intent(inout) :: ptr(${dim[rank]}$)
     ${ftype}$, pointer :: f_data(${dim[rank]}$)
     call self%f%allocate_device()
+    call self%f%set_device_needs_update(.false.)
     call self%f%set_host_needs_update(.true.) ! Because we will write to device
     if (self%map_devptr) then
         call self%f%device_mapped_host_data(f_data)
