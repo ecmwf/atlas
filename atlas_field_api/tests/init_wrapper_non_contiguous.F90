@@ -7,28 +7,10 @@
 ! granted to it by virtue of its status as an intergovernmental organisation
 ! nor does it submit to any jurisdiction.
 
-MODULE NON_CONTI
-        USE FIELD_MODULE
-        USE FIELD_FACTORY_MODULE
-        USE PARKIND1
-        USE FIELD_ABORT_MODULE
-        IMPLICIT NONE
-CONTAINS
-        SUBROUTINE DO_STUFF_WITH_NONCONTIGUOUS_DATA(D)
-                REAL(KIND=JPRB) :: D(:,:)
-                CLASS(FIELD_2RB), POINTER :: W => NULL()
-                REAL(KIND=JPRB), POINTER :: PTR(:,:)
-                CALL FIELD_NEW(W, DATA=D)
-                CALL W%GET_HOST_DATA_RDWR(PTR)
-                PTR=42
-                CALL FIELD_DELETE(W)
-        END SUBROUTINE DO_STUFF_WITH_NONCONTIGUOUS_DATA
-END MODULE NON_CONTI
 PROGRAM INIT_WRAPPER_NON_CONTIGUOUS
         ! TEST IF WRAPPER WORKS WITH NON CONTIGUOUS ARRAY
-        USE FIELD_MODULE
+        USE FIELD_ABORT_MODULE
         USE PARKIND1
-        USE NON_CONTI
 
         IMPLICIT NONE
         REAL(KIND=JPRB), ALLOCATABLE :: D(:,:)
@@ -44,6 +26,21 @@ PROGRAM INIT_WRAPPER_NON_CONTIGUOUS
         END IF
         END DO
         END DO
+
+CONTAINS
+        SUBROUTINE DO_STUFF_WITH_NONCONTIGUOUS_DATA(D)
+                USE FIELD_MODULE
+                USE FIELD_FACTORY_MODULE
+                USE PARKIND1
+                IMPLICIT NONE
+                REAL(KIND=JPRB) :: D(:,:)
+                CLASS(FIELD_2RB), POINTER :: W => NULL()
+                REAL(KIND=JPRB), POINTER :: PTR(:,:)
+                CALL FIELD_NEW(W, DATA=D)
+                CALL W%GET_HOST_DATA_RDWR(PTR)
+                PTR=42
+                CALL FIELD_DELETE(W)
+        END SUBROUTINE DO_STUFF_WITH_NONCONTIGUOUS_DATA
 
 END PROGRAM INIT_WRAPPER_NON_CONTIGUOUS
 
