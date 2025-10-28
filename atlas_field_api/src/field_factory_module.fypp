@@ -59,7 +59,7 @@ subroutine FIELD_NEW_${rank}$${dtype}$(FIELD_PTR, UBOUNDS, LBOUNDS, PERSISTENT, 
 
     ! Start of routine
     allocate(FIELD_PTR)
-    FIELD_PTR%persistent    = optional_arg(PERSISTENT, DEFAULT=.true.)
+    FIELD_PTR%persistent    = optional_arg(PERSISTENT, DEFAULT=.false.)
     FIELD_PTR%map_devptr    = optional_arg(MAP_DEVPTR, DEFAULT=.true.)
     FIELD_PTR%sync_on_final = .false.
     FIELD_PTR%lbounds       = 1
