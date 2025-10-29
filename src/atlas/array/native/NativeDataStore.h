@@ -17,6 +17,8 @@
 
 #include "pluto/pluto.h"
 
+#include "eckit/utils/Translator.h"
+
 #include "atlas/array/ArrayDataStore.h"
 #include "atlas/array/ArraySpec.h"
 #include "atlas/library.h"
@@ -29,6 +31,27 @@
 
 
 #define ATLAS_ACC_DEBUG 0
+
+namespace {
+bool getEnv(const std::string& env, bool default_value) {
+    const char* cenv = ::getenv(env.c_str());
+    if (cenv != nullptr) {
+        return eckit::Translator<std::string, bool>()(cenv);
+    }
+    return default_value;
+}
+#if ATLAS_HAVE_GPU
+bool DEVICE_MEMORY() {
+    static bool v = getEnv("ATLAS_SIMULATE_DEVICE_MEMORY", true) || pluto::devices() > 0;
+    return v;
+}
+#else
+bool DEVICE_MEMORY() {
+  static bool ATLAS_ALLOCATE_DEVICE = getEnv("ATLAS_SIMULATE_DEVICE_MEMORY",false);
+  return ATLAS_ALLOCATE_DEVICE;
+}
+}
+#endif
 
 //------------------------------------------------------------------------------
 
@@ -72,7 +95,7 @@ static bool test_device_is_shared() {
     }
 
     // If above shortcuts failed, we can do an introspection on a dummy allocation
-    if (ATLAS_HAVE_GPU && pluto::devices()) {
+    if (DEVICE_MEMORY()) {
         void* device_ptr = device_resource.allocate(8);
         bool is_shared = pluto::is_managed(device_ptr) || (pluto::is_pinned(device_ptr));
         device_resource.deallocate(device_ptr,8);
@@ -117,11 +140,12 @@ public:
         label_ = array::label::get();
         allocateHost();
         initialise(host_data_, size_);
-        if (ATLAS_HAVE_GPU && pluto::devices()) {
+        if (DEVICE_MEMORY()) {
             device_updated_ = false;
         }
         else {
             device_data_ = host_data_;
+            device_mapped_host_data_ = host_data_;
         }
     }
 
@@ -131,7 +155,7 @@ public:
     }
 
     void updateDevice() const override {
-        if (ATLAS_HAVE_GPU && pluto::devices()) {
+        if (DEVICE_MEMORY()) {
             if (not device_allocated_) {
                 allocateDevice();
             }
@@ -142,12 +166,14 @@ public:
             }
 #endif
             pluto::copy_host_to_device(label_, device_data_, host_data_, size_);
-            device_updated_ = true;
         }
+        device_updated_ = true;
     }
 
     void updateHost() const override {
-        if constexpr (ATLAS_HAVE_GPU) {
+        ATLAS_DEBUG_VAR(DEVICE_MEMORY());
+        if (DEVICE_MEMORY()) {
+            ATLAS_DEBUG_VAR(device_allocated_);
             if (device_allocated_) {
 #if ATLAS_HAVE_TRACE
                 std::unique_ptr<atlas::Trace> trace;
@@ -155,10 +181,11 @@ public:
                     trace.reset(new atlas::Trace(Here(), "update_host", {"memory","memory.transfer", "memory.transfer.d2h"}));
                 }
 #endif
+                ATLAS_DEBUG("copy_device_to_host");
                 pluto::copy_device_to_host(label_, host_data_, device_data_, size_);
-                host_updated_ = true;
             }
         }
+        host_updated_ = true;
     }
 
     bool valid() const override { return true; }
@@ -202,7 +229,7 @@ public:
     bool deviceAllocated() const override { return device_allocated_; }
 
     void allocateDevice() const override {
-        if (ATLAS_HAVE_GPU && pluto::devices()) {
+        if (DEVICE_MEMORY()) {
             if (device_allocated_) {
                 return;
             }
@@ -219,7 +246,13 @@ public:
                     #endif
                     device_data_ = device_allocator_.allocate(label_, size_);
                 }
-                ATLAS_ASSERT(pluto::is_device_accessible(device_data_));
+                if (pluto::devices() > 0) {
+                    device_mapped_host_data_ = host_data_;
+                    ATLAS_ASSERT(pluto::is_device_accessible(device_data_));
+                }
+                else {
+                    device_mapped_host_data_ = device_data_;
+                }
                 device_allocated_ = true;
                 accMap();
             }
@@ -238,6 +271,7 @@ public:
 #endif
                 device_allocator_.deallocate(label_, device_data_,size_);
             }
+            device_mapped_host_data_ = nullptr;
             device_data_ = nullptr;
             device_allocated_ = false;
             device_updated_ = false;
@@ -262,7 +296,7 @@ public:
 
     void* voidDeviceData() override { return static_cast<void*>(device_data_); }
 
-    void* voidDeviceMappedHostData() override { return static_cast<void*>(host_data_); }
+    void* voidDeviceMappedHostData() override { return static_cast<void*>(device_mapped_host_data_); }
 
     void accMap() const override {
         if ((not acc_mapped_ && acc::devices())) {
@@ -336,6 +370,7 @@ private:
     size_t size_;
     Value* host_data_;
     mutable Value* device_data_{nullptr};
+    mutable Value* device_mapped_host_data_{nullptr};
 
     mutable bool host_updated_{true};
     mutable bool device_updated_{true};
@@ -355,12 +390,13 @@ template <typename Value>
 class WrappedDataStore final : public ArrayDataStore {
 public:
 
-    void init_device() {
-        if (ATLAS_HAVE_GPU && pluto::devices()) {
+    void init_device(bool contiguous) {
+        if (DEVICE_MEMORY()) {
             device_updated_ = false;
         }
         else {
             device_data_ = host_data_;
+            device_mapped_host_data_ = host_data_;
         }
     }
 
@@ -368,7 +404,7 @@ public:
         device_allocator_{pluto::device::get_default_resource()},
         device_mapped_host_allocator_{device_mapped_host_resource()} {
         label_ = array::label::get();
-        init_device();
+        init_device(contiguous_);
     }
 
     WrappedDataStore(Value* host_data, const ArraySpec& spec):
@@ -377,8 +413,8 @@ public:
         device_allocator_{pluto::device::get_default_resource()},
         device_mapped_host_allocator_{device_mapped_host_resource()} {
         label_ = array::label::get();
-        init_device();
         contiguous_ = spec.contiguous();
+        init_device(contiguous_);
         if (! contiguous_) {
             int break_idx = 0;
             size_t shp_mult_rhs = spec.shape()[spec.rank() - 1];
@@ -412,11 +448,36 @@ public:
         deallocateDevice();
     }
 
+    void memcpy_host_to_host_2D ( void* dst_ptr,
+                                  [[maybe_unused]] std::size_t dst_pitch_bytes /*stride in bytes to next contiguous chunk on destination*/,
+                                  const void* src_ptr,
+                                  [[maybe_unused]] std::size_t src_pitch_bytes /*stride in bytes to next contiguous chunk on source*/,
+                                  [[maybe_unused]] std::size_t width_bytes /*bytes of contiguous chunk*/,
+                                  [[maybe_unused]] std::size_t height_count /*count of contiguous chunks*/) const {
+        if (dst_ptr == src_ptr) {
+            return;
+        }
+        for (size_t h=0; h<height_count; ++h) {
+            void* dst       = (char*)dst_ptr + h * dst_pitch_bytes;
+            const void* src = (char*)src_ptr + h * src_pitch_bytes;
+            std::memcpy(dst, src, width_bytes);
+        }
+    }
+
+    template <class T>
+    void copy_host_to_host_2D( T* dst, std::size_t dst_pitch,
+                               const T* src, std::size_t src_pitch,
+                               std::size_t width, std::size_t height) const {
+        memcpy_host_to_host_2D(
+            dst, dst_pitch * sizeof(T),
+            src, src_pitch * sizeof(T),
+            width * sizeof(T), height);
+    }
+
+
     void updateDevice() const override {
-        if (ATLAS_HAVE_GPU && pluto::devices()) {
-            if (not device_allocated_) {
-                allocateDevice();
-            }
+        allocateDevice();
+        if (DEVICE_MEMORY()) {
 #if ATLAS_HAVE_TRACE
             std::unique_ptr<atlas::Trace> trace;
             if (atlas::Library::instance().traceMemory()) {
@@ -433,12 +494,12 @@ public:
                     host_data_, memcpy_d2h_pitch_,
                     memcpy_width_, memcpy_height_);
             }
-            device_updated_ = true;
         }
+        device_updated_ = true;
     }
 
     void updateHost() const override {
-        if constexpr (ATLAS_HAVE_GPU) {
+        if (DEVICE_MEMORY()) {
             if (device_allocated_) {
 #if ATLAS_HAVE_TRACE
                 std::unique_ptr<atlas::Trace> trace;
@@ -456,9 +517,9 @@ public:
                         device_data_, memcpy_h2d_pitch_,
                         memcpy_width_, memcpy_height_);
                 }
-                host_updated_ = true;
             }
         }
+        host_updated_ = true;
     }
 
 
@@ -499,7 +560,7 @@ public:
     bool deviceAllocated() const override { return device_allocated_; }
 
     void allocateDevice() const override {
-        if (ATLAS_HAVE_GPU && pluto::devices()) {
+        if (DEVICE_MEMORY()) {
             if (device_allocated_) {
                 return;
             }
@@ -512,9 +573,31 @@ public:
 #endif
                 device_data_ = device_allocator_.allocate(label_, size_);
                 device_allocated_ = true;
-                if (contiguous_) {
+                if (pluto::devices() == 0) {
+                    device_mapped_host_data_ = device_data_;
+                }
+                else if (contiguous_) {
+                    device_mapped_host_data_ = host_data_;
                     accMap();
                 }
+                else {
+                    device_mapped_host_data_ = nullptr;
+                }
+            }
+        }
+    }
+
+    void allocateDeviceMappedHostData() const {
+        if (not device_mapped_host_data_) {
+            device_mapped_host_data_ = device_mapped_host_allocator_.allocate("device_mapped_host("+label_+")", size_);
+        }
+    }
+
+    void deallocateDeviceMappedHostData() const {
+        if (device_mapped_host_data_) {
+            if (device_mapped_host_data_ != device_data_ && device_mapped_host_data_ != host_data_) {
+                device_mapped_host_allocator_.deallocate("device_mapped_host("+label_+")",device_mapped_host_data_, size_);
+                device_mapped_host_data_ = nullptr;
             }
         }
     }
@@ -528,6 +611,8 @@ public:
                 trace.reset(new atlas::Trace(Here(), "deallocate_device [host=wrapped]", {"memory","memory.allocator","memory.allocator.device","memory.allocator.device.deallocate"}));
             }
 #endif
+            deallocateDeviceMappedHostData();
+
             device_allocator_.deallocate(label_, device_data_, size_);
             device_data_ = nullptr;
             device_allocated_ = false;
@@ -554,13 +639,11 @@ public:
     void* voidDeviceData() override { return static_cast<void*>(device_data_); }
 
     void* voidDeviceMappedHostData() override {
-        if (contiguous_) {
-            return static_cast<void*>(host_data_);
+        if (device_mapped_host_data_) {
+            return static_cast<void*>(device_mapped_host_data_);
         }
-        if (not acc_mapped_) {
-            accMap();
-        }
-        ATLAS_ASSERT(device_mapped_host_data_ != nullptr);
+        allocateDeviceMappedHostData();
+        accMap();
         return static_cast<void*>(device_mapped_host_data_);
     }
 
@@ -581,7 +664,6 @@ public:
                 do_acc_map(host_data_, device_data_);
             }
             else {
-                device_mapped_host_data_ = device_mapped_host_allocator_.allocate("device_mapped_host("+label_+")",size_);
                 do_acc_map(device_mapped_host_data_, device_data_);
             }
         }
@@ -607,12 +689,8 @@ public:
             if (contiguous_) {
                 do_acc_unmap(host_data_, device_data_);
             }
-            else {
-                if (device_mapped_host_data_) {
-                    do_acc_unmap(device_mapped_host_data_, device_data_);
-                    device_mapped_host_allocator_.deallocate("device_mapped_host("+label_+")",device_mapped_host_data_, size_);
-                    device_mapped_host_data_ = nullptr;
-                }
+            else if(device_mapped_host_data_) {
+                do_acc_unmap(device_mapped_host_data_, device_data_);
             }
         }
     }
