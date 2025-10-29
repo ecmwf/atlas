@@ -6,7 +6,12 @@ find_package( atlas REQUIRED )
 find_package( fckit REQUIRED )
 find_package( pluto REQUIRED )
 find_package( OpenMP COMPONENTS Fortran )
-find_package( OpenACC COMPONENTS Fortran )
+
+set (HAVE_ACC 0)
+if (atlas_HAVE_ACC)
+  find_package( OpenACC COMPONENTS Fortran REQUIRED )
+  set (HAVE_ACC 1)
+endif()
 
 enable_testing()
 
