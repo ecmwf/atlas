@@ -25,13 +25,6 @@
 
 namespace pluto {
 
-static void throw_not_implemented(const char* message, const char* file, int line) {
-    std::stringstream err;
-    err << "ERROR (NOT IMPLEMENTED) : " << message << " [ at " << file << " : " << line << "]";
-    throw std::runtime_error(err.str());
-}
-#define THROW_NOT_IMPLEMENTED(message) throw_not_implemented(message, __FILE__, __LINE__)
-
 void memcpy_host_to_device(void* device_ptr, const void* host_ptr, std::size_t bytes) {
     if (device_ptr == host_ptr) {
         if (LOG) {
@@ -122,6 +115,22 @@ void memcpy_device_to_host(void* host_ptr, const void* device_ptr, std::size_t b
     }
 }
 
+void memcpy_host_to_host_2D ( void* dst_ptr,
+                              std::size_t dst_pitch_bytes /*stride in bytes to next contiguous chunk on destination*/,
+                              const void* src_ptr,
+                              std::size_t src_pitch_bytes /*stride in bytes to next contiguous chunk on source*/,
+                              std::size_t width_bytes /*bytes of contiguous chunk*/,
+                              std::size_t height_count /*count of contiguous chunks*/) {
+    if (dst_ptr == src_ptr) {
+        return;
+    }
+    for (size_t h=0; h<height_count; ++h) {
+        void* dst       = (char*)dst_ptr + h * dst_pitch_bytes;
+        const void* src = (char*)src_ptr + h * src_pitch_bytes;
+        std::memcpy(dst, src, width_bytes);
+    }
+}
+
 void memcpy_host_to_device_2D(
     void* device_ptr,
     [[maybe_unused]] std::size_t device_pitch_bytes /*stride in bytes to next contiguous chunk on device*/,
@@ -145,7 +154,7 @@ void memcpy_host_to_device_2D(
                              hicMemcpyHostToDevice));
     }
     else {
-        THROW_NOT_IMPLEMENTED("memcpy_host_to_device_2D for CPU backend");
+        memcpy_host_to_host_2D(device_ptr, device_pitch_bytes, host_ptr, host_pitch_bytes, width_bytes, height_count);
     }
 }
 
@@ -172,7 +181,7 @@ void memcpy_host_to_device_2D(
                                   hicMemcpyHostToDevice, s.value<hicStream_t>()));
     }
     else {
-        THROW_NOT_IMPLEMENTED("memcpy_host_to_device_2D for CPU backend");
+        memcpy_host_to_host_2D(device_ptr, device_pitch_bytes, host_ptr, host_pitch_bytes, width_bytes, height_count);
     }
 }
 
@@ -199,7 +208,7 @@ void memcpy_device_to_host_2D(
                              hicMemcpyDeviceToHost));
     }
     else {
-        THROW_NOT_IMPLEMENTED("memcpy_device_to_host_2D for CPU backend");
+        memcpy_host_to_host_2D(host_ptr, host_pitch_bytes, device_ptr, device_pitch_bytes, width_bytes, height_count);
     }
 }
 void memcpy_device_to_host_2D(
@@ -224,7 +233,7 @@ void memcpy_device_to_host_2D(
                                   hicMemcpyDeviceToHost, s.value<hicStream_t>()));
     }
     else {
-        THROW_NOT_IMPLEMENTED("memcpy_device_to_host_2D for CPU backend");
+        memcpy_host_to_host_2D(host_ptr, host_pitch_bytes, device_ptr, device_pitch_bytes, width_bytes, height_count);
     }
 }
 

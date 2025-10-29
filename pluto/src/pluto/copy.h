@@ -258,4 +258,35 @@ void copy_device_to_host_2D(
         width, height);
 }
 
+template <class T>
+void copy_host_to_host_2D(
+    std::string_view label,
+    T* dst, std::size_t dst_pitch,
+    const T* src, std::size_t src_pitch,
+    std::size_t width, std::size_t height) {
+
+    if (trace::enabled()) {
+        trace::log::copy_host_to_host(label, dst, src, height * width * sizeof(T));
+    }
+
+    memcpy_host_to_host_2D(
+        dst, dst_pitch * sizeof(T),
+        src, src_pitch * sizeof(T),
+        width * sizeof(T), height);
+}
+
+template <class T>
+void copy_host_to_host_2D(
+    T* dst, std::size_t dst_pitch,
+    const T* src, std::size_t src_pitch,
+    std::size_t width, std::size_t height) {
+
+    copy_device_to_host_2D(
+        std::string_view{},
+        dst, dst_pitch,
+        src, src_pitch,
+        width, height);
+}
+
+
 }  // namespace pluto

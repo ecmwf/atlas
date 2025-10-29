@@ -47,4 +47,12 @@ void memcpy_device_to_host_2D(void* host_ptr,
                               std::size_t width_bytes /*bytes of contiguous chunk*/,
                               std::size_t height_count /*count of contiguous chunks*/, stream_view);
 
+void memcpy_host_to_host_2D(void* dst_ptr,
+                            std::size_t dst_pitch_bytes /*stride in bytes to next contiguous chunk on dst*/,
+                            const void* src_ptr,
+                            std::size_t src_pitch_bytes /*stride in bytes to next contiguous chunk on src*/,
+                            std::size_t width_bytes /*bytes of contiguous chunk*/,
+                            std::size_t height_count /*count of contiguous chunks*/);
+
+
 }  // namespace pluto

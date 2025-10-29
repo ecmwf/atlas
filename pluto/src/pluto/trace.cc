@@ -130,6 +130,16 @@ void copy_device_to_host(std::string_view label, const void* hptr, const void* d
     out << "host_ptr="<<hptr<<", device_ptr="<<dptr<<", bytes="<<format_bytes(bytes)<<")";
     out << '\n';
 }
+
+void copy_host_to_host(std::string_view label, const void* dst_ptr, const void* src_ptr, std::size_t bytes) {
+    out << "PLUTO_TRACE copy_host_to_host(";
+    if (not label.empty()) {
+        out << "label="<<label<<", ";
+    }
+    out << "dst_ptr="<<dst_ptr<<", src_ptr="<<src_ptr<<", bytes="<<format_bytes(bytes)<<")";
+    out << '\n';
+}
+
 }
 
 

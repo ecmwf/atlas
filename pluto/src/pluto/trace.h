@@ -80,6 +80,7 @@ void allocate_async(std::string_view label, const void* ptr, std::size_t bytes, 
 void deallocate_async(std::string_view label, const void* ptr, std::size_t bytes, std::size_t alignment, const void* stream, std::string_view resource_name, memory_tracker* memory_tracker);
 void copy_host_to_device(std::string_view label, const void* dptr, const void* hptr, std::size_t bytes);
 void copy_device_to_host(std::string_view label, const void* hptr, const void* dptr, std::size_t bytes);
+void copy_host_to_host(std::string_view label, const void* dst_ptr, const void* src_ptr, std::size_t bytes);
 }
 
 }  // namespace pluto::trace
