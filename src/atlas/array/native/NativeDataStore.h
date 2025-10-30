@@ -448,33 +448,6 @@ public:
         deallocateDevice();
     }
 
-    void memcpy_host_to_host_2D ( void* dst_ptr,
-                                  [[maybe_unused]] std::size_t dst_pitch_bytes /*stride in bytes to next contiguous chunk on destination*/,
-                                  const void* src_ptr,
-                                  [[maybe_unused]] std::size_t src_pitch_bytes /*stride in bytes to next contiguous chunk on source*/,
-                                  [[maybe_unused]] std::size_t width_bytes /*bytes of contiguous chunk*/,
-                                  [[maybe_unused]] std::size_t height_count /*count of contiguous chunks*/) const {
-        if (dst_ptr == src_ptr) {
-            return;
-        }
-        for (size_t h=0; h<height_count; ++h) {
-            void* dst       = (char*)dst_ptr + h * dst_pitch_bytes;
-            const void* src = (char*)src_ptr + h * src_pitch_bytes;
-            std::memcpy(dst, src, width_bytes);
-        }
-    }
-
-    template <class T>
-    void copy_host_to_host_2D( T* dst, std::size_t dst_pitch,
-                               const T* src, std::size_t src_pitch,
-                               std::size_t width, std::size_t height) const {
-        memcpy_host_to_host_2D(
-            dst, dst_pitch * sizeof(T),
-            src, src_pitch * sizeof(T),
-            width * sizeof(T), height);
-    }
-
-
     void updateDevice() const override {
         allocateDevice();
         if (DEVICE_MEMORY()) {
