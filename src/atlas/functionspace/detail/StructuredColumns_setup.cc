@@ -108,8 +108,16 @@ void StructuredColumns::setup(const grid::Distribution& distribution, const ecki
     part_ = mpi::comm(mpi_comm()).rank();
     nb_partitions_ = distribution.nb_partitions();
 
-    j_begin_ = std::numeric_limits<idx_t>::max();
-    j_end_   = std::numeric_limits<idx_t>::min();
+    // We initialize j_begin_ and j_end_ to large integers, but we avoid using
+    // the max/min (as in numeric_limits<idx_t>::max()/min()) values because we
+    // need the difference `j_end_ - j_begin_` to be representable as an idx_t.
+    // This is to avoid miscompilation of OpenMP for loops below when using the
+    // gcc compiler, as described in https://github.com/ecmwf/atlas/issues/323
+    const idx_t max_over_two = std::numeric_limits<idx_t>::max() / 2;
+    j_begin_ = max_over_two;
+    j_end_   = -max_over_two;
+    // The logic around i_begin_, i_end_ doesn't miscompile in the same way so
+    // we initialize to the max/min values.
     i_begin_.resize(grid_->ny(), std::numeric_limits<idx_t>::max());
     i_end_.resize(grid_->ny(), std::numeric_limits<idx_t>::min());
     idx_t owned(0);
@@ -631,7 +639,7 @@ void StructuredColumns::setup(const grid::Distribution& distribution, const ecki
             ghost(gp.r)   = 0;
         }
 
-        // Following short loops are not parallelized with
+        // Following short loops are not parallelized with OpenMP
 
         for (idx_t j = j_begin_halo_; j < j_begin_; ++j) {
             for (idx_t i = i_begin_halo_(j); i < i_end_halo_(j); ++i) {
