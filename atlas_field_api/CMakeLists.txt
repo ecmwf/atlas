@@ -12,6 +12,7 @@ if (atlas_HAVE_ACC)
   find_package( OpenACC COMPONENTS Fortran REQUIRED )
   set (HAVE_ACC 1)
 endif()
+message(STATUS "HAVE_ACC: ${HAVE_ACC}")
 
 enable_testing()
 

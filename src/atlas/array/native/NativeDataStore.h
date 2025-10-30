@@ -42,16 +42,16 @@ bool getEnv(const std::string& env, bool default_value) {
 }
 #if ATLAS_HAVE_GPU
 bool DEVICE_MEMORY() {
-    static bool v = getEnv("ATLAS_SIMULATE_DEVICE_MEMORY", true) || pluto::devices() > 0;
+    static bool v = getEnv("ATLAS_SIMULATE_DEVICE_MEMORY", false) || pluto::devices() > 0;
     return v;
 }
 #else
 bool DEVICE_MEMORY() {
-  static bool ATLAS_ALLOCATE_DEVICE = getEnv("ATLAS_SIMULATE_DEVICE_MEMORY",false);
+  static bool ATLAS_ALLOCATE_DEVICE = getEnv("ATLAS_SIMULATE_DEVICE_MEMORY", false);
   return ATLAS_ALLOCATE_DEVICE;
 }
-}
 #endif
+}
 
 //------------------------------------------------------------------------------
 
@@ -171,9 +171,7 @@ public:
     }
 
     void updateHost() const override {
-        ATLAS_DEBUG_VAR(DEVICE_MEMORY());
         if (DEVICE_MEMORY()) {
-            ATLAS_DEBUG_VAR(device_allocated_);
             if (device_allocated_) {
 #if ATLAS_HAVE_TRACE
                 std::unique_ptr<atlas::Trace> trace;
@@ -181,7 +179,6 @@ public:
                     trace.reset(new atlas::Trace(Here(), "update_host", {"memory","memory.transfer", "memory.transfer.d2h"}));
                 }
 #endif
-                ATLAS_DEBUG("copy_device_to_host");
                 pluto::copy_device_to_host(label_, host_data_, device_data_, size_);
             }
         }
