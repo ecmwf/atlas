@@ -57,12 +57,13 @@ endif()
 
 if( CMAKE_CXX_COMPILER_ID MATCHES NVHPC )
   ecbuild_add_cxx_flags("--diag_suppress declared_but_not_referenced --display_error_number" NAME atlas_cxx_disable_warnings )
+  ecbuild_add_fortran_flags("-Mnotarget_temps" NAME atlas_fortran_norepack ) # otherwise wrong strides computation of arrays passed as arguments
   # For all the variables with side effects (constructor/destructor functionality)
 endif()
 
 if( CMAKE_CXX_COMPILER_ID MATCHES IntelLLVM )
   # Turn off -ffinite-math-only which gets included by some optimisation levels which assumes values can never be NaN.
-  # Then results in std::isnan(value) always retrun false.
+  # Then results in std::isnan(value) always return false.
   ecbuild_add_cxx_flags("-fno-finite-math-only")
 endif()
 
