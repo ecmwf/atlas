@@ -207,12 +207,16 @@ implicit none
   FCTEST_CHECK_EQUAL(field%strides(), ([1]))
 
   print *, "(fix_id,      :, fix_id, fix_id)"
-  field = atlas_Field(existing_data(     :, fix_id, fix_id, fix_id))
+  field = atlas_Field(existing_data(fix_id,      :, fix_id, fix_id))
   FCTEST_CHECK_EQUAL(field%strides(), ([8]))
 
   print *, "(fix_id, fix_id,      :, fix_id)"
   field = atlas_Field(existing_data(fix_id, fix_id,      :, fix_id))
   FCTEST_CHECK_EQUAL(field%strides(), ([16]))
+
+  print *, "(fix_id, fix_id, fix_id,      :)"
+  field = atlas_Field(existing_data(fix_id, fix_id, fix_id,      :))
+  FCTEST_CHECK_EQUAL(field%strides(), ([48]))
 
   call field%final()
 END_TEST
