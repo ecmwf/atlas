@@ -129,11 +129,11 @@ END_TEST
 TEST( test_field_wrapdataslice )
 implicit none
 
-  real(c_double), allocatable :: existing_data(:,:,:,:)
+  real(c_double), allocatable, target :: existing_data(:,:,:,:)
   real(c_double), pointer :: dview(:,:,:), hview(:,:,:)
   type(atlas_Field) :: field
   integer(c_int) :: i, j, k, l
-  integer(c_int), parameter :: Ni = 8, Nj = 2, Nk = 3, Nl = 4, k_idx = 2
+  integer(c_int), parameter :: Ni = 8, Nj = 2, Nk = 3, Nl = 4, fix_id = 2
   real(c_double) :: a
   write(0,*) "test_field_wrapdataslice"
   allocate( existing_data(Ni, Nj, Nk, Nl) )
@@ -148,7 +148,7 @@ implicit none
     enddo
   enddo
 
-  field = atlas_Field(existing_data(:,:,k_idx,:))
+  field = atlas_Field(existing_data(:,:,fix_id,:))
   FCTEST_CHECK_EQUAL(field%shape() , ([Ni, Nj, Nl]))
   FCTEST_CHECK_EQUAL(field%strides() , ([1, Ni, Ni*Nj*Nk]))
 
@@ -170,13 +170,49 @@ implicit none
     do j = 1, Nj
       do k = 1, Nk
         a = 1._c_double;
-        if (k == k_idx) a = -1._c_double;
+        if (k == fix_id) a = -1._c_double;
         do l = 1, Nl
           FCTEST_CHECK_EQUAL(existing_data(i, j, k, l), a * real(1000*i + 100*j + 10*k + l, c_double))
         enddo
       enddo
     enddo
   enddo
+
+  print *, "\n(fix_id, fix_id,      :,      :)"
+  field = atlas_Field(existing_data(fix_id, fix_id,      :,      :))
+  FCTEST_CHECK_EQUAL(field%strides(), ([16, 48]))
+
+  print *, "(fix_id,      :, fix_id,      :)"
+  field = atlas_Field(existing_data(fix_id,      :, fix_id,      :))
+  FCTEST_CHECK_EQUAL(field%strides(), ([8, 48]))
+
+  print *, "(fix_id,      :,      :, fix_id)"
+  field = atlas_Field(existing_data(fix_id,      :,      :, fix_id))
+  FCTEST_CHECK_EQUAL(field%strides(), ([8, 16]))
+
+  print *, "(     :, fix_id, fix_id,      :)"
+  field = atlas_Field(existing_data(     :, fix_id, fix_id,      :))
+  FCTEST_CHECK_EQUAL(field%strides(), ([1, 48]))
+
+  print *, "(     :, fix_id,      :,      fix_id)"
+  field = atlas_Field(existing_data(     :, fix_id,      :, fix_id))
+  FCTEST_CHECK_EQUAL(field%strides(), ([1, 16]))
+
+  print *, "(     :,      :, fix_id, fix_id)"
+  field = atlas_Field(existing_data(     :,      :, fix_id, fix_id))
+  FCTEST_CHECK_EQUAL(field%strides(), ([1, 8]))
+
+  print *, "(     :, fix_id, fix_id, fix_id)"
+  field = atlas_Field(existing_data(     :, fix_id, fix_id, fix_id))
+  FCTEST_CHECK_EQUAL(field%strides(), ([1]))
+
+  print *, "(fix_id,      :, fix_id, fix_id)"
+  field = atlas_Field(existing_data(     :, fix_id, fix_id, fix_id))
+  FCTEST_CHECK_EQUAL(field%strides(), ([8]))
+
+  print *, "(fix_id, fix_id,      :, fix_id)"
+  field = atlas_Field(existing_data(fix_id, fix_id,      :, fix_id))
+  FCTEST_CHECK_EQUAL(field%strides(), ([16]))
 
   call field%final()
 END_TEST
