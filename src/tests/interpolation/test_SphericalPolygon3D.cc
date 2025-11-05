@@ -301,7 +301,7 @@ CASE("test_spherical_polygon_nonplanar_quad") {
                 EXPECT((isPointInside[i] == 1));
                 Vector4d polygonWeightsVectorRotated((*polygonWeightsRotated)[0], (*polygonWeightsRotated)[1],
                                                      (*polygonWeightsRotated)[2], (*polygonWeightsRotated)[3]);
-                EXPECT(polygonWeightsVector[pointsInsideRotated].isApprox(polygonWeightsVectorRotated, relative_error));
+                EXPECT_EQ(polygonWeightsVector[pointsInsideRotated], polygonWeightsVectorRotated);
                 pointsInsideRotated += 1;
             }
         }
