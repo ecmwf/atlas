@@ -6,6 +6,13 @@
 # granted to it by virtue of its status as an intergovernmental organisation nor
 # does it submit to any jurisdiction.
 
+ecbuild_add_test( TARGET atlas_test_SphericalPolygon3D
+  CONDITION eckit_EIGEN_FOUND
+  SOURCES   test_SphericalPolygon3D.cc
+  LIBS      atlas
+  ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
+)
+
 ecbuild_add_test( TARGET atlas_test_Quad3D
   CONDITION eckit_EIGEN_FOUND
   SOURCES   test_Quad3D.cc
