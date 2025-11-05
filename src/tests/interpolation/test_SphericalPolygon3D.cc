@@ -12,7 +12,6 @@
 #include "atlas/interpolation/Vector3D.h"
 #include "atlas/interpolation/element/SphericalPolygon3D.h"
 #include "eckit/types/FloatCompare.h"
-#include "eigen3/Eigen/src/Core/Matrix.h"
 #include "tests/AtlasTestEnvironment.h"
 
 using atlas::interpolation::Vector3D;
