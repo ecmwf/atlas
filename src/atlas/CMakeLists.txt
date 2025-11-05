@@ -567,6 +567,7 @@ interpolation/element/Triag2D.cc
 interpolation/element/Triag2D.h
 interpolation/element/Triag3D.cc
 interpolation/element/Triag3D.h
+interpolation/element/SphericalPolygon3D.h
 interpolation/method/Intersect.cc
 interpolation/method/Intersect.h
 interpolation/method/Ray.cc # For testing Quad
