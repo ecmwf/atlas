@@ -46,6 +46,45 @@
 #endif
 #endif
 
+bool ignore_ectrans_not_implemented(std::exception& e) {
+    static bool ATLAS_TEST_IGNORE_ECTRANS_NOT_IMPLEMENTED = []() -> bool {
+        const char* env = ::getenv("ATLAS_TEST_IGNORE_ECTRANS_NOT_IMPLEMENTED");
+        if (env) {
+            std::cout << "ATLAS_TEST_IGNORE_ECTRANS_NOT_IMPLEMENTED=" << env << std::endl;
+            return std::atoi(env);
+        }
+        return false;
+    }();
+    if (ATLAS_TEST_IGNORE_ECTRANS_NOT_IMPLEMENTED == false) {
+        return false;
+    }
+    std::string errstr(e.what());
+    for(auto& c : errstr){ c = std::tolower(c); }
+    std::vector<std::string> search{"trans", "not", "implemented"};
+    return std::all_of(search.begin() ,search.end(),[&](const std::string& s)->bool {
+        return errstr.find(s) != std::string::npos;
+    });
+}
+
+#define ECTRANS_MAYBE_NOT_IMPLEMENTED(expr) \
+    do {                                                                                            \
+        try {                                                                                       \
+            expr;                                                                                   \
+        }                                                                                           \
+        catch (std::exception & e) {                                                                \
+            if( ignore_ectrans_not_implemented(e) ) {                                               \
+                atlas::Log::error() << "ERROR IGNORED: Not implemented with ectrans code path\n"    \
+                                    << "Skipping remainder of test"                                 \
+                                    << std::endl;                                                   \
+                return;                                                                             \
+            }                                                                                       \
+            throw eckit::testing::TestException("Unexpected exception caught: "+std::string(e.what()), Here());    \
+        }                                                                                           \
+        catch (...) {                                                                               \
+            throw eckit::testing::TestException("Unexpected and unknown exception caught", Here()); \
+        }                                                                                           \
+    } while (false)
+
 using namespace eckit;
 
 using atlas::array::Array;
@@ -1585,7 +1624,8 @@ CASE("test_trans_levels") {
 }
 #endif
 
-
+#if 1
+// ECTRANS GPU VERSION DOES NOT YET SUPPORT THIS
 #if ATLAS_HAVE_TRANS
 #if ATLAS_HAVE_ECTRANS || defined(TRANS_HAVE_INVTRANS_ADJ)
 CASE("test_2level_adjoint_test_with_powerspectrum_convolution") {
@@ -1659,7 +1699,7 @@ CASE("test_2level_adjoint_test_with_powerspectrum_convolution") {
 
         // transform fields to spectral and view
         if (test_name[test_type].compare("inverse") == 0) {
-            transIFS.invtrans_adj(gpf, spf);
+            ECTRANS_MAYBE_NOT_IMPLEMENTED(transIFS.invtrans_adj(gpf, spf));
         } else if (test_name[test_type].compare("direct") == 0) {
             transIFS.dirtrans(gpf, spf);
         }
@@ -1699,8 +1739,9 @@ CASE("test_2level_adjoint_test_with_powerspectrum_convolution") {
         if (test_name[test_type].compare("inverse") == 0) {
             transIFS.invtrans(spf, gpf2);
         } else if (test_name[test_type].compare("direct") == 0) {
-            transIFS.dirtrans_adj(spf, gpf2);
+            ECTRANS_MAYBE_NOT_IMPLEMENTED(transIFS.dirtrans_adj(spf, gpf2));
         }
+
         Log::info() << "adjoint test transforms " << test_name[test_type] << std::endl;
 
 
@@ -1798,7 +1839,7 @@ CASE("test_2level_adjoint_test_with_vortdiv") {
     }
     atlas::mpi::comm().allReduceInPlace(adj_value, eckit::mpi::sum());
 
-    transIFS.dirtrans_wind2vordiv_adj(spfvor, spfdiv, gpfuv2);
+    ECTRANS_MAYBE_NOT_IMPLEMENTED(transIFS.dirtrans_wind2vordiv_adj(spfvor, spfdiv, gpfuv2));
 
     double adj_value2(0.0);
     for (atlas::idx_t j = gridFS.j_begin(); j < gridFS.j_end(); ++j) {
@@ -1816,6 +1857,7 @@ CASE("test_2level_adjoint_test_with_vortdiv") {
                 << " " << adj_value << " " << adj_value2 << std::endl;
     EXPECT(std::abs(adj_value - adj_value2) / adj_value < 1e-12);
 }
+#endif
 #endif
 #endif
 
