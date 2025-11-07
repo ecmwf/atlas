@@ -49,9 +49,10 @@ void MatchingFunctionSpacePartitionerLonLatPolygon::partition(const Grid& grid, 
         omp::fill(part, part + grid.size(), 0);
     }
     else {
-        const auto& p = partitioned_.polygon();
+        const auto& poly = partitioned_.polygon();
+        const auto& proj = partitioned_.projection();
 
-        util::PolygonXY poly{p};
+        util::PolygonXY poly_xy{poly};
         {
             ATLAS_TRACE("point-in-polygon check for entire grid (" + std::to_string(grid.size()) + " points)");
             size_t num_threads = atlas_omp_get_max_threads();
@@ -64,15 +65,17 @@ void MatchingFunctionSpacePartitionerLonLatPolygon::partition(const Grid& grid, 
             for( size_t chunk=0; chunk < chunks; ++chunk) {
                 const size_t begin = chunk * size_t(grid.size()) / chunks;
                 const size_t end   = (chunk + 1) * size_t(grid.size()) / chunks;
-                auto it            = grid.xy().begin() + chunk * grid.size() / chunks;
+                auto lonlat_it     = grid.lonlat().begin() + chunk * grid.size() / chunks;
+                PointXY xy;
                 for (size_t n = begin; n < end; ++n) {
-                    if (poly.contains(*it)) {
+                    xy = proj.xy(*lonlat_it);
+                    if (poly_xy.contains(xy)) {
                         part[n] = mpi_rank;
                     }
                     else {
                         part[n] = -1;
                     }
-                    ++it;
+                    ++lonlat_it;
                 }
             }
         }
