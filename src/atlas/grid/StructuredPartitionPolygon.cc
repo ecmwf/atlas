@@ -39,15 +39,16 @@ void compute(const functionspace::FunctionSpaceImpl& _fs, idx_t _halo, std::vect
         throw_Exception("halo must zero or matching the one of the StructuredColumns", Here());
     }
 
-    bool north_pole_included = 90. - grid.y(0) == 0.;
-    bool south_pole_included = 90. + grid.y(grid.ny() - 1) == 0;
+    const int y_numbering = (grid.y().front() < grid.y().back()) ? +1 : -1;
+    bool jfirst_at_pole = y_numbering * 90. + grid.y(0) == 0.;
+    bool jlast_at_pole  = y_numbering * 90. - grid.y(grid.ny() - 1) == 0;
 
     auto compute_j = [&](const idx_t j) {
         if (j < 0) {
-            return -j - 1 + north_pole_included;
+            return -j - 1 + jfirst_at_pole;
         }
         else if (j >= grid.ny()) {
-            return 2 * grid.ny() - j - 1 - south_pole_included;
+            return 2 * grid.ny() - j - 1 - jlast_at_pole;
         }
         return j;
     };
@@ -114,7 +115,7 @@ void compute(const functionspace::FunctionSpaceImpl& _fs, idx_t _halo, std::vect
         idx_t j = _halo ? fs.j_begin_halo() : fs.j_begin();
         idx_t i = _halo ? fs.i_begin_halo(j) : fs.i_begin(j);
         if (j == 0 && _halo == 0) {
-            p[YY] = dom.ymax();
+            p[YY] = y_numbering < 0 ? dom.ymax() : dom.ymin();
         }
         else {
             p[YY] = 0.5 * (compute_y(j - 1) + compute_y(j));
@@ -133,7 +134,7 @@ void compute(const functionspace::FunctionSpaceImpl& _fs, idx_t _halo, std::vect
         idx_t j = _halo ? fs.j_begin_halo() :  fs.j_begin();
         idx_t i = _halo ? fs.i_end_halo(j) - 1 : fs.i_end(j) - 1;
         if (j == 0 && _halo == 0) {
-            p[YY] = dom.ymax();
+            p[YY] = y_numbering < 0 ? dom.ymax() : dom.ymin();
         }
         else {
             p[YY] = 0.5 * (compute_y(j - 1) + compute_y(j));
@@ -194,7 +195,7 @@ void compute(const functionspace::FunctionSpaceImpl& _fs, idx_t _halo, std::vect
         idx_t i = _halo ? fs.i_end_halo(j) - 1 : fs.i_end(j) - 1;
 
         if (j == grid.ny() - 1 && _halo == 0) {
-            p[YY] = dom.ymin();
+            p[YY] = y_numbering < 0 ? dom.ymin() : dom.ymax();
         }
         else {
             p[YY] = 0.5 * (compute_y(j) + compute_y(j + 1));
@@ -243,7 +244,7 @@ void compute(const functionspace::FunctionSpaceImpl& _fs, idx_t _halo, std::vect
         idx_t j = _halo ? fs.j_end_halo() - 1 : fs.j_end() - 1;
         idx_t i = _halo ? fs.i_begin_halo(j) : fs.i_begin(j);
         if (j == grid.ny() - 1 && _halo == 0) {
-            p[YY] = dom.ymin();
+            p[YY] = y_numbering < 0 ? dom.ymin() : dom.ymax();
         }
         else {
             p[YY] = 0.5 * (compute_y(j) + compute_y(j + 1));
