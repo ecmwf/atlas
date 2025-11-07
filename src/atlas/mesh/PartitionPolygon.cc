@@ -238,11 +238,16 @@ void PartitionPolygon::outputPythonScript(const eckit::PathName& filepath, const
                     return xticks_ss.str();
                 };
                 // clang-format off
-                f << "\n" "ax.set_xlim( " << xmin << "-5, " << xmax << "+5)"
-                     "\n" "ax.set_ylim(-90-5, 90+5)"
-                     "\n" "ax.set_xticks(" << xticks() << ")"
-                     "\n" "ax.set_yticks([-90,-45,0,45,90])"
-                     "\n" "plt.grid()"
+                if (mesh_.projection().units() == "degrees") {
+                    f << "\n" "ax.set_xlim( " << xmin << "-5, " << xmax << "+5)"
+                         "\n" "ax.set_ylim(-90-5, 90+5)"
+                         "\n" "ax.set_xticks(" << xticks() << ")"
+                         "\n" "ax.set_yticks([-90,-45,0,45,90])";
+                }
+                else {
+                    f << "\n" "ax.autoscale()";
+                }
+                f << "\n" "plt.grid()"
                      "\n" "plt.show()";
                 // clang-format on
             }
