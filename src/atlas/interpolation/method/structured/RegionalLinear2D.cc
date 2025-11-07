@@ -45,9 +45,6 @@ void RegionalLinear2D::do_setup(const FunctionSpace& source,
   source_ = source;
   target_ = target;
 
-  if (target_.size() == 0) {
-    return;
-  }
   ASSERT(source_.type() == "StructuredColumns");
 
   // Get grid parameters
@@ -160,7 +157,7 @@ void RegionalLinear2D::do_setup(const FunctionSpace& source,
   // Buffer size
   targetRecvSize_ = targetRecvPointsList.size();
 
-  if (targetRecvSize_ > 0) {
+  {
     // RecvDispls
     targetRecvDispls_.push_back(0);
     for (size_t jt = 0; jt < comm_.size()-1; ++jt) {
@@ -412,10 +409,6 @@ void RegionalLinear2D::do_execute(const FieldSet& sourceFieldSet,
 void RegionalLinear2D::do_execute(const Field& sourceField, Field& targetField,
                                  Metadata&) const {
   ATLAS_TRACE("atlas::interpolation::method::RegionalLinear2D::do_execute()");
-
-  if (targetField.size() == 0) {
-      return;
-  }
 
   // Check number of levels
   ASSERT(sourceField.levels() == targetField.levels());
