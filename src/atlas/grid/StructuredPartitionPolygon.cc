@@ -108,6 +108,9 @@ void compute(const functionspace::FunctionSpaceImpl& _fs, idx_t _halo, std::vect
     };
 
     double ymax, ymin, xmax, xmin;
+    if (fs.j_begin() >= fs.j_end()) {
+        return;
+    }
 
     // Top
     // Top left point
@@ -326,7 +329,7 @@ StructuredPartitionPolygon::StructuredPartitionPolygon(const functionspace::Func
     compute(fs, halo, points_, inner_bounding_box_);
     auto min = Point2(std::numeric_limits<double>::max(), std::numeric_limits<double>::max());
     auto max = Point2(std::numeric_limits<double>::lowest(), std::numeric_limits<double>::lowest());
-    for (size_t i = 0; i < inner_bounding_box_.size() - 1; ++i) {
+    for (int i = 0; i < static_cast<int>(inner_bounding_box_.size()) - 1; ++i) {
         min = Point2::componentsMin(min, inner_bounding_box_[i]);
         max = Point2::componentsMax(max, inner_bounding_box_[i]);
     }
@@ -391,39 +394,41 @@ void StructuredPartitionPolygon::outputPythonScript(const eckit::PathName& filep
                      "\n" "ax = fig.add_subplot(111,aspect='equal')"
                      "\n";
             }
-            f << "\n" "verts_" << r << " = [";
-            for ( size_t i=0; i<points.size(); ++i ) {
-                f << "\n  (" << points[i][XX] << ", " << points[i][YY] << "), ";
-            }
-            f << "\n]"
-                 "\n"
-                 "\n" "codes_" << r << " = [Path.MOVETO]"
-                 "\n" "codes_" << r << ".extend([Path.LINETO] * " << ( points.size() - 2 ) << ")"
-                 "\n" "codes_" << r << ".extend([Path.CLOSEPOLY])"
-                 "\n"
-                 "\n" "count_" << r << " = " << count <<
-                 "\n" "count_all_" << r << " = " << count_all <<
-                 "\n";
-            if ( plot_nodes ) {
-                f << "\n" "x_" << r << " = [";
-                for ( idx_t i = 0; i < count; ++i ) {
-                    f << xy( i, XX ) << ", ";
+            if (points.size() > 0) {
+                f << "\n" "verts_" << r << " = [";
+                for ( size_t i=0; i<points.size(); ++i ) {
+                    f << "\n  (" << points[i][XX] << ", " << points[i][YY] << "), ";
                 }
-                f << "]"
-                     "\n" "y_" << r << " = [";
-                for ( idx_t i = 0; i < count; ++i ) {
-                    f << xy( i, YY ) << ", ";
+                f << "\n]"
+                    "\n"
+                    "\n" "codes_" << r << " = [Path.MOVETO]"
+                    "\n" "codes_" << r << ".extend([Path.LINETO] * " << ( points.size() - 2 ) << ")"
+                    "\n" "codes_" << r << ".extend([Path.CLOSEPOLY])"
+                    "\n"
+                    "\n" "count_" << r << " = " << count <<
+                    "\n" "count_all_" << r << " = " << count_all <<
+                    "\n";
+                if ( plot_nodes ) {
+                    f << "\n" "x_" << r << " = [";
+                    for ( idx_t i = 0; i < count; ++i ) {
+                        f << xy( i, XX ) << ", ";
+                    }
+                    f << "]"
+                        "\n" "y_" << r << " = [";
+                    for ( idx_t i = 0; i < count; ++i ) {
+                        f << xy( i, YY ) << ", ";
+                    }
+                    f << "]";
                 }
-                f << "]";
+                f << "\n"
+                    "\n" "c = next(colours)"
+                    "\n" "ax.add_patch(patches.PathPatch(Path(verts_" << r << ", codes_" << r << "), edgecolor=c, facecolor=c, alpha=0.3, lw=1))";
+                if ( plot_nodes ) {
+                    f << "\n" "if plot_nodes:"
+                        "\n" "    ax.scatter(x_" << r << ", y_" << r << ", color=c, marker='o')";
+                }
+                f << "\n";
             }
-            f << "\n"
-                 "\n" "c = next(colours)"
-                 "\n" "ax.add_patch(patches.PathPatch(Path(verts_" << r << ", codes_" << r << "), edgecolor=c, facecolor=c, alpha=0.3, lw=1))";
-            if ( plot_nodes ) {
-                f << "\n" "if plot_nodes:"
-                     "\n" "    ax.scatter(x_" << r << ", y_" << r << ", color=c, marker='o')";
-            }
-            f << "\n";
             if ( mpi_rank == mpi_size - 1 ) {
                 if (fs_.projection().units() == "degrees") {
                     f << "\n" "ax.set_xlim( " << xmin << "-5, " << xmax << "+5)"
@@ -469,7 +474,6 @@ void StructuredPartitionPolygon::allGather(util::PartitionPolygons& polygons_) c
         mypolygon.push_back(p[XX]);
         mypolygon.push_back(p[YY]);
     }
-    ATLAS_ASSERT(mypolygon.size() >= 4);
 
     eckit::mpi::Buffer<double> recv_polygons(mpi_size);
 
