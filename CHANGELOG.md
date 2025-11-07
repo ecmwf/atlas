@@ -7,6 +7,13 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
 ## [Unreleased]
 
+## [0.44.1] - 2025-11-07
+
+### Fixed
+- Fix loop bounds for gcc+OpenMP compiler by @fmahebert in https://github.com/ecmwf/atlas/pull/324
+- Fix compilation of atlas_fctest_fvm_nabla with NAG compiler (#326) by @wdeconinck in https://github.com/ecmwf/atlas/pull/330
+- Set Eigen version to eigen@3 in CI to prevent 5.0.0 update
+
 ## [0.44.0] - 2025-10-06
 
 ### Added
@@ -688,6 +695,7 @@ Fix StructuredInterpolation2D with retry for failed stencils
 ## 0.13.0 - 2018-02-16
 
 [Unreleased]: https://github.com/ecmwf/atlas/compare/master...develop
+[0.44.1]: https://github.com/ecmwf/atlas/compare/0.44.0...0.44.1
 [0.44.0]: https://github.com/ecmwf/atlas/compare/0.43.1...0.44.0
 [0.43.1]: https://github.com/ecmwf/atlas/compare/0.43.0...0.43.1
 [0.43.0]: https://github.com/ecmwf/atlas/compare/0.42.0...0.43.0
