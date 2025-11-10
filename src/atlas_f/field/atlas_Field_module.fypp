@@ -431,69 +431,121 @@ end function
 function atlas_Field__wrap_name_${dtype}$_r${rank}$(name,data) result(field)
   use atlas_field_c_binding
   use fckit_array_module, only : array_strides, array_view1d
-  use, intrinsic :: iso_c_binding, only : c_int, c_long, c_float, c_double
-  use fckit_c_interop_module, only : c_str
+  use, intrinsic :: iso_c_binding, only : c_int, c_long, c_float, c_double, c_loc, c_int32_t, c_sizeof
+  use fckit_c_interop_module, only : c_str, c_ptr_to_loc
   type(atlas_Field) :: field
   character(len=*), intent(in) :: name
   ${ftype}$, intent(in), target :: data(${dim[rank]}$)
+  ${ftype}$, pointer :: data_ptr(${dim[rank]}$)
+  ${ftype}$ :: elem_value
   integer(c_int) :: shapef(${rank}$)
   integer(c_int) :: stridesf(${rank}$)
 #:if ftype != "logical"
   ${ftype}$, pointer :: data1d(:)
-  data1d => array_view1d(data)
+  ! For some reason, with nvhpc/22.11 we need create a pointer to pass to array_view1d
+  ! This is not reproducible all the time.
+  ! Test atlas_fctest_functionspace started failing when fckit was compiled with -Mnotarget_temps (nvidia/22.11)
+  data_ptr => data
+  data1d => array_view1d(data_ptr)
 #:else
+  ! Case for logical only
   integer(c_int), pointer :: data1d(:)
-  data1d => array_view1d( data, int(0,c_int) )
-#:endif
-  shapef = shape(data)
-  stridesf = array_strides(data)
-  field = atlas_Field__cptr( &
-    atlas__Field__wrap_${ctype}$_specf( c_str(name), data1d, size(shapef), shapef, stridesf ) )
-  call field%return()
-end function
-function atlas_Field__wrap_${dtype}$_r${rank}$(data) result(field)
-  use, intrinsic :: iso_c_binding, only : c_int, c_long, c_float, c_double, c_loc, c_int32_t
-  use :: fckit_c_interop_module
-  use atlas_field_c_binding
-  use fckit_array_module, only : array_strides, array_view1d
-  type(atlas_Field) :: field
-  ${ftype}$, intent(in), target :: data(${dim[rank]}$)
-  integer(c_int) :: shapef(${rank}$)
-  integer(c_int) :: stridesf(${rank}$)
-#:if ftype != "logical"
-    ${ftype}$, pointer :: data1d(:)
-    data1d => array_view1d(data)
-#:else
-    integer(c_int), pointer :: data1d(:)
-    data1d => array_view1d( data, int(0,c_int) )
+  data_ptr => data
+  data1d => array_view1d( data_ptr, int(0,c_int) )
 #:endif
   shapef = shape(data)
   if( size(data)>0 ) then
   !!! See issue https://github.com/ecmwf/atlas/pull/213 : problem with array_strides(data) with NAG compiler.
 #:if rank == 4
-    stridesf(1) = &
-      int(c_ptr_to_loc(c_loc(data(2,1,1,1)))-c_ptr_to_loc(c_loc(data(1,1,1,1))),c_int32_t)/int(8,c_int32_t)
-    stridesf(2) = &
-      int(c_ptr_to_loc(c_loc(data(1,2,1,1)))-c_ptr_to_loc(c_loc(data(1,1,1,1))),c_int32_t)/int(8,c_int32_t)
-    stridesf(3) = &
-      int(c_ptr_to_loc(c_loc(data(1,1,2,1)))-c_ptr_to_loc(c_loc(data(1,1,1,1))),c_int32_t)/int(8,c_int32_t)
-    stridesf(4) = &
-      int(c_ptr_to_loc(c_loc(data(1,1,1,2)))-c_ptr_to_loc(c_loc(data(1,1,1,1))),c_int32_t)/int(8,c_int32_t)
+    stridesf = 1
+    if (ubound(data,1) > 1) stridesf(1) = &
+      int(c_ptr_to_loc(c_loc(data(2,1,1,1)))-c_ptr_to_loc(c_loc(data(1,1,1,1))),c_int32_t)/int(c_sizeof(elem_value),c_int32_t)
+    if (ubound(data,2) > 1) stridesf(2) = &
+      int(c_ptr_to_loc(c_loc(data(1,2,1,1)))-c_ptr_to_loc(c_loc(data(1,1,1,1))),c_int32_t)/int(c_sizeof(elem_value),c_int32_t)
+    if (ubound(data,3) > 1) stridesf(3) = &
+      int(c_ptr_to_loc(c_loc(data(1,1,2,1)))-c_ptr_to_loc(c_loc(data(1,1,1,1))),c_int32_t)/int(c_sizeof(elem_value),c_int32_t)
+    if (ubound(data,4) > 1) stridesf(4) = &
+      int(c_ptr_to_loc(c_loc(data(1,1,1,2)))-c_ptr_to_loc(c_loc(data(1,1,1,1))),c_int32_t)/int(c_sizeof(elem_value),c_int32_t)
 #:elif rank == 3
-    stridesf(1) = &
-      int(c_ptr_to_loc(c_loc(data(2,1,1)))-c_ptr_to_loc(c_loc(data(1,1,1))),c_int32_t)/int(8,c_int32_t)
-    stridesf(2) = &
-      int(c_ptr_to_loc(c_loc(data(1,2,1)))-c_ptr_to_loc(c_loc(data(1,1,1))),c_int32_t)/int(8,c_int32_t)
-    stridesf(3) = &
-      int(c_ptr_to_loc(c_loc(data(1,1,2)))-c_ptr_to_loc(c_loc(data(1,1,1))),c_int32_t)/int(8,c_int32_t)
+    stridesf = 1
+    if (ubound(data,1) > 1) stridesf(1) = &
+      int(c_ptr_to_loc(c_loc(data(2,1,1)))-c_ptr_to_loc(c_loc(data(1,1,1))),c_int32_t)/int(c_sizeof(elem_value),c_int32_t)
+    if (ubound(data,2) > 1) stridesf(2) = &
+      int(c_ptr_to_loc(c_loc(data(1,2,1)))-c_ptr_to_loc(c_loc(data(1,1,1))),c_int32_t)/int(c_sizeof(elem_value),c_int32_t)
+    if (ubound(data,3) > 1) stridesf(3) = &
+      int(c_ptr_to_loc(c_loc(data(1,1,2)))-c_ptr_to_loc(c_loc(data(1,1,1))),c_int32_t)/int(c_sizeof(elem_value),c_int32_t)
 #:elif rank == 2
-    stridesf(1) = &
-      int(c_ptr_to_loc(c_loc(data(2,1)))-c_ptr_to_loc(c_loc(data(1,1))),c_int32_t)/int(8,c_int32_t)
-    stridesf(2) = &
-      int(c_ptr_to_loc(c_loc(data(1,2)))-c_ptr_to_loc(c_loc(data(1,1))),c_int32_t)/int(8,c_int32_t)
+    stridesf = 1
+    if (ubound(data,1) > 1) stridesf(1) = &
+      int(c_ptr_to_loc(c_loc(data(2,1)))-c_ptr_to_loc(c_loc(data(1,1))),c_int32_t)/int(c_sizeof(elem_value),c_int32_t)
+    if (ubound(data,2) > 1) stridesf(2) = &
+      int(c_ptr_to_loc(c_loc(data(1,2)))-c_ptr_to_loc(c_loc(data(1,1))),c_int32_t)/int(c_sizeof(elem_value),c_int32_t)
 #:elif rank == 1
-    stridesf(1) = &
-      int(c_ptr_to_loc(c_loc(data(2)))-c_ptr_to_loc(c_loc(data(1))),c_int32_t)/int(8,c_int32_t)
+    stridesf = 1
+    if (ubound(data,1) > 1) stridesf(1) = &
+      int(c_ptr_to_loc(c_loc(data(2)))-c_ptr_to_loc(c_loc(data(1))),c_int32_t)/int(c_sizeof(elem_value),c_int32_t)
+#:else
+    stridesf = array_strides(data)
+#:endif
+  else
+    stridesf = 0
+  endif
+
+  field = atlas_Field__cptr( &
+    atlas__Field__wrap_${ctype}$_specf( c_str(name), data1d, size(shapef), shapef, stridesf ) )
+  call field%return()
+end function
+function atlas_Field__wrap_${dtype}$_r${rank}$(data) result(field)
+  use, intrinsic :: iso_c_binding, only : c_int, c_long, c_float, c_double, c_loc, c_int32_t, c_sizeof
+  use :: fckit_c_interop_module, only : c_str, c_ptr_to_loc
+  use atlas_field_c_binding
+  use fckit_array_module, only : array_strides, array_view1d
+  type(atlas_Field) :: field
+  ${ftype}$, intent(in), target :: data(${dim[rank]}$)
+  ${ftype}$, pointer :: data_ptr(${dim[rank]}$)
+  ${ftype}$ :: elem_value
+  integer(c_int) :: shapef(${rank}$)
+  integer(c_int) :: stridesf(${rank}$)
+#:if ftype != "logical"
+    ${ftype}$, pointer :: data1d(:)
+    data_ptr => data
+    data1d => array_view1d(data_ptr)
+#:else
+    integer(c_int), pointer :: data1d(:)
+    data_ptr => data
+    data1d => array_view1d( data_ptr, int(0,c_int) )
+#:endif
+  shapef = shape(data)
+  if( size(data)>0 ) then
+  !!! See issue https://github.com/ecmwf/atlas/pull/213 : problem with array_strides(data) with NAG compiler.
+#:if rank == 4
+    stridesf = 1
+    if (ubound(data,1) > 1) stridesf(1) = &
+      int(c_ptr_to_loc(c_loc(data(2,1,1,1)))-c_ptr_to_loc(c_loc(data(1,1,1,1))),c_int32_t)/int(c_sizeof(elem_value),c_int32_t)
+    if (ubound(data,2) > 1) stridesf(2) = &
+      int(c_ptr_to_loc(c_loc(data(1,2,1,1)))-c_ptr_to_loc(c_loc(data(1,1,1,1))),c_int32_t)/int(c_sizeof(elem_value),c_int32_t)
+    if (ubound(data,3) > 1) stridesf(3) = &
+      int(c_ptr_to_loc(c_loc(data(1,1,2,1)))-c_ptr_to_loc(c_loc(data(1,1,1,1))),c_int32_t)/int(c_sizeof(elem_value),c_int32_t)
+    if (ubound(data,4) > 1) stridesf(4) = &
+      int(c_ptr_to_loc(c_loc(data(1,1,1,2)))-c_ptr_to_loc(c_loc(data(1,1,1,1))),c_int32_t)/int(c_sizeof(elem_value),c_int32_t)
+#:elif rank == 3
+    stridesf = 1
+    if (ubound(data,1) > 1) stridesf(1) = &
+      int(c_ptr_to_loc(c_loc(data(2,1,1)))-c_ptr_to_loc(c_loc(data(1,1,1))),c_int32_t)/int(c_sizeof(elem_value),c_int32_t)
+    if (ubound(data,2) > 1) stridesf(2) = &
+      int(c_ptr_to_loc(c_loc(data(1,2,1)))-c_ptr_to_loc(c_loc(data(1,1,1))),c_int32_t)/int(c_sizeof(elem_value),c_int32_t)
+    if (ubound(data,3) > 1) stridesf(3) = &
+      int(c_ptr_to_loc(c_loc(data(1,1,2)))-c_ptr_to_loc(c_loc(data(1,1,1))),c_int32_t)/int(c_sizeof(elem_value),c_int32_t)
+#:elif rank == 2
+    stridesf = 1
+    if (ubound(data,1) > 1) stridesf(1) = &
+      int(c_ptr_to_loc(c_loc(data(2,1)))-c_ptr_to_loc(c_loc(data(1,1))),c_int32_t)/int(c_sizeof(elem_value),c_int32_t)
+    if (ubound(data,2) > 1) stridesf(2) = &
+      int(c_ptr_to_loc(c_loc(data(1,2)))-c_ptr_to_loc(c_loc(data(1,1))),c_int32_t)/int(c_sizeof(elem_value),c_int32_t)
+#:elif rank == 1
+    stridesf = 1
+    if (ubound(data,1) > 1) stridesf(1) = &
+      int(c_ptr_to_loc(c_loc(data(2)))-c_ptr_to_loc(c_loc(data(1))),c_int32_t)/int(c_sizeof(elem_value),c_int32_t)
 #:else
     stridesf = array_strides(data)
 #:endif
