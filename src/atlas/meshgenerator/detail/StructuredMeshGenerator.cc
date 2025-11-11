@@ -246,7 +246,6 @@ void StructuredMeshGenerator::generate(const Grid& grid, const grid::Distributio
 // show distribution
 #if DEBUG_OUTPUT
     int inode                       = 0;
-    const atlas::vector<int>& parts = distribution;
     Log::info() << "Partition : " << std::endl;
     for (size_t ilat = 0; ilat < rg.ny(); ilat++) {
         for (size_t ilon = 0; ilon < rg.nx(ilat); ilon++) {
@@ -360,6 +359,12 @@ Find min and max latitudes used by this part.
                 }
                 lat_north = *std::min_element(thread_reduce_lat_north.begin(), thread_reduce_lat_north.end());
                 lat_south = *std::max_element(thread_reduce_lat_south.begin(), thread_reduce_lat_south.end());
+                if (lat_north == std::numeric_limits<idx_t>::max()) {
+                    lat_north = -1;
+                }
+                if (lat_south == std::numeric_limits<idx_t>::min()) {
+                    lat_south = -1;
+                }
             }
         }
     }

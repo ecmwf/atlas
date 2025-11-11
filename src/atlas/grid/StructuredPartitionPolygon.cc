@@ -39,15 +39,16 @@ void compute(const functionspace::FunctionSpaceImpl& _fs, idx_t _halo, std::vect
         throw_Exception("halo must zero or matching the one of the StructuredColumns", Here());
     }
 
-    bool north_pole_included = 90. - grid.y(0) == 0.;
-    bool south_pole_included = 90. + grid.y(grid.ny() - 1) == 0;
+    const int y_numbering = (grid.y().front() < grid.y().back()) ? +1 : -1;
+    bool jfirst_at_pole = y_numbering * 90. + grid.y(0) == 0.;
+    bool jlast_at_pole  = y_numbering * 90. - grid.y(grid.ny() - 1) == 0;
 
     auto compute_j = [&](const idx_t j) {
         if (j < 0) {
-            return -j - 1 + north_pole_included;
+            return -j - 1 + jfirst_at_pole;
         }
         else if (j >= grid.ny()) {
-            return 2 * grid.ny() - j - 1 - south_pole_included;
+            return 2 * grid.ny() - j - 1 - jlast_at_pole;
         }
         return j;
     };
@@ -107,6 +108,9 @@ void compute(const functionspace::FunctionSpaceImpl& _fs, idx_t _halo, std::vect
     };
 
     double ymax, ymin, xmax, xmin;
+    if (fs.j_begin() >= fs.j_end()) {
+        return;
+    }
 
     // Top
     // Top left point
@@ -114,7 +118,7 @@ void compute(const functionspace::FunctionSpaceImpl& _fs, idx_t _halo, std::vect
         idx_t j = _halo ? fs.j_begin_halo() : fs.j_begin();
         idx_t i = _halo ? fs.i_begin_halo(j) : fs.i_begin(j);
         if (j == 0 && _halo == 0) {
-            p[YY] = dom.ymax();
+            p[YY] = y_numbering < 0 ? dom.ymax() : dom.ymin();
         }
         else {
             p[YY] = 0.5 * (compute_y(j - 1) + compute_y(j));
@@ -133,7 +137,7 @@ void compute(const functionspace::FunctionSpaceImpl& _fs, idx_t _halo, std::vect
         idx_t j = _halo ? fs.j_begin_halo() :  fs.j_begin();
         idx_t i = _halo ? fs.i_end_halo(j) - 1 : fs.i_end(j) - 1;
         if (j == 0 && _halo == 0) {
-            p[YY] = dom.ymax();
+            p[YY] = y_numbering < 0 ? dom.ymax() : dom.ymin();
         }
         else {
             p[YY] = 0.5 * (compute_y(j - 1) + compute_y(j));
@@ -194,7 +198,7 @@ void compute(const functionspace::FunctionSpaceImpl& _fs, idx_t _halo, std::vect
         idx_t i = _halo ? fs.i_end_halo(j) - 1 : fs.i_end(j) - 1;
 
         if (j == grid.ny() - 1 && _halo == 0) {
-            p[YY] = dom.ymin();
+            p[YY] = y_numbering < 0 ? dom.ymin() : dom.ymax();
         }
         else {
             p[YY] = 0.5 * (compute_y(j) + compute_y(j + 1));
@@ -243,7 +247,7 @@ void compute(const functionspace::FunctionSpaceImpl& _fs, idx_t _halo, std::vect
         idx_t j = _halo ? fs.j_end_halo() - 1 : fs.j_end() - 1;
         idx_t i = _halo ? fs.i_begin_halo(j) : fs.i_begin(j);
         if (j == grid.ny() - 1 && _halo == 0) {
-            p[YY] = dom.ymin();
+            p[YY] = y_numbering < 0 ? dom.ymin() : dom.ymax();
         }
         else {
             p[YY] = 0.5 * (compute_y(j) + compute_y(j + 1));
@@ -325,7 +329,7 @@ StructuredPartitionPolygon::StructuredPartitionPolygon(const functionspace::Func
     compute(fs, halo, points_, inner_bounding_box_);
     auto min = Point2(std::numeric_limits<double>::max(), std::numeric_limits<double>::max());
     auto max = Point2(std::numeric_limits<double>::lowest(), std::numeric_limits<double>::lowest());
-    for (size_t i = 0; i < inner_bounding_box_.size() - 1; ++i) {
+    for (int i = 0; i < static_cast<int>(inner_bounding_box_.size()) - 1; ++i) {
         min = Point2::componentsMin(min, inner_bounding_box_[i]);
         max = Point2::componentsMax(max, inner_bounding_box_[i]);
     }
@@ -390,45 +394,52 @@ void StructuredPartitionPolygon::outputPythonScript(const eckit::PathName& filep
                      "\n" "ax = fig.add_subplot(111,aspect='equal')"
                      "\n";
             }
-            f << "\n" "verts_" << r << " = [";
-            for ( size_t i=0; i<points.size(); ++i ) {
-                f << "\n  (" << points[i][XX] << ", " << points[i][YY] << "), ";
-            }
-            f << "\n]"
-                 "\n"
-                 "\n" "codes_" << r << " = [Path.MOVETO]"
-                 "\n" "codes_" << r << ".extend([Path.LINETO] * " << ( points.size() - 2 ) << ")"
-                 "\n" "codes_" << r << ".extend([Path.CLOSEPOLY])"
-                 "\n"
-                 "\n" "count_" << r << " = " << count <<
-                 "\n" "count_all_" << r << " = " << count_all <<
-                 "\n";
-            if ( plot_nodes ) {
-                f << "\n" "x_" << r << " = [";
-                for ( idx_t i = 0; i < count; ++i ) {
-                    f << xy( i, XX ) << ", ";
+            if (points.size() > 0) {
+                f << "\n" "verts_" << r << " = [";
+                for ( size_t i=0; i<points.size(); ++i ) {
+                    f << "\n  (" << points[i][XX] << ", " << points[i][YY] << "), ";
                 }
-                f << "]"
-                     "\n" "y_" << r << " = [";
-                for ( idx_t i = 0; i < count; ++i ) {
-                    f << xy( i, YY ) << ", ";
+                f << "\n]"
+                    "\n"
+                    "\n" "codes_" << r << " = [Path.MOVETO]"
+                    "\n" "codes_" << r << ".extend([Path.LINETO] * " << ( points.size() - 2 ) << ")"
+                    "\n" "codes_" << r << ".extend([Path.CLOSEPOLY])"
+                    "\n"
+                    "\n" "count_" << r << " = " << count <<
+                    "\n" "count_all_" << r << " = " << count_all <<
+                    "\n";
+                if ( plot_nodes ) {
+                    f << "\n" "x_" << r << " = [";
+                    for ( idx_t i = 0; i < count; ++i ) {
+                        f << xy( i, XX ) << ", ";
+                    }
+                    f << "]"
+                        "\n" "y_" << r << " = [";
+                    for ( idx_t i = 0; i < count; ++i ) {
+                        f << xy( i, YY ) << ", ";
+                    }
+                    f << "]";
                 }
-                f << "]";
+                f << "\n"
+                    "\n" "c = next(colours)"
+                    "\n" "ax.add_patch(patches.PathPatch(Path(verts_" << r << ", codes_" << r << "), edgecolor=c, facecolor=c, alpha=0.3, lw=1))";
+                if ( plot_nodes ) {
+                    f << "\n" "if plot_nodes:"
+                        "\n" "    ax.scatter(x_" << r << ", y_" << r << ", color=c, marker='o')";
+                }
+                f << "\n";
             }
-            f << "\n"
-                 "\n" "c = next(colours)"
-                 "\n" "ax.add_patch(patches.PathPatch(Path(verts_" << r << ", codes_" << r << "), edgecolor=c, facecolor=c, alpha=0.3, lw=1))";
-            if ( plot_nodes ) {
-                f << "\n" "if plot_nodes:"
-                     "\n" "    ax.scatter(x_" << r << ", y_" << r << ", color=c, marker='o')";
-            }
-            f << "\n";
             if ( mpi_rank == mpi_size - 1 ) {
-                f << "\n" "ax.set_xlim( " << xmin << "-5, " << xmax << "+5)"
-                     "\n" "ax.set_ylim(-90-5,  90+5)"
-                     "\n" "ax.set_xticks([0,45,90,135,180,225,270,315,360])"
-                     "\n" "ax.set_yticks([-90,-45,0,45,90])"
-                     "\n" "plt.grid()"
+                if (fs_.projection().units() == "degrees") {
+                    f << "\n" "ax.set_xlim( " << xmin << "-5, " << xmax << "+5)"
+                         "\n" "ax.set_ylim(-90-5,  90+5)"
+                         "\n" "ax.set_xticks([0,45,90,135,180,225,270,315,360])"
+                         "\n" "ax.set_yticks([-90,-45,0,45,90])";
+                }
+                else {
+                    f << "\n" "ax.autoscale()";
+                }
+                f << "\n" "plt.grid()"
                      "\n" "plt.show()";
             }
         }
@@ -463,7 +474,6 @@ void StructuredPartitionPolygon::allGather(util::PartitionPolygons& polygons_) c
         mypolygon.push_back(p[XX]);
         mypolygon.push_back(p[YY]);
     }
-    ATLAS_ASSERT(mypolygon.size() >= 4);
 
     eckit::mpi::Buffer<double> recv_polygons(mpi_size);
 
