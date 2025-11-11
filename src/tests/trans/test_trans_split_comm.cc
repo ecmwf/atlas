@@ -8,51 +8,28 @@
 
 
 #include <array>
-#include <chrono>
 #include <iostream>
 #include <string>
-#include <string_view>
-#include <thread>
 #include <vector>
 
 #include "eckit/mpi/Comm.h"
-#include "eckit/mpi/Parallel.h"
 
 #include "atlas/array.h"
-#include "atlas/field/FieldSet.h"
-#include "atlas/functionspace/NodeColumns.h"
 #include "atlas/functionspace/Spectral.h"
 #include "atlas/functionspace/StructuredColumns.h"
 #include "atlas/grid.h"
-#include "atlas/grid/Distribution.h"
 #include "atlas/grid/Partitioner.h"
-#include "atlas/grid/detail/partitioner/EqualRegionsPartitioner.h"
 #include "atlas/grid/detail/partitioner/TransPartitioner.h"
 #include "atlas/mesh/Mesh.h"
-#include "atlas/mesh/Nodes.h"
 #include "atlas/meshgenerator.h"
 #include "atlas/option.h"
 #include "atlas/output/Gmsh.h"
 #include "atlas/parallel/mpi/mpi.h"
 #include "atlas/trans/Trans.h"
-#include "atlas/util/CoordinateEnums.h"
-#include "atlas/util/Earth.h"
 
-
-#if ATLAS_HAVE_TRANS
-#include "atlas/library/config.h"
-#include "atlas/trans/ifs/TransIFS.h"
-#include "atlas/trans/ifs/TransIFSNodeColumns.h"
-#include "atlas/trans/ifs/TransIFSStructuredColumns.h"
-#if ATLAS_HAVE_ECTRANS
-#include "ectrans/transi.h"
-#else
-#include "transi/trans.h"
-#endif
-#endif
+#include "atlas/util/function/VortexRollup.h"
 
 #include "tests/AtlasTestEnvironment.h"
-
 
 using atlas::grid::detail::partitioner::TransPartitioner;
 
@@ -60,167 +37,75 @@ using atlas::grid::detail::partitioner::TransPartitioner;
 namespace atlas {
 namespace test {
 
-int colourFormula(const int world_rank = atlas::mpi::comm("world").rank(),
-                  const int world_size = atlas::mpi::comm("world").size()) {
-  // 1:3 ratio.
-  constexpr float ratio = 0.25;
+int getColour(const int world_rank = mpi::comm("world").rank(),
+              const int world_size = mpi::comm("world").size()) {
+    // 1:3 ratio.
+    constexpr float ratio = 0.25;
 
-  if (static_cast<float>(world_rank) / static_cast<float>(world_size) < ratio) {
-    return 0;
-  } else {
-    return 1;
-  }
+    if (static_cast<float>(world_rank + 1) / static_cast<float>(world_size) <= ratio) {
+        return 0;
+    } else {
+        return 1;
+    }
 }
 
-int getColour() {
-  return colourFormula();
-}
+struct AtlasSplitCommEnv : public AtlasTestEnvironment {
+    AtlasSplitCommEnv(int argc, char* argv[]): AtlasTestEnvironment(argc, argv) {
+        ATLAS_ASSERT(mpi::comm().size() > 1);
 
-struct AtlasTransEnvironment : public AtlasTestEnvironment {
-    AtlasTransEnvironment(int argc, char* argv[]): AtlasTestEnvironment(argc, argv) {
-        if (eckit::mpi::comm().size() == 1) {
-            trans_use_mpi(false);
-            // TODO(JC): Abort
-        }
-
-        // Split world communicator and set Atlas default to the split.
-        atlas::mpi::comm().split(getColour(), "split_comm");
+        // Split world communicator and set default comm to the split communicator.
+        mpi::comm().split(getColour(), "split_comm");
         eckit::mpi::setCommDefault("split_comm");
     }
-
-    ~AtlasTransEnvironment() { trans_finalize(); }
-
 };
 
 
-/// @brief Compute magnitude of flow with rotation-angle beta
-/// (beta=0 --> zonal, beta=pi/2 --> meridional)
-static void rotated_flow_magnitude(StructuredGrid& grid, double var[], const double& beta) {
-    const double radius  = util::Earth::radius();
-    const double USCAL   = 20.;
-    const double pvel    = USCAL / radius;
-    const double deg2rad = M_PI / 180.;
-
-    idx_t n(0);
-    for (idx_t jlat = 0; jlat < grid.ny(); ++jlat) {
-        for (idx_t jlon = 0; jlon < grid.nx(jlat); ++jlon) {
-            const double x = grid.x(jlon, jlat) * deg2rad;
-            const double y = grid.y(jlat) * deg2rad;
-            const double Ux =
-                pvel * (std::cos(beta) + std::tan(y) * std::cos(x) * std::sin(beta)) * radius * std::cos(y);
-            const double Uy = -pvel * std::sin(x) * std::sin(beta) * radius;
-            var[n]          = std::sqrt(Ux * Ux + Uy * Uy);
-            ++n;
-        }
-    }
-}
-
-/// @brief Compute magnitude of flow with rotation-angle beta
-/// (beta=0 --> zonal, beta=pi/2 --> meridional)
-void rotated_flow_magnitude(const functionspace::NodeColumns& fs, Field& field, const double& beta) {
-    const double radius  = util::Earth::radius();
-    const double USCAL   = 20.;
-    const double pvel    = USCAL / radius;
-    const double deg2rad = M_PI / 180.;
-
-    array::ArrayView<double, 2> lonlat_deg = array::make_view<double, 2>(fs.nodes().lonlat());
-    array::ArrayView<double, 1> var        = array::make_view<double, 1>(field);
-
-    size_t nnodes = fs.nodes().size();
-    for (size_t jnode = 0; jnode < nnodes; ++jnode) {
-        double x   = lonlat_deg(jnode, (size_t)LON) * deg2rad;
-        double y   = lonlat_deg(jnode, (size_t)LAT) * deg2rad;
-        double Ux  = pvel * (std::cos(beta) + std::tan(y) * std::cos(x) * std::sin(beta)) * radius * std::cos(y);
-        double Uy  = -pvel * std::sin(x) * std::sin(beta) * radius;
-        var(jnode) = std::sqrt(Ux * Ux + Uy * Uy);
-    }
-}
-
-
-
+// Each MPI colour in the test does a different resolution transform.
 size_t gaussResolutionForComm() {
-  static constexpr std::array<size_t, 2> resols = {80, 160};
-
-  return resols[getColour()];
-}
-
-std::ostream& worldlog() {
-  // |R<rank> C<colour>| ==>
-  std::cout << "|R" << atlas::mpi::comm("world").rank() << " C" << getColour() << "| ==> ";
-  return std::cout;
+    static constexpr std::array<size_t, 2> resols = {20, 60};
+    return resols[getColour()];
 }
 
 
 CASE("test_trans_split_comm") {
-    const atlas::mpi::Comm& comm = atlas::mpi::comm();
-    const std::size_t no_mpi_ranks = comm.size();
-    std::size_t mpi_rank = comm.rank();
-
-    worldlog() << "communicator: " << comm.name() << std::endl;
-    worldlog() << "no. of MPI ranks: " << no_mpi_ranks << std::endl;
-    worldlog() << "MPI rank: " << mpi_rank << std::endl;
-
-    // list of MPI communicators
-    std::vector<std::string> ds_comms = eckit::mpi::listComms();
-    worldlog() << ds_comms << std::endl;
-
-    std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-
-    //--
-
     const size_t resol = gaussResolutionForComm();
-    worldlog() << resol << std::endl;
-
     const std::string grid_uid = "O" + std::to_string(resol);
+
     StructuredGrid g(grid_uid);
-    long N = g.ny() / 2;
-    trans::TransIFS trans(g, 2 * N - 1);
-    worldlog() << "Trans initialized => " << resol << std::endl;
-    std::vector<double> rspecg;
-    int nfld = 1;
 
-    std::vector<double> init_gpg(trans.grid().size());
-    std::vector<double> init_gp(trans.trans()->ngptot);
-    std::vector<double> init_sp(trans.trans()->nspec2);
-    std::vector<int> nfrom(nfld, 1);
-    if (mpi::comm().rank() == 0) {
-        double beta = M_PI * 0.5;
-        rotated_flow_magnitude(g, init_gpg.data(), beta);
+    auto N = GaussianGrid(g).N();
+    functionspace::Spectral specFS(2 * N - 1);
+
+    functionspace::StructuredColumns gridFS(g,
+        grid::Partitioner(new grid::detail::partitioner::TransPartitioner()));
+
+    trans::Trans transIFS(gridFS, specFS);
+
+    Field specField = specFS.createField<double>(option::name("specfield"));
+
+    // Make vortex rollup field on the grid.
+    atlas::Field vortexField = gridFS.createField<double>(atlas::option::name("vortex"));
+    atlas::Field fieldOut = gridFS.createField<double>(atlas::option::name("out"));
+    const auto lonlat = atlas::array::make_view<const double, 2>(vortexField.functionspace().lonlat());
+    auto view = atlas::array::make_view<double, 1>(vortexField);
+
+    for (atlas::idx_t ij = 0; ij < view.shape(0); ++ij) {
+        constexpr double zz = 1.0;
+        view(ij) = atlas::util::function::vortex_rollup(lonlat(ij, 0), lonlat(ij, 1), zz);
     }
-    trans.distgrid(nfld, nfrom.data(), init_gpg.data(), init_gp.data());
-    trans.dirtrans(nfld, init_gp.data(), init_sp.data());
 
-    std::vector<double> rgp(3 * nfld * trans.trans()->ngptot);
-    double *no_vorticity(nullptr), *no_divergence(nullptr);
-    int nb_vordiv(0);
-    int nb_scalar(nfld);
-    trans.invtrans(nb_scalar, init_sp.data(), nb_vordiv, no_vorticity, no_divergence, rgp.data(),
-                   option::scalar_derivatives(true));
+    // Go to and from spectral space.
+    transIFS.dirtrans(vortexField, specField);
+    transIFS.invtrans(specField, fieldOut);
 
-    std::vector<int> nto(nfld, 1);
-    std::vector<double> rgpg(3 * nfld * trans.grid().size());
-
-    trans.gathgrid(nfld, nto.data(), rgp.data(), rgpg.data());
-
-    // GATHER all on world and do a sum...
-    
-
-    // Output
+    // Output. Writes two files - one for each split communicator.
     {
         Mesh mesh = StructuredMeshGenerator().generate(g);
-        functionspace::StructuredColumns gp(g);
-        output::Gmsh gmsh(grid_uid + "-grid.msh");
-        Field scalar("scalar", rgp.data(), array::make_shape(gp.size()));
-        Field scalar_dNS("scalar_dNS", rgp.data() + nfld * gp.size(), array::make_shape(gp.size()));
-        Field scalar_dEW("scalar_dEW", rgp.data() + 2 * nfld * gp.size(), array::make_shape(gp.size()));
+        output::Gmsh gmsh(grid_uid + "-grid-split_comm_" + std::to_string(getColour()) + ".msh");
         gmsh.write(mesh);
-        gmsh.write(scalar, gp);
-        gmsh.write(scalar_dEW, gp);
-        gmsh.write(scalar_dNS, gp);
+        gmsh.write(fieldOut, gridFS);
     }
-
 }
-
 
 
 }  // namespace test
@@ -229,5 +114,5 @@ CASE("test_trans_split_comm") {
 //--
 
 int main(int argc, char** argv) {
-    return atlas::test::run<atlas::test::AtlasTransEnvironment>(argc, argv);
+    return atlas::test::run<atlas::test::AtlasSplitCommEnv>(argc, argv);
 }
