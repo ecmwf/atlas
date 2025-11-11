@@ -13,6 +13,7 @@
 
 #include "atlas/linalg/sparse.h"
 #include "atlas/util/Config.h"
+#include "atlas/mdspan.h"
 
 namespace atlas {
 
@@ -21,8 +22,10 @@ class ScripIO {
 public:
     explicit ScripIO(const util::Config& = util::NoConfig()) {}
 
-    static atlas::linalg::SparseMatrixStorage read(const std::string&);
-    static void write(const linalg::SparseMatrixStorage&, const std::string&);
+    static atlas::linalg::SparseMatrixStorage read_matrix(const std::string&);
+    static void write_matrix(const linalg::SparseMatrixStorage&, const std::string&);
+
+    static void read_mask(const std::string&, mdspan<int,dims<1>>);
 };
 
 }

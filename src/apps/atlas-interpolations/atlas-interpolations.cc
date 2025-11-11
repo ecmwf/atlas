@@ -111,7 +111,9 @@ public:
         add_option(new SimpleOption<std::string>("i.knn", "number of nearest neighbours in case i.type=knn or k-nearest-neighbours. (default=1)"));
         add_option(new SimpleOption<bool>("i.normalise", "Normalise weights"));
         add_option(new SimpleOption<std::string>("s.grid", "source grid"));
+        add_option(new SimpleOption<std::string>("s.mask", "source mask"));
         add_option(new SimpleOption<std::string>("t.grid", "target grid"));
+        add_option(new SimpleOption<std::string>("t.mask", "target mask"));
         add_option(new SimpleOption<std::string>("i.type", "interpolation type"));
 
         add_option(new eckit::option::Separator("Advanced configuration"));
@@ -199,6 +201,15 @@ std::string get_matrix_format(const AtlasTool::Args& args) {
     }
     return "eckit";
 }
+
+std::string get_mask_format(const std::string& mask) {
+    auto ext = get_extension(mask);
+    if (ext == "nc") {
+        return "scrip";
+    }
+    ATLAS_NOTIMPLEMENTED;
+}
+
 
 std::string get_matrix_name(const AtlasTool::Args& args) {
     if (args.has("matrix.name")) {
@@ -652,6 +663,22 @@ int AtlasInterpolations::execute(const AtlasTool::Args& args) {
             timers.functionspace_setup.stop();
         }
 
+        Field smask, tmask;
+        if (args.has("s.mask")) {
+            smask = src_fs.createField<int>(option::name("smask")|option::global());
+            std::string mask = args.getString("s.mask");
+            if (get_mask_format(mask) == "scrip") {
+                ScripIO::read_mask(mask, array::make_view<int,1>(smask).as_mdspan());
+            }
+        }
+        if (args.has("t.mask")) {
+            tmask = tgt_fs.createField<int>(option::name("tmask")|option::global());
+            std::string mask = args.getString("t.mask");
+            if (get_mask_format(mask) == "scrip") {
+                ScripIO::read_mask(mask, array::make_view<int,1>(tmask).as_mdspan());
+            }
+        }
+
         ATLAS_TRACE_SCOPE("Setup interpolator") {
             timers.interpolation_setup.start();
             auto config = get_interpolation_config(sgrid, tgrid, args);
@@ -776,7 +803,7 @@ Matrix AtlasInterpolations::read_matrix(std::string matrix_name, std::string for
     }
     else if (format == "scrip") {
         Log::info() << "Reading matrix from file '" << matrix_name << ".nc'" << std::endl;
-        return ScripIO::read(matrix_name + ".nc");
+        return ScripIO::read_matrix(matrix_name + ".nc");
     }
     else {
         ATLAS_THROW_EXCEPTION("Matrix format " << format << " is not recognised. Recognized are {eckit,scrip}");
@@ -794,7 +821,7 @@ void AtlasInterpolations::write_matrix(const Matrix& matrix, std::string matrix_
     }
     else if (format == "scrip") {
         Log::info() << "Writing matrix in scrip format to file '" << matrix_name << ".nc'" << std::endl;
-        ScripIO::write(matrix, matrix_name+".nc");
+        ScripIO::write_matrix(matrix, matrix_name+".nc");
     }
     else {
         ATLAS_NOTIMPLEMENTED;
