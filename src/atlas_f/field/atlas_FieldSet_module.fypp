@@ -151,7 +151,7 @@ contains
 subroutine access_data_${dtype}$_r${rank}$_by_name(this, name, field)
   use fckit_c_interop_module, only: c_str
   use atlas_fieldset_c_binding
-  use, intrinsic :: iso_c_binding, only : c_ptr, c_int, c_long, c_float, c_double
+  use, intrinsic :: iso_c_binding, only : c_ptr, c_int, c_long, c_float, c_double, c_bool
   class(atlas_FieldSet), intent(in) :: this
   character(len=*), intent(in) :: name
   ${ftype}$, pointer, intent(inout) :: field(${dim[rank]}$)
@@ -165,7 +165,7 @@ end subroutine
 subroutine access_data_${dtype}$_r${rank}$_by_idx(this, idx, field)
   use fckit_c_interop_module, only: c_str
   use atlas_fieldset_c_binding
-  use, intrinsic :: iso_c_binding, only : c_ptr, c_int, c_long, c_float, c_double
+  use, intrinsic :: iso_c_binding, only : c_ptr, c_int, c_long, c_float, c_double, c_bool
   class(atlas_FieldSet), intent(in) :: this
   integer, intent(in) :: idx
   ${ftype}$, pointer, intent(inout) :: field(${dim[rank]}$)
@@ -179,7 +179,7 @@ end subroutine
 subroutine access_data_${dtype}$_r${rank}$_slice_by_name(this, name, slice, iblk)
   use fckit_c_interop_module, only: c_str
   use atlas_fieldset_c_binding
-  use, intrinsic :: iso_c_binding, only : c_ptr, c_int, c_long, c_float, c_double
+  use, intrinsic :: iso_c_binding, only : c_ptr, c_int, c_long, c_float, c_double, c_bool
   class(atlas_FieldSet), intent(in) :: this
   character(len=*), intent(in) :: name
 #:if rank > 1
@@ -199,7 +199,7 @@ end subroutine
 subroutine access_data_${dtype}$_r${rank}$_slice_by_idx(this, idx, slice, iblk)
   use fckit_c_interop_module, only: c_str
   use atlas_fieldset_c_binding
-  use, intrinsic :: iso_c_binding, only : c_ptr, c_int, c_long, c_float, c_double
+  use, intrinsic :: iso_c_binding, only : c_ptr, c_int, c_long, c_float, c_double, c_bool
   class(atlas_FieldSet), intent(in) :: this
   integer, intent(in) :: idx
 #:if rank > 1
@@ -223,7 +223,7 @@ subroutine access_device_data_${dtype}$_r${rank}$_by_name(this, name, field)
   use fckit_c_interop_module, only: c_str
   use atlas_field_c_binding
   use atlas_Field_module, only: atlas_Field
-  use, intrinsic :: iso_c_binding, only : c_ptr, c_int, c_long, c_float, c_double
+  use, intrinsic :: iso_c_binding, only : c_ptr, c_int, c_long, c_float, c_double, c_bool
   class(atlas_FieldSet), intent(in) :: this
   character(len=*), intent(in) :: name
   ${ftype}$, pointer, intent(inout) :: field(${dim[rank]}$)
@@ -243,7 +243,7 @@ subroutine access_device_data_${dtype}$_r${rank}$_by_idx(this, idx, field)
   use fckit_c_interop_module, only: c_str
   use atlas_field_c_binding
   use atlas_Field_module, only: atlas_Field
-  use, intrinsic :: iso_c_binding, only : c_ptr, c_int, c_long, c_float, c_double
+  use, intrinsic :: iso_c_binding, only : c_ptr, c_int, c_long, c_float, c_double, c_bool
   class(atlas_FieldSet), intent(in) :: this
   integer, intent(in) :: idx
   ${ftype}$, pointer, intent(inout) :: field(${dim[rank]}$)

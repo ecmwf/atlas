@@ -440,7 +440,7 @@ function atlas_Field__wrap_name_${dtype}$_r${rank}$(name,data) result(field)
   ${ftype}$ :: elem_value
   integer(c_int) :: shapef(${rank}$)
   integer(c_int) :: stridesf(${rank}$)
-#:if ftype != "logical"
+#:if ftype != "logical(c_bool)"
   ${ftype}$, pointer :: data1d(:)
   ! For some reason, with nvhpc/22.11 we need create a pointer to pass to array_view1d
   ! This is not reproducible all the time.
@@ -506,7 +506,7 @@ function atlas_Field__wrap_${dtype}$_r${rank}$(data) result(field)
   ${ftype}$ :: elem_value
   integer(c_int) :: shapef(${rank}$)
   integer(c_int) :: stridesf(${rank}$)
-#:if ftype != "logical"
+#:if ftype != "logical(c_bool)"
     ${ftype}$, pointer :: data1d(:)
     data_ptr => data
     data1d => array_view1d(data_ptr)

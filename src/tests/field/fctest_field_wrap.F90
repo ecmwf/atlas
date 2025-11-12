@@ -126,8 +126,8 @@ END_TEST
 TEST( test_field_wrap_logical)
 implicit none
 
-  logical, allocatable :: existing_data(:,:,:)
-  logical, pointer :: data(:,:,:)
+  logical(c_bool), allocatable :: existing_data(:,:,:)
+  logical(c_bool), pointer :: data(:,:,:)
   type(atlas_Field) :: field
   integer(c_int) :: Ni=1
   integer(c_int) :: Nj=1
@@ -161,7 +161,7 @@ implicit none
   do i=1,Ni
     do j=1,Nj
       do k=1,Nk
-        FCTEST_CHECK_EQUAL( data(i,j,k), (mod(k,2) == 0) )
+        FCTEST_CHECK_EQUAL( logical(data(i,j,k)), (mod(k,2) == 0) )
         data(i,j,k) = (mod(k,3) == 0 )
       enddo
     enddo
@@ -174,7 +174,7 @@ implicit none
   do i=1,Ni
     do j=1,Nj
       do k=1,Nk
-        FCTEST_CHECK_EQUAL( data(i,j,k), (mod(k,3) == 0) )
+        FCTEST_CHECK_EQUAL( logical(data(i,j,k)), (mod(k,3) == 0) )
       enddo
     enddo
   enddo
