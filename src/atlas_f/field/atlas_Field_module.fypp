@@ -165,7 +165,7 @@ contains
 #:for dtype,ftype,ctype in types
 !-------------------------------------------------------------------------------
 subroutine array_c_to_f_${dtype}$_r${rank}$(array_cptr,rank,shape_cptr,strides_cptr,array_fptr)
-  use, intrinsic :: iso_c_binding, only : c_ptr, c_int, c_double, c_long, c_float, c_f_pointer
+  use, intrinsic :: iso_c_binding, only : c_ptr, c_int, c_double, c_long, c_float, c_f_pointer, c_bool
   @:ENABLE_ATLAS_MACROS()
   type(c_ptr), intent(in) :: array_cptr
   integer(c_int), intent(in) :: rank
@@ -215,7 +215,7 @@ end subroutine
 #:for dtype,ftype,ctype in types
 subroutine access_data_${dtype}$_r${rank}$(this, field)
   use atlas_field_c_binding
-  use, intrinsic :: iso_c_binding, only : c_ptr, c_int, c_long, c_float, c_double
+  use, intrinsic :: iso_c_binding, only : c_ptr, c_int, c_long, c_float, c_double, c_bool
   class(atlas_Field), intent(in) :: this
   ${ftype}$, pointer, intent(inout) :: field(${dim[rank]}$)
   type(c_ptr) :: field_cptr
@@ -228,7 +228,7 @@ end subroutine
 
 subroutine access_device_data_${dtype}$_r${rank}$(this, field)
   use atlas_field_c_binding
-  use, intrinsic :: iso_c_binding, only : c_ptr, c_int, c_long, c_float, c_double
+  use, intrinsic :: iso_c_binding, only : c_ptr, c_int, c_long, c_float, c_double, c_bool
   class(atlas_Field), intent(in) :: this
   ${ftype}$, pointer, intent(inout) :: field(${dim[rank]}$)
   type(c_ptr) :: field_cptr
@@ -241,7 +241,7 @@ end subroutine
 
 subroutine access_data_${dtype}$_r${rank}$_slice(this, slice, iblk)
   use atlas_field_c_binding
-  use, intrinsic :: iso_c_binding, only : c_ptr, c_int, c_long, c_float, c_double
+  use, intrinsic :: iso_c_binding, only : c_ptr, c_int, c_long, c_float, c_double, c_bool
   class(atlas_Field), intent(in) :: this
   ${ftype}$, pointer :: field(${dim[rank]}$)
 #:if rank > 1
@@ -271,7 +271,7 @@ end subroutine
 #:for dtype,ftype,ctype in types
 subroutine access_data_${dtype}$_r${rank}$_shape(this, field, shape)
   use atlas_field_c_binding
-  use, intrinsic :: iso_c_binding, only : c_ptr, c_int, c_long, c_float, c_double, c_f_pointer
+  use, intrinsic :: iso_c_binding, only : c_ptr, c_int, c_long, c_float, c_double, c_f_pointer, c_bool
   class(atlas_Field), intent(in) :: this
   ${ftype}$, pointer, intent(inout) :: field(${dim[rank]}$)
   integer(c_int), intent(in) :: shape(:)
@@ -431,7 +431,7 @@ end function
 function atlas_Field__wrap_name_${dtype}$_r${rank}$(name,data) result(field)
   use atlas_field_c_binding
   use fckit_array_module, only : array_strides, array_view1d
-  use, intrinsic :: iso_c_binding, only : c_int, c_long, c_float, c_double, c_loc, c_int32_t, c_sizeof
+  use, intrinsic :: iso_c_binding, only : c_int, c_long, c_float, c_double, c_loc, c_int32_t, c_bool, c_sizeof
   use fckit_c_interop_module, only : c_str, c_ptr_to_loc
   type(atlas_Field) :: field
   character(len=*), intent(in) :: name
@@ -496,7 +496,7 @@ function atlas_Field__wrap_name_${dtype}$_r${rank}$(name,data) result(field)
   call field%return()
 end function
 function atlas_Field__wrap_${dtype}$_r${rank}$(data) result(field)
-  use, intrinsic :: iso_c_binding, only : c_int, c_long, c_float, c_double, c_loc, c_int32_t, c_sizeof
+  use, intrinsic :: iso_c_binding, only : c_int, c_long, c_float, c_double, c_loc, c_int32_t, c_bool, c_sizeof
   use :: fckit_c_interop_module, only : c_str, c_ptr_to_loc
   use atlas_field_c_binding
   use fckit_array_module, only : array_strides, array_view1d
