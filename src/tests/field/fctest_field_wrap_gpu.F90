@@ -129,7 +129,7 @@ END_TEST
 TEST( test_field_wrapdataslice )
 implicit none
 
-  real(c_double), allocatable, target :: existing_data(:,:,:,:)
+  real(c_double), allocatable :: existing_data(:,:,:,:)
   real(c_double), pointer :: dview(:,:,:), hview(:,:,:)
   type(atlas_Field) :: field
   integer(c_int) :: i, j, k, l
