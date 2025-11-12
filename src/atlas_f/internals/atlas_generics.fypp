@@ -12,7 +12,7 @@
 #:set dim    = ['',':',':,:',':,:,:',':,:,:,:',':,:,:,:,:']
 #:set dimr   = ['','',':',':,:',':,:,:',':,:,:,:']
 
-#:set ftypes = ['integer(c_int)','integer(c_long)','real(c_float)','real(c_double)', 'logical']
+#:set ftypes = ['integer(c_int)','integer(c_long)','real(c_float)','real(c_double)', 'logical(c_bool)']
 #:set ctypes = ['int','long','float','double', 'int']
 #:set dtypes = ['int32', 'int64', 'real32', 'real64', 'logical32']
 #:set types  = list(zip(dtypes,ftypes,ctypes))
