@@ -297,7 +297,7 @@ if( HAVE_ACC AND CMAKE_Fortran_COMPILER_ID MATCHES NVHPC )
 endif()
 
 if( CMAKE_Fortran_COMPILER_ID MATCHES NVHPC )
-    ecbuild_target_compile_options(atlas_f PRIVATE -Mnotarget_temps) # otherwise wrong strides computation of arrays passed as arguments
+    target_compile_options(atlas_f PRIVATE -Mnotarget_temps) # otherwise wrong strides computation of arrays passed as arguments
 endif()
 
 fckit_target_preprocess_fypp( atlas_f
