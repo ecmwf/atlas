@@ -32,6 +32,13 @@ if(HAVE_WARNINGS)
 
 endif()
 
+# prevent repacking of argument arrays in Fortran modules to get correct strides
+set( HAVE_NOREPACK 1 )
+check_fortran_compiler_flag(-Mnotarget_temps SUPPORTED_FLAGS_NOTARGET_TEMPS)
+if( NOT SUPPORTED_FLAGS_NOTARGET_TEMPS )
+  set( HAVE_NOREPACK 0 )
+endif()
+
 if( CMAKE_CXX_COMPILER_ID STREQUAL Intel )
   ecbuild_add_cxx_flags("-diag-disable=11074" NO_FAIL)   # Inline limits
   ecbuild_add_cxx_flags("-diag-disable=11076" NO_FAIL)   # Inline limits

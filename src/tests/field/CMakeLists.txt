@@ -138,6 +138,7 @@ if( HAVE_FCTEST )
     LINKER_LANGUAGE Fortran
     SOURCES         fctest_field_wrap_gpu.F90 external_acc_routine.F90
     LIBS            atlas_f OpenACC::OpenACC_Fortran
+    DEFINITIONS     HAVE_NOREPACK=${HAVE_NOREPACK}
     ENVIRONMENT     ${ATLAS_TEST_ENVIRONMENT} ATLAS_RUN_NGPUS=1
   )
 

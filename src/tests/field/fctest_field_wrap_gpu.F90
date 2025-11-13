@@ -85,6 +85,15 @@ subroutine kernel_3(view, Ni, Nj, Nk)
 end subroutine kernel_3
 
 
+subroutine try_offload(field)
+  type(atlas_Field), intent(inout) :: field
+  call field%allocate_device()
+  call field%update_device()
+  call field%update_host()
+  call field%deallocate_device()
+end subroutine try_offload
+
+
 TEST( test_field_wrapdata )
 implicit none
 
@@ -178,45 +187,49 @@ implicit none
     enddo
   enddo
 
-  print *, "\n(fix_id, fix_id,      :,      :)"
+#if HAVE_NOREPACK
+  field = atlas_Field(existing_data(fix_id:fix_id, fix_id,      :,      :))
+  FCTEST_CHECK_EQUAL(field%strides(), ([1, 16, 48]))
+#endif
+
   field = atlas_Field(existing_data(fix_id, fix_id,      :,      :))
   FCTEST_CHECK_EQUAL(field%strides(), ([16, 48]))
+  call try_offload(field)
 
-  print *, "(fix_id,      :, fix_id,      :)"
   field = atlas_Field(existing_data(fix_id,      :, fix_id,      :))
   FCTEST_CHECK_EQUAL(field%strides(), ([8, 48]))
 
-  print *, "(fix_id,      :,      :, fix_id)"
   field = atlas_Field(existing_data(fix_id,      :,      :, fix_id))
   FCTEST_CHECK_EQUAL(field%strides(), ([8, 16]))
+  call try_offload(field)
 
-  print *, "(     :, fix_id, fix_id,      :)"
   field = atlas_Field(existing_data(     :, fix_id, fix_id,      :))
   FCTEST_CHECK_EQUAL(field%strides(), ([1, 48]))
+  call try_offload(field)
 
-  print *, "(     :, fix_id,      :,      fix_id)"
   field = atlas_Field(existing_data(     :, fix_id,      :, fix_id))
   FCTEST_CHECK_EQUAL(field%strides(), ([1, 16]))
+  call try_offload(field)
 
-  print *, "(     :,      :, fix_id, fix_id)"
   field = atlas_Field(existing_data(     :,      :, fix_id, fix_id))
   FCTEST_CHECK_EQUAL(field%strides(), ([1, 8]))
+  call try_offload(field)
 
-  print *, "(     :, fix_id, fix_id, fix_id)"
   field = atlas_Field(existing_data(     :, fix_id, fix_id, fix_id))
   FCTEST_CHECK_EQUAL(field%strides(), ([1]))
+  call try_offload(field)
 
-  print *, "(fix_id,      :, fix_id, fix_id)"
   field = atlas_Field(existing_data(fix_id,      :, fix_id, fix_id))
   FCTEST_CHECK_EQUAL(field%strides(), ([8]))
+  call try_offload(field)
 
-  print *, "(fix_id, fix_id,      :, fix_id)"
   field = atlas_Field(existing_data(fix_id, fix_id,      :, fix_id))
   FCTEST_CHECK_EQUAL(field%strides(), ([16]))
+  call try_offload(field)
 
-  print *, "(fix_id, fix_id, fix_id,      :)"
   field = atlas_Field(existing_data(fix_id, fix_id, fix_id,      :))
   FCTEST_CHECK_EQUAL(field%strides(), ([48]))
+  call try_offload(field)
 
   call field%final()
 END_TEST
