@@ -187,11 +187,10 @@ implicit none
     enddo
   enddo
 
-#if HAVE_NOREPACK
   field = atlas_Field(existing_data(fix_id:fix_id, fix_id,      :,      :))
   FCTEST_CHECK_EQUAL(field%strides(), ([1, 16, 48]))
-#endif
 
+#if HAVE_NOREPACK
   field = atlas_Field(existing_data(fix_id, fix_id,      :,      :))
   FCTEST_CHECK_EQUAL(field%strides(), ([16, 48]))
   call try_offload(field)
@@ -202,6 +201,7 @@ implicit none
   field = atlas_Field(existing_data(fix_id,      :,      :, fix_id))
   FCTEST_CHECK_EQUAL(field%strides(), ([8, 16]))
   call try_offload(field)
+#endif
 
   field = atlas_Field(existing_data(     :, fix_id, fix_id,      :))
   FCTEST_CHECK_EQUAL(field%strides(), ([1, 48]))
@@ -219,6 +219,7 @@ implicit none
   FCTEST_CHECK_EQUAL(field%strides(), ([1]))
   call try_offload(field)
 
+#if HAVE_NOREPACK
   field = atlas_Field(existing_data(fix_id,      :, fix_id, fix_id))
   FCTEST_CHECK_EQUAL(field%strides(), ([8]))
   call try_offload(field)
@@ -230,6 +231,7 @@ implicit none
   field = atlas_Field(existing_data(fix_id, fix_id, fix_id,      :))
   FCTEST_CHECK_EQUAL(field%strides(), ([48]))
   call try_offload(field)
+#endif
 
   call field%final()
 END_TEST
