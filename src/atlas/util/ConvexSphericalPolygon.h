@@ -23,9 +23,13 @@
 namespace atlas {
 namespace util {
 
+constexpr double EPS  = std::numeric_limits<double>::epsilon();
+constexpr double EPS2 = EPS * EPS;
+
 //------------------------------------------------------------------------------------------------------
 
 class ConvexSphericalPolygon {
+
 public:
     static constexpr int MAX_GRIDCELL_EDGES = 4;
     static constexpr int MAX_SIZE           = 2 * MAX_GRIDCELL_EDGES + 1;
@@ -132,6 +136,7 @@ public:
 
     static void fpe(bool v) { fpe_ = v; }
     static bool fpe() { return fpe_; }
+
 private:
     struct SubTriangle {
         PointXYZ centroid;
@@ -159,6 +164,10 @@ private:
 
     // Set valid_ to true when polygon is convex
     void validate();
+
+    // cf. M. Floater, “Generalized barycentric coordinates and applications” Acta Numerica, p. 001, 2016.
+    std::optional<std::array<double, MAX_SIZE>> compute_vertex_weights(const PointXYZ& candidatePoint, double edgeEpsilon = 5. * EPS) const;
+
 
 private:
     std::array<PointXYZ, MAX_SIZE> sph_coords_;

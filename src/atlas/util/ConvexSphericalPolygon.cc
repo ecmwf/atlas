@@ -28,9 +28,6 @@ using GreatCircleSegment = ConvexSphericalPolygon::GreatCircleSegment;
 
 namespace {
 
-constexpr double EPS  = std::numeric_limits<double>::epsilon();
-constexpr double EPS2 = EPS * EPS;
-
 inline double distance2(const PointXYZ& p1, const PointXYZ& p2) {
     double dx = p2[0] - p1[0];
     double dy = p2[1] - p1[1];
@@ -170,6 +167,66 @@ void ConvexSphericalPolygon::validate() {
         }
     }
 }
+
+
+std::optional<std::array<double, ConvexSphericalPolygon::MAX_SIZE>>
+ConvexSphericalPolygon::compute_vertex_weights(const PointXYZ& candidatePoint, double edgeEpsilon) const {
+    std::array<double, MAX_SIZE> greatCircleProducts = {0};
+    for (int i = 0; i < size_; ++i) {
+        auto segment = GreatCircleSegment(sph_coords_[i], sph_coords_[i+1]);
+        auto normal = PointXYZ::normalize(segment.cross());
+        greatCircleProducts[i] = dot(normal, candidatePoint);
+        if (! segment.inLeftHemisphere(candidatePoint, edgeEpsilon)) {
+            return {};
+        }
+    }
+    std::array<double, MAX_SIZE> weights = {0};
+    for (int v = 0; v < size_; ++v) {
+        if (PointXYZ::distance2(candidatePoint, sph_coords_[v]) < edgeEpsilon * edgeEpsilon) {
+            weights[v] = 1;
+            return weights;
+        }
+    }
+    std::array<PointXYZ, MAX_SIZE> spokeNormals;
+    std::array<double, MAX_SIZE> spokeNorms;
+    double denominator = 0.;
+
+    for (int v = 0; v < size_; ++v) {
+        spokeNormals[v] = PointXYZ::cross(sph_coords_[v], candidatePoint);
+        spokeNorms[v]   = PointXYZ::norm(spokeNormals[v]);
+    }
+
+    for (int weightIndex = 0; weightIndex < size_; ++weightIndex) {
+        int previousWeightIndex = (size_ + weightIndex - 1) % size_;
+        int nextWeightIndex     = (weightIndex + 1) % size_;
+        double product          = 1.;
+
+        for (int index = 0; index < size_; ++index) {
+            if ((index != weightIndex) && (index != previousWeightIndex)) {
+                product *= greatCircleProducts[index];
+            }
+        }
+
+        double leftSideAngle =
+            spokeNorms[nextWeightIndex] -
+            dot(spokeNormals[nextWeightIndex], spokeNormals[weightIndex]) / spokeNorms[weightIndex];
+        double rightSideAngle =
+            spokeNorms[previousWeightIndex] -
+            dot(spokeNormals[previousWeightIndex], spokeNormals[weightIndex]) / spokeNorms[weightIndex];
+
+        weights[weightIndex] = (greatCircleProducts[previousWeightIndex] * (leftSideAngle) +
+                                greatCircleProducts[weightIndex] * (rightSideAngle)) *
+                                product;
+        denominator += weights[weightIndex] * dot(sph_coords_[weightIndex], candidatePoint);
+    }
+
+    for (double& weight : weights) {
+        weight /= denominator;
+    }
+
+    return weights;
+}
+
 
 bool ConvexSphericalPolygon::equals(const ConvexSphericalPolygon& plg, const double deg_prec) const {
     if (size_ == 0 and plg.size_ == 0) {
