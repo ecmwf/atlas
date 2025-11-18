@@ -32,11 +32,10 @@ if(HAVE_WARNINGS)
 
 endif()
 
-# prevent repacking of argument arrays in Fortran modules to get correct strides
+# nvfortran does not provide robust flags to prevent forcefully repacking of discontinuguous argument arrays
 set( HAVE_NOREPACK 1 )
-check_fortran_compiler_flag(-Mnotarget_temps SUPPORTED_FLAGS_NOTARGET_TEMPS)
-if( NOT SUPPORTED_FLAGS_NOTARGET_TEMPS )
-  set( HAVE_NOREPACK 0 )
+if( CMAKE_Fortran_COMPILER_ID MATCHES NVHPC )
+    set( HAVE_NOREPACK 0 )
 endif()
 
 if( CMAKE_CXX_COMPILER_ID STREQUAL Intel )
