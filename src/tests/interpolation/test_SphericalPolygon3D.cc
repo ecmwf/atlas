@@ -11,6 +11,7 @@
 #include <numeric>
 #include "atlas/interpolation/Vector3D.h"
 #include "atlas/interpolation/element/SphericalPolygon3D.h"
+#include "atlas/util/ConvexSphericalPolygon.h"
 #include "eckit/types/FloatCompare.h"
 #include "eigen3/Eigen/src/Core/Matrix.h"
 #include "tests/AtlasTestEnvironment.h"
@@ -30,12 +31,37 @@ static const double parametricEpsilon = 1e-15;
 const double recipRoot2 = 1 / sqrt(2);
 const double recipRoot3 = 1 / sqrt(3);
 
+using ConvexSphericalPolygon = util::ConvexSphericalPolygon;
+
+void xyz2lonlat(const PointXYZ& xyz, PointLonLat& lonlat) {
+    eckit::geometry::Sphere::convertCartesianToSpherical(1., xyz, lonlat);
+}
+
+util::ConvexSphericalPolygon make_polygon(const std::initializer_list<PointXYZ>& list) {
+    std::vector<PointLonLat> vec_ll;
+    vec_ll.resize(list.size());
+    int i = 0;
+    for (auto p : list) {
+        xyz2lonlat(p, vec_ll[i++]);
+    }
+    return util::ConvexSphericalPolygon{vec_ll};
+}
+
+template <class... Ts>
+util::ConvexSphericalPolygon make_polygon(Ts&&... ts) {
+    std::array<PointLonLat, sizeof...(Ts)> arr{ts...};
+    return util::ConvexSphericalPolygon{arr};
+}
 
 CASE("test_spherical_polygon_triag") {
     const std::array<const Vector3D, 3> testTriangleVertices = {Vector3D{0, 1, 0}, Vector3D{recipRoot2, 0, recipRoot2},
                                                                 Vector3D{1, 0, 0}};
     SphericalPolygon3D<3> testTriangle(testTriangleVertices);
+
+    auto testTriangle_csp = make_polygon({{0, 1, 0}, {recipRoot2, 0, recipRoot2}, {1, 0, 0}});
+
     double testTriangleArea = testTriangle.area();
+    double testTriangleArea_csp = testTriangle_csp.area();
 
     SECTION("test great circle normals") {
         std::array<Vector3D, 3> expectedGreatCircleNormals = {Vector3D{recipRoot2, 0, -1 * recipRoot2},
@@ -47,8 +73,11 @@ CASE("test_spherical_polygon_triag") {
 
     SECTION("test shoelace formula for area") {  // same as usual angle for triangle
         double expectedArea = 0.5210;
-        Log::info() << testTriangleArea << " " << expectedArea << std::endl;
+        double expectedArea_csp = 0.7854;
+        Log::info() << "SP3D area : " << testTriangleArea << " approx. equal " << expectedArea << std::endl;
+        Log::info() << "CSP area  : " << testTriangleArea_csp << " approx. equal " << expectedArea_csp << std::endl;
         EXPECT(eckit::types::is_approximately_equal(testTriangleArea, expectedArea, relative_error));
+        EXPECT(eckit::types::is_approximately_equal(testTriangleArea_csp, expectedArea_csp, relative_error));
     }
 
     SECTION("test intersection and weight computation") {
@@ -66,6 +95,19 @@ CASE("test_spherical_polygon_triag") {
             Vector3D{0, recipRoot2, recipRoot2},                          // Outside
             Vector3D{-1 * recipRoot3, -1 * recipRoot3, -1 * recipRoot3},  // Opposite Side
             Vector3D{recipRoot2, recipRoot2, -0.000001}                   // Just outside edge
+        };
+
+        std::array<PointXYZ, numberTestPoints> candidatePoints_csp = {
+            PointXYZ{0, 1, 0},                                            // Vertex 0
+            PointXYZ{recipRoot2, 0, recipRoot2},                          // Vertex 1
+            PointXYZ{1, 0, 0},                                            // Vertex 2
+            PointXYZ{recipRoot3, recipRoot3, recipRoot3},                 // Inside
+            PointXYZ{recipRoot2, recipRoot2, 0},                          // On edge
+            PointXYZ{recipRoot2, recipRoot2, 0.000001},                   // Just inside edge
+            PointXYZ{0.01, 0.9999, 0.01},                                 // Just inside vertex
+            PointXYZ{0, recipRoot2, recipRoot2},                          // Outside
+            PointXYZ{-1 * recipRoot3, -1 * recipRoot3, -1 * recipRoot3},  // Opposite Side
+            PointXYZ{recipRoot2, recipRoot2, -0.000001}                   // Just outside edge
         };
 
         std::array<bool, numberTestPoints> isPointInside = {1, 1, 1, 1, 1, 1, 1, 0, 0, 0};
@@ -87,6 +129,8 @@ CASE("test_spherical_polygon_triag") {
 
         size_t pointsInside  = 0;
         size_t pointsOutside = 0;
+        size_t pointsInside_csp  = 0;
+        size_t pointsOutside_csp = 0;
 
         for (size_t i = 0; i < numberTestPoints; ++i) {
             std::optional<std::array<double, 3>> polygonWeights =
@@ -101,8 +145,22 @@ CASE("test_spherical_polygon_triag") {
                 Vector3D polygonWeightsVector((*polygonWeights)[0], (*polygonWeights)[1], (*polygonWeights)[2]);
                 EXPECT(polygonWeightsVector.isApprox(candidateWeights[i], relative_error));
             }
+
+            std::vector<double> polygonWeights_csp =
+                testTriangle_csp.compute_vertex_weights(candidatePoints_csp[i], edgeEpsilon);
+            if (*std::max_element(polygonWeights_csp.begin(), polygonWeights_csp.end()) == 0.) {
+                EXPECT((isPointInside[i] == 0));
+                pointsOutside_csp += 1;
+            }
+            else {
+                EXPECT((isPointInside[i] == 1));
+                pointsInside_csp += 1;
+                Vector3D polygonWeightsVector_csp(polygonWeights_csp[0], polygonWeights_csp[1], polygonWeights_csp[2]);
+                EXPECT(polygonWeightsVector_csp.isApprox(candidateWeights[i], relative_error));
+            }
         }
-        Log::info() << "Points in/out: " << pointsInside << "/" << pointsOutside << std::endl;
+        Log::info() << "SP3D Points in/out: " << pointsInside << "/" << pointsOutside << std::endl;
+        Log::info() << "CSP  Points in/out: " << pointsInside_csp << "/" << pointsOutside_csp << std::endl;
         EXPECT(pointsOutside == expectedOutside);
         EXPECT(pointsInside == expectedInside);
     }

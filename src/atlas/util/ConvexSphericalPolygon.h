@@ -165,8 +165,9 @@ private:
     // Set valid_ to true when polygon is convex
     void validate();
 
+public:
     // cf. M. Floater, “Generalized barycentric coordinates and applications” Acta Numerica, p. 001, 2016.
-    std::optional<std::array<double, MAX_SIZE>> compute_vertex_weights(const PointXYZ& candidatePoint, double edgeEpsilon = 5. * EPS) const;
+    std::vector<double> compute_vertex_weights(const PointXYZ& candidatePoint, double edgeEpsilon = 5. * EPS) const;
 
 
 private:

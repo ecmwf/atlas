@@ -169,21 +169,24 @@ void ConvexSphericalPolygon::validate() {
 }
 
 
-std::optional<std::array<double, ConvexSphericalPolygon::MAX_SIZE>>
+std::vector<double>
 ConvexSphericalPolygon::compute_vertex_weights(const PointXYZ& candidatePoint, double edgeEpsilon) const {
     std::array<double, MAX_SIZE> greatCircleProducts = {0};
+    std::vector<double> weights(size_);
+    std::fill(weights.begin(), weights.end(), 0.);
+
     for (int i = 0; i < size_; ++i) {
-        auto segment = GreatCircleSegment(sph_coords_[i], sph_coords_[i+1]);
+        auto segment = GreatCircleSegment(sph_coords_[i], sph_coords_[(i+1) % size_]);
         auto normal = PointXYZ::normalize(segment.cross());
         greatCircleProducts[i] = dot(normal, candidatePoint);
-        if (! segment.inLeftHemisphere(candidatePoint, edgeEpsilon)) {
-            return {};
+        if (! segment.inLeftHemisphere(candidatePoint, -edgeEpsilon)) {
+            return weights;
         }
     }
-    std::array<double, MAX_SIZE> weights = {0};
+    weights.reserve(size_);
     for (int v = 0; v < size_; ++v) {
         if (PointXYZ::distance2(candidatePoint, sph_coords_[v]) < edgeEpsilon * edgeEpsilon) {
-            weights[v] = 1;
+            weights[v] = 1.;
             return weights;
         }
     }
