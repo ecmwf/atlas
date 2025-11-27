@@ -178,6 +178,7 @@ void RegularMeshGenerator::generate_mesh(const RegularGrid& rg, const grid::Dist
     int nparts = options.get<size_t>("nb_parts");
     int nx     = rg.nx();
     int ny     = rg.ny();
+    const int y_numbering = (rg.y().front() < rg.y().back()) ? +1 : -1;
 
     bool periodic_x = options.get<bool>("periodic_x") or rg.periodic();
     bool periodic_y = options.get<bool>("periodic_y");
@@ -529,10 +530,19 @@ void RegularMeshGenerator::generate_mesh(const RegularGrid& rg, const grid::Dist
             if (!is_ghost_SR[ii]) {
                 if ((ix_min + ix < nx - 1 || periodic_x) && (iy_min + iy < ny - 1 || periodic_y)) {
                     // define cell corners (local indices)
-                    quad_nodes[0] = local_idx_SR[ii];
-                    quad_nodes[3] = local_idx_SR[iy * nxl + ix + 1];        // point to the right
-                    quad_nodes[2] = local_idx_SR[(iy + 1) * nxl + ix + 1];  // point above right
-                    quad_nodes[1] = local_idx_SR[(iy + 1) * nxl + ix];      // point above
+                    if (y_numbering < 0) {
+                        quad_nodes[0] = local_idx_SR[ii];
+                        quad_nodes[3] = local_idx_SR[iy * nxl + ix + 1];        // point to the right
+                        quad_nodes[2] = local_idx_SR[(iy + 1) * nxl + ix + 1];  // point above right
+                        quad_nodes[1] = local_idx_SR[(iy + 1) * nxl + ix];      // point above
+                    }
+                    else {
+                        quad_nodes[0] = local_idx_SR[ii];
+                        quad_nodes[1] = local_idx_SR[iy * nxl + ix + 1];        // point to the right
+                        quad_nodes[2] = local_idx_SR[(iy + 1) * nxl + ix + 1];  // point above right
+                        quad_nodes[3] = local_idx_SR[(iy + 1) * nxl + ix];      // point above
+
+                    }
                     node_connectivity.set(jcell, quad_nodes);
                     cells_part(jcell) = mypart;
 #if DEBUG_OUTPUT_DETAIL

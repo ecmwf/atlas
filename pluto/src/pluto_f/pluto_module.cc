@@ -76,8 +76,17 @@ void c_pluto_memory_pool_resource_reserve(pluto::memory_resource* memory_resourc
     }
 }
 
+int c_pluto_has_registered_resource(const char* name, int name_size) {
+    return pluto::has_registered_resource(std::string_view{name, static_cast<std::size_t>(name_size)});
+}
 pluto::memory_resource* c_pluto_get_registered_resource(const char* name, int name_size) {
     return pluto::get_registered_resource(std::string_view{name, static_cast<std::size_t>(name_size)});
+}
+void c_pluto_register_resource(const char* name, int name_size, pluto::memory_resource* memory_resource) {
+    pluto::register_resource(std::string_view{name, static_cast<std::size_t>(name_size)}, memory_resource);
+}
+void c_pluto_unregister_resource(const char* name, int name_size) {
+    pluto::unregister_resource(std::string_view{name, static_cast<std::size_t>(name_size)});
 }
 pluto::memory_resource* c_pluto_new_delete_resource() {
     return pluto::new_delete_resource();

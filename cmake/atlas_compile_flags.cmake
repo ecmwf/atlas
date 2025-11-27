@@ -32,6 +32,12 @@ if(HAVE_WARNINGS)
 
 endif()
 
+# nvfortran does not provide robust flags to prevent forcefully repacking of discontinuguous argument arrays
+set( HAVE_NOREPACK 1 )
+if( CMAKE_Fortran_COMPILER_ID MATCHES NVHPC )
+    set( HAVE_NOREPACK 0 )
+endif()
+
 if( CMAKE_CXX_COMPILER_ID STREQUAL Intel )
   ecbuild_add_cxx_flags("-diag-disable=11074" NO_FAIL)   # Inline limits
   ecbuild_add_cxx_flags("-diag-disable=11076" NO_FAIL)   # Inline limits
@@ -62,7 +68,7 @@ endif()
 
 if( CMAKE_CXX_COMPILER_ID MATCHES IntelLLVM )
   # Turn off -ffinite-math-only which gets included by some optimisation levels which assumes values can never be NaN.
-  # Then results in std::isnan(value) always retrun false.
+  # Then results in std::isnan(value) always return false.
   ecbuild_add_cxx_flags("-fno-finite-math-only")
 endif()
 

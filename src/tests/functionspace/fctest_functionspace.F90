@@ -958,9 +958,9 @@ type(atlas_FieldSet) :: fset
 type(atlas_functionspace) :: fs_base
 type(atlas_trace) :: trace
 
-integer i, k
-integer rank
-real space
+integer(c_int) ::  i, k
+integer(c_int) :: rank
+real(c_double) :: space
 real(c_double), allocatable :: point_values(:,:)
 integer(c_int), dimension(4) :: ghost_values
 integer(c_int), dimension(4) :: partition_index
@@ -989,15 +989,15 @@ rank = fckit_mpi%rank()
 ! 0  45 | 315  90
 
 
-space = 360.0 /(2.0 * fckit_mpi%size())
+space = 360.0_c_double /(2.0_c_double * fckit_mpi%size())
 fset = atlas_FieldSet()
 
 allocate(point_values(2, 4))
 
-point_values = reshape((/space * (2 * rank), 0.0, &
-                         space * (2 * rank + 1), 0.0, &
-                         space * (2 * rank - 1), 0.0, &
-                         space * (2 * rank + 2), 0.0/), shape(point_values))
+point_values = reshape((/space * (2 * rank),      0.0_c_double, &
+                         space * (2 * rank + 1),  0.0_c_double, &
+                         space * (2 * rank - 1),  0.0_c_double, &
+                         space * (2 * rank + 2),  0.0_c_double/),  shape(point_values))
 
 if (point_values(1, 3) < 0.0) point_values(1, 3) = 360.0 + point_values(1, 3)
 if (point_values(1, 4) > 360.0 - tol) point_values(1, 4) = 0.0d0
