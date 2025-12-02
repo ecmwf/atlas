@@ -35,6 +35,7 @@
 #include "atlas/util/Checksum.h"
 #include "atlas/util/function/VortexRollup.h"
 
+#include "AtlasIO.h"
 #include "ScripIO.h"
 
 
@@ -206,6 +207,9 @@ std::string get_mask_format(const std::string& mask) {
     auto ext = get_extension(mask);
     if (ext == "nc") {
         return "scrip";
+    }
+    else if (ext == "atlas") {
+        return "atlas";
     }
     ATLAS_NOTIMPLEMENTED;
 }
@@ -670,12 +674,24 @@ int AtlasInterpolations::execute(const AtlasTool::Args& args) {
             if (get_mask_format(mask) == "scrip") {
                 ScripIO::read_mask(mask, array::make_view<int,1>(smask).as_mdspan());
             }
+            else if (get_mask_format(mask) == "atlas") {
+                AtlasIO::read_mask(mask, array::make_view<int,1>(smask).as_mdspan());
+            }
+            else {
+                ATLAS_NOTIMPLEMENTED;
+            }
         }
         if (args.has("t.mask")) {
             tmask = tgt_fs.createField<int>(option::name("tmask")|option::global());
             std::string mask = args.getString("t.mask");
             if (get_mask_format(mask) == "scrip") {
                 ScripIO::read_mask(mask, array::make_view<int,1>(tmask).as_mdspan());
+            }
+            else if (get_mask_format(mask) == "atlas") {
+                AtlasIO::read_mask(mask, array::make_view<int,1>(tmask).as_mdspan());
+            }
+            else {
+                ATLAS_NOTIMPLEMENTED;
             }
         }
 
