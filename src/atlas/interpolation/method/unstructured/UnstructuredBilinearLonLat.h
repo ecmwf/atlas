@@ -12,7 +12,6 @@
 #include <string>
 
 #include "eckit/config/Configuration.h"
-#include "eckit/memory/NonCopyable.h"
 
 #include "atlas/array/ArrayView.h"
 #include "atlas/functionspace/FunctionSpace.h"

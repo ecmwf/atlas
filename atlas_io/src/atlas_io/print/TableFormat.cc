@@ -226,7 +226,7 @@ struct TablePrinter {
             widths[col]   = std::max(widths[col], columns[col][0].size());
         }
         ++col;
-        if (col == columns.size()) {
+        if (col == static_cast<int>(columns.size())) {
             ++row;
             col = 0;
         }
@@ -247,7 +247,7 @@ struct TablePrinter {
         }
         out << " " << sep << std::endl;
 
-        for (size_t r = 1; r < row; ++r) {
+        for (int r = 1; r < row; ++r) {
             out << " ";
             for (size_t c = 0; c < columns.size(); ++c) {
                 out << " " << sep << " " << std::setw(widths[c]) << std::left << columns[c][r];

@@ -144,8 +144,12 @@ public:  // methods
     /// Constructor taking a list of points (makes copy)
     Unstructured(const std::vector<PointXY>& pts);
 
+    /// Constructor taking a uid and list of points (makes copy)
+    Unstructured(const std::string& uid, size_t N, const double x[], const double y[], size_t xstride = 1, size_t ystride = 1);
+
     /// Constructor taking a list of points (makes copy)
-    Unstructured(size_t N, const double x[], const double y[], size_t xstride = 1, size_t ystride = 1);
+    Unstructured(size_t N, const double x[], const double y[], size_t xstride = 1, size_t ystride = 1) :
+        Unstructured("", N, x, y, xstride, ystride) {}
 
     /// Constructor taking a list of points (makes copy)
     Unstructured(size_t N, const double xy[]);
@@ -156,6 +160,12 @@ public:  // methods
     Unstructured(mdspan<const double, Extents, LayoutPolicy, AccessorPolicy> xy):
         Unstructured(xy.extent(0), &xy[std::array{0,0}], &xy[std::array{0,1}], xy.stride(1), xy.stride(1)) {}
 
+    /// Constructor taking a mdspan (makes copy)
+    /// First dimension is number of points, second dimension is coordinate. First X (lon), then Y (lat)
+    template <typename Extents, typename LayoutPolicy, typename AccessorPolicy>
+    Unstructured(const std::string& uid, mdspan<const double, Extents, LayoutPolicy, AccessorPolicy> xy):
+        Unstructured(uid, xy.extent(0), &xy[std::array{0,0}], &xy[std::array{0,1}], xy.stride(1), xy.stride(1)) {}
+
     /// Constructor from initializer list
     Unstructured(std::initializer_list<PointXY>);
 
@@ -164,6 +174,13 @@ public:  // methods
     virtual idx_t size() const override;
 
     virtual Spec spec() const override;
+
+    virtual uid_t uid() const override {
+        if (! uid_.empty()) {
+            return uid_;
+        }
+        return Grid::uid();
+    }
 
     const PointXY& xy(idx_t n) const { return (*points_)[n]; }
 
@@ -216,6 +233,8 @@ protected:
 
     /// Cache for the spec since may be quite heavy to compute
     mutable std::unique_ptr<Grid::Spec> cached_spec_;
+
+    uid_t uid_;
 };
 
 extern "C" {

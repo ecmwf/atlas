@@ -45,9 +45,6 @@ public:
     ///       the referenced datahandle
     Stream(eckit::DataHandle&);
 
-    /// Assignment constructor sharing datahandle with other Stream
-    Stream(const Stream&);
-
     /// Access internal eckit::DataHandle
     eckit::DataHandle& datahandle();
 

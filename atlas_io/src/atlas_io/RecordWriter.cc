@@ -159,7 +159,7 @@ void RecordWriter::checksum(bool on) {
 
 void RecordWriter::set(const RecordWriter::Key& key, Link&& link, const eckit::Configuration&) {
     keys_.emplace_back(key);
-    encoders_[key] = std::move(Encoder{link});
+    encoders_[key] = Encoder{link};
     info_.emplace(key, DataInfo{});
 }
 

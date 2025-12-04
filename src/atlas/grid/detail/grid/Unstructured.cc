@@ -20,6 +20,8 @@
 
 #include "atlas/array/ArrayView.h"
 #include "atlas/grid/Iterator.h"
+#include "atlas/grid/SpecRegistry.h"
+
 #include "atlas/grid/detail/grid/GridBuilder.h"
 #include "atlas/grid/detail/grid/GridFactory.h"
 #include "atlas/option.h"
@@ -140,17 +142,27 @@ Unstructured::Unstructured(std::initializer_list<PointXY> initializer_list):
     domain_ = GlobalDomain();
 }
 
-Unstructured::Unstructured(size_t N, const double x[], const double y[], size_t xstride, size_t ystride):
+Unstructured::Unstructured(const std::string& uid, size_t N, const double x[], const double y[], size_t xstride, size_t ystride):
  Grid(), points_(new std::vector<PointXY>(N)) {
     util::Config config_domain;
     config_domain.set("type", "global");
     domain_ = Domain(config_domain);
-
     std::vector<PointXY>& p = *points_;
     const idx_t npts        = static_cast<idx_t>(p.size());
 
     for (idx_t n = 0; n < npts; ++n) {
         p[n].assign(x[n*xstride], y[n*ystride]);
+    }
+
+    if (!uid.empty()) {
+        if (atlas::grid::SpecRegistry::has(uid)) {
+            cached_spec_.reset(new Grid::Spec{atlas::grid::SpecRegistry::get(uid)});
+            cached_spec_->get("uid",uid_);
+            cached_spec_->get("name",shortName_);
+        }
+        if (uid_.empty()) {
+            uid_ = uid;
+        }
     }
 }
 
