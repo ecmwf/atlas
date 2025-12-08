@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include <optional>
 #include <vector>
 
 #include "eckit/deprecated.h"
@@ -138,6 +139,8 @@ public:
 
     int next(const int index) const { return (index == size_ - 1) ? 0 : index + 1; };
 
+    int previous(const int index) const { return (index == 0) ? size_ - 1 : index - 1; };
+
     static void fpe(bool v) { fpe_ = v; }
     static bool fpe() { return fpe_; }
 private:
@@ -169,6 +172,8 @@ private:
     void validate();
 
     void validateAndComputeNormals();
+
+    std::optional<std::vector<double>> compute_vertex_weights(const PointXYZ& candidatePoint) const;
 
 private:
     std::array<PointXYZ, MAX_SIZE> sph_coords_;
