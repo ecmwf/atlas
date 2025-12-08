@@ -30,6 +30,12 @@ public:
     static constexpr int MAX_GRIDCELL_EDGES = 4;
     static constexpr int MAX_SIZE           = 2 * MAX_GRIDCELL_EDGES + 1;
 
+    enum interpolationMode
+    {
+        GRID,
+        SMV
+    };
+
 public:
     class GreatCircleSegment {
     public:
@@ -67,14 +73,16 @@ public:
     using contains_PointLonLat = std::is_same<typename std::decay<typename Points::value_type>::type, PointLonLat>;
 
     template <class Points, typename std::enable_if<contains_PointLonLat<Points>::value, void>::type* = nullptr>
-    ConvexSphericalPolygon(const Points& points): ConvexSphericalPolygon(points.data(), points.size()) {}
+    ConvexSphericalPolygon(const Points& points, const interpolationMode mode = GRID):
+        ConvexSphericalPolygon(points.data(), points.size(), mode) {}
 
-    ConvexSphericalPolygon(const PointLonLat points[], size_t size);
+    ConvexSphericalPolygon(const PointLonLat points[], size_t size, const interpolationMode mode = GRID);
 
-    ConvexSphericalPolygon(const PointXYZ& p1, const PointXYZ& p2, const PointXYZ& p3):
-        ConvexSphericalPolygon(std::array<PointXYZ, 3>{p1, p2, p3}.data(), 3) {}
+    ConvexSphericalPolygon(const PointXYZ& p1, const PointXYZ& p2, const PointXYZ& p3,
+                           const interpolationMode mode = GRID):
+        ConvexSphericalPolygon(std::array<PointXYZ, 3>{p1, p2, p3}.data(), 3, mode) {}
 
-    ConvexSphericalPolygon(const PointXYZ points[], size_t size);
+    ConvexSphericalPolygon(const PointXYZ points[], size_t size, const interpolationMode mode = GRID);
 
     void invalidate_this_polygon() {
         size_ = 0;
@@ -160,6 +168,8 @@ private:
     // Set valid_ to true when polygon is convex
     void validate();
 
+    void validateAndComputeNormals();
+
 private:
     std::array<PointXYZ, MAX_SIZE> sph_coords_;
     mutable PointXYZ centroid_;
@@ -170,6 +180,8 @@ private:
     mutable bool computed_centroid_{false};
     mutable bool computed_radius_{false};
     mutable bool computed_area_{false};
+
+    std::vector<PointXYZ> edge_normals;
 
     static bool fpe_;
 };
