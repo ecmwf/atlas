@@ -945,7 +945,7 @@ Field StructuredColumns::mask() const {
     if (!field_mask_) {
         auto field_mask = createField(option::name("mask")|option::datatypeT<int>()|option::levels(0));
         auto mask = array::make_view<int, 1>(field_mask);
-        mask.assign(0);
+        mask.assign(1);
         field_mask_ = field_mask;
     }
     return field_mask_;
