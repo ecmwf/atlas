@@ -938,6 +938,16 @@ int AtlasInterpolations::execute(const AtlasTool::Args& args) {
             timers.interpolation_exe.stop();
             Log::info() << "Interpolation execute timer     : " << elapsed_ms(timers.interpolation_exe) << " [ms]"  << std::endl;
 
+#if 0
+            // Set the target values marked as missing to zero
+            auto tgt_field_v = array::make_view<double,1>(tgt_field);
+            for (idx_t i = 0; i < tgt_fs.size(); ++i) {
+                if (tgt_field_v[i] == 9999.) {
+                    tgt_field_v[i] = 0;
+                }
+            }
+#endif
+
             Field tgt_field_global;
             if (output_checksum) {
                 tgt_field_global = tgt_fs.createField(tgt_field, option::global());
