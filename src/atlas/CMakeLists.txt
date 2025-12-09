@@ -567,7 +567,6 @@ interpolation/element/Triag2D.cc
 interpolation/element/Triag2D.h
 interpolation/element/Triag3D.cc
 interpolation/element/Triag3D.h
-interpolation/element/SphericalPolygon3D.h
 interpolation/method/Intersect.cc
 interpolation/method/Intersect.h
 interpolation/method/Ray.cc # For testing Quad
@@ -703,6 +702,8 @@ interpolation/method/unstructured/ConservativeSphericalPolygonInterpolation.cc
 interpolation/method/unstructured/ConservativeSphericalPolygonInterpolation.h
 interpolation/method/unstructured/FiniteElement.cc
 interpolation/method/unstructured/FiniteElement.h
+interpolation/method/unstructured/SphericalMeanValue.cc
+interpolation/method/unstructured/SphericalMeanValue.h
 interpolation/method/unstructured/UnstructuredBilinearLonLat.cc
 interpolation/method/unstructured/UnstructuredBilinearLonLat.h
 interpolation/nonlinear/Missing.cc

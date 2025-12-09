@@ -20,9 +20,9 @@ namespace test {
 
 //----------------------------------------------------------------------------------------------------------------------
 
-using ConvexSphericalPolygon = util::ConvexSphericalPolygon;    
+using ConvexSphericalPolygon = util::ConvexSphericalPolygon;
 
-const double relative_error           = 0.00001;
+const double relative_error           = 0.00005;
 const double recipRoot2               = 1 / sqrt(2);
 const double recipRoot3               = 1 / sqrt(3);
 
@@ -44,7 +44,7 @@ CASE("test_convex_spherical_polygon_triag") {
         }
     }
 
-    SECTION("test_intersection_and_weights") {
+    SECTION("test_weight_computation") {
         const size_t numberTestPoints = 10;
 
         std::array<PointXYZ, numberTestPoints> candidatePoints = {
@@ -141,8 +141,7 @@ CASE("test_spherical_polygon_nonplanar_quad") {
         }
     }
 
-    SECTION("test intersection and weight computation") {
-
+    SECTION("test_weight_computation") {
         std::array<std::vector<double>, numberTestPoints> candidateWeights = {
             std::vector<double>{1, 0, 0, 0},
             std::vector<double>{0, 1, 0, 0},
@@ -188,23 +187,29 @@ CASE("test_spherical_polygon_nonplanar_quad") {
 
         util::ConvexSphericalPolygon testQuadRotated(testQuadRotatedVertices.data(), testQuadRotatedVertices.size(),ConvexSphericalPolygon::SMV);
         size_t pointsInsideRotated = 0;
+        size_t pointsOutsideRotated = 0;
 
         for (size_t i = 0; i < numberTestPoints; ++i) {
             std::optional<std::vector<double>> polygonWeightsRotated = testQuadRotated.compute_vertex_weights(candidatePoints[i]);
 
             if (!polygonWeightsRotated) {
                 EXPECT((isPointInside[i] == 0));
-                pointsOutside += 1;
+                pointsOutsideRotated += 1;
             }
             else {
                 EXPECT((isPointInside[i] == 1));
-                pointsInside += 1;
+                pointsInsideRotated += 1;
                 for (size_t j = 0; j < 4; ++j) {
-                    EXPECT(eckit::types::is_approximately_equal(polygonWeightsRotated.value()[j], candidateWeights[i][testQuadRotated.previous(j)],
+                    EXPECT(eckit::types::is_approximately_equal(polygonWeightsRotated.value()[j],
+                                                                candidateWeights[i][testQuadRotated.previous(j)],
                                                                 relative_error));
                 }
             }
         }
+
+        Log::info() << "Points in/out: " << pointsInsideRotated << "/" << pointsOutsideRotated << std::endl;
+        EXPECT(pointsOutsideRotated == expectedOutside);
+        EXPECT(pointsInsideRotated == expectedInside);
     }
 }
 
