@@ -133,6 +133,9 @@ bool MissingIfAllMissing::executeT(Matrix& W, const array::Array& array, const C
         // the result is missing value if all values in row are missing
         if (N_missing > 0) {
             if (N_missing == N_entries || eckit::types::is_approximately_equal(sum, 0.)) {
+            // When this sum is really small, e.g. 1.e-5 AND the interpolation method is high-order then the interpolation weights become really large (pos and neg)
+            // and the interpolation is no longer accurate. It would be better to mark the entire interpolation as missing.
+            // This means replacing te above "if" with e.g.  if (N_missing == N_entries || sum < 1.e-4) {
                 if (add_missing) {
                     missing_rows->emplace_back(r);
                 }
