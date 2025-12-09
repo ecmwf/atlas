@@ -39,6 +39,12 @@
 #include "atlas/util/Checksum.h"
 #include "atlas/util/function/VortexRollup.h"
 
+
+#include "atlas/util/function/MDPI_functions.h"
+#include "atlas/util/function/SolidBodyRotation.h"
+#include "atlas/util/function/SphericalHarmonic.h"
+#include "atlas/util/function/VortexRollup.h"
+
 #include "AtlasIO.h"
 #include "ScripIO.h"
 
@@ -267,8 +273,74 @@ public:
         add_option(new SimpleOption<bool>("output-checksum", "Compute checksums"));
         add_option(new SimpleOption<std::string>("checksum.file", "Path of files for checksums [default='checksum']"));
 
+
+        // Initial condition options
+        add_option(new eckit::option::Separator("Initial condition options"));
+        add_option(new SimpleOption<std::string>(
+            "init", "Setup initial source field [ constant, spherical_harmonic, vortex_rollup (default), solid_body_rotation_wind_magnitude ]"));
+        add_option(new SimpleOption<double>("solid_body_rotation.angle", "Angle of solid body rotation (default = 0.)"));
+        add_option(new SimpleOption<double>("vortex_rollup.t", "Value that controls vortex rollup (default = 0.5)"));
+        add_option(new SimpleOption<double>("constant.value", "Value that is assigned in case init==constant)"));
+        add_option(new SimpleOption<long>("spherical_harmonic.n", "total wave number 'n' of a spherical harmonic"));
+        add_option(new SimpleOption<long>("spherical_harmonic.m", "zonal wave number 'm' of a spherical harmonic"));
+
     }
 };
+
+
+std::function<double(const PointLonLat&)> get_init(const AtlasTool::Args& args) {
+    std::string init;
+    args.get("init", init = "vortex_rollup");
+    if (init == "vortex_rollup") {
+        double t;
+        args.get("vortex_rollup.t", t = 1.);
+        return [t](const PointLonLat& p) { return util::function::vortex_rollup(p.lon(), p.lat(), t); };
+    }
+    else if (init == "spherical_harmonic") {
+        int n = 2;
+        int m = 2;
+        args.get("spherical_harmonic.n", n);
+        args.get("spherical_harmonic.m", m);
+
+        bool caching = true;  // true -> warning not thread-safe
+        util::function::SphericalHarmonic Y(n, m, caching);
+        return [Y](const PointLonLat& p) { return Y(p.lon(), p.lat()); };
+    }
+    else if (init == "constant") {
+        double value;
+        args.get("constant.value", value = 1.);
+        return [value](const PointLonLat&) { return value; };
+    }
+    else if (init == "solid_body_rotation_wind_magnitude") {
+        double beta;
+        args.get("solid_body_rotation.angle", beta = 0.);
+        util::function::SolidBodyRotation sbr(beta);
+        return [sbr](const PointLonLat& p) { return sbr.windMagnitude(p.lon(), p.lat()); };
+    }
+    else if (init == "MDPI_sinusoid") {
+        auto sbr = util::function::MDPI_sinusoid;
+        return [sbr](const PointLonLat& p) { return sbr(p.lon(), p.lat()); };
+    }
+    else if (init == "MDPI_harmonic") {
+        auto sbr = util::function::MDPI_harmonic;
+        return [sbr](const PointLonLat& p) { return sbr(p.lon(), p.lat()); };
+    }
+    else if (init == "MDPI_vortex") {
+        auto sbr = util::function::MDPI_vortex;
+        return [sbr](const PointLonLat& p) { return sbr(p.lon(), p.lat()); };
+    }
+    else if (init == "MDPI_gulfstream") {
+        auto sbr = util::function::MDPI_gulfstream;
+        return [sbr](const PointLonLat& p) { return sbr(p.lon(), p.lat()); };
+    }
+    else {
+        if (args.has("init")) {
+            Log::error() << "Bad value for \"init\": \"" << init << "\" not recognised." << std::endl;
+            ATLAS_NOTIMPLEMENTED;
+        }
+    }
+    ATLAS_THROW_EXCEPTION("Should not be here");
+}
 
 double elapsed_ms(const StopWatch& timer, bool single_rank = false) {
     double timer_elapsed = timer.elapsed() * 1000.;
@@ -648,9 +720,10 @@ void test_matrix(const Grid& sgrid, const Grid& tgrid, const Matrix& matrix, con
     std::vector<double> tdata(tgrid.size());
 
     ATLAS_TRACE_SCOPE("initialize source") {
+        auto init = get_init(args);
         idx_t n{0};
         for (auto p : sgrid.lonlat()) {
-            sdata[n++] = util::function::vortex_rollup(p.lon(), p.lat(), 1.);
+            sdata[n++] = init(p);
         }
     }
 
@@ -806,6 +879,8 @@ int AtlasInterpolations::execute(const AtlasTool::Args& args) {
             }
             Field smask = src_fs.mask();
             src_fs.scatter(smask_glb, smask);
+            src_fs.haloExchange(smask);
+
             // smask = src_fs.createField<int>(option::name("smask")|option::global());
             //gmsh_output("smask", sgrid, array::make_view<int,1>(smask), args);
         }
@@ -826,6 +901,7 @@ int AtlasInterpolations::execute(const AtlasTool::Args& args) {
             }
             Field tmask = tgt_fs.mask();
             tgt_fs.scatter(tmask_glb, tmask);
+            tgt_fs.haloExchange(tmask);
         }
 
         ATLAS_TRACE_SCOPE("Setup interpolator") {
@@ -849,9 +925,10 @@ int AtlasInterpolations::execute(const AtlasTool::Args& args) {
             auto tgt_field = interpolator.target().createField<double>();
             auto src_lonlat = array::make_view<double, 2>(interpolator.source().lonlat());
             ATLAS_TRACE_SCOPE("initialize source") {
+                auto init = get_init(args);
                 auto src_field_v = array::make_view<double, 1>(src_field);
                 for (idx_t i = 0; i < src_fs.size(); ++i) {
-                    src_field_v[i] = 10. + util::function::vortex_rollup(src_lonlat(i, 0), src_lonlat(i, 1), 1.);
+                    src_field_v[i] = init(PointLonLat{src_lonlat(i, 0), src_lonlat(i, 1)});
                 }
             }
             src_field.set_dirty(false); // all values are up to date
