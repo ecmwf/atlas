@@ -170,14 +170,14 @@ void ConvexSphericalPolygon::compute_centroid_and_area() const {
 // cf. M. Floater, “Generalized barycentric coordinates and applications” Acta Numerica, p. 001, 2016.
 std::optional<std::vector<double>> ConvexSphericalPolygon::compute_vertex_weights(
     const PointXYZ& candidatePoint) const {
-    ATLAS_ASSERT(edge_normals.size() == size_,
+    ATLAS_ASSERT(edge_normals_.size() == size_,
                  "Incorrect number of edge normals computed - should equal number of polygon edges.");
 
     std::array<double, MAX_SIZE> greatCircleProducts = {0};
 
-    for (int i = 0; i < size_; ++i) {
+    for (size_t i = 0; i < size_; ++i) {
         GreatCircleSegment segment = GreatCircleSegment(sph_coords_[i], sph_coords_[(i + 1) % size_]);
-        greatCircleProducts[i]     = dot(edge_normals[i], candidatePoint);
+        greatCircleProducts[i]     = dot(edge_normals_[i], candidatePoint);
 
         if (!segment.inLeftHemisphere(candidatePoint, -5 * EPS)) {
             return {};
@@ -186,7 +186,7 @@ std::optional<std::vector<double>> ConvexSphericalPolygon::compute_vertex_weight
 
     std::vector<double> weights(size_, 0);
 
-    for (int v = 0; v < size_; ++v) {
+    for (size_t v = 0; v < size_; ++v) {
         if (PointXYZ::distance2(candidatePoint, sph_coords_[v]) < 25 * EPS2) {
             weights[v] = 1.;
             return weights;
@@ -197,17 +197,17 @@ std::optional<std::vector<double>> ConvexSphericalPolygon::compute_vertex_weight
     std::array<double, MAX_SIZE> spokeNorms;
     double denominator = 0.;
 
-    for (int v = 0; v < size_; ++v) {
+    for (size_t v = 0; v < size_; ++v) {
         spokeNormals[v] = PointXYZ::cross(sph_coords_[v], candidatePoint);
         spokeNorms[v]   = PointXYZ::norm(spokeNormals[v]);
     }
 
-    for (int w = 0; w < size_; ++w) {
+    for (size_t w = 0; w < size_; ++w) {
         int pw         = previous(w);
         int nw         = next(w);
         double product = 1.;
 
-        for (int i = 0; i < size_; ++i) {
+        for (size_t i = 0; i < size_; ++i) {
             if ((i != w) && (i != pw)) {
                 product *= greatCircleProducts[i];
             }
@@ -270,7 +270,7 @@ void ConvexSphericalPolygon::validateAndComputeNormals() {
             computedNormals[i] = currentPolygonSide.cross();
         }
 
-        computedNormals.swap(edge_normals);
+        computedNormals.swap(edge_normals_);
     }
 }
 

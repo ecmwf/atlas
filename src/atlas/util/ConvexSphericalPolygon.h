@@ -95,6 +95,8 @@ public:
 
     size_t size() const { return size_; }
 
+    std::vector<PointXYZ> edge_normals() const { return edge_normals_; }
+
     double area() const {
         if (not computed_area_) {
             compute_centroid_and_area();
@@ -141,6 +143,8 @@ public:
 
     int previous(const int index) const { return (index == 0) ? size_ - 1 : index - 1; };
 
+    std::optional<std::vector<double>> compute_vertex_weights(const PointXYZ& candidatePoint) const;
+
     static void fpe(bool v) { fpe_ = v; }
     static bool fpe() { return fpe_; }
 private:
@@ -173,8 +177,6 @@ private:
 
     void validateAndComputeNormals();
 
-    std::optional<std::vector<double>> compute_vertex_weights(const PointXYZ& candidatePoint) const;
-
 private:
     std::array<PointXYZ, MAX_SIZE> sph_coords_;
     mutable PointXYZ centroid_;
@@ -186,7 +188,7 @@ private:
     mutable bool computed_radius_{false};
     mutable bool computed_area_{false};
 
-    std::vector<PointXYZ> edge_normals;
+    std::vector<PointXYZ> edge_normals_;
 
     static bool fpe_;
 };

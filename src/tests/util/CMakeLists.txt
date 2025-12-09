@@ -88,6 +88,12 @@ ecbuild_add_test( TARGET atlas_test_convexsphericalpolygon
   ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
 )
 
+ecbuild_add_test( TARGET atlas_test_convexsphericalmeanvalue
+  SOURCES   test_convexsphericalmeanvalue.cc
+  LIBS      atlas
+  ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
+)
+
 ecbuild_add_test( TARGET atlas_test_unitsphere
   SOURCES test_unitsphere.cc
   LIBS atlas
