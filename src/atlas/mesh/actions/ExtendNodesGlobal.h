@@ -24,10 +24,11 @@ namespace actions {
 /// Adds virtual nodes to the mesh that aren't contained in the Grid Domain
 class ExtendNodesGlobal {
 public:
-    ExtendNodesGlobal(const std::string& gridname = "O16");
+    explicit ExtendNodesGlobal(const std::string& gridname = DEFAULT_GRIDNAME);
     void operator()(const Grid&, Mesh&) const;
 
 private:
+    static const std::string DEFAULT_GRIDNAME;
     std::string gridname_;
 };
 
