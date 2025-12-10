@@ -25,7 +25,7 @@ namespace pluto {
 
 template<typename T, typename Extents>
 void interprete(pluto::mdspan<T,Extents> a, atlas::io::ArrayReference& out) {
-    out = atlas::io::ArrayReference(a.data_handle(), atlas::io::make_datatype<int>(), atlas::io::ArrayMetadata::ArrayShape{a.extents()});
+    out = atlas::io::ArrayReference(a.data_handle(), atlas::io::make_datatype<int>(), atlas::io::ArrayMetadata::ArrayShape{a.extent(0)});
 }
 
 template<typename T, typename Extents>
@@ -67,6 +67,18 @@ void AtlasIO::read_mask(const std::string& mask_name, mdspan<int,dims<1>> mask) 
     reader.read("mask", mask);
     reader.wait();
 }
+
+void AtlasIO::write_mask(const std::string& mask_name, const std::string& grid_name, mdspan<int,dims<1>> mask) {
+    ATLAS_TRACE();
+    eckit::LocalConfiguration compression;
+    compression.set("compression","lz4");
+    atlas::io::RecordWriter record;
+    record.set("grid", grid_name);
+    record.set("size", size_t(mask.size()));
+    record.set("mask", atlas::io::ref(mask), compression);
+    record.write(mask_name, atlas::io::Mode::write);
+}
+
 
 
 }

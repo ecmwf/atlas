@@ -953,6 +953,13 @@ int AtlasInterpolations::execute(const AtlasTool::Args& args) {
                 tgt_field_global = tgt_fs.createField(tgt_field, option::global());
                 auto tgt_field_global_v = array::make_view<double,1>(tgt_field_global);
                 tgt_fs.gather(tgt_field, tgt_field_global);
+#if 0
+                for( idx_t i=0; i<tgt_field_global_v.size(); ++i) {
+                    if (tgt_field_global_v(i) == 9999.) {
+                        tgt_field_global_v(i) = 0.;
+                    }
+                }
+#endif
 
                 if (mpi::rank() == 0) {
                     auto target_checksum = util::checksum(tgt_field_global_v.data(), tgt_field_global_v.size());
@@ -981,9 +988,26 @@ int AtlasInterpolations::execute(const AtlasTool::Args& args) {
                     std::string coords = args.getString("gmsh.coordinates", "lonlat");
                     output::Gmsh gmsh(tgt_name + ".msh", Config("coordinates", coords) | Config("ghost", "false"));
                     gmsh.write(tmesh);
+#if 0
+                    auto tview = array::make_view<double,1>(tgt_field);
+                    for(size_t i=0; i<tview.shape(0); ++i) {
+                        if (tview(i) == 9999.) {
+                            tview(i) = 0;
+                        }
+                    }
+#endif
                     gmsh.write(tgt_field);
                 }
             }
+#if 0
+            // This writes the mask to file, can be used to interpolate masks
+            std::vector<int> output_mask(tgrid.size());
+            auto tview = array::make_view<double,1>(tgt_field);
+            for(size_t i=0; i<output_mask.size(); ++i) {
+                output_mask[i] = (tview(i) != 0 && tview(i) != 9999.) ? 1 : 0;
+            }
+            AtlasIO::write_mask("mask_"+tgrid.name()+".atlas", tgrid.name(), mdspan<int,dims<1>>(output_mask.data(), output_mask.size()));
+#endif
         }
     }
 

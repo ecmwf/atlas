@@ -22,6 +22,8 @@ public:
     explicit AtlasIO(const util::Config& = util::NoConfig()) {}
 
     static void read_mask(const std::string&, mdspan<int,dims<1>>);
+
+    static void write_mask(const std::string& mask_name, const std::string& grid_name, mdspan<int,dims<1>>);
 };
 
 }
