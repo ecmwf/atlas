@@ -95,6 +95,7 @@ ConvexSphericalPolygon::ConvexSphericalPolygon(const PointLonLat points[], size_
         ++isp;
     }
     size_ = isp;
+    ATLAS_ASSERT(size_ > 2, "Polygon must have at least 3 points");
     switch (mode) {
         case SMV:
             validateAndComputeNormals();
@@ -128,6 +129,7 @@ ConvexSphericalPolygon::ConvexSphericalPolygon(const PointXYZ points[], size_t s
         ++isp;
     }
     size_ = isp;
+    ATLAS_ASSERT(size_ > 2, "Polygon must have at least 3 points");
     switch (mode) {
         case SMV:
             validateAndComputeNormals();
@@ -170,7 +172,7 @@ void ConvexSphericalPolygon::compute_centroid_and_area() const {
 // cf. M. Floater, “Generalized barycentric coordinates and applications” Acta Numerica, p. 001, 2016.
 std::optional<std::vector<double>> ConvexSphericalPolygon::compute_vertex_weights(
     const PointXYZ& candidatePoint) const {
-    ATLAS_ASSERT(edge_normals_.size() == size_,
+    ATLAS_ASSERT(edge_normals_.size() == this->size(),
                  "Incorrect number of edge normals computed - should equal number of polygon edges.");
 
     std::array<double, MAX_SIZE> greatCircleProducts = {0};
@@ -250,9 +252,10 @@ void ConvexSphericalPolygon::validate() {
 void ConvexSphericalPolygon::validateAndComputeNormals() {
     valid_ = size_ > 2;
     if (valid_) {
-        std::vector<PointXYZ> computedNormals(size());
+        std::vector<PointXYZ>().swap(edge_normals_);
+        edge_normals_.reserve(size_);
 
-        for (int i = 0; i < size(); i++) {
+        for (int i = 0; i < size_; i++) {
             int ni                = next(i);
             int nni               = next(ni);
             const PointXYZ& P     = sph_coords_[i];
@@ -267,10 +270,8 @@ void ConvexSphericalPolygon::validateAndComputeNormals() {
                 valid_ = false;
                 break;
             }
-            computedNormals[i] = currentPolygonSide.cross();
+            edge_normals_.emplace_back(currentPolygonSide.cross());
         }
-
-        computedNormals.swap(edge_normals_);
     }
 }
 

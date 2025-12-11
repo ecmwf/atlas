@@ -74,16 +74,18 @@ public:
     using contains_PointLonLat = std::is_same<typename std::decay<typename Points::value_type>::type, PointLonLat>;
 
     template <class Points, typename std::enable_if<contains_PointLonLat<Points>::value, void>::type* = nullptr>
-    ConvexSphericalPolygon(const Points& points, const interpolationMode mode = GRID):
+    ConvexSphericalPolygon(const Points& points, const interpolationMode mode = interpolationMode::GRID):
         ConvexSphericalPolygon(points.data(), points.size(), mode) {}
 
-    ConvexSphericalPolygon(const PointLonLat points[], size_t size, const interpolationMode mode = GRID);
+    ConvexSphericalPolygon(const PointLonLat points[], size_t size,
+                           const interpolationMode mode = interpolationMode::GRID);
 
     ConvexSphericalPolygon(const PointXYZ& p1, const PointXYZ& p2, const PointXYZ& p3,
-                           const interpolationMode mode = GRID):
+                           const interpolationMode mode = interpolationMode::GRID):
         ConvexSphericalPolygon(std::array<PointXYZ, 3>{p1, p2, p3}.data(), 3, mode) {}
 
-    ConvexSphericalPolygon(const PointXYZ points[], size_t size, const interpolationMode mode = GRID);
+    ConvexSphericalPolygon(const PointXYZ points[], size_t size,
+                           const interpolationMode mode = interpolationMode::GRID);
 
     void invalidate_this_polygon() {
         size_ = 0;
