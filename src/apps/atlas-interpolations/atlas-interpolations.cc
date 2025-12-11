@@ -48,6 +48,10 @@
 #include "AtlasIO.h"
 #include "ScripIO.h"
 
+#if ATLAS_HAVE_GRIB
+#include "GribFileReader.h"
+#include "Grib.h"
+#endif
 
 using atlas::functionspace::PointCloud;
 using atlas::functionspace::NodeColumns;
@@ -283,6 +287,10 @@ public:
         add_option(new SimpleOption<double>("constant.value", "Value that is assigned in case init==constant)"));
         add_option(new SimpleOption<long>("spherical_harmonic.n", "total wave number 'n' of a spherical harmonic"));
         add_option(new SimpleOption<long>("spherical_harmonic.m", "zonal wave number 'm' of a spherical harmonic"));
+        add_option(new SimpleOption<std::string>("s.grib", "file path to input"));
+
+        add_option(new SimpleOption<double>("missing-value", "Value used with --test-matrix to add as missing value"));
+        add_option(new SimpleOption<bool>("gmsh.missing-value", "Treat missing-value in Gmsh output with --test-matrix"));
 
     }
 };
@@ -414,23 +422,37 @@ std::string get_mask_format(const std::string& mask) {
 }
 
 
+Grid get_sgrid(const AtlasTool::Args& args) {
+    ATLAS_ASSERT(args.has("s.grib") or args.has("s.grid"), "Could not detect grid because s.grib or s.grid is not defined");
+    if (args.has("s.grid")) {
+        return Grid(args.getString("s.grid"));
+    }
+    else {
+        ATLAS_ASSERT(ATLAS_HAVE_GRIB);
+#if ATLAS_HAVE_GRIB
+        // Read from GRIB
+        GribFileReader grib_reader(args.getString("s.grib"));
+        ATLAS_ASSERT(grib_reader.count());
+        return grib_reader.grib().get_grid();
+#else
+        return Grid();
+#endif
+    }
+}
+
+Grid get_tgrid(const AtlasTool::Args& args) {
+    return Grid(args.getString("t.grid", "O32"));
+}
+
 std::string get_matrix_name(const AtlasTool::Args& args) {
     if (args.has("matrix.name")) {
         auto matrix = args.getString("matrix.name");
         return get_basename(matrix);
     }
-    auto sgrid = args.getString("s.grid");
+    auto sgrid = get_sgrid(args).name();
     auto tgrid = args.getString("t.grid");
     auto interpolation_name = get_interpolation_method(args);
     return "remap_" + sgrid + "_" + tgrid + "_" + interpolation_name;
-}
-
-Grid get_sgrid(const AtlasTool::Args& args) {
-    return Grid(args.getString("s.grid", "O8"));
-}
-
-Grid get_tgrid(const AtlasTool::Args& args) {
-    return Grid(args.getString("t.grid", "O32"));
 }
 
 bool gridpoints_are_cells(const Grid& g) {
@@ -702,6 +724,10 @@ void gmsh_output(const std::string& name, const Grid& grid, const View& field, c
     gmsh.write(mesh);
     auto fs = gridpoints_are_cells(grid) ? FunctionSpace(CellColumns(mesh)) : FunctionSpace(NodeColumns(mesh));
     auto f = fs.createField<double>(option::name(name));
+    if (args.getBool("gmsh.missing-value",false)) {
+        f.metadata().set("missing_value",args.getDouble("missing-value",0.));
+        f.metadata().set("missing_value_type","equals");
+    }
     auto v = array::make_view<double,1>(f);
     auto g = array::make_view<gidx_t,1>(fs.global_index());
     size_t min_size = std::min<size_t>(f.size(),field.size());
@@ -720,10 +746,22 @@ void test_matrix(const Grid& sgrid, const Grid& tgrid, const Matrix& matrix, con
     std::vector<double> tdata(tgrid.size());
 
     ATLAS_TRACE_SCOPE("initialize source") {
-        auto init = get_init(args);
-        idx_t n{0};
-        for (auto p : sgrid.lonlat()) {
-            sdata[n++] = init(p);
+        if (args.has("init") || not args.has("s.grib")) {
+            ATLAS_DEBUG("using init");
+            auto init = get_init(args);
+            idx_t n{0};
+            for (auto p : sgrid.lonlat()) {
+                sdata[n++] = init(p);
+            }
+        }
+        else {
+            ATLAS_DEBUG("using grib");
+
+            ATLAS_ASSERT(args.has("s.grib"));
+#if ATLAS_HAVE_GRIB
+            GribFileReader grib_reader(args.getString("s.grib"));
+            grib_reader.grib().get_values(sdata.data(),sdata.size());
+#endif
         }
     }
 
@@ -737,8 +775,19 @@ void test_matrix(const Grid& sgrid, const Grid& tgrid, const Matrix& matrix, con
     Log::info() << "Serial sparse-matrix-multiply timer  \t: " << elapsed_ms(timer_serial_sparse_matrix_multiply.elapsed(),true) << " [ms]" << std::endl;
     Log::info() << "Serial sparse-matrix non-zero entries\t: " << matrix.nnz() << std::endl;
 
+    {
+        double missing_value = args.getDouble("missing-value",0.);
+        auto m = atlas::linalg::make_host_view<double>(matrix);
+        for (idx_t r=0; r<m.rows(); ++r) {
+            if (m.outer()[r+1] - m.outer()[r] == 0) {
+                tdata[r] = missing_value;
+            }
+        }
+    }
 
     if (args.getBool("output-checksum",false)) {
+        // The matrix version is possibly not bit-identical with the interpolator version
+        // This is because the matrix version uses grid points without halo, wrapping around the globe
         size_t min_size = std::min(tgt_ref.size(), tdata.size());
         for (size_t i=0; i<min_size; ++i) {
             if (std::abs(tgt_ref[i] - tdata[i]) < 1.e-14) {
@@ -751,15 +800,80 @@ void test_matrix(const Grid& sgrid, const Grid& tgrid, const Matrix& matrix, con
         checksum_file << std::setw(8) << target_checksum << "    [test-matrix]   checksum of target field" << std::endl;
     }
 
+#if 0
+    {
+        auto it = tgrid.lonlat().begin();
+        for (size_t i=0; i<tdata.size(); ++i) {
+            if (tdata[i] < -2.0) {
+                std::vector<double> src_val;
+                std::vector<double> weights;
+                linalg::sparse_matrix_for_each_row(i, atlas::linalg::make_host_view<double>(matrix), [&](auto row, auto col, auto val) {
+                    weights.emplace_back(val);
+                    src_val.emplace_back(sdata[col]);
+                });
+
+                Log::info() << i << "\t" << tdata[i] << "\t" << *it << std::endl;
+                Log::info() << "\t weights " << weights << std::endl; 
+                Log::info() << "\t src_val " << src_val << std::endl; 
+            }
+            ++it;
+        }
+    }
+#endif
+
     // atlas::array::make_view<double,1>(tdata.data(), matrix.rows()).dump(Log::info());
     // Log::info() << std::endl;
 
 
     if (args.getBool("output-gmsh",false)) {
         ATLAS_TRACE_SCOPE("Gmsh serial output") {
+
+            if (args.has("s.mask")) {
+                std::vector<int> mask(sgrid.size());
+                {
+                    std::string mask_name = args.getString("s.mask");
+                    if (get_mask_format(mask_name) == "scrip") {
+                        ScripIO::read_mask(mask_name, mdspan<int,dims<1>>(mask.data(), mask.size()));
+                    }
+                    else if (get_mask_format(mask_name) == "atlas") {
+                        AtlasIO::read_mask(mask_name, mdspan<int,dims<1>>(mask.data(), mask.size()));
+                    }
+                    else {
+                        ATLAS_NOTIMPLEMENTED;
+                    }
+                }
+                double missing_value = args.getDouble("missing-value",0.);
+                for(size_t i=0; i<sdata.size(); ++i) {
+                    if(mask[i] == 0) {
+                        sdata[i] = missing_value;
+                    }
+                }
+            }
+
             std::string sname = "test_matrix_source_" + get_matrix_name(args);
             gmsh_output(sname, sgrid, atlas::array::make_view<double,1>(sdata.data(), matrix.cols()), args);
 
+            if (args.has("t.mask")) {
+                std::vector<int> mask(tgrid.size());
+                {
+                    std::string mask_name = args.getString("t.mask");
+                    if (get_mask_format(mask_name) == "scrip") {
+                        ScripIO::read_mask(mask_name, mdspan<int,dims<1>>(mask.data(), mask.size()));
+                    }
+                    else if (get_mask_format(mask_name) == "atlas") {
+                        AtlasIO::read_mask(mask_name, mdspan<int,dims<1>>(mask.data(), mask.size()));
+                    }
+                    else {
+                        ATLAS_NOTIMPLEMENTED;
+                    }
+                }
+                double missing_value = args.getDouble("missing-value",0.);
+                for(size_t i=0; i<tdata.size(); ++i) {
+                    if(mask[i] == 0) {
+                        tdata[i] = missing_value;
+                    }
+                }
+            }
             std::string tname = "test_matrix_target_" + get_matrix_name(args);
             gmsh_output(tname, tgrid, atlas::array::make_view<double,1>(tdata.data(), matrix.rows()), args);
         }

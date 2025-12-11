@@ -24,9 +24,18 @@ ecbuild_add_option( FEATURE NETCDF
                     DESCRIPTION "Compile support the SCRIP format"
                     REQUIRED_PACKAGES "NetCDF COMPONENTS C CXX" )
 
+ecbuild_add_option( FEATURE GRIB
+                    DESCRIPTION "Compile support the GRIB format"
+                    REQUIRED_PACKAGES "eccodes" )
+
 target_compile_definitions( atlas-interpolations PRIVATE ATLAS_HAVE_NETCDF=${HAVE_NETCDF} )
 if( HAVE_NETCDF )
   target_link_libraries( atlas-interpolations NetCDF::NetCDF_CXX )
+endif()
+
+target_compile_definitions( atlas-interpolations PRIVATE ATLAS_HAVE_GRIB=${HAVE_GRIB} )
+if( HAVE_GRIB )
+  target_link_libraries( atlas-interpolations eccodes )
 endif()
 
 function( atlas_test_app_atlas_interpolations case nprocs )
