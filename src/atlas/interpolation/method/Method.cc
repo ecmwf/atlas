@@ -487,39 +487,61 @@ void Method::adaptMatrixWithSourceMask() {
         ATLAS_DEBUG("Applying mask");
         auto W = make_host_view_r<eckit::linalg::Scalar, eckit::linalg::Index>(*matrix_);
         struct InterpolationStencil {
+            using Scalar = eckit::linalg::Scalar;
             std::vector<idx_t> index_;
-            std::vector<double> weights_;
-            double sum_{0};
+            std::vector<Scalar> weights_;
+            Scalar sum_{0};
+            Scalar min_{std::numeric_limits<Scalar>::max()};
+            Scalar max_{std::numeric_limits<Scalar>::lowest()};
             void clear() {
                 index_.clear();
                 weights_.clear();
                 sum_ = 0;
+                min_ = std::numeric_limits<Scalar>::max();
+                max_ = std::numeric_limits<Scalar>::lowest();
             }
             void reserve(size_t size) {
                 index_.reserve(size);
                 weights_.reserve(size);
             }
             void normalise() {
-                double factor = 1./sum_;
+                Scalar factor = 1./sum_;
                 sum_ = 0.;
-                for( auto& w: weights_) {
+                min_ = std::numeric_limits<Scalar>::max();
+                max_ = std::numeric_limits<Scalar>::lowest();
+                for( Scalar& w: weights_) {
                     w *= factor;
                     sum_ += w;
+                    min_ = std::min(min_, w);
+                    max_ = std::max(max_, w);
                 }
             }
-            void add(idx_t index, double weight) {
+            void add(idx_t index, Scalar weight) {
                 index_.emplace_back(index);
                 weights_.emplace_back(weight);
                 sum_ += weight;
+                min_ = std::min(min_, weight);
+                max_ = std::max(max_, weight);
             }
             size_t size() const { return index_.size(); }
             bool missing() const {
-                return index_.size() == 0 || sum_ < 1.e-4;
-                // When this sum is really small, e.g. 1.e-5 AND the interpolation method is high-order then the interpolation weights become really large (+1000, -1000)
-                // and the interpolation is no longer accurate. It would be better to mark the entire interpolation as missing, and rely on a fallback interpolation
-                // Perhaps, rather than checking for the sum to be small we should instead look at the values of the weights to be in a better range on the order of 1.
+                if (index_.size() == 0) {
+                    return true;
+                }
+                if (sum_ < 1.e-4) {
+                    // When this sum is really small, e.g. 1.e-5 AND the interpolation method is high-order then the interpolation weights become really large (+1000, -1000)
+                    // and the interpolation is no longer accurate. It would be better to mark the entire interpolation as missing, and rely on a fallback interpolation
+                    // Perhaps, rather than checking for the sum to be small we should instead look at the values of the weights to be in a better range on the order of 1.
+                    return true;
+                }
+                if (min_ < 0.) { // non-monotone stencil
+                    if (max_/sum_ > 1.) {
+                        return true;
+                    }
+                }
+                return false;
             }
-            double sum() const {
+            Scalar sum() const {
                 return sum_;
             }
         } masked_stencil;
