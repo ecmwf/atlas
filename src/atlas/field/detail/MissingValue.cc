@@ -20,7 +20,7 @@
 #include "atlas/array/DataType.h"
 #include "atlas/field/Field.h"
 #include "atlas/util/Metadata.h"
-
+#include "atlas/runtime/Log.h"
 
 namespace atlas {
 namespace field {
@@ -69,7 +69,9 @@ struct MissingValueNaN : MissingValue {
  */
 template <typename T>
 struct MissingValueEquals : MissingValue {
-    MissingValueEquals(const Config& config): MissingValueEquals(config_value<T>(config)) {}
+    MissingValueEquals(const Config& config): MissingValueEquals(config_value<T>(config)) {
+        ATLAS_DEBUG_VAR(missingValue_);
+    }
 
     MissingValueEquals(T missingValue): missingValue_(missingValue), missingValue2_(missingValue_) {
         ATLAS_ASSERT(missingValue_ == missingValue2_);  // FIXME this succeeds

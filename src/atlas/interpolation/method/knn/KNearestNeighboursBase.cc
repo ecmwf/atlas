@@ -64,10 +64,11 @@ void insert_tree(util::IndexKDTree& tree, const FunctionSpace_type& functionspac
 void insert_tree(util::IndexKDTree& tree, const functionspace::NodeColumns& functionspace) {
     auto lonlat = array::make_view<double, 2>(functionspace.lonlat());
     auto halo   = array::make_view<int, 1>(functionspace.nodes().halo());
+    auto mask   = array::make_view<int, 1>(functionspace.mask());
     int h       = functionspace.halo().size();
 
     for (idx_t ip = 0; ip < lonlat.shape(0); ++ip) {
-        if (halo(ip) <= h) {
+        if (halo(ip) <= h && mask(ip) != 0) {
             tree.insert(PointLonLat(lonlat(ip, LON), lonlat(ip, LAT)), ip);
         }
     }
@@ -87,9 +88,11 @@ void insert_tree(util::IndexKDTree& tree, const functionspace::CellColumns& func
 
 void insert_tree(util::IndexKDTree& tree, const functionspace::StructuredColumns& functionspace) {
     auto lonlat = array::make_view<double, 2>(functionspace.lonlat());
-
+    auto mask   = array::make_view<int, 1>(functionspace.mask());
     for (idx_t ip = 0; ip < lonlat.shape(0); ++ip) {
-        tree.insert(PointLonLat(lonlat(ip, LON), lonlat(ip, LAT)), ip);
+        if (mask(ip) != 0) {
+            tree.insert(PointLonLat(lonlat(ip, LON), lonlat(ip, LAT)), ip);
+        }
     }
 }
 

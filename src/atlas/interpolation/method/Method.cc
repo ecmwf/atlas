@@ -12,6 +12,7 @@
 
 #include "atlas/interpolation/method/Method.h"
 
+#include "eckit/config/Resource.h"
 
 #include "atlas/array.h"
 #include "atlas/field/Field.h"
@@ -19,10 +20,17 @@
 #include "atlas/field/MissingValue.h"
 #include "atlas/functionspace/NodeColumns.h"
 #include "atlas/linalg/sparse.h"
+#include "atlas/linalg/sparse/SparseMatrixTriplet.h"
 #include "atlas/mesh/Nodes.h"
 #include "atlas/runtime/Exception.h"
 #include "atlas/runtime/Log.h"
 #include "atlas/runtime/Trace.h"
+
+#include "atlas/interpolation/nonlinear/Missing.h"
+
+#include "atlas/interpolation/Interpolation.h"
+
+static int hack_recursive_call_detector = 0;
 
 using namespace atlas::linalg;
 namespace atlas {
@@ -184,6 +192,7 @@ void Method::interpolate_field_rank1(const Field& src, Field& tgt, const Matrix&
     auto tgt_v = on_device ? make_device_view_w<Value, 1>(tgt) : make_host_view_w<Value, 1>(tgt);
 
     if (nonLinear_(src)) {
+        ATLAS_DEBUG();
         eckit::linalg::SparseMatrix W_copy = atlas::linalg::make_eckit_sparse_matrix(W);
         nonLinear_->execute(W_copy, src);
         auto W_nl = make_sparse_matrix_storage(std::move(W_copy));
@@ -192,8 +201,14 @@ void Method::interpolate_field_rank1(const Field& src, Field& tgt, const Matrix&
         sparse_matrix_multiply(W_nl_v, src_v, tgt_v, backend);
     }
     else {
+        ATLAS_DEBUG();
         auto W_v = on_device ? make_device_view_r<eckit::linalg::Scalar, eckit::linalg::Index>(W)
                              : make_host_view_r<eckit::linalg::Scalar, eckit::linalg::Index>(W);
+
+        ATLAS_DEBUG_VAR(W_v.nnz());
+        ATLAS_DEBUG_VAR(W_v.rows());
+        ATLAS_DEBUG_VAR(W_v.cols());
+
         sparse_matrix_multiply(W_v, src_v, tgt_v, backend);
     }
 
@@ -428,12 +443,170 @@ Method::Method(const Method::Config& config) {
     config.get("adjoint", adjoint_ = false);
 }
 
-void Method::setup(const FunctionSpace& source, const FunctionSpace& target) {
-    ATLAS_TRACE("atlas::interpolation::method::Method::setup(FunctionSpace, FunctionSpace)");
-    this->do_setup(source, target);
+void Method::adaptMatrixWithSourceMask() {
+    ATLAS_TRACE();
+    ATLAS_ASSERT(matrix_ != nullptr, "Matrix is null");
+
+    Field smask = source().mask();
+    smask.metadata().set("missing_value", 0);
+    smask.metadata().set("missing_value_type", "equals");
+    interpolation::nonlinear::MissingIfAllMissing missing_if_all_missing;
+
+    ATLAS_DEBUG_VAR(matrix_->nnz());
+    ATLAS_DEBUG_VAR(matrix_->rows());
+    ATLAS_DEBUG_VAR(matrix_->cols());
+
+    size_t nb_zero = 0;
+    auto smask_view = array::make_view<int,1>(smask);
+    for (idx_t i = 0; i < smask_view.shape(0); ++i) {
+        if (smask_view(i) == 0) {
+            ++nb_zero;
+        }
+    }
+    ATLAS_DEBUG_VAR(nb_zero);
+
+    if (missing_if_all_missing.applicable(smask)) {
+	    ATLAS_DEBUG("source mask applied");
+        eckit::linalg::SparseMatrix matrix_copy = make_eckit_sparse_matrix(*matrix_); // Makes a copy!
+
+        nonlinear::NonLinear::RowIndices missing_rows;
+        missing_if_all_missing.execute(matrix_copy, smask, missing_rows);
+        
+        matrix_shared_ = std::make_shared<Matrix>(make_sparse_matrix_storage(std::move(matrix_copy)));
+        matrix_        = matrix_shared_.get();
+        ATLAS_DEBUG_VAR(matrix_->nnz());
+        ATLAS_DEBUG_VAR(matrix_->rows());
+        ATLAS_DEBUG_VAR(matrix_->cols());
+        ATLAS_DEBUG_VAR(missing_rows.size());
+        if (missing_rows.size()) {
+            missing_.reserve(missing_.size() + missing_rows.size());
+            for (idx_t i=0; i<missing_rows.size(); ++i) {
+                missing_.emplace_back(missing_rows[i]);
+            }
+        }
+        std::sort(missing_.begin(), missing_.end());
+    }
+    else {
+        ATLAS_DEBUG("no source mask applied");
+    }
+}
+
+void Method::adaptMatrixWithFallback() {
+    if (missing_.empty()) {
+        return;
+    }
+    std::string interpolation_fallback = eckit::Resource<std::string>("$ATLAS_INTERPOLATION_FALLBACK", "");
+    if (interpolation_fallback.empty() || hack_recursive_call_detector > 0) {
+        return;
+    }
+
+    ATLAS_TRACE();
+    ATLAS_ASSERT(matrix_ != nullptr, "Matrix is null");
+    auto interpolation_matrix = atlas::linalg::make_host_view<eckit::linalg::Scalar,eckit::linalg::Index>(*matrix_);
+    std::size_t rows = interpolation_matrix.rows();
+    std::size_t cols = interpolation_matrix.cols();
+
+    hack_recursive_call_detector++;
+    Interpolation fallback(option::type(interpolation_fallback), source(), target());
+    hack_recursive_call_detector--;
+    interpolation::MatrixCache fallback_interpolation_cache = fallback.createCache();
+    auto fallback_interpolation_matrix_storage = fallback_interpolation_cache.matrix();
+    auto fallback_interpolation_matrix = atlas::linalg::make_host_view<eckit::linalg::Scalar,eckit::linalg::Index>(fallback_interpolation_matrix_storage);
+
+    // assume missing_ is sorted!
+    size_t m=0;
+    std::vector<linalg::Triplet<eckit::linalg::Scalar, eckit::linalg::Index>> triplets;
+    triplets.reserve(rows);
+    auto add_triplets_for_row = [&triplets] (auto matrix, std::size_t r) {
+        for (idx_t c = matrix.outer()[r]; c < matrix.outer()[r + 1]; ++c) {
+            triplets.emplace_back(r, matrix.inner()[c], matrix.value()[c]);
+        }
+    };
+    for (std::size_t r=0; r<rows; ++r) {
+        if (m == missing_.size()){
+            add_triplets_for_row(interpolation_matrix, r);
+        }
+        else if (r != missing_[m]) {
+            add_triplets_for_row(interpolation_matrix, r);
+        }
+        else { // r == missing_[m]
+            add_triplets_for_row(fallback_interpolation_matrix, r);
+            ++m;
+        }
+    }
+    ATLAS_ASSERT(m == missing_.size());
+    missing_.clear();
+    
+    matrix_shared_ = std::make_shared<Matrix>(make_sparse_matrix_storage_from_triplets(rows, cols, triplets, true));
+    matrix_        = matrix_shared_.get();
+}
+
+void Method::adaptMatrixWithTargetMask() {
+    ATLAS_TRACE();
+    ATLAS_ASSERT(matrix_ != nullptr, "Matrix is null");
+    auto interpolation_matrix = atlas::linalg::make_host_view<eckit::linalg::Scalar,eckit::linalg::Index>(*matrix_);
+    std::size_t rows = interpolation_matrix.rows();
+    std::size_t cols = interpolation_matrix.cols();
+
+    Field tmask = target().mask();
+
+    // assume missing_ is sorted!
+    size_t m=0;
+    std::vector<linalg::Triplet<eckit::linalg::Scalar, eckit::linalg::Index>> triplets;
+    triplets.reserve(rows);
+    auto add_triplets_for_row = [&triplets] (auto matrix, std::size_t r) {
+        for (idx_t c = matrix.outer()[r]; c < matrix.outer()[r + 1]; ++c) {
+            triplets.emplace_back(r, matrix.inner()[c], matrix.value()[c]);
+        }
+    };
+    ATLAS_DEBUG_VAR(missing_.size());
+    std::vector<int> still_missing;
+    still_missing.reserve(missing_.size());
+    auto tmask_view = array::make_view<int,1>(tmask);
+    for (std::size_t r=0; r<rows; ++r) {
+        if (tmask_view(r) == 0) {
+            still_missing.emplace_back(r);
+            continue; // skip masked target points
+        }
+        if (m == missing_.size()) {
+            add_triplets_for_row(interpolation_matrix, r);
+        }
+        else if (r != missing_[m]) {
+            add_triplets_for_row(interpolation_matrix, r);
+        }
+        else { // r == missing_[m]
+            still_missing.emplace_back(r);
+            ++m;
+        }
+    }
+    missing_.swap(still_missing);
+    ATLAS_DEBUG_VAR(missing_.size());
+
+    matrix_shared_ = std::make_shared<Matrix>(make_sparse_matrix_storage_from_triplets(rows, cols, triplets, true));
+    matrix_        = matrix_shared_.get();
+}
+
+void Method::post_setup() {
+    ATLAS_TRACE();
+    if (matrix_) {
+        adaptMatrixWithSourceMask();
+        adaptMatrixWithFallback();
+        adaptMatrixWithTargetMask();
+    }
     if (adjoint_) {
         adjoint_matrix();
     }
+    failed_interpolations_ = std::make_unique<array::ArrayT<idx_t>>(missing_.size());
+    auto failed_view = array::make_view<idx_t,1>(*failed_interpolations_);
+    for (idx_t i=0; i<missing_.size(); ++i) {
+        failed_view(i) = missing_[i];
+    }
+}
+
+void Method::setup(const FunctionSpace& source, const FunctionSpace& target) {
+    ATLAS_TRACE("atlas::interpolation::method::Method::setup(FunctionSpace, FunctionSpace)");
+    this->do_setup(source, target);
+    post_setup();
 }
 
 const Method::Matrix& Method::adjoint_matrix() const {
@@ -454,26 +627,31 @@ const Method::Matrix& Method::adjoint_matrix() const {
 void Method::setup(const Grid& source, const Grid& target) {
     ATLAS_TRACE("atlas::interpolation::method::Method::setup(Grid, Grid)");
     this->do_setup(source, target, Cache());
+    post_setup();
 }
 
 void Method::setup(const FunctionSpace& source, const Field& target) {
     ATLAS_TRACE("atlas::interpolation::method::Method::setup(FunctionSpace, Field)");
     this->do_setup(source, target);
+    post_setup();
 }
 
 void Method::setup(const FunctionSpace& source, const FieldSet& target) {
     ATLAS_TRACE("atlas::interpolation::method::Method::setup(FunctionSpace, FieldSet)");
     this->do_setup(source, target);
+    post_setup();
 }
 
 void Method::setup(const Grid& source, const Grid& target, const Cache& cache) {
     ATLAS_TRACE("atlas::interpolation::method::Method::setup(Grid, Grid, Cache)");
     this->do_setup(source, target, cache);
+    post_setup();
 }
 
 void Method::setup(const FunctionSpace& source, const FunctionSpace& target, const Cache& cache) {
     ATLAS_TRACE("atlas::interpolation::method::Method::setup(FunctionSpace, FunctionSpace, Cache)");
     this->do_setup(source, target, cache);
+    post_setup();
 }
 
 Method::Metadata Method::execute(const FieldSet& source, FieldSet& target) const {

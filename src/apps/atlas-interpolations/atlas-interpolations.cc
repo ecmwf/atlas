@@ -26,6 +26,10 @@
 #include "atlas/interpolation/method/MethodFactory.h"
 #include "atlas/linalg/sparse.h"
 #include "atlas/linalg/sparse/MakeEckitSparseMatrix.h"
+#include "atlas/linalg/sparse/SparseMatrixToTriplets.h"
+#include "atlas/linalg/sparse/SparseMatrixTriplet.h"
+
+
 #include "atlas/mesh/Mesh.h"
 #include "atlas/meshgenerator.h"
 #include "atlas/output/Gmsh.h"
@@ -47,6 +51,129 @@ using atlas::util::Config;
 
 using Matrix = atlas::linalg::SparseMatrixStorage;
 using StopWatch = atlas::runtime::trace::StopWatch;
+
+
+namespace atlas::linalg {
+    
+template <typename Value, typename Index>
+class TripletView {
+public:
+    TripletView(Index& row, Index& column, Value& value):
+        row_{row}, column_{column}, value_{value} {}
+    Index& row() { return row_; }
+    Index& column() { return column_; }
+    Value& value() { return value_; }
+    const Index& row() const { return row_; }
+    const Index& column() const { return column_; }
+    const Value& value() const { return value_; }
+private:
+    Value& value_;
+    Index& row_;
+    Index& column_;
+};
+template <typename Value, typename Index>
+class TripletsView {
+    public:
+    class iterator {
+        public:
+        iterator(std::size_t idx, TripletsView* parent): idx_{idx}, parent_{parent} {}
+        iterator& operator++() { ++idx_; return *this; }
+        bool operator!=(const iterator& other) const { return idx_ != other.idx_; }
+        TripletView<Value, Index> operator*() const {
+            return TripletView<Value, Index>{parent_->row(idx_), parent_->column(idx_), parent_->value(idx_)};
+        }
+        private:
+        std::size_t idx_;
+        TripletsView* parent_;
+    };
+    class const_iterator {
+    public:
+        const_iterator(std::size_t idx, const TripletsView* parent): idx_{idx}, parent_{parent} {}
+        const_iterator& operator++() { ++idx_; return *this; }
+        bool operator!=(const const_iterator& other) const { return idx_ != other.idx_; }
+        TripletView<const Value, const Index> operator*() const {
+            return TripletView<const Value, const Index>{parent_->row(idx_), parent_->column(idx_), parent_->value(idx_)};
+        }
+    private:
+        std::size_t idx_;
+        const TripletsView* parent_;
+    };
+
+    template <typename A1, typename A2, typename A3>
+    TripletsView(std::vector<Index, A1>& rows, std::vector<Index, A2>& columns, std::vector<Value,A3>& values) :
+        TripletsView(rows.data(), columns.data(), values.data(), values.size()) {
+            ATLAS_ASSERT(rows.size() == columns.size());
+            ATLAS_ASSERT(values.size() == rows.size());
+        }
+
+    TripletsView(Index* rows, Index* columns, Value* values, std::size_t size):
+        rows_{rows}, columns_{columns}, values_{values}, size_{size} {}
+
+    iterator begin() { return iterator{0, this}; }  
+    iterator end() { return iterator{size_, this}; }
+    const_iterator begin() const { return const_iterator{0, this}; }  
+    const_iterator end() const { return const_iterator{size_, this}; }
+    std::size_t size() const { return size_; }
+    Index& row(std::size_t idx) { return rows_[idx]; }
+    Index& column(std::size_t idx) { return columns_[idx]; }
+    Value& value(std::size_t idx) { return values_[idx]; }
+    const Index& row(std::size_t idx) const { return rows_[idx]; }
+    const Index& column(std::size_t idx) const { return columns_[idx]; }
+    const Value& value(std::size_t idx) const { return values_[idx]; }
+private:
+    Index* rows_;
+    Index* columns_;
+    Value* values_;
+    std::size_t size_;
+};
+
+
+interpolation::MatrixCache create_matrix_cache(Interpolation interpolation) {
+    interpolation::MatrixCache interpolation_cache = interpolation.createCache();
+    auto interpolation_matrix_storage = interpolation_cache.matrix();
+    auto interpolation_matrix = atlas::linalg::make_host_view<eckit::linalg::Scalar,eckit::linalg::Index>(interpolation_matrix_storage);
+
+    if (interpolation.failedInterpolations().size() == 0) {
+        return interpolation_cache;
+    }
+
+    Interpolation fallback(option::type("nearest-neighbour"), interpolation.source(), interpolation.target());
+    interpolation::MatrixCache fallback_interpolation_cache = interpolation.createCache();
+    auto fallback_interpolation_matrix_storage = interpolation_cache.matrix();
+    auto fallback_interpolation_matrix = atlas::linalg::make_host_view<eckit::linalg::Scalar,eckit::linalg::Index>(fallback_interpolation_matrix_storage);
+
+    auto missing_rows = array::make_view<int,1>(interpolation.failedInterpolations());
+    std::set<idx_t> missing_set;
+    for( idx_t i=0; i<missing_rows.size(); ++i ) {
+        missing_set.insert( missing_rows(i) );
+    }
+
+    std::vector<Triplet<eckit::linalg::Scalar, eckit::linalg::Index>> triplets;
+    triplets.reserve(interpolation_matrix.rows());
+    for (std::size_t r=0; r<interpolation_matrix.rows(); ++r) {
+        if (missing_set.find(r) != missing_set.end()) {
+            for (idx_t c = interpolation_matrix.outer()[r]; c < interpolation_matrix.outer()[r + 1]; ++c) {
+                triplets.emplace_back(r, interpolation_matrix.inner()[c], interpolation_matrix.value()[c]);
+            }
+        }
+        else {
+            for (idx_t c = fallback_interpolation_matrix.outer()[r]; c < fallback_interpolation_matrix.outer()[r + 1]; ++c) {
+                triplets.emplace_back(r, fallback_interpolation_matrix.inner()[c], fallback_interpolation_matrix.value()[c]);
+            }
+        }
+    }
+    return interpolation::MatrixCache{
+        make_sparse_matrix_storage_from_triplets(
+            interpolation_matrix.rows(),
+            interpolation_matrix.cols(),
+            triplets,
+            true
+        )
+    };
+}
+
+
+}
 
 
 namespace atlas {
@@ -440,6 +567,8 @@ std::pair<FunctionSpace,FunctionSpace> get_fs(const Grid& sgrid, const Grid& tgr
         else if (type == fs_type::nodes) {
             auto mesh = create_mesh_with_gridpoints_as_nodes(grid, dist, halo);
             fs = NodeColumns(mesh, option::halo(halo));
+            auto mask = mesh.nodes().add(fs.createField<int>(option::name("mask")));
+            array::make_view<int,1>(mask).assign(1);
         }
         else if (type == fs_type::structured) {
             fs = StructuredColumns(grid, dist, option::halo(halo));
@@ -660,39 +789,43 @@ int AtlasInterpolations::execute(const AtlasTool::Args& args) {
     matrix.clear();
 
     if (args.getBool("interpolate",false) || args.getBool("output-matrix",false) || args.getBool("test-interpolator",false) || (args.getBool("test-matrix",false) && !matrix_tested)) {
-        ATLAS_TRACE_SCOPE("Setup source and target") {
-            timers.functionspace_setup.start();
-            // create_fspaces(config, sgrid, tgrid, src_fs, tgt_fs);
-            std::tie(src_fs, tgt_fs) = get_fs(sgrid, tgrid, args);
-            timers.functionspace_setup.stop();
+;
+        if (args.has("s.mask")) {
+            Field smask_glb = src_fs.createField<int>(option::name("mask")|option::global());
+            {
+                std::string mask = args.getString("s.mask");
+                if (get_mask_format(mask) == "scrip") {
+                    ScripIO::read_mask(mask, array::make_view<int,1>(smask_glb).as_mdspan());
+                }
+                else if (get_mask_format(mask) == "atlas") {
+                    AtlasIO::read_mask(mask, array::make_view<int,1>(smask_glb).as_mdspan());
+                }
+                else {
+                    ATLAS_NOTIMPLEMENTED;
+                }
+            }
+            Field smask = src_fs.mask();
+            src_fs.scatter(smask_glb, smask);
+            // smask = src_fs.createField<int>(option::name("smask")|option::global());
+            //gmsh_output("smask", sgrid, array::make_view<int,1>(smask), args);
         }
 
-        Field smask, tmask;
-        if (args.has("s.mask")) {
-            smask = src_fs.createField<int>(option::name("smask")|option::global());
-            std::string mask = args.getString("s.mask");
-            if (get_mask_format(mask) == "scrip") {
-                ScripIO::read_mask(mask, array::make_view<int,1>(smask).as_mdspan());
-            }
-            else if (get_mask_format(mask) == "atlas") {
-                AtlasIO::read_mask(mask, array::make_view<int,1>(smask).as_mdspan());
-            }
-            else {
-                ATLAS_NOTIMPLEMENTED;
-            }
-        }
         if (args.has("t.mask")) {
-            tmask = tgt_fs.createField<int>(option::name("tmask")|option::global());
-            std::string mask = args.getString("t.mask");
-            if (get_mask_format(mask) == "scrip") {
-                ScripIO::read_mask(mask, array::make_view<int,1>(tmask).as_mdspan());
+            Field tmask_glb = tgt_fs.createField<int>(option::name("mask")|option::global());
+            {
+                std::string mask = args.getString("t.mask");
+                if (get_mask_format(mask) == "scrip") {
+                    ScripIO::read_mask(mask, array::make_view<int,1>(tmask_glb).as_mdspan());
+                }
+                else if (get_mask_format(mask) == "atlas") {
+                    AtlasIO::read_mask(mask, array::make_view<int,1>(tmask_glb).as_mdspan());
+                }
+                else {
+                    ATLAS_NOTIMPLEMENTED;
+                }
             }
-            else if (get_mask_format(mask) == "atlas") {
-                AtlasIO::read_mask(mask, array::make_view<int,1>(tmask).as_mdspan());
-            }
-            else {
-                ATLAS_NOTIMPLEMENTED;
-            }
+            Field tmask = tgt_fs.mask();
+            tgt_fs.scatter(tmask_glb, tmask);
         }
 
         ATLAS_TRACE_SCOPE("Setup interpolator") {
@@ -705,6 +838,7 @@ int AtlasInterpolations::execute(const AtlasTool::Args& args) {
                 interpolator = Interpolation(config, src_fs, tgt_fs, cache);
             }
             timers.interpolation_setup.stop();
+            ATLAS_DEBUG_VAR(interpolator.failedInterpolations().size());
         }
 
         Log::info() << "Grid + FunctionSpace timer\t: " << elapsed_ms(timers.functionspace_setup) << " [ms]"  << std::endl;
@@ -717,7 +851,7 @@ int AtlasInterpolations::execute(const AtlasTool::Args& args) {
             ATLAS_TRACE_SCOPE("initialize source") {
                 auto src_field_v = array::make_view<double, 1>(src_field);
                 for (idx_t i = 0; i < src_fs.size(); ++i) {
-                    src_field_v[i] = util::function::vortex_rollup(src_lonlat(i, 0), src_lonlat(i, 1), 1.);
+                    src_field_v[i] = 10. + util::function::vortex_rollup(src_lonlat(i, 0), src_lonlat(i, 1), 1.);
                 }
             }
             src_field.set_dirty(false); // all values are up to date
@@ -758,7 +892,7 @@ int AtlasInterpolations::execute(const AtlasTool::Args& args) {
                     std::string tgt_name = "test_interpolator_target_" + matrix_name;
                     Log::info() << "Storing field '" << tgt_name << ".msh'." << std::endl;
                     std::string coords = args.getString("gmsh.coordinates", "lonlat");
-                    output::Gmsh gmsh(tgt_name + ".msh", Config("coordinates", coords) | Config("ghost", "true"));
+                    output::Gmsh gmsh(tgt_name + ".msh", Config("coordinates", coords) | Config("ghost", "false"));
                     gmsh.write(tmesh);
                     gmsh.write(tgt_field);
                 }

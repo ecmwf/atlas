@@ -240,7 +240,6 @@ void FiniteElement::setup(const FunctionSpace& source) {
 
     trace_setup_source.stop();
 
-
     icoords_.reset(new array::ArrayView<double, 2>(array::make_view<double, 2>(source_xyz)));
     igidx_.reset(new array::ArrayView<gidx_t, 1>(array::make_view<gidx_t, 1>(src.nodes().global_index())));
     connectivity_              = &meshSource.cells().node_connectivity();

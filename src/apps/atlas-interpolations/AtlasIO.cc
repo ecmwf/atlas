@@ -17,6 +17,7 @@
 #include "atlas/io/atlas-io.h"
 
 #include "atlas/runtime/Exception.h"
+#include "atlas/runtime/Trace.h"
 
 #include "atlas/runtime/Log.h"
 
@@ -58,6 +59,7 @@ namespace atlas {
 
 
 void AtlasIO::read_mask(const std::string& mask_name, mdspan<int,dims<1>> mask) {
+    ATLAS_TRACE();
     std::size_t size;
     atlas::io::RecordReader reader(mask_name);
     reader.read("size",size).wait();

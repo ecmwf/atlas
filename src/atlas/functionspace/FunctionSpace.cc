@@ -91,6 +91,10 @@ Field FunctionSpace::partition() const {
     return get()->partition();
 }
 
+Field FunctionSpace::mask() const {
+    return get()->mask();
+}
+
 void FunctionSpace::haloExchange(const FieldSet& fields, bool on_device) const {
     get()->haloExchange(fields, on_device);
 }

@@ -77,6 +77,7 @@ public:
     Field index_i() const { return functionspace_->index_i(); }
     Field index_j() const { return functionspace_->index_j(); }
     Field ghost() const { return functionspace_->ghost(); }
+    Field mask() const { return functionspace_->mask(); }
 
     void compute_xy(idx_t i, idx_t j, PointXY& xy) const { return functionspace_->compute_xy(i, j, xy); }
     PointXY compute_xy(idx_t i, idx_t j) const { return functionspace_->compute_xy(i, j); }

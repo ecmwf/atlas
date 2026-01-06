@@ -99,6 +99,8 @@ public:
 
     Field partition() const;
 
+    Field mask() const;
+
     const functionspace::HaloDescription& halo_description() const;
 
     const parallel::GatherScatter& gather() const;

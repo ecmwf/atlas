@@ -113,6 +113,8 @@ public:
 
     virtual atlas::Field global_index() const;
 
+    virtual atlas::Field mask() const;
+
     virtual const util::PartitionPolygons& polygons() const;
 
     virtual const Projection& projection() const;

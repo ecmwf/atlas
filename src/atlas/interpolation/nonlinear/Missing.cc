@@ -17,6 +17,7 @@
 #include "atlas/field/MissingValue.h"
 #include "atlas/util/DataType.h"
 #include "atlas/util/Metadata.h"
+#include "atlas/runtime/Log.h"
 
 
 namespace atlas {
@@ -66,26 +67,32 @@ bool Missing::applicable(const Field& f) const {
     return field::MissingValue(f);
 }
 
-bool MissingIfAllMissing::execute(NonLinear::Matrix& W, const Field& field) const {
-    return execute(W, field.array(), field.metadata());
+bool Missing::do_execute(Matrix& W, const Field& field, RowIndices* missing_rows) const {
+    return do_execute(W, field.array(), field.metadata(), missing_rows);
 }
 
-bool MissingIfAllMissing::execute(NonLinear::Matrix& W, const array::Array& array, const Config& config) const {
+bool MissingIfAllMissing::do_execute(Matrix& W, const array::Array& array, const Config& config, RowIndices* missing_rows) const {
     switch(array.datatype().kind()) {
-        case (DataType::kind<double>()):        return executeT<double>(W, array, config);
-        case (DataType::kind<float>()):         return executeT<float>(W, array, config);
-        case (DataType::kind<int>()):           return executeT<int>(W, array, config);
-        case (DataType::kind<long>()):          return executeT<long>(W, array, config);
-        case (DataType::kind<unsigned long>()): return executeT<unsigned long>(W, array, config);
+        case (DataType::kind<double>()):        return executeT<double>(W, array, config, missing_rows);
+        case (DataType::kind<float>()):         return executeT<float>(W, array, config, missing_rows);
+        case (DataType::kind<int>()):           return executeT<int>(W, array, config, missing_rows);
+        case (DataType::kind<long>()):          return executeT<long>(W, array, config, missing_rows);
+        case (DataType::kind<unsigned long>()): return executeT<unsigned long>(W, array, config, missing_rows);
         default: ATLAS_NOTIMPLEMENTED;
     }
 }
 
 template<typename T>
-bool MissingIfAllMissing::executeT(NonLinear::Matrix& W, const array::Array& array, const Config& config) const {
+bool MissingIfAllMissing::executeT(Matrix& W, const array::Array& array, const Config& config, RowIndices* missing_rows) const {
     field::MissingValue mv(missing_value_type(array.datatype(), config), config);
 
     auto& missingValue = mv.ref();
+
+    bool add_missing = missing_rows != nullptr;
+    if (add_missing) {
+        missing_rows->clear();
+        missing_rows->reserve(W.rows());
+    }
 
     ATLAS_ASSERT(array.rank() == 1);
 
@@ -95,7 +102,7 @@ bool MissingIfAllMissing::executeT(NonLinear::Matrix& W, const array::Array& arr
 
     auto data  = const_cast<Scalar*>(W.data());
     bool modif = false;
-    bool zeros = false;
+    size_t zeros = 0;
 
     Size i = 0;
     Matrix::iterator it(W);
@@ -126,8 +133,11 @@ bool MissingIfAllMissing::executeT(NonLinear::Matrix& W, const array::Array& arr
         // the result is missing value if all values in row are missing
         if (N_missing > 0) {
             if (N_missing == N_entries || eckit::types::is_approximately_equal(sum, 0.)) {
+                if (add_missing) {
+                    missing_rows->emplace_back(r);
+                }
                 for (Size j = k; j < k + N_entries; ++j) {
-                    data[j] = j == i_missing ? 1. : 0.;
+                    data[j] = (j == i_missing ? 1. : 0.);
                 }
             }
             else {
@@ -135,7 +145,7 @@ bool MissingIfAllMissing::executeT(NonLinear::Matrix& W, const array::Array& arr
                 for (Size j = k; j < k + N_entries; ++j, ++kt) {
                     if (missingValue(values[kt.col()])) {
                         data[j] = 0.;
-                        zeros   = true;
+                        zeros++;
                     }
                     else {
                         data[j] *= factor;
@@ -149,29 +159,29 @@ bool MissingIfAllMissing::executeT(NonLinear::Matrix& W, const array::Array& arr
     if (zeros && missingValue.isnan()) {
         W.prune(0.);
     }
+    ATLAS_DEBUG_VAR(zeros);
 
     return modif;
 }
 
-bool MissingIfAnyMissing::execute(NonLinear::Matrix& W, const Field& field) const {
-    return execute(W, field.array(), field.metadata());
-}
-
-bool MissingIfAnyMissing::execute(NonLinear::Matrix& W, const array::Array& array, const Config& config) const {
+bool MissingIfAnyMissing::do_execute(Matrix& W, const array::Array& array, const Config& config, RowIndices* missing_rows) const {
     switch(array.datatype().kind()) {
-        case (DataType::kind<double>()):        return executeT<double>(W, array, config);
-        case (DataType::kind<float>()):         return executeT<float>(W, array, config);
-        case (DataType::kind<int>()):           return executeT<int>(W, array, config);
-        case (DataType::kind<long>()):          return executeT<long>(W, array, config);
-        case (DataType::kind<unsigned long>()): return executeT<unsigned long>(W, array, config);
+        case (DataType::kind<double>()):        return executeT<double>(W, array, config, missing_rows);
+        case (DataType::kind<float>()):         return executeT<float>(W, array, config, missing_rows);
+        case (DataType::kind<int>()):           return executeT<int>(W, array, config, missing_rows);
+        case (DataType::kind<long>()):          return executeT<long>(W, array, config, missing_rows);
+        case (DataType::kind<unsigned long>()): return executeT<unsigned long>(W, array, config, missing_rows);
         default: ATLAS_NOTIMPLEMENTED;
     }
 }
 
-
 template<typename T>
-bool MissingIfAnyMissing::executeT(NonLinear::Matrix& W, const array::Array& array, const Config& config) const {
+bool MissingIfAnyMissing::executeT(Matrix& W, const array::Array& array, const Config& config, RowIndices* missing_rows) const {
     field::MissingValue mv(missing_value_type(array.datatype(), config), config);
+
+    if (missing_rows != nullptr) {
+        ATLAS_NOTIMPLEMENTED;
+    }
 
     auto& missingValue = mv.ref();
 
@@ -226,25 +236,25 @@ bool MissingIfAnyMissing::executeT(NonLinear::Matrix& W, const array::Array& arr
     return modif;
 }
 
-bool MissingIfHeaviestMissing::execute(NonLinear::Matrix& W, const Field& field) const {
-    return execute(W, field.array(), field.metadata());
-}
-
-bool MissingIfHeaviestMissing::execute(NonLinear::Matrix& W, const array::Array& array, const Config& config) const {
+bool MissingIfHeaviestMissing::do_execute(Matrix& W, const array::Array& array, const Config& config, RowIndices* missing_rows) const {
     switch(array.datatype().kind()) {
-        case (DataType::kind<double>()):        return executeT<double>(W, array, config);
-        case (DataType::kind<float>()):         return executeT<float>(W, array, config);
-        case (DataType::kind<int>()):           return executeT<int>(W, array, config);
-        case (DataType::kind<long>()):          return executeT<long>(W, array, config);
-        case (DataType::kind<unsigned long>()): return executeT<unsigned long>(W, array, config);
+        case (DataType::kind<double>()):        return executeT<double>(W, array, config, missing_rows);
+        case (DataType::kind<float>()):         return executeT<float>(W, array, config, missing_rows);
+        case (DataType::kind<int>()):           return executeT<int>(W, array, config, missing_rows);
+        case (DataType::kind<long>()):          return executeT<long>(W, array, config, missing_rows);
+        case (DataType::kind<unsigned long>()): return executeT<unsigned long>(W, array, config, missing_rows);
         default: ATLAS_NOTIMPLEMENTED;
     }
 }
 
 template<typename T>
-bool MissingIfHeaviestMissing::executeT(NonLinear::Matrix& W, const array::Array& array, const Config& config) const {
+bool MissingIfHeaviestMissing::executeT(Matrix& W, const array::Array& array, const Config& config, RowIndices* missing_rows) const {
     field::MissingValue mv(missing_value_type(array.datatype(), config), config);
     auto& missingValue = mv.ref();
+
+    if (missing_rows != nullptr) {
+        ATLAS_NOTIMPLEMENTED;
+    }
 
     // NOTE only for scalars (for now)
     auto values = make_view_array_values<T, 1>(array);

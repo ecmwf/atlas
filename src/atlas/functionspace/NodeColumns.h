@@ -274,6 +274,8 @@ public:
 
     Field partition() const override { return nodes_.partition(); }
 
+    Field mask() const override { return nodes_.field("mask"); }
+
     const util::PartitionPolygon& polygon(idx_t halo = 0) const override { return mesh_.polygon(halo); }
 
     const util::PartitionPolygons& polygons() const override { return mesh_.polygons(); }

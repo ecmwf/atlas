@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "atlas/array/Array.h"
 #include "atlas/interpolation/method/Method.h"
 #include "atlas/library/config.h"
 #include "atlas/util/ObjectHandle.h"
@@ -37,6 +38,7 @@ public:
     using Config   = eckit::Parametrisation;
     using Cache    = interpolation::Cache;
     using Metadata = interpolation::Method::Metadata;
+    using FailedInterpolations = const array::Array;
 
     using Handle::Handle;
     Interpolation() = default;
@@ -75,6 +77,10 @@ public:
     friend std::ostream& operator<<(std::ostream& out, const Interpolation& i) {
         i.print(out);
         return out;
+    }
+
+    FailedInterpolations& failedInterpolations() const {
+        return get()->failedInterpolations();
     }
 };
 

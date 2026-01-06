@@ -20,45 +20,59 @@ namespace interpolation {
 namespace nonlinear {
 
 
-struct Missing : NonLinear {
-private:
+class Missing : public NonLinear {
+public:
     bool applicable(const Field& f) const override;
+
+    using NonLinear::execute;
+    bool execute(Matrix& W, const Field& field) const override {
+        return do_execute(W, field, nullptr);
+    }
+    bool execute(Matrix& W, const Field& field, RowIndices& missing_rows) const {
+        return do_execute(W, field, &missing_rows);
+    }
+    bool execute(Matrix& W, const array::Array& array , const Config& config) const override {
+        return do_execute(W, array, config, nullptr);
+    }
+    bool execute(Matrix& W, const array::Array& array , const Config& config, RowIndices& missing_rows) const {
+        return do_execute(W, array, config, &missing_rows);
+    }
+private:
+    bool do_execute(Matrix& W, const Field& field, RowIndices* missing_rows) const;
+    virtual bool do_execute(Matrix& W, const array::Array&, const Config&, RowIndices* missing_rows) const = 0;
 };
 
 
-struct MissingIfAllMissing : Missing {
-    bool execute(NonLinear::Matrix& W, const Field& field) const override;
-
-    bool execute(NonLinear::Matrix& W, const array::Array&, const Config&) const override;
-
-    template<typename T>
-    bool executeT(NonLinear::Matrix& W, const array::Array&, const Config&) const;
-
+class MissingIfAllMissing : public Missing {
+public:
     static std::string static_type() { return "missing-if-all-missing"; }
+    using Missing::execute;
+    bool do_execute(Matrix& W, const array::Array&, const Config&, RowIndices* missing_rows) const override;
+private:
+    template<typename T>
+    bool executeT(Matrix& W, const array::Array&, const Config&, RowIndices* missing_rows) const;
 };
 
 
-struct MissingIfAnyMissing : Missing {
-    bool execute(NonLinear::Matrix& W, const Field& field) const override;
-
-    bool execute(NonLinear::Matrix& W, const array::Array&, const Config&) const override;
-
-    template<typename T>
-    bool executeT(NonLinear::Matrix& W, const array::Array&, const Config&) const;
-
+class MissingIfAnyMissing : public Missing {
+public:
     static std::string static_type() { return "missing-if-any-missing"; }
+    using Missing::execute;
+    bool do_execute(Matrix& W, const array::Array&, const Config&, RowIndices* missing_rows) const override;
+private:
+    template<typename T>
+    bool executeT(Matrix& W, const array::Array&, const Config&, RowIndices* missing_rows) const;
 };
 
 
-struct MissingIfHeaviestMissing : Missing {
-    bool execute(NonLinear::Matrix& W, const Field& field) const override;
-
-    bool execute(NonLinear::Matrix& W, const array::Array&, const Config&) const override;
-
-    template<typename T>
-    bool executeT(NonLinear::Matrix& W, const array::Array&, const Config&) const;
-
+class MissingIfHeaviestMissing : public Missing {
+public:
     static std::string static_type() { return "missing-if-heaviest-missing"; }
+    using Missing::execute;
+    bool do_execute(Matrix& W, const array::Array&, const Config&, RowIndices* missing_rows) const override;
+private:
+    template<typename T>
+    bool executeT(Matrix& W, const array::Array&, const Config&, RowIndices* missing_rows) const;
 };
 
 }  // namespace nonlinear

@@ -14,6 +14,7 @@
 
 #include <string>
 #include <type_traits>
+#include <vector>
 
 #include "eckit/config/Parametrisation.h"
 #include "eckit/linalg/SparseMatrix.h"
@@ -40,6 +41,7 @@ public:
     using Matrix = eckit::linalg::SparseMatrix;
     using Scalar = eckit::linalg::Scalar;
     using Size   = eckit::linalg::Size;
+    using RowIndices = std::vector<Size>;
 
     /**
      * @brief ctor
