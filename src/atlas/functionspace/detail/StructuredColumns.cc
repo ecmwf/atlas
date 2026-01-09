@@ -677,6 +677,7 @@ void StructuredColumns::scatter(const FieldSet& global_fieldset, FieldSet& local
 
         glb.metadata().broadcast(loc.metadata(), root);
         loc.metadata().set("global", false);
+        loc.set_dirty(true);
     }
 }
 // ----------------------------------------------------------------------------

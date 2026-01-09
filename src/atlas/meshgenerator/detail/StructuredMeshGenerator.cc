@@ -262,6 +262,14 @@ void StructuredMeshGenerator::generate(const Grid& grid, const grid::Distributio
     Region region;
     generate_region(rg, distribution, mypart, region);
 
+    if (not rg.projection() && rg.domain().global()) {
+        double max_dy = 0;
+        for (size_t ilat = 0; ilat < rg.ny()-1; ilat++) {
+            max_dy = std::max(max_dy, std::abs(rg.y(ilat)-rg.y(ilat+1)));
+        }
+        double cell_maximum_diagonal_on_unit_sphere = std::sqrt(max_dy*max_dy + max_dy*max_dy) * M_PI / 180.;
+        mesh.metadata().set("cell_maximum_diagonal_on_unit_sphere",cell_maximum_diagonal_on_unit_sphere);
+    }
 
     mesh.metadata().set("nb_parts",options.getInt("nb_parts"));
     mesh.metadata().set("part",options.getInt("part"));

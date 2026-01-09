@@ -25,8 +25,7 @@ namespace meshgenerator {
 
 class DelaunayMeshGenerator : public MeshGenerator::Implementation {
 public:
-    DelaunayMeshGenerator();
-    DelaunayMeshGenerator(const eckit::Parametrisation& p);
+    DelaunayMeshGenerator(const eckit::Parametrisation& = util::NoConfig());
 
     virtual ~DelaunayMeshGenerator() override;
 
@@ -43,6 +42,7 @@ private:  // methods
     int part_;
     bool remove_duplicate_points_;
     bool reshuffle_;
+    std::string extension_grid_;
 };
 
 //----------------------------------------------------------------------------------------------------------------------

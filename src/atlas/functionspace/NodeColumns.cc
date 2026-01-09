@@ -560,6 +560,7 @@ void NodeColumns::scatter(const FieldSet& global_fieldset, FieldSet& local_field
         if( !name.empty() ) {
             loc.metadata().set("name", name);
         }
+        loc.set_dirty(true);
     }
 }
 

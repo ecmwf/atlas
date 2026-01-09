@@ -18,6 +18,7 @@
 #include "atlas/grid/Distribution.h"
 #include "atlas/grid/Grid.h"
 #include "atlas/grid/Iterator.h"
+#include "atlas/mesh/ElementType.h"
 #include "atlas/mesh/HybridElements.h"
 #include "atlas/mesh/Mesh.h"
 #include "atlas/mesh/Nodes.h"
@@ -26,11 +27,11 @@
 #include "atlas/mesh/actions/ExtendNodesGlobal.h"
 #include "atlas/meshgenerator/detail/DelaunayMeshGenerator.h"
 #include "atlas/meshgenerator/detail/MeshGeneratorFactory.h"
+#include "atlas/parallel/mpi/mpi.h"
 #include "atlas/projection/Projection.h"
 #include "atlas/runtime/Log.h"
+#include "atlas/util/Config.h"
 #include "atlas/util/CoordinateEnums.h"
-#include "atlas/parallel/mpi/mpi.h"
-#include "atlas/mesh/ElementType.h"
 
 using atlas::Mesh;
 
@@ -39,13 +40,12 @@ namespace meshgenerator {
 
 //----------------------------------------------------------------------------------------------------------------------
 
-DelaunayMeshGenerator::DelaunayMeshGenerator() = default;
-
 DelaunayMeshGenerator::DelaunayMeshGenerator(const eckit::Parametrisation& p) {
     p.get("mpi_comm",mpi_comm_=mpi::comm().name());
     p.get("part",part_=mpi::comm(mpi_comm_).rank());
     p.get("reshuffle",reshuffle_=true);
     p.get("remove_duplicate_points",remove_duplicate_points_=true);
+    p.get("extension_grid", extension_grid_);
 }
 
 DelaunayMeshGenerator::~DelaunayMeshGenerator() = default;
@@ -92,11 +92,12 @@ void DelaunayMeshGenerator::generate(const Grid& grid, const grid::Distribution&
 
             ++jnode;
         }
+
         mesh::actions::BuildXYZField()(mesh);
-        mesh::actions::ExtendNodesGlobal()(grid,mesh);  ///< does nothing if global domain
+        mesh::actions::ExtendNodesGlobal{extension_grid_}(grid, mesh);  ///< does nothing if global domain
         mesh::actions::BuildConvexHull3D()(mesh);
-        
-        auto cells_gidx = array::make_view<gidx_t,1>( mesh.cells().global_index() );
+
+        auto cells_gidx = array::make_view<gidx_t, 1>(mesh.cells().global_index());
         for (idx_t jelem=0; jelem<mesh.cells().size(); ++jelem) {
             cells_gidx(jelem) = jelem + 1;
         }

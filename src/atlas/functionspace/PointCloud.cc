@@ -500,6 +500,7 @@ void PointCloud::scatter(const FieldSet& global_fieldset, FieldSet& local_fields
         if( !name.empty() ) {
             loc.metadata().set("name", name);
         }
+        loc.set_dirty(true);
     }
 }
 
