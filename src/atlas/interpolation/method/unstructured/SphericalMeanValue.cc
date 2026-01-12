@@ -392,8 +392,7 @@ Method::Triplets SphericalMeanValue::projectPointToElements(size_t ip, const Ele
                 (*icoords_)(idx[i], size_t(0)), (*icoords_)(idx[i], size_t(1)), (*icoords_)(idx[i], size_t(2))}));
         }
 
-        util::ConvexSphericalPolygon currentPolygon(listVertices.data(), listVertices.size(),
-                                                    util::ConvexSphericalPolygon::SMV);
+        util::ConvexSphericalPolygon currentPolygon(listVertices.data(), listVertices.size());
 
         nb_cols = currentPolygon.size();
         ATLAS_ASSERT(nb_cols == 3 || nb_cols == 4);

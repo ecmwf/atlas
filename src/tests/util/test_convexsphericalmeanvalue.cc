@@ -31,7 +31,7 @@ CASE("test_convex_spherical_polygon_triag") {
     std::array<PointXYZ, 3> testTriangleVertices{PointXYZ{0, 1, 0}, PointXYZ{recipRoot2, 0, recipRoot2},
                                                  PointXYZ{1, 0, 0}};
 
-    util::ConvexSphericalPolygon testTriangle(testTriangleVertices.data(),testTriangleVertices.size(), ConvexSphericalPolygon::SMV);
+    util::ConvexSphericalPolygon testTriangle(testTriangleVertices.data(), testTriangleVertices.size());
 
     SECTION("test_edge_normals") {
         std::array<PointXYZ, 3> expectedEdgeNormals = {PointXYZ{recipRoot2, 0, -1 * recipRoot2},
@@ -105,7 +105,7 @@ CASE("test_convex_spherical_polygon_triag") {
 CASE("test_spherical_polygon_nonplanar_quad") {
     std::array<PointXYZ, 4> testQuadVertices{PointXYZ{1,0,0},PointXYZ{recipRoot2,recipRoot2,0},{recipRoot3,recipRoot3,recipRoot3},{recipRoot2,0,recipRoot2}};
 
-    util::ConvexSphericalPolygon testQuad(testQuadVertices.data(), testQuadVertices.size(),ConvexSphericalPolygon::SMV);
+    util::ConvexSphericalPolygon testQuad(testQuadVertices.data(), testQuadVertices.size());
     const size_t numberTestPoints = 11;
 
     std::array<PointXYZ, numberTestPoints> candidatePoints = {
@@ -185,7 +185,7 @@ CASE("test_spherical_polygon_nonplanar_quad") {
                                                                  PointXYZ{recipRoot2, recipRoot2, 0},
                                                                  PointXYZ{recipRoot3, recipRoot3, recipRoot3}};
 
-        util::ConvexSphericalPolygon testQuadRotated(testQuadRotatedVertices.data(), testQuadRotatedVertices.size(),ConvexSphericalPolygon::SMV);
+        util::ConvexSphericalPolygon testQuadRotated(testQuadRotatedVertices.data(), testQuadRotatedVertices.size());
         size_t pointsInsideRotated = 0;
         size_t pointsOutsideRotated = 0;
 
