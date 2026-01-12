@@ -114,9 +114,16 @@ CASE("test_interpolation_finite_element_from_healpix") {
     for (util::Config config : interpolationTypes) {
         std::string interpType        = "";
         std::string normalisationMode = "";
+
         config.get("type", interpType);
         config.get("normalisation", normalisationMode);
-        SECTION("using " + interpType + " " + normalisationMode) {
+        bool isNormalisationMode = 0;
+
+        if (normalisationMode == "true") {
+            isNormalisationMode = 1;
+        }
+
+        SECTION("using " + interpType + " " + (isNormalisationMode ? " w/ normalisation" : "")) {
             const auto scheme = config;
             Interpolation interpolation(scheme, fs, pointcloud);
             SECTION("test maximum nearest neighbour settings") {

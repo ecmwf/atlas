@@ -397,20 +397,21 @@ Method::Triplets SphericalMeanValue::projectPointToElements(size_t ip, const Ele
         nb_cols = currentPolygon.size();
         ATLAS_ASSERT(nb_cols == 3 || nb_cols == 4);
 
-        std::optional<std::vector<double>> polygonWeights = currentPolygon.compute_vertex_weights(candidatePoint);
+        std::vector<double> polygonWeights;
+        polygonWeights.reserve(nb_cols);
 
-        if (polygonWeights) {
+        if (currentPolygon.compute_vertex_weights(candidatePoint, polygonWeights.data(), polygonWeights.size()) == 1) {
             if (normalisation_) {
                 double weightsSum = 0;
                 for (size_t i = 0; i < nb_cols; ++i) {
-                    weightsSum += (*polygonWeights)[i];
+                    weightsSum += (polygonWeights)[i];
                 }
                 for (size_t i = 0; i < nb_cols; ++i) {
-                    (*polygonWeights)[i] /= weightsSum;
+                    (polygonWeights)[i] /= weightsSum;
                 }
             }
             for (size_t i = 0; i < nb_cols; ++i) {
-                triplets.emplace_back(ip, idx[i], (*polygonWeights)[i]);
+                triplets.emplace_back(ip, idx[i], (polygonWeights)[i]);
             }
             break;
         }

@@ -81,9 +81,11 @@ CASE("test_convex_spherical_polygon_triag") {
         size_t pointsOutside = 0;
 
         for (size_t i = 0; i < numberTestPoints; ++i) {
-            std::optional<std::vector<double>> polygonWeights = testTriangle.compute_vertex_weights(candidatePoints[i]);
+            std::vector<double> polygonWeights;
+            polygonWeights.reserve(testTriangle.size());
 
-            if (!polygonWeights) {
+            if (testTriangle.compute_vertex_weights(candidatePoints[i], polygonWeights.data(), polygonWeights.size()) ==
+                1) {
                 EXPECT((isPointInside[i] == 0));
                 pointsOutside += 1;
             }
@@ -91,7 +93,8 @@ CASE("test_convex_spherical_polygon_triag") {
                 EXPECT((isPointInside[i] == 1));
                 pointsInside += 1;
                 for (size_t j = 0; j < 3; ++j) {
-                    EXPECT(eckit::types::is_approximately_equal(polygonWeights.value()[j],candidateWeights[i][j], relative_error));
+                    EXPECT(eckit::types::is_approximately_equal(polygonWeights[j], candidateWeights[i][j],
+                                                                relative_error));
                 }
             }
         }
@@ -160,9 +163,11 @@ CASE("test_spherical_polygon_nonplanar_quad") {
         size_t pointsOutside = 0;
 
         for (size_t i = 0; i < numberTestPoints; ++i) {
-            std::optional<std::vector<double>> polygonWeights = testQuad.compute_vertex_weights(candidatePoints[i]);
+            std::vector<double> polygonWeights;
+            polygonWeights.reserve(testQuad.size());
 
-            if (!polygonWeights) {
+            if (testQuad.compute_vertex_weights(candidatePoints[i], polygonWeights.data(), polygonWeights.size()) ==
+                1) {
                 EXPECT((isPointInside[i] == 0));
                 pointsOutside += 1;
             }
@@ -170,8 +175,8 @@ CASE("test_spherical_polygon_nonplanar_quad") {
                 EXPECT((isPointInside[i] == 1));
                 pointsInside += 1;
                 for (size_t j = 0; j < 4; ++j) {
-                    EXPECT(eckit::types::is_approximately_equal(polygonWeights.value()[j], candidateWeights[i][j],
-                                                                    relative_error));
+                    EXPECT(eckit::types::is_approximately_equal(polygonWeights[j], candidateWeights[i][j],
+                                                                relative_error));
                 }
             }
         }
@@ -190,9 +195,11 @@ CASE("test_spherical_polygon_nonplanar_quad") {
         size_t pointsOutsideRotated = 0;
 
         for (size_t i = 0; i < numberTestPoints; ++i) {
-            std::optional<std::vector<double>> polygonWeightsRotated = testQuadRotated.compute_vertex_weights(candidatePoints[i]);
+            std::vector<double> polygonWeightsRotated;
+            polygonWeightsRotated.reserve(testQuadRotated.size());
 
-            if (!polygonWeightsRotated) {
+            if (testQuadRotated.compute_vertex_weights(candidatePoints[i], polygonWeightsRotated.data(),
+                                                       polygonWeightsRotated.size()) == 1) {
                 EXPECT((isPointInside[i] == 0));
                 pointsOutsideRotated += 1;
             }
@@ -200,9 +207,8 @@ CASE("test_spherical_polygon_nonplanar_quad") {
                 EXPECT((isPointInside[i] == 1));
                 pointsInsideRotated += 1;
                 for (size_t j = 0; j < 4; ++j) {
-                    EXPECT(eckit::types::is_approximately_equal(polygonWeightsRotated.value()[j],
-                                                                candidateWeights[i][testQuadRotated.previous(j)],
-                                                                relative_error));
+                    EXPECT(eckit::types::is_approximately_equal(
+                        polygonWeightsRotated[j], candidateWeights[i][testQuadRotated.previous(j)], relative_error));
                 }
             }
         }

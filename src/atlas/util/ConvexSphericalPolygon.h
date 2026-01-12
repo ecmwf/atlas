@@ -140,7 +140,7 @@ public:
 
     int previous(const int index) const { return (index == 0) ? size_ - 1 : index - 1; };
 
-    std::optional<std::vector<double>> compute_vertex_weights(const PointXYZ& candidatePoint) const;
+    int compute_vertex_weights(const PointXYZ& candidatePoint, double vertex_weights[], size_t vertex_weights_size);
 
     static void fpe(bool v) { fpe_ = v; }
     static bool fpe() { return fpe_; }

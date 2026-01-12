@@ -156,8 +156,9 @@ void ConvexSphericalPolygon::compute_centroid_and_area() const {
 }
 
 // cf. M. Floater, “Generalized barycentric coordinates and applications” Acta Numerica, p. 001, 2016.
-std::optional<std::vector<double>> ConvexSphericalPolygon::compute_vertex_weights(
-    const PointXYZ& candidatePoint) const {
+int ConvexSphericalPolygon::compute_vertex_weights(const PointXYZ& candidatePoint, double vertex_weights[],
+                                                   size_t vertex_weights_size) {
+    ATLAS_ASSERT(vertex_weights_size == size(), "vertex_weights container size does not match number of vertices");
     ATLAS_ASSERT(edge_normals().size() == this->size(),
                  "Incorrect number of edge normals computed - should equal number of polygon edges.");
 
@@ -168,16 +169,19 @@ std::optional<std::vector<double>> ConvexSphericalPolygon::compute_vertex_weight
         greatCircleProducts[i]     = dot(edge_normals_[i], candidatePoint);
 
         if (!segment.inLeftHemisphere(candidatePoint, -5 * EPS)) {
-            return {};
+            return 0;
         }
     }
 
-    std::vector<double> weights(size_, 0);
+    // TODO - set vertex_weights to all zeros
 
     for (size_t v = 0; v < size_; ++v) {
         if (PointXYZ::distance2(candidatePoint, sph_coords_[v]) < 25 * EPS2) {
-            weights[v] = 1.;
-            return weights;
+            for (size_t vv = 0; vv < size_; ++vv) {
+                vertex_weights[vv] = 0;
+            }
+            vertex_weights[v] = 1.;
+            return 1;
         }
     }
 
@@ -204,14 +208,15 @@ std::optional<std::vector<double>> ConvexSphericalPolygon::compute_vertex_weight
         double leftSideAngle  = spokeNorms[nw] - dot(spokeNormals[nw], spokeNormals[w]) / spokeNorms[w];
         double rightSideAngle = spokeNorms[pw] - dot(spokeNormals[pw], spokeNormals[w]) / spokeNorms[w];
 
-        weights[w] = (greatCircleProducts[pw] * (leftSideAngle) + greatCircleProducts[w] * (rightSideAngle)) * product;
-        denominator += weights[w] * dot(sph_coords_[w], candidatePoint);
+        vertex_weights[w] =
+            (greatCircleProducts[pw] * (leftSideAngle) + greatCircleProducts[w] * (rightSideAngle)) * product;
+        denominator += vertex_weights[w] * dot(sph_coords_[w], candidatePoint);
     }
 
-    for (double& weight : weights) {
-        weight /= denominator;
+    for (size_t w = 0; w < size_; ++w) {
+        vertex_weights[w] /= denominator;
     }
-    return weights;
+    return 1;
 }
 
 void ConvexSphericalPolygon::validate() {
