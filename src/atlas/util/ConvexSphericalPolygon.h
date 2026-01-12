@@ -31,12 +31,6 @@ public:
     static constexpr int MAX_GRIDCELL_EDGES = 4;
     static constexpr int MAX_SIZE           = 2 * MAX_GRIDCELL_EDGES + 1;
 
-    enum interpolationMode
-    {
-        GRID,
-        SMV
-    };
-
 public:
     class GreatCircleSegment {
     public:
@@ -74,18 +68,14 @@ public:
     using contains_PointLonLat = std::is_same<typename std::decay<typename Points::value_type>::type, PointLonLat>;
 
     template <class Points, typename std::enable_if<contains_PointLonLat<Points>::value, void>::type* = nullptr>
-    ConvexSphericalPolygon(const Points& points, const interpolationMode mode = interpolationMode::GRID):
-        ConvexSphericalPolygon(points.data(), points.size(), mode) {}
+    ConvexSphericalPolygon(const Points& points): ConvexSphericalPolygon(points.data(), points.size()) {}
 
-    ConvexSphericalPolygon(const PointLonLat points[], size_t size,
-                           const interpolationMode mode = interpolationMode::GRID);
+    ConvexSphericalPolygon(const PointLonLat points[], size_t size);
 
-    ConvexSphericalPolygon(const PointXYZ& p1, const PointXYZ& p2, const PointXYZ& p3,
-                           const interpolationMode mode = interpolationMode::GRID):
-        ConvexSphericalPolygon(std::array<PointXYZ, 3>{p1, p2, p3}.data(), 3, mode) {}
+    ConvexSphericalPolygon(const PointXYZ& p1, const PointXYZ& p2, const PointXYZ& p3):
+        ConvexSphericalPolygon(std::array<PointXYZ, 3>{p1, p2, p3}.data(), 3) {}
 
-    ConvexSphericalPolygon(const PointXYZ points[], size_t size,
-                           const interpolationMode mode = interpolationMode::GRID);
+    ConvexSphericalPolygon(const PointXYZ points[], size_t size);
 
     void invalidate_this_polygon() {
         size_ = 0;
@@ -97,7 +87,12 @@ public:
 
     size_t size() const { return size_; }
 
-    std::vector<PointXYZ> edge_normals() const { return edge_normals_; }
+    std::vector<PointXYZ> edge_normals() const {
+        if (not computed_edge_normals_) {
+            compute_edge_normals();
+        }
+        return edge_normals_;
+    }
 
     double area() const {
         if (not computed_area_) {
@@ -177,7 +172,7 @@ private:
     // Set valid_ to true when polygon is convex
     void validate();
 
-    void validateAndComputeNormals();
+    void compute_edge_normals() const;
 
 private:
     std::array<PointXYZ, MAX_SIZE> sph_coords_;
@@ -189,8 +184,9 @@ private:
     mutable bool computed_centroid_{false};
     mutable bool computed_radius_{false};
     mutable bool computed_area_{false};
+    mutable bool computed_edge_normals_{false};
 
-    std::vector<PointXYZ> edge_normals_;
+    mutable std::vector<PointXYZ> edge_normals_;
 
     static bool fpe_;
 };

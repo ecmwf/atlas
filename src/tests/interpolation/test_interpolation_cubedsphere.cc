@@ -105,7 +105,7 @@ CASE("cubedsphere_to_cubedsphere_interpolation") {
         }
 
 
-        SECTION("using " + interpType + (isNormalisationMode ? "w/ normalisation" : "")) {
+        SECTION("using " + interpType + (isNormalisationMode ? " w/ normalisation" : "")) {
             const auto scheme = config;
             const auto interp = Interpolation(scheme, fixture.sourceFunctionSpace_, targetFunctionSpace);
 
@@ -173,7 +173,7 @@ CASE("cubedsphere_scalar_interpolation") {
             isNormalisationMode = 1;
         }
 
-        SECTION("using " + interpType + (isNormalisationMode ? "w/ normalisation" : "")) {
+        SECTION("using " + interpType + (isNormalisationMode ? " w/ normalisation" : "")) {
             // Set up interpolation object.
             const auto scheme = config | util::Config("adjoint", true);
             const auto interp = Interpolation(scheme, fixture.sourceFunctionSpace_, fixture.targetFunctionSpace_);

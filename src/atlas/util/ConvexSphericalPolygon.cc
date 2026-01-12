@@ -74,8 +74,7 @@ PointLonLat xyz2lonlat(const PointXYZ& xyz) {
 
 bool ConvexSphericalPolygon::fpe_ = true;
 
-ConvexSphericalPolygon::ConvexSphericalPolygon(const PointLonLat points[], size_t size, const interpolationMode mode):
-    size_{size} {
+ConvexSphericalPolygon::ConvexSphericalPolygon(const PointLonLat points[], size_t size): size_{size} {
     ATLAS_ASSERT(size_ > 2, "Polygon must have at least 3 points");
     ATLAS_ASSERT(size_ < MAX_SIZE, "Number of polygon points exceeds compile time MAX_SIZE");
     lonlat2xyz(points[0], sph_coords_[0]);
@@ -96,21 +95,14 @@ ConvexSphericalPolygon::ConvexSphericalPolygon(const PointLonLat points[], size_
     }
     size_ = isp;
     ATLAS_ASSERT(size_ > 2, "Polygon must have at least 3 points");
-    switch (mode) {
-        case SMV:
-            validateAndComputeNormals();
-            break;
-        case GRID:
-        default:
-            validate();
-    }
+    validate();
+
     if (not valid_) {
         invalidate_this_polygon();
     }
 }
 
-ConvexSphericalPolygon::ConvexSphericalPolygon(const PointXYZ points[], size_t size, const interpolationMode mode):
-    size_{size} {
+ConvexSphericalPolygon::ConvexSphericalPolygon(const PointXYZ points[], size_t size): size_{size} {
     ATLAS_ASSERT(size_ > 2, "Polygon must have at least 3 points");
     ATLAS_ASSERT(size_ < MAX_SIZE, "Number of polygon points exceeds compile time MAX_SIZE");
     sph_coords_[0] = points[0];
@@ -130,14 +122,8 @@ ConvexSphericalPolygon::ConvexSphericalPolygon(const PointXYZ points[], size_t s
     }
     size_ = isp;
     ATLAS_ASSERT(size_ > 2, "Polygon must have at least 3 points");
-    switch (mode) {
-        case SMV:
-            validateAndComputeNormals();
-            break;
-        case GRID:
-        default:
-            validate();
-    }
+    validate();
+
     if (not valid_) {
         invalidate_this_polygon();
     }
@@ -172,7 +158,7 @@ void ConvexSphericalPolygon::compute_centroid_and_area() const {
 // cf. M. Floater, “Generalized barycentric coordinates and applications” Acta Numerica, p. 001, 2016.
 std::optional<std::vector<double>> ConvexSphericalPolygon::compute_vertex_weights(
     const PointXYZ& candidatePoint) const {
-    ATLAS_ASSERT(edge_normals_.size() == this->size(),
+    ATLAS_ASSERT(edge_normals().size() == this->size(),
                  "Incorrect number of edge normals computed - should equal number of polygon edges.");
 
     std::array<double, MAX_SIZE> greatCircleProducts = {0};
@@ -249,29 +235,18 @@ void ConvexSphericalPolygon::validate() {
     }
 }
 
-void ConvexSphericalPolygon::validateAndComputeNormals() {
-    valid_ = size_ > 2;
+void ConvexSphericalPolygon::compute_edge_normals() const {
     if (valid_) {
         std::vector<PointXYZ>().swap(edge_normals_);
         edge_normals_.reserve(size_);
 
         for (int i = 0; i < size_; i++) {
             int ni                = next(i);
-            int nni               = next(ni);
             const PointXYZ& P     = sph_coords_[i];
             const PointXYZ& nextP = sph_coords_[ni];
-            if (std::abs(dot(P, P) - 1.) >= 10 * EPS) {
-                valid_ = false;
-                break;
-            }
-            ATLAS_ASSERT(not approx_eq(P, PointXYZ::mul(nextP, -1.)));
-            GreatCircleSegment currentPolygonSide = GreatCircleSegment{P, nextP};
-            if (not currentPolygonSide.inLeftHemisphere(sph_coords_[nni], -0.5 * EPS)) {
-                valid_ = false;
-                break;
-            }
-            edge_normals_.emplace_back(currentPolygonSide.cross());
+            edge_normals_.emplace_back(GreatCircleSegment{P, nextP}.cross());
         }
+        computed_edge_normals_ = true;
     }
 }
 
