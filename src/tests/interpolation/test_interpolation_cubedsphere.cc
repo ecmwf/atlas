@@ -98,8 +98,14 @@ CASE("cubedsphere_to_cubedsphere_interpolation") {
 
         config.get("type", interpType);
         config.get("normalisation", normalisationMode);
+        bool isNormalisationMode = 0;
 
-        SECTION("using " + interpType + " " + normalisationMode) {
+        if (normalisationMode == "true") {
+            isNormalisationMode = 1;
+        }
+
+
+        SECTION("using " + interpType + (isNormalisationMode ? "w/ normalisation" : "")) {
             const auto scheme = config;
             const auto interp = Interpolation(scheme, fixture.sourceFunctionSpace_, targetFunctionSpace);
 
@@ -161,8 +167,13 @@ CASE("cubedsphere_scalar_interpolation") {
 
         config.get("type", interpType);
         config.get("normalisation", normalisationMode);
+        bool isNormalisationMode = 0;
 
-        SECTION("using " + interpType + " " + normalisationMode) {
+        if (normalisationMode == "true") {
+            isNormalisationMode = 1;
+        }
+
+        SECTION("using " + interpType + (isNormalisationMode ? "w/ normalisation" : "")) {
             // Set up interpolation object.
             const auto scheme = config | util::Config("adjoint", true);
             const auto interp = Interpolation(scheme, fixture.sourceFunctionSpace_, fixture.targetFunctionSpace_);
@@ -188,17 +199,20 @@ CASE("cubedsphere_scalar_interpolation") {
             }
             partField.haloExchange();
 
-            if (normalisationMode != "") {
-                normalisationMode = "_" + normalisationMode;
+            bool isNormalisationMode = 0;
+            if (normalisationMode == "true") {
+                isNormalisationMode = 1;
             }
 
-            gmshOutput("cubedsphere_source_" + interpType + normalisationMode + ".msh", FieldSet(sourceField));
+            gmshOutput("cubedsphere_source_" + interpType + (isNormalisationMode ? "_normalised" : "") + ".msh",
+                       FieldSet(sourceField));
 
             auto targetFields = FieldSet{};
             targetFields.add(targetField);
             targetFields.add(errorField);
             targetFields.add(partField);
-            gmshOutput("cubedsphere_target_" + interpType + "_" + normalisationMode + ".msh", targetFields);
+            gmshOutput("cubedsphere_target_" + interpType + (isNormalisationMode ? "_normalised" : "") + ".msh",
+                       targetFields);
 
             //--------------------------------------------------------------------------
             // Adjoint test.

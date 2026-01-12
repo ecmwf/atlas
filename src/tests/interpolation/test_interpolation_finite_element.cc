@@ -57,8 +57,13 @@ CASE("test_interpolation_finite_element") {
 
         config.get("type", interpType);
         config.get("normalisation", normalisationMode);
+        bool isNormalisationMode = 0;
 
-        SECTION("using " + interpType + " " + normalisationMode) {
+        if (normalisationMode == "true") {
+            isNormalisationMode = 1;
+        }
+
+        SECTION("using " + interpType + " " + (isNormalisationMode ? " w/ normalisation" : "")) {
             const auto scheme = config;
             Interpolation interpolation(scheme, fs, pointcloud);
 
