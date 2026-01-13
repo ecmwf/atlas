@@ -80,11 +80,11 @@ CASE("test_convex_spherical_polygon_triag") {
         size_t pointsInside  = 0;
         size_t pointsOutside = 0;
 
-        for (size_t i = 0; i < numberTestPoints; ++i) {
-            std::vector<double> polygonWeights(testTriangle.size());
+        std::vector<double> polygonWeights(testTriangle.size());
 
+        for (size_t i = 0; i < numberTestPoints; ++i) {
             if (testTriangle.compute_vertex_weights(candidatePoints[i], polygonWeights.data(), polygonWeights.size()) ==
-                1) {
+                0) {
                 EXPECT((isPointInside[i] == 0));
                 pointsOutside += 1;
             }
@@ -161,11 +161,11 @@ CASE("test_spherical_polygon_nonplanar_quad") {
         size_t pointsInside  = 0;
         size_t pointsOutside = 0;
 
-        for (size_t i = 0; i < numberTestPoints; ++i) {
-            std::vector<double> polygonWeights(testQuad.size());
+        std::vector<double> polygonWeights(testQuad.size());
 
+        for (size_t i = 0; i < numberTestPoints; ++i) {
             if (testQuad.compute_vertex_weights(candidatePoints[i], polygonWeights.data(), polygonWeights.size()) ==
-                1) {
+                0) {
                 EXPECT((isPointInside[i] == 0));
                 pointsOutside += 1;
             }
@@ -178,7 +178,7 @@ CASE("test_spherical_polygon_nonplanar_quad") {
                 }
             }
         }
-        
+
         Log::info() << "Points in/out: " << pointsInside << "/" << pointsOutside << std::endl;
         EXPECT(pointsOutside == expectedOutside);
         EXPECT(pointsInside == expectedInside);
@@ -192,11 +192,11 @@ CASE("test_spherical_polygon_nonplanar_quad") {
         size_t pointsInsideRotated = 0;
         size_t pointsOutsideRotated = 0;
 
-        for (size_t i = 0; i < numberTestPoints; ++i) {
-            std::vector<double> polygonWeightsRotated(testQuadRotated.size());
+        std::vector<double> polygonWeightsRotated(testQuadRotated.size());
 
+        for (size_t i = 0; i < numberTestPoints; ++i) {
             if (testQuadRotated.compute_vertex_weights(candidatePoints[i], polygonWeightsRotated.data(),
-                                                       polygonWeightsRotated.size()) == 1) {
+                                                       polygonWeightsRotated.size()) == 0) {
                 EXPECT((isPointInside[i] == 0));
                 pointsOutsideRotated += 1;
             }

@@ -86,7 +86,7 @@ public:
 
     size_t size() const { return size_; }
 
-    std::vector<PointXYZ>& edge_normals() const {
+    const std::vector<PointXYZ>& edge_normals() const {
         if (not computed_edge_normals_) {
             compute_edge_normals();
         }
