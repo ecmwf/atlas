@@ -81,8 +81,7 @@ CASE("test_convex_spherical_polygon_triag") {
         size_t pointsOutside = 0;
 
         for (size_t i = 0; i < numberTestPoints; ++i) {
-            std::vector<double> polygonWeights;
-            polygonWeights.reserve(testTriangle.size());
+            std::vector<double> polygonWeights(testTriangle.size());
 
             if (testTriangle.compute_vertex_weights(candidatePoints[i], polygonWeights.data(), polygonWeights.size()) ==
                 1) {
@@ -163,8 +162,7 @@ CASE("test_spherical_polygon_nonplanar_quad") {
         size_t pointsOutside = 0;
 
         for (size_t i = 0; i < numberTestPoints; ++i) {
-            std::vector<double> polygonWeights;
-            polygonWeights.reserve(testQuad.size());
+            std::vector<double> polygonWeights(testQuad.size());
 
             if (testQuad.compute_vertex_weights(candidatePoints[i], polygonWeights.data(), polygonWeights.size()) ==
                 1) {
@@ -195,8 +193,7 @@ CASE("test_spherical_polygon_nonplanar_quad") {
         size_t pointsOutsideRotated = 0;
 
         for (size_t i = 0; i < numberTestPoints; ++i) {
-            std::vector<double> polygonWeightsRotated;
-            polygonWeightsRotated.reserve(testQuadRotated.size());
+            std::vector<double> polygonWeightsRotated(testQuadRotated.size());
 
             if (testQuadRotated.compute_vertex_weights(candidatePoints[i], polygonWeightsRotated.data(),
                                                        polygonWeightsRotated.size()) == 1) {

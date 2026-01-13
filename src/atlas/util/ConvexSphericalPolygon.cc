@@ -94,7 +94,6 @@ ConvexSphericalPolygon::ConvexSphericalPolygon(const PointLonLat points[], size_
         ++isp;
     }
     size_ = isp;
-    ATLAS_ASSERT(size_ > 2, "Polygon must have at least 3 points");
     validate();
 
     if (not valid_) {
@@ -121,7 +120,6 @@ ConvexSphericalPolygon::ConvexSphericalPolygon(const PointXYZ points[], size_t s
         ++isp;
     }
     size_ = isp;
-    ATLAS_ASSERT(size_ > 2, "Polygon must have at least 3 points");
     validate();
 
     if (not valid_) {
