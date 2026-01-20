@@ -24,14 +24,19 @@ namespace atlas {
 namespace mesh {
 namespace actions {
 
-ExtendNodesGlobal::ExtendNodesGlobal(const std::string& gridname): gridname_(gridname) {}
+const std::string ExtendNodesGlobal::DEFAULT_GRIDNAME = "O16";
+
+ExtendNodesGlobal::ExtendNodesGlobal(const std::string& gridname):
+    gridname_(gridname.empty() ? DEFAULT_GRIDNAME : gridname) {
+    ATLAS_ASSERT(!gridname_.empty());
+}
 
 void ExtendNodesGlobal::operator()(const Grid& grid, Mesh& mesh) const {
     if (grid.domain().global()) {
         return;  // don't add virtual points to global domains
     }
 
-    Grid O16("O16");
+    Grid extension_grid(gridname_);
 
     // virtual points
     std::vector<PointXY> extended_pts;
@@ -39,7 +44,7 @@ void ExtendNodesGlobal::operator()(const Grid& grid, Mesh& mesh) const {
 
     // loop over the point and keep the ones that *don't* fall in the domain
 
-    for (const PointLonLat& lonlat : O16.lonlat()) {
+    for (const PointLonLat& lonlat : extension_grid.lonlat()) {
         PointXY xy = grid.projection().xy(lonlat);
         if (not grid.domain().contains(xy)) {
             extended_pts.push_back(xy);
@@ -66,9 +71,9 @@ void ExtendNodesGlobal::operator()(const Grid& grid, Mesh& mesh) const {
     array::ArrayView<double, 2> xy     = array::make_view<double, 2>(nodes.xy());
     array::ArrayView<double, 2> lonlat = array::make_view<double, 2>(nodes.lonlat());
     array::ArrayView<gidx_t, 1> gidx   = array::make_view<gidx_t, 1>(nodes.global_index());
-    array::ArrayView<int, 1>    ghost  = array::make_view<int, 1>(nodes.ghost());
-    array::ArrayView<int, 1>    partition = array::make_view<int, 1>(nodes.partition());
-    array::ArrayView<int, 1>    flags  = array::make_view<int, 1>(nodes.flags());
+    array::ArrayView<int, 1> ghost     = array::make_view<int, 1>(nodes.ghost());
+    array::ArrayView<int, 1> partition = array::make_view<int, 1>(nodes.partition());
+    array::ArrayView<int, 1> flags     = array::make_view<int, 1>(nodes.flags());
 
     for (idx_t i = 0; i < nb_extension_pts; ++i) {
         const idx_t n         = nb_real_pts + i;

@@ -724,7 +724,7 @@ int AtlasInterpolations::execute(const AtlasTool::Args& args) {
     }
 
     if (args.getBool("output-matrix",false) || (args.getBool("test-matrix",false) && !matrix_tested)) {
-        matrix = interpolation::assemble_global_matrix(interpolator);
+        matrix = interpolation::assemble_global_matrix(tgrid.size(), sgrid.size(), interpolator);
         if (mpi::comm().rank() == 0) {
             if (args.getBool("output-matrix",false)) {
                 write_matrix(matrix, matrix_name, matrix_format);

@@ -7,6 +7,64 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
 ## [Unreleased]
 
+## [0.45.0] - 2026-01-14
+
+### Fixed
+- Fixes and workaround failing atlas_fctest_functionspace when fckit is compiled with -Mnotarget_temps with NVHPC by @wdeconinck in https://github.com/ecmwf/atlas/pull/332
+- Pluto fixes and improvements by @wdeconinck in https://github.com/ecmwf/atlas/pull/335
+- [pluto] Fix installation of missing header
+- FunctionSpace::scatter sets local field to dirty halo
+- Remove unused header eckit/memory/Noncopyable.h
+- Fix GatherScatter when global index with index 1 in in halo as is the case with ORCA grids
+
+### Changed
+- Increase support for parallel interpolation from LAM grids by @wdeconinck in https://github.com/ecmwf/atlas/pull/331
+- Detect and treat multiple (2+) discontiguity when wrapping arrays w/ atlas::Field by @sbrdar in https://github.com/ecmwf/atlas/pull/327
+- Improve UnstructuredGrid::spec() performance by @wdeconinck in https://github.com/ecmwf/atlas/pull/336
+- DelaunayMeshGenerator/ExtendNodesGlobal custom extension grid (defaul… by @pmaciel in https://github.com/ecmwf/atlas/pull/337
+- Add cell_maximum_diagonal_on_unit_sphere metadata for global StructuredGrid without projections
+
+### Added
+- Installation scripts for lz4 and metis
+- Add cell_maximum_diagonal_on_unit_sphere metadata for global StructuredGrid without projections to improve search in FiniteElement interpolation
+
+
+## [0.44.1] - 2025-11-07
+
+### Fixed
+- Fix loop bounds for gcc+OpenMP compiler by @fmahebert in https://github.com/ecmwf/atlas/pull/324
+- Fix compilation of atlas_fctest_fvm_nabla with NAG compiler (#326) by @wdeconinck in https://github.com/ecmwf/atlas/pull/330
+- Set Eigen version to eigen@3 in CI to prevent 5.0.0 update
+
+## [0.44.0] - 2025-10-06
+
+### Added
+- Add Collect communication pattern by @wdeconinck in https://github.com/ecmwf/atlas/pull/301
+- Add array::View interoperability with mdspan by @wdeconinck in https://github.com/ecmwf/atlas/pull/304
+- Add support for pocketfft by @wdeconinck in https://github.com/ecmwf/atlas/pull/308, https://github.com/ecmwf/atlas/pull/320
+- Improvement in spherical-polygon intersection by @sbrdar in https://github.com/ecmwf/atlas/pull/310
+- Improvement in the conservative interpolation for general meshes by @sbrdar in https://github.com/ecmwf/atlas/pull/318
+- Add Field::syncHost and Field::syncDevice by @wdeconinck in https://github.com/ecmwf/atlas/pull/311
+- Add more GPU tracing capabilities for device allocations and host-device data transfers by @wdeconinck in https://github.com/ecmwf/atlas/pull/312
+- Improve HaloExchange on_device, checking state flags by @wdeconinck in https://github.com/ecmwf/atlas/pull/313
+- Update interpolation to support hicsparse backend by @l90lpa in https://github.com/ecmwf/atlas/pull/275
+- Add Locator to find at which partition and at which index a global index is located by @wdeconinck in https://github.com/ecmwf/atlas/pull/317
+- Add matrix halo exchange to "binning" interpolation method. by @odlomax in https://github.com/ecmwf/atlas/pull/315
+- Introduce atlas-interpolations app by @wdeconinck in https://github.com/ecmwf/atlas/pull/321
+- Support building of StructuredColumns with halos for grids with uneven points at poles e.g. N80 grid
+
+### Changed
+- Move mdspan from atlas to pluto and update mdspan to latest by @wdeconinck in https://github.com/ecmwf/atlas/pull/303
+- Update MeshBuilder API by @wdeconinck in https://github.com/ecmwf/atlas/pull/305
+
+### Fixed
+- Fix out-of-range in RegionalLinear2D with FORTRAN feature disabled by @wdeconinck in https://github.com/ecmwf/atlas/pull/322
+- Fix empty adjoint matrix for SphericalVector for scalar fields by @wdeconinck in https://github.com/ecmwf/atlas/pull/314
+- Support CUDA 13.0 by @wdeconinck in https://github.com/ecmwf/atlas/pull/316
+- Fix out-of-range in RegionalLinear2D with FORTRAN feature disabled by @wdeconinck in https://github.com/ecmwf/atlas/pull/322
+- Allow BlockStructuredColumns to be used for MatchingPartitioner
+
+
 ## [0.43.1] - 2025-07-09
 
 ### Fixed
@@ -659,6 +717,9 @@ Fix StructuredInterpolation2D with retry for failed stencils
 ## 0.13.0 - 2018-02-16
 
 [Unreleased]: https://github.com/ecmwf/atlas/compare/master...develop
+[0.45.0]: https://github.com/ecmwf/atlas/compare/0.44.1...0.45.0
+[0.44.1]: https://github.com/ecmwf/atlas/compare/0.44.0...0.44.1
+[0.44.0]: https://github.com/ecmwf/atlas/compare/0.43.1...0.44.0
 [0.43.1]: https://github.com/ecmwf/atlas/compare/0.43.0...0.43.1
 [0.43.0]: https://github.com/ecmwf/atlas/compare/0.42.0...0.43.0
 [0.42.0]: https://github.com/ecmwf/atlas/compare/0.41.0...0.42.0

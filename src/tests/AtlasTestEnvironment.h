@@ -224,6 +224,30 @@ bool approx_eq(const Point3& v1, const Point3& v2, const double& t) {
     return approx_eq(v1[0], v2[0], t) && approx_eq(v1[1], v2[1], t) && approx_eq(v1[2], v2[2], t);
 }
 
+template<typename P1, typename A1, typename P2, typename A2>
+bool approx_eq(const std::vector<P1,A1>& v1, const std::vector<P2,A2>& v2) {
+    if (v1.size() != v2.size()) {
+        return false;
+    }
+    bool _approx_eq = true;
+    for (size_t j=0; j<v1.size(); ++j) {
+        _approx_eq &= approx_eq(v1[j], v2[j]);
+    }
+    return _approx_eq;
+}
+
+template<typename P1, typename A1, typename P2, typename A2>
+bool approx_eq(const std::vector<P1,A1>& v1, const std::vector<P2,A2>& v2, const double& t) {
+    if (v1.size() != v2.size()) {
+        return false;
+    }
+    bool _approx_eq = true;
+    for (size_t j=0; j<v1.size(); ++j) {
+        _approx_eq &= approx_eq(v1[j], v2[j], t);
+    }
+    return _approx_eq;
+}
+
 template <typename T1, typename T2>
 std::string expect_message(const std::string& condition, const T1& lhs, const T2& rhs, const eckit::CodeLocation& loc) {
     std::stringstream msg;

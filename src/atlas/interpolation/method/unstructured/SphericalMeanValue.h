@@ -1,8 +1,11 @@
 /*
- * (C) Crown Copyright 2021 Met Office
+ * (C) Copyright 2013 ECMWF.
  *
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
+ * In applying this licence, ECMWF does not waive the privileges and immunities
+ * granted to it by virtue of its status as an intergovernmental organisation
+ * nor does it submit to any jurisdiction.
  */
 
 #pragma once
@@ -22,12 +25,15 @@ namespace atlas {
 namespace interpolation {
 namespace method {
 
-class UnstructuredBilinearLonLat : public Method {
+class SphericalMeanValue : public Method {
 public:
-    UnstructuredBilinearLonLat(const Config& config): Method(config) {
+    SphericalMeanValue(const Config& config): Method(config) {
+        config.get("max_fraction_elems_to_try", max_fraction_elems_to_try_);
+        config.get("treat_failure_as_missing_value", treat_failure_as_missing_value_);
+        config.get("normalisation", normalisation_);
     }
 
-    virtual ~UnstructuredBilinearLonLat() override {}
+    virtual ~SphericalMeanValue() override {}
 
     virtual void print(std::ostream&) const override;
 
@@ -59,15 +65,13 @@ protected:
 private:
     using Method::do_setup;
     virtual void do_setup(const FunctionSpace& source, const FunctionSpace& target) override;
-
     virtual void do_setup(const Grid& source, const Grid& target, const Cache&) override;
     virtual void do_setup(const FunctionSpace& source, const FunctionSpace& target, const Cache&) override;
 
 protected:
     mesh::MultiBlockConnectivity* connectivity_;
-    std::unique_ptr<array::ArrayView<double, 2>> ilonlat_;
-    std::unique_ptr<array::ArrayView<double, 2>> olonlat_;
-    std::unique_ptr<array::ArrayView<double, 2>> oxyz_;
+    std::unique_ptr<array::ArrayView<double, 2>> icoords_;
+    std::unique_ptr<array::ArrayView<double, 2>> ocoords_;
     std::unique_ptr<array::ArrayView<gidx_t, 1>> igidx_;
 
     Field target_lonlat_;
@@ -78,6 +82,8 @@ protected:
     FunctionSpace target_;
 
     bool treat_failure_as_missing_value_{true};
+    double max_fraction_elems_to_try_{0.2};
+    bool normalisation_{true};
 };
 
 }  // namespace method

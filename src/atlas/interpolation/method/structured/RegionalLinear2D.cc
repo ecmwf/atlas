@@ -45,9 +45,6 @@ void RegionalLinear2D::do_setup(const FunctionSpace& source,
   source_ = source;
   target_ = target;
 
-  if (target_.size() == 0) {
-    return;
-  }
   ASSERT(source_.type() == "StructuredColumns");
 
   // Get grid parameters
@@ -70,10 +67,8 @@ void RegionalLinear2D::do_setup(const FunctionSpace& source,
   }
 
   // Source grid indices
-  const Field sourceFieldIndexI = sourceFs.index_i();
-  const Field sourceFieldIndexJ = sourceFs.index_j();
-  const auto sourceIndexIView = array::make_view<idx_t, 1>(sourceFieldIndexI);
-  const auto sourceIndexJView = array::make_view<idx_t, 1>(sourceFieldIndexJ);
+  const auto sourceIndexIView = array::make_indexview<idx_t, 1>(sourceFs.index_i());
+  const auto sourceIndexJView = array::make_indexview<idx_t, 1>(sourceFs.index_j());
   sourceSize_ = sourceFs.size();
 
   // Destination grid size
@@ -87,7 +82,11 @@ void RegionalLinear2D::do_setup(const FunctionSpace& source,
   std::vector<int> mpiTask(sourceNx*sourceNy, 0);
   for (size_t sourceJnode = 0; sourceJnode < sourceSize_; ++sourceJnode) {
     if (sourceGhostView(sourceJnode) == 0) {
-      mpiTask[(sourceIndexIView(sourceJnode)-1)*sourceNy+sourceIndexJView(sourceJnode)-1] = comm_.rank();
+      idx_t idx = sourceIndexIView(sourceJnode)*static_cast<idx_t>(sourceNy)+sourceIndexJView(sourceJnode);
+      if (idx < 0 || idx >= mpiTask.size()) {
+        throw_OutOfRange("mpiTask", idx, mpiTask.size(), Here());
+      }
+      mpiTask[idx] = comm_.rank();
     }
   }
   comm_.allReduceInPlace(mpiTask.begin(), mpiTask.end(), eckit::mpi::sum());
@@ -158,7 +157,7 @@ void RegionalLinear2D::do_setup(const FunctionSpace& source,
   // Buffer size
   targetRecvSize_ = targetRecvPointsList.size();
 
-  if (targetRecvSize_ > 0) {
+  {
     // RecvDispls
     targetRecvDispls_.push_back(0);
     for (size_t jt = 0; jt < comm_.size()-1; ++jt) {
@@ -206,7 +205,7 @@ void RegionalLinear2D::do_setup(const FunctionSpace& source,
     std::vector<int> gij;
     for (size_t sourceJnode = 0; sourceJnode < sourceSize_; ++sourceJnode) {
       if (sourceGhostView(sourceJnode) == 0) {
-        gij.push_back((sourceIndexIView(sourceJnode)-1)*sourceNy+sourceIndexJView(sourceJnode)-1);
+        gij.push_back(sourceIndexIView(sourceJnode)*sourceNy+sourceIndexJView(sourceJnode));
       } else {
         gij.push_back(-1);
       }
@@ -410,10 +409,6 @@ void RegionalLinear2D::do_execute(const FieldSet& sourceFieldSet,
 void RegionalLinear2D::do_execute(const Field& sourceField, Field& targetField,
                                  Metadata&) const {
   ATLAS_TRACE("atlas::interpolation::method::RegionalLinear2D::do_execute()");
-
-  if (targetField.size() == 0) {
-      return;
-  }
 
   // Check number of levels
   ASSERT(sourceField.levels() == targetField.levels());

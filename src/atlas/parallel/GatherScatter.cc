@@ -30,10 +30,10 @@ namespace parallel {
 
 namespace {
 struct IsGhostPoint {
-    IsGhostPoint(const int mypart, const int part[], const idx_t ridx[], const idx_t base, const int N) {
+    IsGhostPoint(const int mypart, const int part[], const idx_t ridx[], const idx_t remote_idx_base, const int N) {
         part_   = part;
         ridx_   = ridx;
-        base_   = base;
+        remote_idx_base_   = remote_idx_base;
         mypart_ = mypart;
     }
 
@@ -41,7 +41,7 @@ struct IsGhostPoint {
         if (part_[idx] != mypart_) {
             return true;
         }
-        if (ridx_[idx] != base_ + idx) {
+        if (ridx_[idx] != remote_idx_base_ + idx) {
             return true;
         }
         return false;
@@ -49,7 +49,7 @@ struct IsGhostPoint {
     int mypart_;
     const int* part_;
     const idx_t* ridx_;
-    idx_t base_;
+    idx_t remote_idx_base_;
 };
 
 struct Node {
@@ -77,12 +77,12 @@ GatherScatter::GatherScatter(): name_(), is_setup_(false) {
 GatherScatter::GatherScatter(const std::string& name): name_(name), is_setup_(false) {
 }
 
-void GatherScatter::setup(const int part[], const idx_t remote_idx[], const int base, const gidx_t glb_idx[],
+void GatherScatter::setup(const int part[], const idx_t remote_idx[], const int remote_idx_base, const gidx_t glb_idx[],
                           const int mask[], const idx_t parsize) {
-    setup(mpi::comm().name(), part, remote_idx, base, glb_idx, parsize);
+    setup(mpi::comm().name(), part, remote_idx, remote_idx_base, glb_idx, parsize);
 }
 
-void GatherScatter::setup(const std::string& mpi_comm, const int part[], const idx_t remote_idx[], const int base, const gidx_t glb_idx[],
+void GatherScatter::setup(const std::string& mpi_comm, const int part[], const idx_t remote_idx[], const int remote_idx_base, const gidx_t glb_idx[],
                           const int mask[], const idx_t parsize) {
     ATLAS_TRACE("GatherScatter::setup");
     comm_ = &mpi::comm(mpi_comm);
@@ -99,12 +99,13 @@ void GatherScatter::setup(const std::string& mpi_comm, const int part[], const i
     std::vector<int> sendnodes_part(parsize_);
     std::vector<idx_t> sendnodes_ridx(parsize_);
 
+    gidx_t glb_idx_base = 1;
     loccnt_ = 0;
     for (idx_t n = 0; n < parsize_; ++n) {
         if (!mask[n]) {
             sendnodes_gidx[loccnt_] = glb_idx[n];
             sendnodes_part[loccnt_] = part[n];
-            sendnodes_ridx[loccnt_] = remote_idx[n] - base;
+            sendnodes_ridx[loccnt_] = remote_idx[n] - remote_idx_base;
             ++loccnt_;
         }
     }
@@ -197,14 +198,17 @@ void GatherScatter::setup(const std::string& mpi_comm, const int part[], const i
         sendnodes_ridx.clear();
     }
 
+    bool use_sorted_nodes = false; // `use_sorted_nodes = true` is the behaviour as it has been with atlas versions <= 0.42.0
 
-    // Sort on "g" member, and remove duplicates
-    ATLAS_TRACE_SCOPE("sorting") {
-        //        omp::sort(node_sort.begin(), node_sort.end());
-        std::sort(node_sort.begin(), node_sort.end());
-    }
-    ATLAS_TRACE_SCOPE("remove duplicates") {
-        node_sort.erase(std::unique(node_sort.begin(), node_sort.end()), node_sort.end());
+    if (use_sorted_nodes) {
+        // Sort on "g" member, and remove duplicates
+        ATLAS_TRACE_SCOPE("sorting") {
+            //        omp::sort(node_sort.begin(), node_sort.end());
+            std::sort(node_sort.begin(), node_sort.end());
+        }
+        ATLAS_TRACE_SCOPE("remove duplicates") {
+            node_sort.erase(std::unique(node_sort.begin(), node_sort.end()), node_sort.end());
+        }
     }
 
     glbcounts_.assign(nproc, 0);
@@ -227,40 +231,39 @@ void GatherScatter::setup(const std::string& mpi_comm, const int part[], const i
     glbmap_.clear();
     glbmap_.resize(glbcnt_);
     locmap_.clear();
-    locmap_.resize(loccnt_);
+    locmap_.resize(loccnt_,-1);
     std::vector<int> idx(nproc, 0);
 
-    size_t n{0};
+    gidx_t n{node_sort.begin()->g - 1};
     for (const auto& node : node_sort) {
-        idx_t jproc                             = node.p;
-        glbmap_[glbdispls_[jproc] + idx[jproc]] = n++;
+        glbmap_[glbdispls_[node.p] + idx[node.p]] = (use_sorted_nodes ? n++ : node.g - glb_idx_base);
 
-        if (jproc == myproc) {
-            locmap_[idx[jproc]] = node.i;
+        if (node.p == myproc) {
+            locmap_[idx[node.p]] = node.i;
         }
 
-        ++idx[jproc];
+        ++idx[node.p];
     }
 
     is_setup_ = true;
 }
 
-void GatherScatter::setup(const int part[], const idx_t remote_idx[], const int base, const gidx_t glb_idx[],
+void GatherScatter::setup(const int part[], const idx_t remote_idx[], const int remote_idx_base, const gidx_t glb_idx[],
                           const idx_t parsize) {
-    setup(mpi::comm().name(), part, remote_idx, base, glb_idx, parsize);
+    setup(mpi::comm().name(), part, remote_idx, remote_idx_base, glb_idx, parsize);
 }
 
-void GatherScatter::setup(const std::string& mpi_comm, const int part[], const idx_t remote_idx[], const int base, const gidx_t glb_idx[],
+void GatherScatter::setup(const std::string& mpi_comm, const int part[], const idx_t remote_idx[], const int remote_idx_base, const gidx_t glb_idx[],
                           const idx_t parsize) {
     std::vector<int> mask(parsize);
     {
         int mypart = mpi::comm(mpi_comm).rank();
-        IsGhostPoint is_ghost(mypart, part, remote_idx, base, parsize);
+        IsGhostPoint is_ghost(mypart, part, remote_idx, remote_idx_base, parsize);
         for (idx_t jj = 0; jj < parsize; ++jj) {
             mask[jj] = is_ghost(jj) ? 1 : 0;
         }
     }
-    setup(mpi_comm, part, remote_idx, base, glb_idx, mask.data(), parsize);
+    setup(mpi_comm, part, remote_idx, remote_idx_base, glb_idx, mask.data(), parsize);
 }
 
 /////////////////////
@@ -273,29 +276,29 @@ void atlas__GatherScatter__delete(GatherScatter* This) {
     delete This;
 }
 
-void atlas__GatherScatter__setup32(GatherScatter* This, int part[], idx_t remote_idx[], int base, int glb_idx[],
+void atlas__GatherScatter__setup32(GatherScatter* This, int part[], idx_t remote_idx[], int remote_idx_base, int glb_idx[],
                                    int parsize) {
 #if ATLAS_BITS_GLOBAL == 32
-    This->setup(part, remote_idx, base, glb_idx, parsize);
+    This->setup(part, remote_idx, remote_idx_base, glb_idx, parsize);
 #else
     std::vector<gidx_t> glb_idx_convert(parsize);
     for (int j = 0; j < parsize; ++j) {
         glb_idx_convert[j] = glb_idx[j];
     }
-    This->setup(part, remote_idx, base, glb_idx_convert.data(), parsize);
+    This->setup(part, remote_idx, remote_idx_base, glb_idx_convert.data(), parsize);
 #endif
 }
 
-void atlas__GatherScatter__setup64(GatherScatter* This, int part[], idx_t remote_idx[], int base, long glb_idx[],
+void atlas__GatherScatter__setup64(GatherScatter* This, int part[], idx_t remote_idx[], int remote_idx_base, long glb_idx[],
                                    int parsize) {
 #if ATLAS_BITS_GLOBAL == 64
-    This->setup(part, remote_idx, base, glb_idx, parsize);
+    This->setup(part, remote_idx, remote_idx_base, glb_idx, parsize);
 #else
     std::vector<gidx_t> glb_idx_convert(parsize);
     for (idx_t j = 0; j < parsize; ++j) {
         glb_idx_convert[j] = glb_idx[j];
     }
-    This->setup(part, remote_idx, base, glb_idx_convert.data(), parsize);
+    This->setup(part, remote_idx, remote_idx_base, glb_idx_convert.data(), parsize);
 #endif
 }
 

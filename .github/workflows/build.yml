@@ -238,7 +238,8 @@ jobs:
     - name: Install Eigen
       if: "!contains( matrix.compiler, 'nvhpc' )"
       run: |
-        brew install eigen
+        brew install eigen@3
+        echo "Eigen3_ROOT=$(brew --prefix eigen@3)" >> $GITHUB_ENV
 
     - name: Save cached dependencies
       # There seems to be a problem with cached NVHPC dependencies, leading to SIGILL perhaps due to slightly different architectures

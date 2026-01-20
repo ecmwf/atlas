@@ -85,6 +85,15 @@ subroutine kernel_3(view, Ni, Nj, Nk)
 end subroutine kernel_3
 
 
+subroutine try_offload(field)
+  type(atlas_Field), intent(inout) :: field
+  call field%allocate_device()
+  call field%update_device()
+  call field%update_host()
+  call field%deallocate_device()
+end subroutine try_offload
+
+
 TEST( test_field_wrapdata )
 implicit none
 
@@ -133,7 +142,7 @@ implicit none
   real(c_double), pointer :: dview(:,:,:), hview(:,:,:)
   type(atlas_Field) :: field
   integer(c_int) :: i, j, k, l
-  integer(c_int), parameter :: Ni = 8, Nj = 2, Nk = 3, Nl = 4, k_idx = 2
+  integer(c_int), parameter :: Ni = 8, Nj = 2, Nk = 3, Nl = 4, fix_id = 2
   real(c_double) :: a
   write(0,*) "test_field_wrapdataslice"
   allocate( existing_data(Ni, Nj, Nk, Nl) )
@@ -148,7 +157,7 @@ implicit none
     enddo
   enddo
 
-  field = atlas_Field(existing_data(:,:,k_idx,:))
+  field = atlas_Field(existing_data(:,:,fix_id,:))
   FCTEST_CHECK_EQUAL(field%shape() , ([Ni, Nj, Nl]))
   FCTEST_CHECK_EQUAL(field%strides() , ([1, Ni, Ni*Nj*Nk]))
 
@@ -170,13 +179,59 @@ implicit none
     do j = 1, Nj
       do k = 1, Nk
         a = 1._c_double;
-        if (k == k_idx) a = -1._c_double;
+        if (k == fix_id) a = -1._c_double;
         do l = 1, Nl
           FCTEST_CHECK_EQUAL(existing_data(i, j, k, l), a * real(1000*i + 100*j + 10*k + l, c_double))
         enddo
       enddo
     enddo
   enddo
+
+  field = atlas_Field(existing_data(fix_id:fix_id, fix_id,      :,      :))
+  FCTEST_CHECK_EQUAL(field%strides(), ([1, 16, 48]))
+
+#if HAVE_NOREPACK
+  field = atlas_Field(existing_data(fix_id, fix_id,      :,      :))
+  FCTEST_CHECK_EQUAL(field%strides(), ([16, 48]))
+  call try_offload(field)
+
+  field = atlas_Field(existing_data(fix_id,      :, fix_id,      :))
+  FCTEST_CHECK_EQUAL(field%strides(), ([8, 48]))
+
+  field = atlas_Field(existing_data(fix_id,      :,      :, fix_id))
+  FCTEST_CHECK_EQUAL(field%strides(), ([8, 16]))
+  call try_offload(field)
+#endif
+
+  field = atlas_Field(existing_data(     :, fix_id, fix_id,      :))
+  FCTEST_CHECK_EQUAL(field%strides(), ([1, 48]))
+  call try_offload(field)
+
+  field = atlas_Field(existing_data(     :, fix_id,      :, fix_id))
+  FCTEST_CHECK_EQUAL(field%strides(), ([1, 16]))
+  call try_offload(field)
+
+  field = atlas_Field(existing_data(     :,      :, fix_id, fix_id))
+  FCTEST_CHECK_EQUAL(field%strides(), ([1, 8]))
+  call try_offload(field)
+
+  field = atlas_Field(existing_data(     :, fix_id, fix_id, fix_id))
+  FCTEST_CHECK_EQUAL(field%strides(), ([1]))
+  call try_offload(field)
+
+#if HAVE_NOREPACK
+  field = atlas_Field(existing_data(fix_id,      :, fix_id, fix_id))
+  FCTEST_CHECK_EQUAL(field%strides(), ([8]))
+  call try_offload(field)
+
+  field = atlas_Field(existing_data(fix_id, fix_id,      :, fix_id))
+  FCTEST_CHECK_EQUAL(field%strides(), ([16]))
+  call try_offload(field)
+
+  field = atlas_Field(existing_data(fix_id, fix_id, fix_id,      :))
+  FCTEST_CHECK_EQUAL(field%strides(), ([48]))
+  call try_offload(field)
+#endif
 
   call field%final()
 END_TEST

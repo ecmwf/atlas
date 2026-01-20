@@ -11,6 +11,7 @@
 #include <iomanip>
 #include <iostream>
 
+#include "atlas/util/Point.h"
 #include "eckit/geometry/Sphere.h"
 #include "eckit/types/FloatCompare.h"
 
@@ -92,8 +93,9 @@ ConvexSphericalPolygon::ConvexSphericalPolygon(const PointLonLat points[], size_
     else {
         ++isp;
     }
-    size_  = isp;
+    size_ = isp;
     validate();
+
     if (not valid_) {
         invalidate_this_polygon();
     }
@@ -117,8 +119,9 @@ ConvexSphericalPolygon::ConvexSphericalPolygon(const PointXYZ points[], size_t s
     else {
         ++isp;
     }
-    size_  = isp;
+    size_ = isp;
     validate();
+
     if (not valid_) {
         invalidate_this_polygon();
     }
@@ -150,6 +153,70 @@ void ConvexSphericalPolygon::compute_centroid_and_area() const {
     computed_centroid_ = true;
 }
 
+// cf. M. Floater, “Generalized barycentric coordinates and applications” Acta Numerica, p. 001, 2016.
+int ConvexSphericalPolygon::compute_vertex_weights(const PointXYZ& candidatePoint, double vertex_weights[],
+                                                   size_t vertex_weights_size) {
+    ATLAS_ASSERT(vertex_weights_size == size(), "vertex_weights container size does not match number of vertices");
+    ATLAS_ASSERT(edge_normals().size() == this->size(),
+                 "Incorrect number of edge normals computed - should equal number of polygon edges.");
+
+    std::array<double, MAX_SIZE> greatCircleProducts = {0};
+
+    for (size_t i = 0; i < size_; ++i) {
+        GreatCircleSegment segment = GreatCircleSegment(sph_coords_[i], sph_coords_[(i + 1) % size_]);
+        greatCircleProducts[i]     = dot(edge_normals_[i], candidatePoint);
+
+        if (!segment.inLeftHemisphere(candidatePoint, -5 * EPS)) {
+            return 0;
+        }
+    }
+
+    // TODO - set vertex_weights to all zeros
+
+    for (size_t v = 0; v < size_; ++v) {
+        if (PointXYZ::distance2(candidatePoint, sph_coords_[v]) < 25 * EPS2) {
+            for (size_t vv = 0; vv < size_; ++vv) {
+                vertex_weights[vv] = 0;
+            }
+            vertex_weights[v] = 1.;
+            return 1;
+        }
+    }
+
+    std::array<PointXYZ, MAX_SIZE> spokeNormals;
+    std::array<double, MAX_SIZE> spokeNorms;
+    double denominator = 0.;
+
+    for (size_t v = 0; v < size_; ++v) {
+        spokeNormals[v] = PointXYZ::cross(sph_coords_[v], candidatePoint);
+        spokeNorms[v]   = PointXYZ::norm(spokeNormals[v]);
+    }
+
+    for (size_t w = 0; w < size_; ++w) {
+        int pw         = previous(w);
+        int nw         = next(w);
+        double product = 1.;
+
+        for (size_t i = 0; i < size_; ++i) {
+            if ((i != w) && (i != pw)) {
+                product *= greatCircleProducts[i];
+            }
+        }
+
+        double leftSideAngle  = spokeNorms[nw] - dot(spokeNormals[nw], spokeNormals[w]) / spokeNorms[w];
+        double rightSideAngle = spokeNorms[pw] - dot(spokeNormals[pw], spokeNormals[w]) / spokeNorms[w];
+
+        vertex_weights[w] =
+            (greatCircleProducts[pw] * (leftSideAngle) + greatCircleProducts[w] * (rightSideAngle)) * product;
+        denominator += vertex_weights[w] * dot(sph_coords_[w], candidatePoint);
+    }
+
+    for (size_t w = 0; w < size_; ++w) {
+        vertex_weights[w] /= denominator;
+    }
+    return 1;
+}
+
 void ConvexSphericalPolygon::validate() {
     valid_ = size_ > 2;
     if (valid_) {
@@ -163,13 +230,29 @@ void ConvexSphericalPolygon::validate() {
                 break;
             }
             ATLAS_ASSERT(not approx_eq(P, PointXYZ::mul(nextP, -1.)));
-            if( not GreatCircleSegment{P, nextP}.inLeftHemisphere(sph_coords_[nni], -0.5*EPS)) {
+            if (not GreatCircleSegment{P, nextP}.inLeftHemisphere(sph_coords_[nni], -0.5 * EPS)) {
                 valid_ = false;
                 break;
             }
         }
     }
 }
+
+void ConvexSphericalPolygon::compute_edge_normals() const {
+    if (valid_) {
+        std::vector<PointXYZ>().swap(edge_normals_);
+        edge_normals_.reserve(size_);
+
+        for (int i = 0; i < size_; i++) {
+            int ni                = next(i);
+            const PointXYZ& P     = sph_coords_[i];
+            const PointXYZ& nextP = sph_coords_[ni];
+            edge_normals_.emplace_back(GreatCircleSegment{P, nextP}.cross());
+        }
+        computed_edge_normals_ = true;
+    }
+}
+
 
 bool ConvexSphericalPolygon::equals(const ConvexSphericalPolygon& plg, const double deg_prec) const {
     if (size_ == 0 and plg.size_ == 0) {

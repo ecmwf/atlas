@@ -14,7 +14,7 @@
 
 ! -----------------------------------------------------------------------------
 
-module fctest_atlas_nabla_EdgeBasedFiniteVolume_Fixture
+module fctest_atlas_fvm_nabla_Fxt
 use atlas_module
 use, intrinsic :: iso_c_binding
 implicit none
@@ -45,8 +45,8 @@ implicit none
 
   type :: timer_type
   private
-    integer*8 :: clck_counts_start, clck_counts_stop, clck_rate
-    integer*8 :: counted = 0
+    integer(8) :: clck_counts_start, clck_counts_stop, clck_rate
+    integer(8) :: counted = 0
     logical :: paused = .True.
   contains
     procedure, public :: start   => timer_start
@@ -67,7 +67,8 @@ contains
         real(c_double) :: time
         if (.not. self%paused) then
             call system_clock ( self%clck_counts_stop, self%clck_rate )
-            time = real(self%counted + self%clck_counts_stop - self%clck_counts_start,c_double)/real(self%clck_rate,c_double)
+            time = real(self%counted + self%clck_counts_stop - self%clck_counts_start,c_double) &
+                & /real(self%clck_rate,c_double)
         else if (self%counted .ge. 0) then
             time = real(self%counted,c_double)/real(self%clck_rate,c_double)
         else
@@ -210,7 +211,7 @@ INTEGER(KIND=JPIM) :: INODE2EDGE_SIZE
 INTEGER(KIND=JPIM) :: JNODE,JEDGE,JLEV,INEDGES,IP1,IP2,IEDGE,INODES
 REAL(KIND=JPRB) :: ZAVG,ZSIGN,ZMETRIC_X,ZMETRIC_Y
 REAL(KIND=JPRB), ALLOCATABLE :: ZAVG_S(:,:,:)
-
+INTEGER(KIND=JPIM) :: NFLEVG
 REAL(KIND=JPRB) :: SCALE, DEG2RAD
 DEG2RAD = RPI/180.
 SCALE = DEG2RAD*DEG2RAD*RA
@@ -219,7 +220,7 @@ SCALE = DEG2RAD*DEG2RAD*RA
 
 !IF (LHOOK) CALL DR_HOOK('FV_GRADIENT',0,ZHOOK_HANDLE)
 
-ASSOCIATE(NFLEVG=>nlev)
+NFLEVG=nlev
 
 !write(0,*) 'enter fv_gradient'
 !write(0,*) 'shape pvar ',shape(pvar)
@@ -253,7 +254,8 @@ ENDDO
 !$OMP END PARALLEL DO
 
 INODES = SIZE(ZLONLAT)/2
-!$OMP PARALLEL DO SCHEDULE(STATIC) PRIVATE(JNODE,JLEV,JEDGE,IEDGE,ZSIGN,ZMETRIC_X,ZMETRIC_Y,INODE2EDGE,INODE2EDGE_SIZE)
+!$OMP PARALLEL DO SCHEDULE(STATIC) &
+!$OMP& PRIVATE(JNODE,JLEV,JEDGE,IEDGE,ZSIGN,ZMETRIC_X,ZMETRIC_Y,INODE2EDGE,INODE2EDGE_SIZE)
 DO JNODE=1,INODES
 
   DO JLEV=1,NFLEVG
@@ -278,19 +280,17 @@ DO JNODE=1,INODES
 ENDDO
 !$OMP END PARALLEL DO
 
-END ASSOCIATE
-
 !IF (LHOOK) CALL DR_HOOK('FV_GRADIENT',1,ZHOOK_HANDLE)
 END SUBROUTINE FV_GRADIENT
 
 
 
 
-end module fctest_atlas_nabla_EdgeBasedFiniteVolume_Fixture
+end module fctest_atlas_fvm_nabla_Fxt
 
 ! -----------------------------------------------------------------------------
 
-TESTSUITE_WITH_FIXTURE(fctest_atlas_nabla_EdgeBasedFiniteVolume,fctest_atlas_nabla_EdgeBasedFiniteVolume_Fixture)
+TESTSUITE_WITH_FIXTURE(fctest_atlas_fvm_nabla,fctest_atlas_fvm_nabla_Fxt)
 
 ! -----------------------------------------------------------------------------
 

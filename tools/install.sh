@@ -18,12 +18,15 @@ export PATH=$SCRIPT_DIR:$PATH
 # Some defaults for the arguments
 PREFIX=$(pwd)/install
 CMAKE_OPTIONS=""
+with_fckit=false
 with_gridtools=false
 with_ectrans=false
 with_fftw=false
 with_qhull=false
+with_lz4=false
 with_deps=false
 with_atlas_orca=false
+with_atlas_fesom=false
 WORK_DIR=$(pwd)
 BUILD_TYPE=RelWithDebInfo
 
@@ -34,8 +37,8 @@ function print_help {
     echo "Usage:"
     echo ""
     echo "  install.sh [--with-deps] [--prefix <prefix>] [--build-type <build-type>] [--cmake <cmake>] [--parallel <nthread>] \\"
-    echo "             [--with-atlas-orca] \\"
-    echo "             [--enable-gridtools] [--enable-ectrans] [--enable-fftw] [--enable-qhull] [--work-dir <work-dir>] [--help]"
+    echo "             [--with-atlas-orca] [--with-atlas-fesom] \\"
+    echo "             [--enable-fortran] [--enable-gridtools] [--enable-ectrans] [--enable-fftw] [--enable-qhull] [--work-dir <work-dir>] [--help]"
     echo ""
     echo "  "
     echo ""
@@ -51,7 +54,9 @@ function print_help {
     echo "                               ! Requires Boost ! Specify Boost_ROOT environment variable to a fairly recent Boost installation"
     echo "  --enable-fftw                Enable optional fftw dependency required for spectral transforms"
     echo "  --enable-qhull               Enable optional qhull required for meshing of unstructured grids"
+    echo "  --enable-fortran             Enable optional fortran interfaces"
     echo "  --with-atlas-orca            Enable optional atlas-orca plugin for ORCA grids"
+    echo "  --with-atlas-fesom           Enable optional atlas-fesom plugin for FESOM grids"
     echo "  --work-dir <workdir>         Working directory where sources and builds live"
     echo "  --help                       Print this help"
     echo ""
@@ -75,6 +80,9 @@ while [ $# != 0 ]; do
     "--with-deps")
         with_deps=true;
         ;;
+    "--enable-fortran")
+        with_fckit=true;
+        ;;
     "--enable-fftw")
         with_fftw=true;
         ;;
@@ -87,8 +95,14 @@ while [ $# != 0 ]; do
     "--enable-qhull")
         with_qhull=true;
         ;;
+    "--enable-lz4")
+        with_lz4=true;
+        ;;
     "--with-atlas-orca")
         with_atlas_orca=true;
+        ;;
+    "--with-atlas-fesom")
+        with_atlas_fesom=true;
         ;;
     "--prefix")
         PREFIX="$2"; shift
@@ -139,6 +153,11 @@ if ${with_deps}; then
     install-qhull.sh --prefix ${PREFIX}
   fi
 
+  ### Install lz4 (optional, off by default)
+  if ${with_lz4}; then
+    install-lz4.sh --prefix ${PREFIX}
+  fi
+
   ### Install ecbuild
   echo "Installing ecbuild"
   [[ -d ${SOURCES_DIR}/ecbuild ]] || git clone -b master https://github.com/ecmwf/ecbuild ${SOURCES_DIR}/ecbuild
@@ -153,6 +172,7 @@ if ${with_deps}; then
         -DCMAKE_INSTALL_PREFIX=${PREFIX} \
         -DCMAKE_BUILD_TYPE=${BUILD_TYPE} \
         -DENABLE_TESTS=OFF \
+        -DENABLE_ECKIT_GEO=OFF \
         -DENABLE_ECKIT_SQL=OFF \
         -DENABLE_ECKIT_CMD=OFF \
         -DENABLE_EIGEN=OFF \
@@ -170,17 +190,19 @@ if ${with_deps}; then
   cmake --install ${BUILDS_DIR}/eckit
 
   ### Install fckit
-  echo "Installing fckit"
-  [[ -d ${SOURCES_DIR}/fckit ]] || git clone -b master https://github.com/ecmwf/fckit ${SOURCES_DIR}/fckit
-  cmake ${SOURCES_DIR}/fckit -B ${BUILDS_DIR}/fckit -DCMAKE_INSTALL_PREFIX=${PREFIX} \
-        -DCMAKE_BUILD_TYPE=${BUILD_TYPE} \
-        -DENABLE_TESTS=OFF \
-        ${CMAKE_OPTIONS}
-  cmake --build ${BUILDS_DIR}/fckit
-  cmake --install ${BUILDS_DIR}/fckit
+  if ${with_fckit}; then
+    echo "Installing fckit"
+    [[ -d ${SOURCES_DIR}/fckit ]] || git clone -b master https://github.com/ecmwf/fckit ${SOURCES_DIR}/fckit
+    cmake ${SOURCES_DIR}/fckit -B ${BUILDS_DIR}/fckit -DCMAKE_INSTALL_PREFIX=${PREFIX} \
+          -DCMAKE_BUILD_TYPE=${BUILD_TYPE} \
+          -DENABLE_TESTS=OFF \
+          ${CMAKE_OPTIONS}
+    cmake --build ${BUILDS_DIR}/fckit
+    cmake --install ${BUILDS_DIR}/fckit
+  fi
 
   ### Install fiat + ectrans (optional, off by default)
-  if ${with_trans}; then
+  if ${with_ectrans}; then
     echo "Installing fiat"
     [[ -d ${SOURCES_DIR}/fiat ]] || git clone -b main https://github.com/ecmwf-ifs/fiat ${SOURCES_DIR}/fiat
     cmake -S ${SOURCES_DIR}/fiat -B ${BUILDS_DIR}/fiat \
@@ -230,6 +252,7 @@ cmake -S ${SCRIPT_DIR}/.. -B ${BUILDS_DIR}/atlas \
       -DCMAKE_INSTALL_PREFIX=${PREFIX} \
       -DCMAKE_BUILD_TYPE=${BUILD_TYPE} \
       -DENABLE_SANDBOX=ON \
+      -DENABLE_TESTS=OFF \
       ${CMAKE_OPTIONS}
 cmake --build   ${BUILDS_DIR}/atlas
 cmake --install ${BUILDS_DIR}/atlas
@@ -242,5 +265,19 @@ if ${with_atlas_orca}; then
         ${CMAKE_OPTIONS}
   cmake --build   ${BUILDS_DIR}/atlas-orca
   cmake --install ${BUILDS_DIR}/atlas-orca
+fi
+
+if ${with_atlas_fesom}; then
+  if ${with_deps}; then
+    echo "atlas-fesom plugin requires METIS. Installing METIS as dependency."
+    install-metis.sh --prefix ${PREFIX}
+  fi
+  echo "Installing atlas-fesom"
+  [[ -d ${SOURCES_DIR}/atlas-fesom ]] || git clone -b ${ATLAS_FESOM_VERSION:-main} ${ATLAS_FESOM_GIT:-"https://github.com/ecmwf/atlas-fesom"} ${SOURCES_DIR}/atlas-fesom
+  cmake -S ${SOURCES_DIR}/atlas-fesom -B ${BUILDS_DIR}/atlas-fesom -DCMAKE_INSTALL_PREFIX=${PREFIX} \
+        -DCMAKE_BUILD_TYPE=${BUILD_TYPE} \
+        ${CMAKE_OPTIONS}
+  cmake --build   ${BUILDS_DIR}/atlas-fesom
+  cmake --install ${BUILDS_DIR}/atlas-fesom
 fi
 

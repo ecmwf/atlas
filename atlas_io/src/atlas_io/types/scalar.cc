@@ -14,7 +14,7 @@
 #endif
 
 // GNU C++ compiler (version 11) should not try to optimize this code
-#if defined(__GNUC__) && !defined(__NVCOMPILER)
+#if defined(__GNUC__) && !defined(__NVCOMPILER) && !defined(__clang__)
 #pragma GCC optimize("O0")
 #endif
 

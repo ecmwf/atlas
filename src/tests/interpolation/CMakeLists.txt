@@ -128,6 +128,14 @@ ecbuild_add_test( TARGET atlas_test_interpolation_structured2D_to_unstructured
   ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
 )
 
+ecbuild_add_test( TARGET atlas_test_interpolation_from_lam
+  SOURCES  test_interpolation_from_lam.cc
+  LIBS     atlas
+  MPI      4
+  CONDITION eckit_HAVE_MPI AND MPI_SLOTS GREATER_EQUAL 4
+  ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
+)
+
 ecbuild_add_test( TARGET atlas_test_interpolation_structured2D_to_points
   SOURCES  test_interpolation_structured2D_to_points.cc
   LIBS     atlas
