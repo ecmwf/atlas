@@ -45,6 +45,11 @@ struct OutputStream {
         out << value;
         return out;
     }
+
+    // This overload is required to pass std::endl or std::flush functors
+    std::ostream& operator<<(std::ostream& (*F)(std::ostream&)) {
+        return F(*options().out);
+    }
 };
 extern OutputStream out;
 

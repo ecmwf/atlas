@@ -475,6 +475,7 @@ void EdgeColumns::scatter(const FieldSet& global_fieldset, FieldSet& local_field
 
         glb.metadata().broadcast(loc.metadata(), root);
         loc.metadata().set("global", false);
+        loc.set_dirty(true);
     }
 }
 void EdgeColumns::scatter(const Field& global, Field& local) const {

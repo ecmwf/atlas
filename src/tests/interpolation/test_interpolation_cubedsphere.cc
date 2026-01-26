@@ -20,6 +20,7 @@
 #include "atlas/output/Gmsh.h"
 #include "atlas/parallel/mpi/mpi.h"
 #include "atlas/redistribution/Redistribution.h"
+#include "atlas/util/Config.h"
 #include "atlas/util/CoordinateEnums.h"
 #include "atlas/util/function/VortexRollup.h"
 
@@ -30,13 +31,13 @@ namespace atlas {
 namespace test {
 
 struct CubedSphereInterpolationFixture {
-    atlas::Grid sourceGrid_ = Grid("CS-LFR-24");
-    atlas::Mesh sourceMesh_ = MeshGenerator("cubedsphere_dual").generate(sourceGrid_);
+    atlas::Grid sourceGrid_                   = Grid("CS-LFR-24");
+    atlas::Mesh sourceMesh_                   = MeshGenerator("cubedsphere_dual").generate(sourceGrid_);
     atlas::FunctionSpace sourceFunctionSpace_ = functionspace::NodeColumns(sourceMesh_);
     atlas::grid::Partitioner targetPartitioner_ =
         grid::MatchingPartitioner(sourceMesh_, util::Config("type", "cubedsphere"));
-    atlas::Grid targetGrid_ = Grid("O24");
-    atlas::Mesh targetMesh_ = MeshGenerator("structured").generate(targetGrid_, targetPartitioner_);
+    atlas::Grid targetGrid_                   = Grid("O24");
+    atlas::Mesh targetMesh_                   = MeshGenerator("structured").generate(targetGrid_, targetPartitioner_);
     atlas::FunctionSpace targetFunctionSpace_ = functionspace::NodeColumns(targetMesh_);
 };
 
@@ -44,7 +45,7 @@ void gmshOutput(const std::string& fileName, const FieldSet& fieldSet) {
 
 
     const auto functionSpace = fieldSet[0].functionspace();
-    const auto mesh = functionspace::NodeColumns(functionSpace).mesh();
+    const auto mesh          = functionspace::NodeColumns(functionSpace).mesh();
 
     const auto gmshConfig =
         util::Config("coordinates", "xyz") | util::Config("ghost", true) | util::Config("info", true);
@@ -68,12 +69,19 @@ double dotProd(const Field& a, const Field& b) {
     return prod;
 }
 
+
+std::array<util::Config, 4> interpolationTypes = {
+    util::Config("type", "finite-element"),
+    util::Config("type", "spherical-mean-value") | util::Config("normalisation", "true"),
+    util::Config("type", "spherical-mean-value") | util::Config("normalisation", "false"),
+    util::Config("type", "cubedsphere-bilinear")};
+
 CASE("cubedsphere_to_cubedsphere_interpolation") {
 
     // Check that interpolation scheme correctly maps a cubedsphere on to itself.
 
     const auto fixture = CubedSphereInterpolationFixture{};
-    auto sourceField = fixture.sourceFunctionSpace_.createField<double>(option::name("test_field"));
+    auto sourceField   = fixture.sourceFunctionSpace_.createField<double>(option::name("test_field"));
     {
         const auto lonlat = array::make_view<double, 2>(fixture.sourceFunctionSpace_.lonlat());
         auto view         = array::make_view<double, 1>(sourceField);
@@ -84,26 +92,48 @@ CASE("cubedsphere_to_cubedsphere_interpolation") {
     const auto targetMesh = MeshGenerator("cubedsphere_dual").generate(fixture.sourceGrid_, fixture.targetPartitioner_);
     const auto targetFunctionSpace = functionspace::CubedSphereNodeColumns(targetMesh);
 
-    const auto scheme = util::Config("type", "cubedsphere-bilinear");
-    const auto interp = Interpolation(scheme, fixture.sourceFunctionSpace_, targetFunctionSpace);
+    for (util::Config config : interpolationTypes) {
+        std::string interpType        = "";
+        std::string normalisationMode = "";
 
-    auto targetField = targetFunctionSpace.createField<double>(option::name("test_field"));
-    interp.execute(sourceField, targetField);
-    targetField.haloExchange();
+        config.get("type", interpType);
+        config.get("normalisation", normalisationMode);
+        bool isNormalisationMode = 0;
 
-    // iterate over target field and check that error is zero.
-    {
-        const auto lonlat = array::make_view<double, 2>(targetFunctionSpace.lonlat());
-        auto targetView   = array::make_view<double, 1>(targetField);
-        for (idx_t i = 0; i < targetFunctionSpace.size(); ++i) {
-            const auto val = util::function::vortex_rollup(lonlat(i, LON), lonlat(i, LAT), 1.);
-            EXPECT_APPROX_EQ(targetView(i), val, 1e-14);
+        if (normalisationMode == "true") {
+            isNormalisationMode = 1;
+        }
+
+
+        SECTION("using " + interpType + (isNormalisationMode ? " w/ normalisation" : "")) {
+            const auto scheme = config;
+            const auto interp = Interpolation(scheme, fixture.sourceFunctionSpace_, targetFunctionSpace);
+
+            auto targetField = targetFunctionSpace.createField<double>(option::name("test_field"));
+            interp.execute(sourceField, targetField);
+            targetField.haloExchange();
+
+            // iterate over target field and check that error is zero.
+            {
+                const auto lonlat = array::make_view<double, 2>(targetFunctionSpace.lonlat());
+                auto targetView   = array::make_view<double, 1>(targetField);
+                for (idx_t i = 0; i < targetFunctionSpace.size(); ++i) {
+                    const auto val = util::function::vortex_rollup(lonlat(i, LON), lonlat(i, LAT), 1.);
+                    EXPECT_APPROX_EQ(targetView(i), val, 1e-14);
+                }
+            }
+
+            // output source and target fields.
+            if (normalisationMode != "") {
+                normalisationMode = "_" + normalisationMode;
+            }
+
+            gmshOutput("cubedsphere_to_cubedsphere_source_" + interpType + normalisationMode + ".msh",
+                       FieldSet{sourceField});
+            gmshOutput("cubedsphere_to_cubedsphere_target_" + interpType + normalisationMode + ".msh",
+                       FieldSet{targetField});
         }
     }
-
-    // output source and target fields.
-    gmshOutput("cubedsphere_to_cubedsphere_source.msh", FieldSet{sourceField});
-    gmshOutput("cubedsphere_to_cubedsphere_target.msh", FieldSet{targetField});
 }
 
 CASE("cubedsphere_scalar_interpolation") {
@@ -131,56 +161,78 @@ CASE("cubedsphere_scalar_interpolation") {
     mpi::comm().allReduceInPlace(stDev, eckit::mpi::Operation::SUM);
     stDev = std::sqrt(stDev / fixture.sourceGrid_.size());
 
-    // Set up interpolation object.
-    const auto scheme = util::Config("type", "cubedsphere-bilinear") | util::Config("adjoint", true);
-    const auto interp = Interpolation(scheme, fixture.sourceFunctionSpace_, fixture.targetFunctionSpace_);
+    for (util::Config config : interpolationTypes) {
+        std::string interpType        = "";
+        std::string normalisationMode = "";
 
-    // Interpolate from source to target field.
-    auto targetField = fixture.targetFunctionSpace_.createField<double>(option::name("test_field"));
-    interp.execute(sourceField, targetField);
-    targetField.haloExchange();
+        config.get("type", interpType);
+        config.get("normalisation", normalisationMode);
+        bool isNormalisationMode = 0;
 
-    // Make some diagnostic output fields.
-    auto errorField = fixture.targetFunctionSpace_.createField<double>(option::name("error_field"));
-    auto partField  = fixture.targetFunctionSpace_.createField<int>(option::name("partition"));
-    {
-        const auto lonlat = array::make_view<double, 2>(fixture.targetFunctionSpace_.lonlat());
-        auto targetView   = array::make_view<double, 1>(targetField);
-        auto errorView    = array::make_view<double, 1>(errorField);
-        auto partView     = array::make_view<int, 1>(partField);
-        for (idx_t i = 0; i < fixture.targetFunctionSpace_.size(); ++i) {
-            const auto val = util::function::vortex_rollup(lonlat(i, LON), lonlat(i, LAT), 1.);
-            errorView(i)   = std::abs((targetView(i) - val) / stDev);
-            partView(i)    = mpi::rank();
+        if (normalisationMode == "true") {
+            isNormalisationMode = 1;
+        }
+
+        SECTION("using " + interpType + (isNormalisationMode ? " w/ normalisation" : "")) {
+            // Set up interpolation object.
+            const auto scheme = config | util::Config("adjoint", true);
+            const auto interp = Interpolation(scheme, fixture.sourceFunctionSpace_, fixture.targetFunctionSpace_);
+
+            // Interpolate from source to target field.
+            auto targetField = fixture.targetFunctionSpace_.createField<double>(option::name("test_field"));
+            interp.execute(sourceField, targetField);
+            targetField.haloExchange();
+
+            // Make some diagnostic output fields.
+            auto errorField = fixture.targetFunctionSpace_.createField<double>(option::name("error_field"));
+            auto partField  = fixture.targetFunctionSpace_.createField<int>(option::name("partition"));
+            {
+                const auto lonlat = array::make_view<double, 2>(fixture.targetFunctionSpace_.lonlat());
+                auto targetView   = array::make_view<double, 1>(targetField);
+                auto errorView    = array::make_view<double, 1>(errorField);
+                auto partView     = array::make_view<int, 1>(partField);
+                for (idx_t i = 0; i < fixture.targetFunctionSpace_.size(); ++i) {
+                    const auto val = util::function::vortex_rollup(lonlat(i, LON), lonlat(i, LAT), 1.);
+                    errorView(i)   = std::abs((targetView(i) - val) / stDev);
+                    partView(i)    = mpi::rank();
+                }
+            }
+            partField.haloExchange();
+
+            bool isNormalisationMode = 0;
+            if (normalisationMode == "true") {
+                isNormalisationMode = 1;
+            }
+
+            gmshOutput("cubedsphere_source_" + interpType + (isNormalisationMode ? "_normalised" : "") + ".msh",
+                       FieldSet(sourceField));
+
+            auto targetFields = FieldSet{};
+            targetFields.add(targetField);
+            targetFields.add(errorField);
+            targetFields.add(partField);
+            gmshOutput("cubedsphere_target_" + interpType + (isNormalisationMode ? "_normalised" : "") + ".msh",
+                       targetFields);
+
+            //--------------------------------------------------------------------------
+            // Adjoint test.
+            //--------------------------------------------------------------------------
+
+            // Ensure that the adjoint identity relationship holds.
+            auto targetAdjoint = fixture.targetFunctionSpace_.createField<double>(option::name("target adjoint"));
+            array::make_view<double, 1>(targetAdjoint).assign(array::make_view<double, 1>(targetField));
+            targetAdjoint.adjointHaloExchange();
+
+            auto sourceAdjoint = fixture.sourceFunctionSpace_.createField<double>(option::name("source adjoint"));
+            array::make_view<double, 1>(sourceAdjoint).assign(0.);
+            interp.execute_adjoint(sourceAdjoint, targetAdjoint);
+
+            const auto yDotY    = dotProd(targetField, targetField);
+            const auto xDotXAdj = dotProd(sourceField, sourceAdjoint);
+
+            EXPECT_APPROX_EQ(yDotY / xDotXAdj, 1., 1e-14);
         }
     }
-    partField.haloExchange();
-
-    gmshOutput("cubedsphere_source.msh", FieldSet(sourceField));
-
-    auto targetFields = FieldSet{};
-    targetFields.add(targetField);
-    targetFields.add(errorField);
-    targetFields.add(partField);
-    gmshOutput("cubedsphere_target.msh", targetFields);
-
-    //--------------------------------------------------------------------------
-    // Adjoint test.
-    //--------------------------------------------------------------------------
-
-    // Ensure that the adjoint identity relationship holds.
-    auto targetAdjoint = fixture.targetFunctionSpace_.createField<double>(option::name("target adjoint"));
-    array::make_view<double, 1>(targetAdjoint).assign(array::make_view<double, 1>(targetField));
-    targetAdjoint.adjointHaloExchange();
-
-    auto sourceAdjoint = fixture.sourceFunctionSpace_.createField<double>(option::name("source adjoint"));
-    array::make_view<double, 1>(sourceAdjoint).assign(0.);
-    interp.execute_adjoint(sourceAdjoint, targetAdjoint);
-
-    const auto yDotY    = dotProd(targetField, targetField);
-    const auto xDotXAdj = dotProd(sourceField, sourceAdjoint);
-
-    EXPECT_APPROX_EQ(yDotY / xDotXAdj, 1., 1e-14);
 }
 
 }  // namespace test

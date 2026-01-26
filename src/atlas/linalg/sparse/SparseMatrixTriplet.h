@@ -86,7 +86,7 @@ std::enable_if_t<detail::is_triplet_iterator<Iter>, SparseMatrixStorage> make_sp
         outer_view(row) = index;
         for (; triplet_iter != triplets_end && triplet_iter->row() == static_cast<Index>(row);
              ++index, ++triplet_iter) {
-            ATLAS_ASSERT(!(*triplet_iter < previous_triplet), "Triplet range must be sorted.");
+            ATLAS_ASSERT(!(triplet_iter->row() < previous_triplet.row()), "Triplets must be sorted per row.");
             ATLAS_ASSERT(static_cast<std::size_t>(triplet_iter->col()) < n_cols, "Triplet column index out of bounds.");
             inner_view(index)  = triplet_iter->col();
             values_view(index) = triplet_iter->value();

@@ -45,8 +45,6 @@ private:
 public:
     Record();
 
-    Record(const Record&);
-
     bool empty() const;
 
     Record& read(Stream& in, bool verify_end = false);

@@ -23,6 +23,40 @@
 namespace atlas::interpolation {
 
 linalg::SparseMatrixStorage assemble_global_matrix(const Interpolation& interpolation, int mpi_root) {
+    auto& mpi_comm = mpi::comm();
+
+    auto compute_max_global_index = [&mpi_comm,mpi_root](const FunctionSpace& fs) {
+        auto global_index = array::make_view<gidx_t, 1>(fs.global_index());
+        auto ghost        = array::make_view<int, 1>(fs.ghost());
+        gidx_t max_gidx{0};
+        for( size_t i = 0; i < global_index.size(); ++i) {
+            if (not ghost(i)) {
+                max_gidx = std::max(max_gidx, global_index(i));
+            }
+        }
+#if ATLAS_ECKIT_VERSION_AT_LEAST(1, 22, 2)
+        // eckit::mpi::Comm::reduceInPlace() was only added in eckit 1.22.2
+        mpi_comm.reduceInPlace(max_gidx, eckit::mpi::max(), mpi_root);
+#else
+        mpi_comm.allReduceInPlace(max_gidx, eckit::mpi::max());
+        (void)mpi_root; // to silence unused lambda capture warning
+#endif
+        return max_gidx;
+    };
+
+    auto src_fs = interpolation.source();
+    auto tgt_fs = interpolation.target();
+
+    // compute max column and row indices
+    gidx_t tgt_max_gidx = compute_max_global_index(tgt_fs);
+    gidx_t src_max_gidx = compute_max_global_index(src_fs);
+
+    return assemble_global_matrix(tgt_max_gidx, src_max_gidx, interpolation, mpi_root);
+}
+
+
+linalg::SparseMatrixStorage assemble_global_matrix(size_t nrows, size_t ncols, const Interpolation& interpolation, int mpi_root) {
+
 
     auto src_fs = interpolation.source();
     auto tgt_fs = interpolation.target();
@@ -130,34 +164,8 @@ linalg::SparseMatrixStorage assemble_global_matrix(const Interpolation& interpol
         }
     }
 
-
-    auto compute_max_global_index = [&mpi_comm,mpi_root](const FunctionSpace& fs) {
-        auto global_index = array::make_view<gidx_t, 1>(fs.global_index());
-        auto ghost        = array::make_view<int, 1>(fs.ghost());
-        gidx_t max_gidx{0};
-        for( size_t i = 0; i < global_index.size(); ++i) {
-            if (not ghost(i)) {
-                max_gidx = std::max(max_gidx, global_index(i));
-            }
-        }
-#if ATLAS_ECKIT_VERSION_AT_LEAST(1, 22, 2)
-        // eckit::mpi::Comm::reduceInPlace() was only added in eckit 1.22.2
-        mpi_comm.reduceInPlace(max_gidx, eckit::mpi::max(), mpi_root);
-#else
-        mpi_comm.allReduceInPlace(max_gidx, eckit::mpi::max());
-        (void)mpi_root; // to silence unused lambda capture warning
-#endif
-        return max_gidx;
-    };
-
-    // compute max column and row indices
-    gidx_t tgt_max_gidx = compute_max_global_index(tgt_fs);
-    gidx_t src_max_gidx = compute_max_global_index(src_fs);
-
     linalg::SparseMatrixStorage global_matrix;
     if (mpi_rank == mpi_root) {
-        size_t nrows = tgt_max_gidx;
-        size_t ncols = src_max_gidx;
         size_t index_base = 1;
         bool is_sorted = false;
         global_matrix = atlas::linalg::make_sparse_matrix_storage_from_rows_columns_values(nrows, ncols, global_rows, global_cols, global_vals, index_base, is_sorted);

@@ -7,6 +7,35 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
 ## [Unreleased]
 
+## [0.45.0] - 2026-01-14
+
+### Fixed
+- Fixes and workaround failing atlas_fctest_functionspace when fckit is compiled with -Mnotarget_temps with NVHPC by @wdeconinck in https://github.com/ecmwf/atlas/pull/332
+- Pluto fixes and improvements by @wdeconinck in https://github.com/ecmwf/atlas/pull/335
+- [pluto] Fix installation of missing header
+- FunctionSpace::scatter sets local field to dirty halo
+- Remove unused header eckit/memory/Noncopyable.h
+- Fix GatherScatter when global index with index 1 in in halo as is the case with ORCA grids
+
+### Changed
+- Increase support for parallel interpolation from LAM grids by @wdeconinck in https://github.com/ecmwf/atlas/pull/331
+- Detect and treat multiple (2+) discontiguity when wrapping arrays w/ atlas::Field by @sbrdar in https://github.com/ecmwf/atlas/pull/327
+- Improve UnstructuredGrid::spec() performance by @wdeconinck in https://github.com/ecmwf/atlas/pull/336
+- DelaunayMeshGenerator/ExtendNodesGlobal custom extension grid (defaul… by @pmaciel in https://github.com/ecmwf/atlas/pull/337
+- Add cell_maximum_diagonal_on_unit_sphere metadata for global StructuredGrid without projections
+
+### Added
+- Installation scripts for lz4 and metis
+- Add cell_maximum_diagonal_on_unit_sphere metadata for global StructuredGrid without projections to improve search in FiniteElement interpolation
+
+
+## [0.44.1] - 2025-11-07
+
+### Fixed
+- Fix loop bounds for gcc+OpenMP compiler by @fmahebert in https://github.com/ecmwf/atlas/pull/324
+- Fix compilation of atlas_fctest_fvm_nabla with NAG compiler (#326) by @wdeconinck in https://github.com/ecmwf/atlas/pull/330
+- Set Eigen version to eigen@3 in CI to prevent 5.0.0 update
+
 ## [0.44.0] - 2025-10-06
 
 ### Added
@@ -688,6 +717,8 @@ Fix StructuredInterpolation2D with retry for failed stencils
 ## 0.13.0 - 2018-02-16
 
 [Unreleased]: https://github.com/ecmwf/atlas/compare/master...develop
+[0.45.0]: https://github.com/ecmwf/atlas/compare/0.44.1...0.45.0
+[0.44.1]: https://github.com/ecmwf/atlas/compare/0.44.0...0.44.1
 [0.44.0]: https://github.com/ecmwf/atlas/compare/0.43.1...0.44.0
 [0.43.1]: https://github.com/ecmwf/atlas/compare/0.43.0...0.43.1
 [0.43.0]: https://github.com/ecmwf/atlas/compare/0.42.0...0.43.0

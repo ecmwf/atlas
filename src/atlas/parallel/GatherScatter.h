@@ -205,6 +205,13 @@ private:  // data
     int glbcnt_;
     std::vector<int> glbcounts_;
     std::vector<int> glbdispls_;
+
+    // glbmap describes how the global MPI buffer maps to the global field
+    // locmap describes how the local MPI buffer maps to the local field
+    // Scatter:
+    //   - pack global_MPI_buffer from global field using glbmap
+    //   - MPI_Scatterv( global_MPI_buffer -> local_MPI_buffer)
+    //   - unpack local_MPI_buffer into local field using locmap
     std::vector<int> locmap_;
     std::vector<int> glbmap_;
 
@@ -300,8 +307,9 @@ void GatherScatter::scatter(parallel::Field<DATA_TYPE const> gfields[], parallel
         }
 
         /// Pack
-        if (myproc == root)
+        if (myproc == root) {
             pack_send_buffer(gfields[jfield], glbmap_, glb_buffer.data());
+        }
 
         /// Scatter
 

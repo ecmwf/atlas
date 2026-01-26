@@ -30,6 +30,12 @@ if (NOT HAVE_PMR)
       pluto/memory_resource/compat/memory_resource
       pluto/memory_resource/compat/memory_resource.cc
   )
+  install(
+    FILES
+      pluto/memory_resource/compat/memory_resource
+    DESTINATION
+      ${INSTALL_INCLUDE_DIR}/pluto/memory_resource/compat
+  )
 endif()
 
 ecbuild_add_library( TARGET pluto

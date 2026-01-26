@@ -86,6 +86,13 @@ public:
 
     size_t size() const { return size_; }
 
+    const std::vector<PointXYZ>& edge_normals() const {
+        if (not computed_edge_normals_) {
+            compute_edge_normals();
+        }
+        return edge_normals_;
+    }
+
     double area() const {
         if (not computed_area_) {
             compute_centroid_and_area();
@@ -130,6 +137,10 @@ public:
 
     int next(const int index) const { return (index == size_ - 1) ? 0 : index + 1; };
 
+    int previous(const int index) const { return (index == 0) ? size_ - 1 : index - 1; };
+
+    int compute_vertex_weights(const PointXYZ& candidatePoint, double vertex_weights[], size_t vertex_weights_size);
+
     static void fpe(bool v) { fpe_ = v; }
     static bool fpe() { return fpe_; }
 private:
@@ -160,6 +171,8 @@ private:
     // Set valid_ to true when polygon is convex
     void validate();
 
+    void compute_edge_normals() const;
+
 private:
     std::array<PointXYZ, MAX_SIZE> sph_coords_;
     mutable PointXYZ centroid_;
@@ -170,6 +183,9 @@ private:
     mutable bool computed_centroid_{false};
     mutable bool computed_radius_{false};
     mutable bool computed_area_{false};
+    mutable bool computed_edge_normals_{false};
+
+    mutable std::vector<PointXYZ> edge_normals_;
 
     static bool fpe_;
 };

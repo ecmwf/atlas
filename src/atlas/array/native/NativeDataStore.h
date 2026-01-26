@@ -368,28 +368,35 @@ public:
         contiguous_ = spec.contiguous();
         if (! contiguous_) {
             int break_idx = 0;
-            size_t shp_mult_rhs = spec.shape()[spec.rank() - 1];
-            for (int i = spec.rank() - 1; i > 0; i--) {
-                if (shp_mult_rhs != spec.strides()[i - 1]) {
-                    break_idx = i - 1;
-                    break;
+            bool break_found = false;
+            size_t expected_stride = 1;
+            size_t shp_mult_rhs = 1;
+            for (int i = spec.rank(); i > 0; i--) {
+                if (expected_stride != spec.strides()[i - 1]) {
+                    if (! break_found) {
+                        break_idx = i - 1;
+                        break_found = true;
+                        shp_mult_rhs = expected_stride;
+                        expected_stride = spec.strides()[i - 1]; // prepare to search another discontiguity
+                    }
+                    else {
+                        // double striding detected --> can not do memcpy anymore
+                        memcpy_2d_ = false;
+                    }
                 }
-                shp_mult_rhs *= spec.shape()[i - 1];
+                expected_stride *= spec.shape()[i - 1];
             }
-            size_t shp_mult_lhs = spec.shape()[0];
-            for (int i = 1; i <= break_idx; i++) {
-                shp_mult_lhs *= spec.shape()[i];
-            }
+            memcpy_h2d_pitch_ = shp_mult_rhs;
+            memcpy_d2h_pitch_ = spec.strides()[break_idx];
+            memcpy_width_ = shp_mult_rhs;
             if (spec.strides()[spec.rank() - 1] > 1) {
-                memcpy_h2d_pitch_ = 1;
-                memcpy_d2h_pitch_ = spec.strides()[spec.rank() - 1];
-                memcpy_width_ = 1;
                 memcpy_height_ = spec.shape()[0] * spec.device_strides()[0];
             }
             else {
-                memcpy_h2d_pitch_ = shp_mult_rhs;
-                memcpy_d2h_pitch_ = spec.strides()[break_idx];
-                memcpy_width_ = shp_mult_rhs;
+                size_t shp_mult_lhs = spec.shape()[0];
+                for (int i = 1; i <= break_idx; i++) {
+                    shp_mult_lhs *= spec.shape()[i];
+                }
                 memcpy_height_ = shp_mult_lhs;
             }
         }
@@ -414,6 +421,7 @@ public:
                 pluto::copy_host_to_device(label_, device_data_, host_data_, size_);
             }
             else {
+                ATLAS_ASSERT(memcpy_2d_, "Atlas fields with more than one discontiguous dimension are not supported");
                 pluto::copy_host_to_device_2D(
                     label_,
                     device_data_, memcpy_h2d_pitch_,
@@ -437,6 +445,7 @@ public:
                     pluto::copy_device_to_host(label_, host_data_, device_data_, size_);
                 }
                 else {
+                    ATLAS_ASSERT(memcpy_2d_, "Atlas fields with more than one discontiguous dimension are not supported");
                     pluto::copy_device_to_host_2D(
                         label_,
                         host_data_, memcpy_d2h_pitch_ ,
@@ -577,6 +586,7 @@ private:
     mutable Value* device_data_;
 
     bool contiguous_{true};
+    bool memcpy_2d_{true};
     size_t memcpy_h2d_pitch_;
     size_t memcpy_d2h_pitch_;
     size_t memcpy_height_;

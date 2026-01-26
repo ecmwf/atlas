@@ -211,6 +211,7 @@ std::string get_arg(const AtlasTool::Args& args, const std::string& flag, const 
 }
 
 int Meshgen2Gmsh::execute(const Args& args) {
+    ATLAS_TRACE();
     key = "";
     args.get("grid.name", key);
 
@@ -288,7 +289,7 @@ int Meshgen2Gmsh::execute(const Args& args) {
 
     Mesh mesh;
     try {
-        Log::info() << "Generating mesh using " << meshgenerator.type() << " generator" << std::endl;
+        Log::info() << "Generating mesh using " << meshgenerator.type() << " generator and partitioner " << partitioner.type() << std::endl;
         mesh = meshgenerator.generate(grid, partitioner);
     }
     catch (eckit::Exception& e) {

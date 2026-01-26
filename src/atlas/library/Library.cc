@@ -29,6 +29,7 @@
 #include "eckit/system/SystemInfo.h"
 #include "eckit/types/Types.h"
 #include "eckit/utils/Translator.h"
+#include "eckit/utils/Tokenizer.h"
 #include "eckit/system/LibraryManager.h"
 
 

@@ -246,7 +246,6 @@ void StructuredMeshGenerator::generate(const Grid& grid, const grid::Distributio
 // show distribution
 #if DEBUG_OUTPUT
     int inode                       = 0;
-    const atlas::vector<int>& parts = distribution;
     Log::info() << "Partition : " << std::endl;
     for (size_t ilat = 0; ilat < rg.ny(); ilat++) {
         for (size_t ilon = 0; ilon < rg.nx(ilat); ilon++) {
@@ -263,6 +262,14 @@ void StructuredMeshGenerator::generate(const Grid& grid, const grid::Distributio
     Region region;
     generate_region(rg, distribution, mypart, region);
 
+    if (not rg.projection() && rg.domain().global()) {
+        double max_dy = 0;
+        for (size_t ilat = 0; ilat < rg.ny()-1; ilat++) {
+            max_dy = std::max(max_dy, std::abs(rg.y(ilat)-rg.y(ilat+1)));
+        }
+        double cell_maximum_diagonal_on_unit_sphere = std::sqrt(max_dy*max_dy + max_dy*max_dy) * M_PI / 180.;
+        mesh.metadata().set("cell_maximum_diagonal_on_unit_sphere",cell_maximum_diagonal_on_unit_sphere);
+    }
 
     mesh.metadata().set("nb_parts",options.getInt("nb_parts"));
     mesh.metadata().set("part",options.getInt("part"));
@@ -360,6 +367,12 @@ Find min and max latitudes used by this part.
                 }
                 lat_north = *std::min_element(thread_reduce_lat_north.begin(), thread_reduce_lat_north.end());
                 lat_south = *std::max_element(thread_reduce_lat_south.begin(), thread_reduce_lat_south.end());
+                if (lat_north == std::numeric_limits<idx_t>::max()) {
+                    lat_north = -1;
+                }
+                if (lat_south == std::numeric_limits<idx_t>::min()) {
+                    lat_south = -1;
+                }
             }
         }
     }

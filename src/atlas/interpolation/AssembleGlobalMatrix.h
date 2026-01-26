@@ -15,6 +15,7 @@
 
 namespace atlas::interpolation {
 
+    atlas::linalg::SparseMatrixStorage assemble_global_matrix(size_t rows, size_t cols, const Interpolation& interpolation, int mpi_root = 0);
     atlas::linalg::SparseMatrixStorage assemble_global_matrix(const Interpolation& interpolation, int mpi_root = 0);
 
     atlas::linalg::SparseMatrixStorage distribute_global_matrix(const FunctionSpace& src_fs, const FunctionSpace& tgt_fs, const linalg::SparseMatrixStorage&, int mpi_root = 0);

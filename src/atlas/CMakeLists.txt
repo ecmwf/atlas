@@ -702,6 +702,8 @@ interpolation/method/unstructured/ConservativeSphericalPolygonInterpolation.cc
 interpolation/method/unstructured/ConservativeSphericalPolygonInterpolation.h
 interpolation/method/unstructured/FiniteElement.cc
 interpolation/method/unstructured/FiniteElement.h
+interpolation/method/unstructured/SphericalMeanValue.cc
+interpolation/method/unstructured/SphericalMeanValue.h
 interpolation/method/unstructured/UnstructuredBilinearLonLat.cc
 interpolation/method/unstructured/UnstructuredBilinearLonLat.h
 interpolation/nonlinear/Missing.cc
