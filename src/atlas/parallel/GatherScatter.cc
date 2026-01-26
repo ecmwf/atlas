@@ -136,6 +136,7 @@ void GatherScatter::setup(const std::string& mpi_comm, const int part[], const i
         ATLAS_THROW_EXCEPTION("Could not allocate node_sort with size " << eckit::Bytes(nb_recv_nodes * sizeof(Node)));
     }
 
+    ATLAS_TRACE_SCOPE("receive nodes global index")
     {
         std::vector<gidx_t> recvnodes_gidx;
         try {
@@ -156,6 +157,7 @@ void GatherScatter::setup(const std::string& mpi_comm, const int part[], const i
     }
 
 
+    ATLAS_TRACE_SCOPE("receive nodes partition")
     {
         std::vector<int> recvnodes_part;
         try {
@@ -175,6 +177,7 @@ void GatherScatter::setup(const std::string& mpi_comm, const int part[], const i
         sendnodes_part.clear();
     }
 
+    ATLAS_TRACE_SCOPE("receive nodes remote index")
     {
         std::vector<idx_t> recvnodes_ridx;
         try {
@@ -199,6 +202,8 @@ void GatherScatter::setup(const std::string& mpi_comm, const int part[], const i
     ATLAS_TRACE_SCOPE("sorting") {
         //        omp::sort(node_sort.begin(), node_sort.end());
         std::sort(node_sort.begin(), node_sort.end());
+    }
+    ATLAS_TRACE_SCOPE("remove duplicates") {
         node_sort.erase(std::unique(node_sort.begin(), node_sort.end()), node_sort.end());
     }
 

@@ -48,7 +48,7 @@ public:
     MultiFieldCreatorArray(const eckit::Configuration& config);
     ~MultiFieldCreatorArray() override;
     MultiFieldImpl* create(const eckit::Configuration& config = util::Config()) const override;
-    MultiFieldImpl* create(const array::DataType datatype, const std::vector<int>& shape,
+    MultiFieldImpl* create(const array::DataType datatype, const array::ArrayShape& shape,
         const std::vector<std::string>& var_names) const override;
 };
 

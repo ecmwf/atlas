@@ -36,7 +36,7 @@ namespace detail {
 
 void StructuredColumns::create_remote_index() const {
     field_remote_index_ = Field("remote_idx", array::make_datatype<idx_t>(), array::make_shape(size_halo_));
-    auto remote_idx     = array::make_view<idx_t, 1>(field_remote_index_);
+    auto remote_idx     = array::make_indexview<idx_t, 1>(field_remote_index_);
     atlas_omp_parallel_for(idx_t n = 0; n < size_owned_; ++n) { remote_idx(n) = n; }
 
 

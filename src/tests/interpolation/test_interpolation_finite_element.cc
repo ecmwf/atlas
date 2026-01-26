@@ -80,6 +80,55 @@ CASE("test_interpolation_finite_element") {
 
 //-----------------------------------------------------------------------------
 
+CASE("test_interpolation_finite_element_from_healpix") {
+    Grid grid("H64");
+    Mesh mesh(grid);
+    NodeColumns fs(mesh);
+
+    // Some points at the equator
+    PointCloud pointcloud(
+        {{15., 90.-0.001},{15.,-90+0.001}});
+
+    auto func = [](double x) -> double { return std::sin(x * M_PI / 180.); };
+
+    Interpolation interpolation(option::type("finite-element") | util::Config("max_fraction_elems_to_try", 0.4), fs,
+                                pointcloud);
+
+    SECTION("test maximum nearest neighbour settings") {
+        std::stringstream test_stream;
+        interpolation.print(test_stream);
+        std::string test_string = test_stream.str();
+        EXPECT((test_string.find("max_fraction_elems_to_try: 0.4") != std::string::npos));
+    }
+
+    SECTION("test interpolation outputs") {
+        Field field_source = fs.createField<double>(option::name("source"));
+        Field field_target("target", array::make_datatype<double>(), array::make_shape(pointcloud.size()));
+
+        auto lonlat = array::make_view<double, 2>(fs.nodes().lonlat());
+        auto source = array::make_view<double, 1>(field_source);
+        for (idx_t j = 0; j < fs.nodes().size(); ++j) {
+            source(j) = func(lonlat(j, LON));
+        }
+
+        interpolation.execute(field_source, field_target);
+
+        auto target = array::make_view<double, 1>(field_target);
+
+        auto check = std::vector<double>{0.998782444936, 0.998678866237};
+
+        for (idx_t j = 0; j < pointcloud.size(); ++j) {
+            static double interpolation_tolerance = 1.e-4;
+            Log::info() << target(j) << "  " << check[j] << std::endl;
+            EXPECT_APPROX_EQ(target(j), check[j], interpolation_tolerance);
+        }
+    }
+}
+
+//-----------------------------------------------------------------------------
+
+
+
 }  // namespace test
 }  // namespace atlas
 

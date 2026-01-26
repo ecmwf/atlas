@@ -85,7 +85,7 @@ ecbuild_add_test( TARGET atlas_test_interpolation_structured2D_regional
   SOURCES  test_interpolation_structured2D_regional.cc
   LIBS     atlas
   MPI      2
-  CONDITION eckit_HAVE_MPI
+  CONDITION eckit_HAVE_MPI AND MPI_SLOTS GREATER_EQUAL 2
   ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
 )
 
@@ -110,11 +110,21 @@ ecbuild_add_test( TARGET atlas_test_interpolation_biquasicubic
   ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
 )
 
+ecbuild_add_test( TARGET atlas_test_interpolation_bicubic_gpu
+  SOURCES test_interpolation_structured2D_gpu.cc
+  LIBS     atlas
+  CONDITION atlas_HAVE_GPU
+  ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT} ATLAS_RUN_NGPUS=1
+)
+if( TEST atlas_test_interpolation_bicubic_gpu )
+  set_tests_properties(atlas_test_interpolation_bicubic_gpu  PROPERTIES LABELS "gpu")
+endif()
+
 ecbuild_add_test( TARGET atlas_test_interpolation_structured2D_to_unstructured
   SOURCES  test_interpolation_structured2D_to_unstructured.cc
   LIBS     atlas
   MPI      2
-  CONDITION eckit_HAVE_MPI
+  CONDITION eckit_HAVE_MPI AND MPI_SLOTS GREATER_EQUAL 2
   ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
 )
 
@@ -122,14 +132,27 @@ ecbuild_add_test( TARGET atlas_test_interpolation_structured2D_to_points
   SOURCES  test_interpolation_structured2D_to_points.cc
   LIBS     atlas
   MPI      4
-  CONDITION eckit_HAVE_MPI
+  CONDITION eckit_HAVE_MPI AND MPI_SLOTS GREATER_EQUAL 4
   ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
 )
+
+ecbuild_add_test( TARGET atlas_test_interpolation_structured2D_to_points_gpu
+  SOURCES  test_interpolation_structured2D_to_points_gpu.cc
+  LIBS     atlas
+  MPI      4
+  CONDITION eckit_HAVE_MPI AND atlas_HAVE_GPU
+  ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT} ATLAS_RUN_NGPUS=1
+)
+if( TEST atlas_test_interpolation_structured2D_to_points_gpu )
+  set_tests_properties(atlas_test_interpolation_structured2D_to_points_gpu PROPERTIES LABELS "gpu")
+endif()
+
 
 ecbuild_add_test( TARGET atlas_test_interpolation_cubedsphere
   SOURCES  test_interpolation_cubedsphere.cc
   LIBS     atlas
-  MPI      6
+  MPI      3
+  OMP      3
   CONDITION eckit_HAVE_MPI AND MPI_SLOTS GREATER_EQUAL 6
   ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
 )
@@ -147,6 +170,21 @@ ecbuild_add_test( TARGET atlas_test_interpolation_binning
   LIBS     atlas
   MPI      6
   CONDITION eckit_HAVE_MPI AND MPI_SLOTS GREATER_EQUAL 6
+  ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
+)
+
+ecbuild_add_test( TARGET atlas_test_par_interpolation_global_matrix
+  SOURCES  test_interpolation_global_matrix.cc
+  LIBS     atlas
+  CONDITION eckit_HAVE_MPI AND MPI_SLOTS GREATER_EQUAL 6
+  MPI      6
+  OMP      1
+  ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
+)
+
+ecbuild_add_test( TARGET atlas_test_interpolation_global_matrix
+  SOURCES  test_interpolation_global_matrix.cc
+  LIBS     atlas
   ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
 )
 

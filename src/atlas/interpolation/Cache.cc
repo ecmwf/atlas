@@ -42,6 +42,19 @@ Cache::Cache(const Interpolation& interpolation): Cache(interpolation.createCach
 
 Cache::~Cache() = default;
 
+Cache& Cache::operator=(const Cache& other) {
+    cache_.clear();
+    add(other);
+    return *this;
+}
+
+Cache& Cache::operator=(Cache&& other) {
+    cache_.clear();
+    add(other);
+    other.cache_.clear();
+    return *this;
+}
+
 void Cache::add(const Cache& other) {
     for (auto& entry : other.cache_) {
         auto& new_cache = cache_[entry.first];
@@ -54,7 +67,7 @@ MatrixCacheEntry::~MatrixCacheEntry() = default;
 class MatrixCacheEntryOwned : public MatrixCacheEntry {
 public:
     MatrixCacheEntryOwned(Matrix&& matrix): MatrixCacheEntry(&matrix_) {
-        const_cast<Matrix&>(matrix_).swap(reinterpret_cast<Matrix&>(matrix));
+        const_cast<Matrix&>(matrix_) = std::move(matrix);
     }
 
 private:

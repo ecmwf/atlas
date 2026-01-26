@@ -22,6 +22,7 @@
 #include "atlas/functionspace/PointCloud.h"
 #include "atlas/interpolation/method/MethodFactory.h"
 #include "atlas/runtime/Exception.h"
+#include "atlas/linalg/sparse/MakeEckitSparseMatrix.h"
 
 
 namespace atlas {
@@ -60,8 +61,8 @@ void GridBoxMaximum::do_execute(const Field& source, Field& target, Metadata&) c
 
 
     if (!matrixFree_) {
-        const Matrix& m = matrix();
-        Matrix::const_iterator k(m);
+        const auto m = atlas::linalg::make_non_owning_eckit_sparse_matrix(matrix());
+        auto k = m.begin();
 
         for (decltype(m.rows()) i = 0, j = 0; i < m.rows(); ++i) {
             double max = std::numeric_limits<double>::lowest();

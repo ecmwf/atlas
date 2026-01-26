@@ -10,6 +10,7 @@
 
 #include "atlas/mesh/Mesh.h"
 
+#include "atlas/grid/Distribution.h"
 #include "atlas/grid/Grid.h"
 #include "atlas/grid/Partitioner.h"
 #include "atlas/mesh/Nodes.h"
@@ -55,6 +56,22 @@ Mesh::Mesh(const Grid& grid, const grid::Partitioner& partitioner, const eckit::
     }()) {
     get()->detach();
 }
+
+Mesh::Mesh(const Grid& grid, const grid::Distribution& distribution, const eckit::Configuration& config):
+    Handle([&]() {
+        auto mpi_comm = mpi::comm().name();
+        if (config.has("mpi_comm")) {
+            mpi_comm = config.getString("mpi_comm");
+        }
+        mpi::Scope mpi_scope(mpi_comm);
+        auto meshgenerator = MeshGenerator{grid.meshgenerator() | config};
+        auto mesh          = meshgenerator.generate(grid, distribution);
+        mesh.get()->attach();
+        return mesh.get();
+    }()) {
+    get()->detach();
+}
+
 
 
 Mesh::Mesh(eckit::Stream& stream): Handle(new Implementation(stream)) {}

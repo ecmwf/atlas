@@ -67,10 +67,11 @@ macro( atlas_add_hic_test )
       set_source_files_properties(${_PAR_SOURCES} PROPERTIES LANGUAGE HIP)
     endif()
 
-    ecbuild_add_test( TARGET      ${_PAR_TARGET}
-                      SOURCES     ${_PAR_SOURCES}
-                      LIBS        ${_libs}
-                      ENVIRONMENT ${_PAR_ENVIRONMENT} )
+    ecbuild_add_test( TARGET          ${_PAR_TARGET}
+                      SOURCES         ${_PAR_SOURCES}
+                      LIBS            ${_libs}
+                      LINKER_LANGUAGE CXX
+                      ENVIRONMENT     ${_PAR_ENVIRONMENT} )
     set_tests_properties(${_PAR_TARGET} PROPERTIES LABELS "gpu")
 
   endif()

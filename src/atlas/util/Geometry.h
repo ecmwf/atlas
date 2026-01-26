@@ -71,7 +71,11 @@ template <typename SphereT>
 class GeometrySphereT : public GeometryBase {
 public:
     void lonlat2xyz(const Point2& lonlat, Point3& xyz) const override {
+#if ATLAS_ECKIT_VERSION_AT_LEAST(1, 24, 0)
+        SphereT::convertSphericalToCartesian(lonlat, xyz, 0., true);
+#else
         SphereT::convertSphericalToCartesian(lonlat, xyz);
+#endif
     }
     void xyz2lonlat(const Point3& xyz, Point2& lonlat) const override {
         SphereT::convertCartesianToSpherical(xyz, lonlat);

@@ -7,6 +7,109 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
 ## [Unreleased]
 
+## [0.44.0] - 2025-10-06
+
+### Added
+- Add Collect communication pattern by @wdeconinck in https://github.com/ecmwf/atlas/pull/301
+- Add array::View interoperability with mdspan by @wdeconinck in https://github.com/ecmwf/atlas/pull/304
+- Add support for pocketfft by @wdeconinck in https://github.com/ecmwf/atlas/pull/308, https://github.com/ecmwf/atlas/pull/320
+- Improvement in spherical-polygon intersection by @sbrdar in https://github.com/ecmwf/atlas/pull/310
+- Improvement in the conservative interpolation for general meshes by @sbrdar in https://github.com/ecmwf/atlas/pull/318
+- Add Field::syncHost and Field::syncDevice by @wdeconinck in https://github.com/ecmwf/atlas/pull/311
+- Add more GPU tracing capabilities for device allocations and host-device data transfers by @wdeconinck in https://github.com/ecmwf/atlas/pull/312
+- Improve HaloExchange on_device, checking state flags by @wdeconinck in https://github.com/ecmwf/atlas/pull/313
+- Update interpolation to support hicsparse backend by @l90lpa in https://github.com/ecmwf/atlas/pull/275
+- Add Locator to find at which partition and at which index a global index is located by @wdeconinck in https://github.com/ecmwf/atlas/pull/317
+- Add matrix halo exchange to "binning" interpolation method. by @odlomax in https://github.com/ecmwf/atlas/pull/315
+- Introduce atlas-interpolations app by @wdeconinck in https://github.com/ecmwf/atlas/pull/321
+- Support building of StructuredColumns with halos for grids with uneven points at poles e.g. N80 grid
+
+### Changed
+- Move mdspan from atlas to pluto and update mdspan to latest by @wdeconinck in https://github.com/ecmwf/atlas/pull/303
+- Update MeshBuilder API by @wdeconinck in https://github.com/ecmwf/atlas/pull/305
+
+### Fixed
+- Fix out-of-range in RegionalLinear2D with FORTRAN feature disabled by @wdeconinck in https://github.com/ecmwf/atlas/pull/322
+- Fix empty adjoint matrix for SphericalVector for scalar fields by @wdeconinck in https://github.com/ecmwf/atlas/pull/314
+- Support CUDA 13.0 by @wdeconinck in https://github.com/ecmwf/atlas/pull/316
+- Fix out-of-range in RegionalLinear2D with FORTRAN feature disabled by @wdeconinck in https://github.com/ecmwf/atlas/pull/322
+- Allow BlockStructuredColumns to be used for MatchingPartitioner
+
+
+## [0.43.1] - 2025-07-09
+
+### Fixed
+- Pluto installation of pluto_module.mod file
+- Avoid temporary array creation in Fortran pluto_allocator%allocate() function
+
+
+## [0.43.0] - 2025-06-25
+
+### Added
+- Python wheel by @tmi in https://github.com/ecmwf/atlas/pull/274, https://github.com/ecmwf/atlas/pull/280
+- Add Grid getter to FunctionSpace by @tom-j-h in https://github.com/ecmwf/atlas/pull/264
+- Fortran: Export atlas_functionspace_BlockStructuredColumns by @wdeconinck in https://github.com/ecmwf/atlas/pull/276
+- Feature/spectral updates by @wdeconinck in https://github.com/ecmwf/atlas/pull/285
+- Add Field::halo() to manage and describe field halo's by @wdeconinck in https://github.com/ecmwf/atlas/pull/291
+- Add a vector_component option utility by @odlomax in https://github.com/ecmwf/atlas/pull/294
+- Implement floating-point-exception trapping for macos by @wdeconinck in https://github.com/ecmwf/atlas/pull/295
+
+### Fixed
+- Bugfix/device strides on cpu by @sbrdar in https://github.com/ecmwf/atlas/pull/297
+- Support nvidia 24.5 by @wdeconinck in https://github.com/ecmwf/atlas/pull/278
+- Set device_updated=false when calling Array::deallocateDevice() (fixes #243) by @wdeconinck in https://github.com/ecmwf/atlas/pull/277
+- Fix StructuredGrid periodicity for certain domains (fixes #282) by @wdeconinck in https://github.com/ecmwf/atlas/pull/283
+
+### Changed
+- Make FiniteElement Interpolation weight computation multithreaded using OpenMP by @wdeconinck in https://github.com/ecmwf/atlas/pull/292
+- Added OpenMP to the cubed-sphere interpolator and the matching cubed sphere partitioner. by @odlomax in https://github.com/ecmwf/atlas/pull/293
+- Deprecate aliases for structured interpolation methods by @wdeconinck in https://github.com/ecmwf/atlas/pull/296
+
+## [0.42.0] - 2025-04-09
+
+### Added
+- Cubed sphere 2 grid builder by @mo-jonasganderton in https://github.com/ecmwf/atlas/pull/253
+- Grid/Distribution constructor for PointCloud by @tom-j-h in https://github.com/ecmwf/atlas/pull/262
+- Add distribution of serial interpolation matrix by @sbrdar in https://github.com/ecmwf/atlas/pull/258
+- Add offloading of discontiguous arrays in https://github.com/ecmwf/atlas/pull/267
+- Add device offload operators on FieldSet in https://github.com/ecmwf/atlas/pull/268
+- Introducing Pluto by @wdeconinck in https://github.com/ecmwf/atlas/pull/269
+- Python wheel: initial setup by @tmi in https://github.com/ecmwf/atlas/pull/257
+
+### Fixed
+- Fix inconsistent index-base used in StructuredColumns::remote_index by @sbrdar in https://github.com/ecmwf/atlas/pull/265
+- Fix OpenMP related bug in DistributionArray
+
+### Changed
+- Use pluto where possible instead of hic calls by @wdeconinck in https://github.com/ecmwf/atlas/pull/270
+- Use pluto default memory resources in atlas::array by @wdeconinck in https://github.com/ecmwf/atlas/pull/273
+
+
+## [0.41.1] - 2025-02-18
+
+### Fixed
+
+- Add CI with gpu
+- Add -Werror in CI to avoid new warnings in the future
+- Fix compilation with ATLAS_BITS_LOCAL=64 and add it to CI to avoid errors in the future
+
+## [0.41.0] - 2025-02-10
+
+### Added
+
+- Add hicsparse as wrapper to cusparse and hipsparse (#237)
+- Add SparseMatrix multiply_add functionality (#240)
+- Replace eckit::SparseMatrix with SparseMatrixStorage and SparseMatrixView to support host/device memory spaces (#247)
+- Add hicSparse backend to sparse matrix multiply (#246)
+- New simplified cubed sphere grid (#245)
+- Add functionality to gather global (serial) sparse matrix from an interpolation (#255)
+
+### Fixed
+
+- Fix warnings (#256)
+- bugfix: DIV_BY_ZERO in MatchingFunctionSpacePartitionerLonLatPolygon for small grids with OMP (#244)
+- bugfix: Apply normalisation also to SphereT as was already done for unit-sphere (#242)
+
 ## [0.40.0] - 2024-11-18
 
 ### Added
@@ -585,6 +688,12 @@ Fix StructuredInterpolation2D with retry for failed stencils
 ## 0.13.0 - 2018-02-16
 
 [Unreleased]: https://github.com/ecmwf/atlas/compare/master...develop
+[0.44.0]: https://github.com/ecmwf/atlas/compare/0.43.1...0.44.0
+[0.43.1]: https://github.com/ecmwf/atlas/compare/0.43.0...0.43.1
+[0.43.0]: https://github.com/ecmwf/atlas/compare/0.42.0...0.43.0
+[0.42.0]: https://github.com/ecmwf/atlas/compare/0.41.0...0.42.0
+[0.41.1]: https://github.com/ecmwf/atlas/compare/0.41.0...0.41.1
+[0.41.0]: https://github.com/ecmwf/atlas/compare/0.40.0...0.41.0
 [0.40.0]: https://github.com/ecmwf/atlas/compare/0.39.0...0.40.0
 [0.39.0]: https://github.com/ecmwf/atlas/compare/0.38.1...0.39.0
 [0.38.1]: https://github.com/ecmwf/atlas/compare/0.38.0...0.38.1

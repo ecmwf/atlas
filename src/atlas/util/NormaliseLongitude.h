@@ -26,8 +26,6 @@ public:
     // Normalise longitude between ( west-eps, east+eps )
     constexpr NormaliseLongitude(double west, double east): west_(west - eps_), east_(east + eps_) {}
 
-    constexpr NormaliseLongitude(const NormaliseLongitude& other): west_(other.west_), east_(other.east_) {}
-
     double operator()(double lon) const {
         while (lon < west_) {
             lon += 360.;

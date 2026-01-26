@@ -595,7 +595,7 @@ CASE("var_ratio_rot_inv = 1.13") {
             ///< rotated
             Point2 ll_str = grid.lonlat(i, j);
             ///< unrotated
-            Point2 ll_str1 = {lon_LAM_str[i], lat_LAM_str[j]};
+            //Point2 ll_str1 = {lon_LAM_str[i], lat_LAM_str[j]};
             //< from stretched rotated to unrotated regular
             grid.projection().lonlat2xy(ll_str);
             Point2 ll_reg = {lon_LAM_reg[i], lat_LAM_reg[j]};

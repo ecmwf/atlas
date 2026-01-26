@@ -31,7 +31,6 @@ void KNearestNeighboursBase::buildPointSearchTree(Mesh& meshSource, const mesh::
     ATLAS_TRACE();
     eckit::TraceTimer<Atlas> tim("KNearestNeighboursBase::buildPointSearchTree()");
 
-
     auto lonlat = array::make_view<double, 2>(meshSource.nodes().lonlat());
     auto halo   = array::make_view<int, 1>(meshSource.nodes().halo());
     int h       = _halo.size();
@@ -47,7 +46,6 @@ void KNearestNeighboursBase::buildPointSearchTree(Mesh& meshSource, const mesh::
         }
     }
     pTree_.build();
-
 
 //    // generate 3D point coordinates
 //    mesh::actions::BuildXYZField("xyz")(meshSource);

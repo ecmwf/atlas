@@ -70,6 +70,8 @@ public:
 
     Interpolation(const Config&, const Grid& source, const Grid& target, const Cache&) noexcept(false);
 
+    Interpolation(const Config&, const FunctionSpace& source, const FunctionSpace& target, const Cache&) noexcept(false);
+
     friend std::ostream& operator<<(std::ostream& out, const Interpolation& i) {
         i.print(out);
         return out;

@@ -66,14 +66,22 @@ public:
      */
     virtual bool execute(Matrix& W, const Field& f) const = 0;
 
+    /**
+     * @brief Apply non-linear corrections to interpolation matrix
+     * @param [inout] W interpolation matrix
+     * @param [in] a array with possibly missing values
+     * @param [in] c configuration with missing values diagnostic information
+     * @return if W was modified
+     */
+    virtual bool execute(Matrix& W, const array::Array& a, const Config& c) const = 0;
+
 protected:
     template <typename Value, int Rank>
-    static array::ArrayView<typename std::add_const<Value>::type, Rank> make_view_field_values(const Field& field) {
-        ATLAS_ASSERT(field);
-        ATLAS_ASSERT_MSG(
-            field.datatype().kind() == array::DataType::kind<Value>(),
-            "Field(name:" + field.name() + ",DataType:" + field.datatype().str() + ") is not of required DataType");
-        return array::make_view<typename std::add_const<Value>::type, Rank>(field);
+    static array::ArrayView<typename std::add_const<Value>::type, Rank> make_view_array_values(const array::Array& array) {
+        if( array.datatype().kind() != array::DataType::kind<Value>() ) {
+            throw_AssertionFailed("Array(DataType:" + array.datatype().str() + ") is not of required DataType", Here());
+        }
+        return array::make_view<typename std::add_const<Value>::type, Rank>(array);
     }
 };
 

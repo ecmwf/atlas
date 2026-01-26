@@ -17,7 +17,7 @@ namespace atlas {
 namespace linalg {
 namespace sparse {
 
-class Backend;
+struct Backend;
 
 void current_backend(const std::string& backend);
 sparse::Backend& current_backend();
@@ -42,6 +42,11 @@ struct openmp : Backend {
 struct eckit_linalg : Backend {
     static std::string type() { return "eckit_linalg"; }
     eckit_linalg(): Backend(type()) {}
+};
+
+struct hicsparse : Backend {
+    static std::string type() { return "hicsparse"; }
+    hicsparse(): Backend(type()) {}
 };
 }  // namespace backend
 

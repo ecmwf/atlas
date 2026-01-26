@@ -44,11 +44,12 @@ void compute_zfn(const int trc, double zfn[]) {
     }
 }
 
-
 void compute_legendre_polynomials_lat(const int trc,     // truncation (in)
                                       const double lat,  // latitude in radians (in)
                                       double legpol[],   // legendre polynomials
-                                      double zfn[]) {
+                                      double zfn[],
+                                      LegendrePolynomialsWorkspace& w // workspace to avoid allocations
+                                      ) {
     auto idxmn  = [&](int jm, int jn) { return (2 * trc + 3 - jm) * jm / 2 + jn - jm; };
     auto idxzfn = [&](int jn, int jk) { return jk + (trc + 1) * jn; };
     {  //ATLAS_TRACE( "compute Legendre polynomials" );
@@ -60,12 +61,11 @@ void compute_legendre_polynomials_lat(const int trc,     // truncation (in)
         volatile double zdlsita = std::sqrt(1. - zdlx * zdlx);  // sin(theta) (this is how trans library does it)
 
         legpol[idxmn(0, 0)] = 1.;
-        double vsin[trc + 1], vcos[trc + 1];
+        w.vsin.resize(trc+1);
+        w.vcos.resize(trc+1);
         for (int j = 1; j <= trc; j++) {
-            vsin[j] = std::sin(j * zdlx1);
-        }
-        for (int j = 1; j <= trc; j++) {
-            vcos[j] = std::cos(j * zdlx1);
+            w.vsin[j] = std::sin(j * zdlx1);
+            w.vcos[j] = std::cos(j * zdlx1);
         }
 
         double zdl1sita = 0.;
@@ -89,9 +89,9 @@ void compute_legendre_polynomials_lat(const int trc,     // truncation (in)
             // represented by only even k
             for (int jk = 2; jk <= jn; jk += 2) {
                 // normalised ordinary Legendre polynomial == \overbar{P_n}^0
-                zdlk = zdlk + zfn[idxzfn(jn, jk)] * vcos[jk];
+                zdlk = zdlk + zfn[idxzfn(jn, jk)] * w.vcos[jk];
                 // normalised associated Legendre polynomial == \overbar{P_n}^1
-                zdlldn = zdlldn + zdsq * zfn[idxzfn(jn, jk)] * jk * vsin[jk];
+                zdlldn = zdlldn + zdsq * zfn[idxzfn(jn, jk)] * jk * w.vsin[jk];
             }
             legpol[idxmn(0, jn)] = zdlk;
             legpol[idxmn(1, jn)] = zdlldn;
@@ -106,9 +106,9 @@ void compute_legendre_polynomials_lat(const int trc,     // truncation (in)
             // represented by only even k
             for (int jk = 1; jk <= jn; jk += 2) {
                 // normalised ordinary Legendre polynomial == \overbar{P_n}^0
-                zdlk = zdlk + zfn[idxzfn(jn, jk)] * vcos[jk];
+                zdlk = zdlk + zfn[idxzfn(jn, jk)] * w.vcos[jk];
                 // normalised associated Legendre polynomial == \overbar{P_n}^1
-                zdlldn = zdlldn + zdsq * zfn[idxzfn(jn, jk)] * jk * vsin[jk];
+                zdlldn = zdlldn + zdsq * zfn[idxzfn(jn, jk)] * jk * w.vsin[jk];
             }
             legpol[idxmn(0, jn)] = zdlk;
             legpol[idxmn(1, jn)] = zdlldn;
@@ -167,10 +167,12 @@ void compute_legendre_polynomials(
     auto idxmn = [&](size_t jm, size_t jn) { return (2 * trc + 3 - jm) * jm / 2 + jn - jm; };
     compute_zfn(truncation, zfn.data());
 
+    LegendrePolynomialsWorkspace w{truncation};
+
     // Loop over latitudes:
     for (size_t jlat = 0; jlat < size_t(nlats); ++jlat) {
         // compute legendre polynomials for current latitude:
-        compute_legendre_polynomials_lat(truncation, lats[jlat], legpol.data(), zfn.data());
+        compute_legendre_polynomials_lat(truncation, lats[jlat], legpol.data(), zfn.data(), w);
 
         // split polynomials into symmetric and antisymmetric parts:
         {
@@ -213,19 +215,20 @@ void compute_legendre_polynomials_all(const int truncation,  // truncation (in)
 {
     size_t trc           = static_cast<size_t>(truncation);
     size_t legendre_size = (trc + 2) * (trc + 1) / 2;
-    size_t ny            = nlats;
     std::vector<double> legpol(legendre_size);
     std::vector<double> zfn((trc + 1) * (trc + 1));
     auto idxmn  = [&](size_t jm, size_t jn) { return (2 * trc + 3 - jm) * jm / 2 + jn - jm; };
     auto idxmnl = [&](size_t jm, size_t jn, size_t jlat) {
-        return (2 * trc + 3 - jm) * jm / 2 * ny + jlat * (trc - jm + 1) + jn - jm;
+        return (2 * trc + 3 - jm) * jm / 2 * nlats + jlat * (trc - jm + 1) + jn - jm;
     };
     compute_zfn(truncation, zfn.data());
 
+    LegendrePolynomialsWorkspace w{truncation};
+
     // Loop over latitudes:
-    for (size_t jlat = 0; jlat < ny; ++jlat) {
+    for (size_t jlat = 0; jlat < nlats; ++jlat) {
         // compute legendre polynomials for current latitude:
-        compute_legendre_polynomials_lat(truncation, lats[jlat], legpol.data(), zfn.data());
+        compute_legendre_polynomials_lat(truncation, lats[jlat], legpol.data(), zfn.data(), w);
 
         for (size_t jm = 0; jm <= trc; ++jm) {
             for (size_t jn = jm; jn <= trc; ++jn) {

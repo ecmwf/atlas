@@ -159,6 +159,7 @@ CASE("multifield_ifs_create") {
         {
             Field field = MultiField {eckit::YAMLConfiguration{json()}}.field("temperature");
             auto temp = array::make_view<Value,3>(field);
+            EXPECT_EQ(temp.rank(), 3);
         }
     }
 }
@@ -399,6 +400,7 @@ CASE("multifield_array_create") {
         {
             Field field = MultiField {eckit::YAMLConfiguration{json()}}.field("temperature");
             auto temp = array::make_view<Value, 3>(field);
+            EXPECT_EQ(temp.rank(), 3);
         }
     }
 }

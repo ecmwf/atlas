@@ -243,7 +243,8 @@ std::vector<IJ> getIjNodes(const IJ& ijCell, idx_t N) {
     else if (ijCell.i() <= 0 && ijCell.j() >= N) {
         // Triangle.
         if (ijCell.i() == 0 && ijCell.j() == N) {
-            ijNodes.erase(ijNodes.begin() + 3);
+            std::vector<IJ> triangle {ijNodes[0], ijNodes[1], ijNodes[2]};
+            ijNodes.swap(triangle);
         }
         // Quad (i)
         else if (ijCell.j() == N) {

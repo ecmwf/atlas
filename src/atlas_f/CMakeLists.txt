@@ -272,6 +272,8 @@ ecbuild_add_library( TARGET atlas_f
 
   PRIVATE_LIBS
         $<${atlas_HAVE_OMP_Fortran}:OpenMP::OpenMP_Fortran>
+        eckit
+        hic
 
   PUBLIC_INCLUDES
         $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/src>

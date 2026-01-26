@@ -30,7 +30,6 @@ public:
     CubedSphereBilinear(const Config& config): Method(config) {
         config.get("halo", halo_);
         config.get("list_size", listSize_);
-        config.get("halo_exchange", halo_exchange_);
     }
     virtual ~CubedSphereBilinear() override {}
 
@@ -42,13 +41,13 @@ private:
     using Method::do_setup;
     void do_setup(const FunctionSpace& source, const FunctionSpace& target) override;
     void do_setup(const Grid& source, const Grid& target, const Cache&) override;
+    void do_setup(const FunctionSpace& source, const FunctionSpace& target, const Cache&) override;
 
     FunctionSpace source_;
     FunctionSpace target_;
 
     int halo_{0};
     int listSize_{8};
-    bool halo_exchange_{true};
 };
 
 }  // namespace method

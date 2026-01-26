@@ -78,9 +78,9 @@ CASE("test_fieldset_concatenation") {
 
 CASE("test_duplicate_name_throws") {
     FieldSet fieldset;
-    auto field_0 = fieldset.add(Field("0", make_datatype<double>(), array::make_shape(10,4)));
-    auto field_1 = fieldset.add(Field("0", make_datatype<double>(), array::make_shape(10,5))); // same name as field_0, uh-oh !
-    auto field_2 = fieldset.add(Field("2", make_datatype<double>(), array::make_shape(10,6)));
+    [[maybe_unused]] auto field_0 = fieldset.add(Field("0", make_datatype<double>(), array::make_shape(10,4)));
+    [[maybe_unused]] auto field_1 = fieldset.add(Field("0", make_datatype<double>(), array::make_shape(10,5))); // same name as field_0, uh-oh !
+    [[maybe_unused]] auto field_2 = fieldset.add(Field("2", make_datatype<double>(), array::make_shape(10,6)));
 
     Field f;
     EXPECT_NO_THROW(f = fieldset["2"]); // OK

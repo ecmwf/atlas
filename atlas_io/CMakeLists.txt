@@ -48,6 +48,29 @@ ecbuild_add_option( FEATURE ECKIT_CODEC
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+ecbuild_add_option( FEATURE WARNING_AS_ERROR
+                    DEFAULT OFF
+                    DESCRIPTION "Treat compile warning as error" )
+
+if(HAVE_WARNING_AS_ERROR)
+  ecbuild_add_cxx_flags("-Werror" NO_FAIL NAME atlas_io_cxx_warning_as_error)
+endif()
+
+ecbuild_add_option( FEATURE WARNINGS
+                    DEFAULT ON
+                    DESCRIPTION "Add warnings to compiler" )
+
+if(HAVE_WARNINGS)
+  ecbuild_add_cxx_flags("-Wall" NO_FAIL)
+  ecbuild_add_cxx_flags("-Wextra" NO_FAIL)
+  ecbuild_add_cxx_flags("-Wno-unused-parameter" NO_FAIL)
+
+endif()
+
+if( CMAKE_CXX_COMPILER_ID STREQUAL Intel )
+  ecbuild_add_cxx_flags("-diag-disable=10441" NO_FAIL)   # Deprecated classic compiler
+endif()
+
 check_cxx_source_compiles( "#include <cxxabi.h>\n int main() { char * type; int status; char * r = abi::__cxa_demangle(type, 0, 0, &status); }"
     ATLAS_IO_HAVE_CXXABI_H )
 

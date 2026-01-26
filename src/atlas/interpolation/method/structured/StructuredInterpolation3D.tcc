@@ -63,8 +63,6 @@ void StructuredInterpolation3D<Kernel>::do_setup( const Grid& source, const Grid
     if ( mpi::size() > 1 ) {
         ATLAS_NOTIMPLEMENTED;
     }
-
-
     ATLAS_ASSERT( StructuredGrid( source ) );
     FunctionSpace source_fs = functionspace::StructuredColumns( source, option::halo( kernel_->stencil_halo() ) );
     FunctionSpace target_fs = functionspace::PointCloud( target );
@@ -72,6 +70,21 @@ void StructuredInterpolation3D<Kernel>::do_setup( const Grid& source, const Grid
     do_setup( source_fs, target_fs );
 }
 
+template <typename Kernel>
+void StructuredInterpolation3D<Kernel>::do_setup( const FunctionSpace& source, const FunctionSpace& target, const Cache& cache) {
+    ATLAS_TRACE( "StructuredInterpolation3D<" + Kernel::className() + ">::do_setup(FunctionSpace source, FunctionSpace target, const Cache)" );
+    if (! matrix_free_ && interpolation::MatrixCache(cache)) {
+        setMatrix(cache);
+        source_ = source;
+        target_ = target;
+        ATLAS_ASSERT(matrix().rows() == target.size());
+        ATLAS_ASSERT(matrix().cols() == source.size());
+        return;
+    }
+    else {
+        do_setup( source, target );
+    }
+}
 
 template <typename Kernel>
 void StructuredInterpolation3D<Kernel>::do_setup( const FunctionSpace& source, const FunctionSpace& target ) {

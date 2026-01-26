@@ -396,7 +396,7 @@ We need to connect to next region
 
     region.elems.reset(array::Array::create<int>(shape));
 
-    int nelems     = 0;
+    [[maybe_unused]] int nelems     = 0;
     region.nquads  = 0;
     region.ntriags = 0;
 
@@ -646,7 +646,6 @@ We need to connect to next region
                     elem(1)  = ipS1;
                     elem(2)  = ipS2;
                     elem(3)  = ipN2;
-                    add_quad = false;
                     std::array<int, 4> np{pN1, pN2, pS1, pS2};
                     std::array<int, 4> pcnts;
                     for (int j = 0; j < 4; ++j) {
@@ -1338,10 +1337,6 @@ void StructuredMeshGenerator::generate_mesh(const StructuredGrid& rg, const grid
                 cells_glb_idx(jcell) = jcell + 1;
                 cells_part(jcell)    = mypart;
                 if( regular_cells_glb_idx ) {
-                    gidx_t nx = rg.nx(jlatN) - 1;
-                    if (periodic_east_west) {
-                        ++nx;
-                    }
                     cells_glb_idx(jcell) = glb_idx( quad_nodes[0] );
                 }
             }

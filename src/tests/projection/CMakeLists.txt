@@ -16,8 +16,7 @@ foreach(test
 endforeach()
 
 ecbuild_add_test( TARGET atlas_test_jacobian SOURCES test_jacobian.cc LIBS atlas
-    ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
-                ATLAS_FPE=FE_OVERFLOW,FE_DIVBYZERO ) # FE_INVALID wrongly raised in release build of e.g. PGI 20.9
+    ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT} )
 
 if(atlas_HAVE_PROJ)
     ecbuild_add_test( TARGET atlas_test_proj SOURCES test_proj.cc LIBS atlas ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT} )

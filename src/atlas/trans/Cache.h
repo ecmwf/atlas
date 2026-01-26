@@ -13,7 +13,6 @@
 #include <memory>
 
 #include "eckit/filesystem/PathName.h"
-#include "eckit/io/Buffer.h"
 
 #include "atlas/util/ObjectHandle.h"
 
@@ -57,13 +56,14 @@ public:
 
 //-----------------------------------------------------------------------------
 class TransCacheFileEntry final : public TransCacheEntry {
-private:
-    eckit::Buffer buffer_;
-
 public:
     TransCacheFileEntry(const eckit::PathName& path);
-    virtual size_t size() const override { return buffer_.size(); }
-    virtual const void* data() const override { return buffer_.data(); }
+    virtual ~TransCacheFileEntry() override;
+    virtual size_t size() const override { return size_; }
+    virtual const void* data() const override { return data_; }
+private:
+    void* data_  = nullptr;
+    size_t size_ = 0;
 };
 
 //-----------------------------------------------------------------------------

@@ -65,8 +65,6 @@ public:
     //--------------------------------------------------------------------------------------
     // Constructors
 
-    KDTree(const KDTree& handle): Handle(handle) {}
-
     /// @brief Construct an empty kd-tree with default geometry (Earth)
     KDTree(): Handle(new detail::KDTreeMemory<Payload, Point>()) {}
 

@@ -29,8 +29,10 @@ private:
 struct MissingIfAllMissing : Missing {
     bool execute(NonLinear::Matrix& W, const Field& field) const override;
 
+    bool execute(NonLinear::Matrix& W, const array::Array&, const Config&) const override;
+
     template<typename T>
-    bool executeT(NonLinear::Matrix& W, const Field& field) const;
+    bool executeT(NonLinear::Matrix& W, const array::Array&, const Config&) const;
 
     static std::string static_type() { return "missing-if-all-missing"; }
 };
@@ -39,8 +41,10 @@ struct MissingIfAllMissing : Missing {
 struct MissingIfAnyMissing : Missing {
     bool execute(NonLinear::Matrix& W, const Field& field) const override;
 
+    bool execute(NonLinear::Matrix& W, const array::Array&, const Config&) const override;
+
     template<typename T>
-    bool executeT(NonLinear::Matrix& W, const Field& field) const;
+    bool executeT(NonLinear::Matrix& W, const array::Array&, const Config&) const;
 
     static std::string static_type() { return "missing-if-any-missing"; }
 };
@@ -49,8 +53,10 @@ struct MissingIfAnyMissing : Missing {
 struct MissingIfHeaviestMissing : Missing {
     bool execute(NonLinear::Matrix& W, const Field& field) const override;
 
+    bool execute(NonLinear::Matrix& W, const array::Array&, const Config&) const override;
+
     template<typename T>
-    bool executeT(NonLinear::Matrix& W, const Field& field) const;
+    bool executeT(NonLinear::Matrix& W, const array::Array&, const Config&) const;
 
     static std::string static_type() { return "missing-if-heaviest-missing"; }
 };

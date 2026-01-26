@@ -46,7 +46,12 @@ void atlas__Field__device_data_specf(FieldImpl* This, Value*& data, int& rank, i
     }
     data     = This->array().device_data<Value>();
     shapef   = const_cast<int*>(This->shapef().data());
-    stridesf = const_cast<int*>(This->device_stridesf().data());
+    if (data == This->array().host_data<Value>()) {
+        stridesf = const_cast<int*>(This->stridesf().data());
+    }
+    else {
+        stridesf = const_cast<int*>(This->device_stridesf().data());
+    }
     rank     = This->shapef().size();
 }
 
@@ -268,6 +273,16 @@ void atlas__Field__update_device(FieldImpl* This) {
 void atlas__Field__update_host(FieldImpl* This) {
     ATLAS_ASSERT(This != nullptr, "Cannot access uninitialised atlas_Field");
     This->updateHost();
+}
+
+void atlas__Field__sync_device(FieldImpl* This) {
+    ATLAS_ASSERT(This != nullptr, "Cannot access uninitialised atlas_Field");
+    This->syncDevice();
+}
+
+void atlas__Field__sync_host(FieldImpl* This) {
+    ATLAS_ASSERT(This != nullptr, "Cannot access uninitialised atlas_Field");
+    This->syncHost();
 }
 
 void atlas__Field__sync_host_device(FieldImpl* This) {

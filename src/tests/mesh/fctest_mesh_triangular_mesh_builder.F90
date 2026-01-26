@@ -42,7 +42,9 @@ TEST( test_mesbuilder )
   integer(ATLAS_KIND_GIDX), allocatable :: node_global_index(:)
   integer(ATLAS_KIND_GIDX), allocatable :: triag_global_index(:)
   integer(ATLAS_KIND_GIDX), allocatable :: triag_nodes_global_index(:,:)
-  real(c_double), allocatable :: x(:), y(:), lon(:), lat(:)
+  real(c_double), allocatable :: xy_in(:,:), lonlat_in(:,:)
+
+  integer(ATLAS_KIND_GIDX) :: global_index_base = 0
 
   !   small mesh
   !
@@ -54,29 +56,38 @@ TEST( test_mesbuilder )
   nb_triags = 4
 
   allocate(node_global_index(nb_nodes))
-  allocate(x(nb_nodes))
-  allocate(y(nb_nodes))
-  allocate(lon(nb_nodes))
-  allocate(lat(nb_nodes))
+  allocate(xy_in(2,nb_nodes))
+  allocate(lonlat_in(2,nb_nodes))
   allocate(triag_global_index(nb_triags))
   allocate(triag_nodes_global_index(3,nb_triags))
 
-  node_global_index = [1, 2, 3, 4, 5, 6]
-  lon = [0.0, 0.0, 10.0, 15.0, 5.0, 15.0]
-  lat = [5.0, 0.0, 0.0,  0.0,  5.0, 5.0]
-  x = lon / 10._c_double
-  y = lat / 10._c_double
+  node_global_index = [6, 5, 4, 3, 2, 1]
+  lonlat_in = reshape([&
+    15.0, 5.0,& ! point 6
+     5.0, 5.0,& ! point 5
+    15.0, 0.0,& ! point 4
+    10.0, 0.0,& ! point 3
+     0.0, 0.0,& ! point 2
+     0.0, 5.0 & ! point 1
+  ], shape(lonlat_in))
+
+  xy_in(:,:) = lonlat_in / 10._c_double
 
   triag_global_index = [1, 2, 3, 4]
   triag_nodes_global_index = reshape([3,6,5 , 3,4,6,  2,5,1,  2,3,5], shape(triag_nodes_global_index))
 
+  ! Change base
+  node_global_index = node_global_index - 1 + global_index_base
+  triag_global_index = triag_global_index - 1 + global_index_base
+  triag_nodes_global_index = triag_nodes_global_index - 1 + global_index_base
 
   ! Manually build mesh
   BLOCK
     type(atlas_TriangularMeshBuilder) :: meshbuilder
     meshbuilder = atlas_TriangularMeshBuilder()
-    mesh = meshbuilder%build(nb_nodes, node_global_index, x, y, lon, lat, &
-                             nb_triags, triag_global_index, triag_nodes_global_index)
+    mesh = meshbuilder%build(nb_nodes, node_global_index, xy_in(1,:), xy_in(2,:), lonlat_in(1,:), lonlat_in(2,:), &
+                             nb_triags, triag_global_index, triag_nodes_global_index, &
+                             global_index_base)
     call meshbuilder%final()
   END BLOCK
 
@@ -103,9 +114,9 @@ TEST( test_mesbuilder )
     call field_lonlat%data(lonlat)
     call field_global_index%data(global_index)
     do jnode=1,nb_nodes
-      FCTEST_CHECK_EQUAL( xy(:,jnode), ([x(jnode), y(jnode)]))
-      FCTEST_CHECK_EQUAL( lonlat(:,jnode), ([lon(jnode), lat(jnode)]))
-      FCTEST_CHECK_EQUAL( global_index(jnode), jnode)
+      FCTEST_CHECK_EQUAL( xy(:,jnode), xy_in(:,jnode) )
+      FCTEST_CHECK_EQUAL( lonlat(:,jnode), lonlat_in(:,jnode) )
+      FCTEST_CHECK_EQUAL( global_index(jnode), node_global_index(jnode) - global_index_base + 1 )
     enddo
     call field_xy%final()
     call field_lonlat%final()

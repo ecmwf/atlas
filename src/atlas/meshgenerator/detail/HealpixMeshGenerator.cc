@@ -67,8 +67,9 @@ HealpixMeshGenerator::HealpixMeshGenerator(const eckit::Parametrisation& p) {
     if (p.get("3d", three_dimensional)) {
         options.set("3d", three_dimensional);
     }
+    options.get("3d",three_dimensional);
 
-    std::string pole_elements{"quads"};
+    std::string pole_elements{ three_dimensional ? "quads" : options.getString("pole_elements") };
     if (p.get("pole_elements", pole_elements)) {
         if (pole_elements != "pentagons" and pole_elements != "quads") {
             Log::warning() << "Atlas::HealpixMeshGenerator accepts \"pentagons\" or \"quads\" for \"pole_elements\"."
@@ -104,7 +105,8 @@ void HealpixMeshGenerator::configure_defaults() {
     options.set("3d", false);
 
     // This options switches between pentagons and quads as the pole elements for (3d -> false)
-    options.set("pole_elements", "quads");
+    // choose: "quads" or "pentagons"
+    options.set("pole_elements", "pentagons");
 
     // This options sets the default partitioner
     std::string partitioner;
@@ -153,7 +155,7 @@ gidx_t HealpixMeshGenerator::idx_xy_to_x(const int xidx, const int yidx, const i
     ATLAS_ASSERT(xidx >= 0);
 
     const gidx_t nb_nodes_orig = 12 * ns * ns;
-    auto ghostIdx              = [ns, this](int latid) { return this->nb_nodes_ + latid; };
+    auto ghostIdx              = [this](int latid) { return this->nb_nodes_ + latid; };
     gidx_t ret;
 
     if (yidx == 0) {
@@ -197,7 +199,7 @@ gidx_t HealpixMeshGenerator::up_idx(const int xidx, const int yidx, const int ns
     ATLAS_ASSERT(yidx <= 4 * ns && yidx >= 0);
 
     const gidx_t nb_nodes_orig = 12 * ns * ns;
-    auto ghostIdx              = [ns, this](int latid) { return this->nb_nodes_ + latid; };
+    auto ghostIdx              = [this](int latid) { return this->nb_nodes_ + latid; };
 
     int ret;
 
@@ -280,7 +282,7 @@ gidx_t HealpixMeshGenerator::down_idx(const int xidx, const int yidx, const int 
     ATLAS_ASSERT(yidx <= 4 * ns);
 
     const gidx_t nb_nodes_orig = 12 * ns * ns;
-    auto ghostIdx              = [ns, this](int latid) { return this->nb_nodes_ + latid; };
+    auto ghostIdx              = [this](int latid) { return this->nb_nodes_ + latid; };
 
     int ret;
 
@@ -376,7 +378,7 @@ gidx_t HealpixMeshGenerator::right_idx(const int xidx, const int yidx, const int
     ATLAS_ASSERT(yidx <= 4 * ns);
 
     const gidx_t nb_nodes_orig = 12 * ns * ns;
-    auto ghostIdx              = [ns, this](int latid) { return this->nb_nodes_ + latid; };
+    auto ghostIdx              = [this](int latid) { return this->nb_nodes_ + latid; };
     int ret                    = -1;
 
     if (yidx == 0) {
@@ -462,7 +464,7 @@ gidx_t HealpixMeshGenerator::right_idx(const int xidx, const int yidx, const int
 // return global_id - 1 of the pentagon node "to the right of" (xidx,yidx) node
 // pentagon points are only needed for yidx == 1 and yidx == 4 * ns - 1
 gidx_t HealpixMeshGenerator::pentagon_right_idx(const int xidx, const int yidx, const int ns) const {
-    auto ghostIdx = [ns, this](int latid) { return this->nb_nodes_ + latid; };
+    auto ghostIdx = [this](int latid) { return this->nb_nodes_ + latid; };
     if (yidx == 1) {
         return (xidx != 3 ? nb_pole_nodes_ + xidx + 1 : ghostIdx(1));
     }
@@ -827,7 +829,7 @@ void HealpixMeshGenerator::generate_mesh(const StructuredGrid& grid, const grid:
     auto cells_glb_idx      = array::make_view<gidx_t, 1>(mesh.cells().global_index());
     auto& node_connectivity = mesh.cells().node_connectivity();
 
-    idx_t cell_nodes[5];
+    std::array<idx_t,5> cell_nodes;
     int jquadcell = quad_begin;
     int jpentcell = pent_begin;
 
@@ -1024,13 +1026,24 @@ void HealpixMeshGenerator::generate_mesh(const StructuredGrid& grid, const grid:
 #endif
                 // add cell to the node connectivity table
                 if (pentagon) {
+                    if (south_hemisphere) {
+                        // Rotate by 2 so that output in 3d shows healpix quad when taking the first 4 nodes
+                        //
+                        //       5                                   3
+                        //    .´  `.                              .´  `.
+                        //   1      4    ----rotate-by-2--->     4      2
+                        //   |      |                            |      |
+                        //   2------3    --- south pole ---      5------1
+                        //
+                        std::rotate(cell_nodes.begin(),cell_nodes.begin()+2,cell_nodes.end());
+                    }
                     cells_part(jpentcell) = mypart;
-                    node_connectivity.set(jpentcell, cell_nodes);
+                    node_connectivity.set(jpentcell, cell_nodes.data());
                     ++jpentcell;
                 }
                 else {
                     cells_part(jquadcell) = mypart;
-                    node_connectivity.set(jquadcell, cell_nodes);
+                    node_connectivity.set(jquadcell, cell_nodes.data());
                     ++jquadcell;
                 }
             }

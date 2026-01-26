@@ -34,3 +34,5 @@ ecbuild_add_executable(
   SOURCES     atlas-gaussian-latitudes.cc
   LIBS        atlas
   CONDITION   atlas_HAVE_ATLAS_GRID )
+
+add_subdirectory(atlas-interpolations)

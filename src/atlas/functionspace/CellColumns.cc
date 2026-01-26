@@ -16,6 +16,7 @@
 
 #include "atlas/array/MakeView.h"
 #include "atlas/functionspace/CellColumns.h"
+#include "atlas/grid/UnstructuredGrid.h"
 #include "atlas/library/config.h"
 #include "atlas/mesh/HybridElements.h"
 #include "atlas/mesh/IsGhostNode.h"
@@ -283,6 +284,10 @@ CellColumns::CellColumns(const Mesh& mesh, const eckit::Configuration& config):
         nb_cells_ = mesh.cells().size();
     }
     ATLAS_ASSERT(nb_cells_);
+
+    if (mesh_.grid()) {
+        grid_ = mesh_.grid();
+    }
 }
 
 CellColumns::~CellColumns() = default;
@@ -511,6 +516,11 @@ std::string checksum_2d_field(const parallel::Checksum& checksum, const Field& f
     auto values = array::make_view<T, 2>(field);
     return checksum.execute(values.data(), field.stride(0));
 }
+template <typename T>
+std::string checksum_1d_field(const parallel::Checksum& checksum, const Field& field) {
+    auto values = array::make_view<T, 1>(field);
+    return checksum.execute(values.data(), 1);
+}
 
 }  // namespace
 
@@ -518,40 +528,71 @@ std::string CellColumns::checksum(const FieldSet& fieldset) const {
     eckit::MD5 md5;
     for (idx_t f = 0; f < fieldset.size(); ++f) {
         const Field& field = fieldset[f];
+        std::string field_checksum;
         if (field.datatype() == array::DataType::kind<int>()) {
-            if (field.levels()) {
-                md5 << checksum_3d_field<int>(checksum(), field);
+            if (field.rank()==3) {
+                field_checksum = checksum_3d_field<int>(checksum(), field);
+            }
+            else if (field.rank()==2) {
+                field_checksum = checksum_2d_field<int>(checksum(), field);
+            }
+            else if (field.rank()==1) {
+                field_checksum = checksum_1d_field<int>(checksum(), field);
             }
             else {
-                md5 << checksum_2d_field<int>(checksum(), field);
+                ATLAS_NOTIMPLEMENTED;
             }
         }
         else if (field.datatype() == array::DataType::kind<long>()) {
-            if (field.levels()) {
-                md5 << checksum_3d_field<long>(checksum(), field);
+            if (field.rank()==3) {
+                field_checksum = checksum_3d_field<long>(checksum(), field);
+            }
+            else if (field.rank()==2) {
+                field_checksum = checksum_2d_field<long>(checksum(), field);
+            }
+            else if (field.rank()==1) {
+                field_checksum = checksum_1d_field<long>(checksum(), field);
             }
             else {
-                md5 << checksum_2d_field<long>(checksum(), field);
+                ATLAS_NOTIMPLEMENTED;
             }
         }
         else if (field.datatype() == array::DataType::kind<float>()) {
-            if (field.levels()) {
-                md5 << checksum_3d_field<float>(checksum(), field);
+            if (field.rank()==3) {
+                field_checksum = checksum_3d_field<float>(checksum(), field);
+            }
+            else if (field.rank()==2) {
+                field_checksum = checksum_2d_field<float>(checksum(), field);
+            }
+            else if (field.rank()==1) {
+                field_checksum = checksum_1d_field<float>(checksum(), field);
             }
             else {
-                md5 << checksum_2d_field<float>(checksum(), field);
+                ATLAS_NOTIMPLEMENTED;
             }
         }
         else if (field.datatype() == array::DataType::kind<double>()) {
-            if (field.levels()) {
-                md5 << checksum_3d_field<double>(checksum(), field);
+            if (field.rank()==3) {
+                field_checksum = checksum_3d_field<double>(checksum(), field);
+            }
+            else if (field.rank()==2) {
+                field_checksum = checksum_2d_field<double>(checksum(), field);
+            }
+            else if (field.rank()==1) {
+                field_checksum = checksum_1d_field<double>(checksum(), field);
             }
             else {
-                md5 << checksum_2d_field<double>(checksum(), field);
+                ATLAS_NOTIMPLEMENTED;
             }
         }
         else {
             throw_Exception("datatype not supported", Here());
+        }
+        if (fieldset.size() == 1) {
+            return field_checksum;
+        }
+        else {
+            md5 << field_checksum;
         }
     }
     return md5;
@@ -570,6 +611,46 @@ const parallel::Checksum& CellColumns::checksum() const {
     return *checksum_;
 }
 
+const Grid& CellColumns::grid() const {
+    if (grid_) {
+        return grid_;
+    }
+
+    const auto& comm = mpi::comm(mpi_comm());
+    std::vector<PointXY> points;
+    if (comm.size() == 1) {
+        const auto xy = atlas::array::make_view<double, 2>(mesh_.nodes().xy());
+        for (auto i = 0; i < xy.shape(0); i++) {
+            points.push_back({xy(i, 0), xy(i, 1)});
+        }
+    } else {
+        std::vector<int> gidx;
+        std::vector<double> x, y;
+        const auto gidxView = array::make_view<gidx_t, 1>(global_index());
+        const auto ghostView = array::make_view<int, 1>(ghost());
+        const auto xy = atlas::array::make_view<double, 2>(mesh_.nodes().xy());
+        for (auto i = 0; i < xy.shape(0); i++) {
+            if (ghostView(i) == 0) {
+                gidx.push_back(gidxView(i));
+                x.push_back(xy(i, 0));
+                y.push_back(xy(i, 1));
+            }
+        }
+        eckit::mpi::Buffer<int> gidxBuffer(comm.size());
+        eckit::mpi::Buffer<double> xBuffer(comm.size());
+        eckit::mpi::Buffer<double> yBuffer(comm.size());
+        comm.allGatherv(gidx.begin(), gidx.end(), gidxBuffer);
+        comm.allGatherv(x.begin(), x.end(), xBuffer);
+        comm.allGatherv(y.begin(), y.end(), yBuffer);
+        points.reserve(gidxBuffer.buffer.size());
+        for (auto i : gidxBuffer.buffer) {
+            points[i - 1] = atlas::PointXY{xBuffer.buffer[i - 1], yBuffer.buffer[i - 1]};
+        }
+    }
+    grid_ = UnstructuredGrid(points);
+    return grid_;
+}
+
 Field CellColumns::lonlat() const {
     if (!mesh_.cells().has_field("lonlat")) {
         mesh::actions::Build2DCellCentres("lonlat")(const_cast<Mesh&>(mesh_));
@@ -586,7 +667,10 @@ Field CellColumns::global_index() const {
 }
 
 Field CellColumns::ghost() const {
-    return mesh_.cells().field("ghost");
+    if (mesh_.cells().has_field("ghost")) {
+       return mesh_.cells().field("ghost");
+    }
+    return mesh_.cells().halo();
 }
 
 Field CellColumns::partition() const {

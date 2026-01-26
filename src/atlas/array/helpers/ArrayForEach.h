@@ -82,6 +82,7 @@ constexpr auto demote_policy() {
   } else {
     return ExecutionPolicy{};
   }
+  ATLAS_UNREACHABLE();
 }
 
 template <typename execution_policy>
@@ -153,6 +154,7 @@ constexpr auto argPadding() {
   } else {
     return std::make_tuple();
   }
+  ATLAS_UNREACHABLE();
 }
 
 template <size_t ViewIdx = 0, typename... SlicerArgs, typename ArrayViewTuple>
@@ -184,6 +186,7 @@ auto makeSlices(const std::tuple<SlicerArgs...>& slicerArgs,
         makeSlices<ViewIdx + 1>(slicerArgs,
                                 std::forward<ArrayViewTuple>(arrayViews)));
   }
+  ATLAS_UNREACHABLE();
 }
 
 template <typename ExecutionPolicy, int Dim, int... ItrDims>

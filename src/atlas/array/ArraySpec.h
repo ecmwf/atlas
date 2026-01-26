@@ -12,6 +12,8 @@
 
 #include <stddef.h>
 #include <vector>
+#include <string_view>
+#include <string>
 
 #include "atlas/array/ArrayIdx.h"
 #include "atlas/array/ArrayLayout.h"
@@ -73,6 +75,23 @@ public:
 
 private:
     void allocate_fortran_specs();
+};
+
+// --------------------------------------------------------------------------------------------
+
+class label {
+public:
+    label(std::string_view s) {
+        previous_ = get();
+        set(s);
+    }
+    ~label() {
+        set(previous_);
+    }
+    static std::string_view get();
+    static void set(std::string_view);
+private:
+    std::string previous_;
 };
 
 //------------------------------------------------------------------------------------------------------

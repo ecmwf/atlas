@@ -112,8 +112,8 @@ ProjectionImpl::Jacobian LambertConformalConicProjection::jacobian(const PointLo
 
     double costheta = cos_d(theta), sintheta = sin_d(theta);
 
-    double x = rho * sintheta;
-    double y = rho0_ - rho * costheta;
+    // double x = rho * sintheta;
+    // double y = rho0_ - rho * costheta;
 
     auto cpj = [&](const double dlon, const double dlat, double& dx, double& dy) {
         double drho   = deg2rad * radius_ * F_ * (-n_) * std::pow(tanlat, -n_ - 1) / (coslat * coslat) * dlat * 0.5;

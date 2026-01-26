@@ -247,7 +247,7 @@ StructuredIndexRange::StructuredIndexRange(const functionspace::StructuredColumn
     jBeginEnd_ = std::make_pair(structuredColumns.j_begin(), structuredColumns.j_end());
 
     for (auto j = jBeginEnd_.first; j < jBeginEnd_.second; ++j) {
-        iBeginEnd_.push_back(std::make_pair(structuredColumns.i_begin(j), structuredColumns.i_end(j)));
+        iBeginEnd_.emplace_back(structuredColumns.i_begin(j), structuredColumns.i_end(j));
     }
 
     mpi_comm_ = structuredColumns.mpi_comm();

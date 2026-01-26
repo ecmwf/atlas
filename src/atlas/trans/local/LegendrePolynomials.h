@@ -11,6 +11,7 @@
 #pragma once
 
 #include <cstddef>
+#include <vector>
 
 namespace atlas {
 namespace trans {
@@ -34,10 +35,22 @@ namespace trans {
 //
 void compute_zfn(const int trc, double zfn[]);
 
+
+// Workspace to avoid repeated allocations
+struct LegendrePolynomialsWorkspace {
+    LegendrePolynomialsWorkspace(int trc) {
+        vsin.reserve(trc+1);
+        vcos.reserve(trc+1);
+    }
+    std::vector<double> vsin;
+    std::vector<double> vcos;
+};
+
 void compute_legendre_polynomials_lat(const int trc,     // truncation (in)
                                       const double lat,  // latitude in radians (in)
                                       double legpol[],   // legendre polynomials
-                                      double zfn[]);
+                                      double zfn[],
+                                      LegendrePolynomialsWorkspace& w); // workspace to avoid allocations
 
 void compute_legendre_polynomials(
     const int trc,             // truncation (in)

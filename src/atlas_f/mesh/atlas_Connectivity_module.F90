@@ -94,7 +94,7 @@ contains
   procedure, public :: block    => atlas_MultiBlockConnectivity__block
 
 ! PGI compiler bug won't accept "assignment_operator_hook" from atlas_Connectivity parent class... grrr
-  procedure, public :: assignment_operator_hook => atlas_MultiBlockConnectivity__assignment_operator_hook
+  procedure, public :: assignment_operator_hook => atlas_MBC__assignment_operator_hook
 
 #if FCKIT_FINAL_NOT_INHERITING
   final :: atlas_MultiBlockConnectivity__final_auto
@@ -194,7 +194,7 @@ end subroutine
 ! Following routine is exact copy of "assignment_operator_hook" above, because of bug in PGI compiler (17.7)
 ! Without it, wrongly the "fckit_owned_object::assignment_operator_hook" is used instead of
 ! "atlas_Connectivity::assignment_operator_hook".
-subroutine atlas_MultiBlockConnectivity__assignment_operator_hook(this,other)
+subroutine atlas_MBC__assignment_operator_hook(this,other)
   class(atlas_MultiBlockConnectivity) :: this
   class(fckit_owned_object) :: other
   call this%set_access()

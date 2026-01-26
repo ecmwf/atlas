@@ -106,13 +106,18 @@ CASE("extract cache, copy it, and move it for use") {
 
     set_field(field_source, grid_source, func);
 
-    eckit::linalg::SparseMatrix matrix = get_or_create_cache(grid_source, grid_target).matrix();
+    interpolation::MatrixCache created_cache = get_or_create_cache(grid_source, grid_target);
+    eckit::linalg::SparseMatrix eckit_matrix_view = atlas::linalg::make_non_owning_eckit_sparse_matrix(created_cache.matrix());
+    eckit::linalg::SparseMatrix eckit_matrix_copy = atlas::linalg::make_eckit_sparse_matrix(created_cache.matrix());
 
-    EXPECT(not matrix.empty());
+    EXPECT(not created_cache.matrix().empty());
+    EXPECT(not eckit_matrix_view.empty());
+    EXPECT(not eckit_matrix_copy.empty());
 
-    auto cache = interpolation::MatrixCache(std::move(matrix));
+    auto cache = interpolation::MatrixCache(atlas::linalg::make_sparse_matrix_storage(std::move(eckit_matrix_copy)));
 
-    EXPECT(matrix.empty());
+    EXPECT(not eckit_matrix_view.empty()); // We didn't touch the view
+    EXPECT(eckit_matrix_copy.empty());     // This has been moved into the new 'cache'
 
     ATLAS_TRACE_SCOPE("Interpolate with cache") {
         Interpolation interpolation_using_cache(option::type("finite-element"), grid_source, grid_target, cache);
@@ -133,7 +138,10 @@ CASE("extract cache, copy it, and pass non-owning pointer") {
 
     set_field(field_source, grid_source, func);
 
-    eckit::linalg::SparseMatrix matrix = get_or_create_cache(grid_source, grid_target).matrix();
+    interpolation::MatrixCache created_cache = get_or_create_cache(grid_source, grid_target);
+    const auto& matrix_storage = created_cache.matrix();
+    atlas::linalg::SparseMatrixStorage matrix_storage_copy(matrix_storage);
+    auto matrix = atlas::linalg::make_host_view<eckit::linalg::Scalar,eckit::linalg::Index>(matrix_storage_copy);
 
     EXPECT(not matrix.empty());
 
@@ -155,7 +163,7 @@ CASE("extract cache, copy it, and pass non-owning pointer") {
     check_field(field_target, grid_target, func, 1.e-4);
     set_field(field_target, 0.);
 
-    auto cache = interpolation::MatrixCache(&matrix);
+    auto cache = interpolation::MatrixCache( &matrix_storage_copy ); 
 
     EXPECT(not matrix.empty());
 

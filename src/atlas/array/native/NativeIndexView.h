@@ -38,12 +38,14 @@
 
 #pragma once
 
+#include <initializer_list>
 #include <iosfwd>
 #include <type_traits>
-#include <initializer_list>
+#include <utility>
 
 #include "atlas/array/ArrayDataStore.h"
 #include "atlas/library/config.h"
+#include "atlas/mdspan.h"
 
 //------------------------------------------------------------------------------------------------------
 
@@ -52,64 +54,13 @@ namespace array {
 
 //------------------------------------------------------------------------------------------------------
 
-namespace detail {
-// FortranIndex:
-// Helper class that does +1 and -1 operations on stored values
-template <typename Value>
-class FortranIndex {
-public:
-    enum
-    {
-        BASE = 1
-    };
-
-public:
-    FortranIndex(Value* idx): idx_(idx) {}
-    void set(const Value& value) { *(idx_) = value + BASE; }
-    Value get() const { return *(idx_)-BASE; }
-    void operator                =(const Value& value) { set(value); }
-    FortranIndex<Value>& operator=(const FortranIndex<Value>& other) {
-        set(other.get());
-        return *this;
-    }
-    FortranIndex<Value>& operator--() {
-        --(*(idx_));
-        return *this;
-    }
-    FortranIndex<Value>& operator++() {
-        ++(*(idx_));
-        return *this;
-    }
-
-    FortranIndex<Value>& operator+=(Value v) {
-        *(idx_) += v;
-        return *this;
-    }
-
-    FortranIndex<Value>& operator-=(Value v) {
-        *(idx_) -= v;
-        return *this;
-    }
-
-    // implicit conversion
-    operator Value() const { return get(); }
-
-private:
-    Value* idx_;
-};
-
-}  // namespace detail
-
 #if ATLAS_HAVE_FORTRAN
 #define INDEX_REF Index
 #define FROM_FORTRAN -1
-#define TO_FORTRAN +1
 #else
 #define INDEX_REF *
 #define FROM_FORTRAN
-#define TO_FORTRAN
 #endif
-
 
 #define ENABLE_IF_NON_CONST                                                                             \
     template <bool EnableBool                                                                   = true, \
@@ -131,12 +82,14 @@ template <typename Value, int Rank>
 class IndexView {
 public:
     using value_type = typename remove_const<Value>::type;
+    using accessor_type = index_accessor<Value,ATLAS_HAVE_FORTRAN>;
+    using reference = typename accessor_type::reference;
 
-#if ATLAS_HAVE_FORTRAN
-    typedef detail::FortranIndex<Value> Index;
-#else
-    typedef Value& Index;
-#endif
+private:
+    using mdspan_extents_type = dextents<size_t,Rank>;
+    using mdspan_strides_type = std::array<size_t,Rank>;
+    using mdspan_type         = mdspan<Value, mdspan_extents_type, layout_stride, index_accessor<Value,ATLAS_HAVE_FORTRAN>>;
+    using const_mdspan_type   = mdspan<const Value, mdspan_extents_type, layout_stride, index_accessor<const Value,ATLAS_HAVE_FORTRAN>>;
 
 public:
 #ifndef DOXYGEN_SHOULD_SKIP_THIS
@@ -144,18 +97,28 @@ public:
 
     IndexView(Value* data, const idx_t shape[Rank], const idx_t strides[Rank]);
 #endif
+
+    template <typename T, typename E, typename L, typename A, typename = std::enable_if_t<std::is_convertible_v<typename A::data_handle_type, Value*> && E::rank() == Rank>>
+    IndexView(mdspan<T,E,L,A>& other) :
+        data_(other.data_handle()) {
+        for (int j = 0; j < Rank; ++j) {
+            shape_[j] = other.extent(j);
+            strides_[j] = other.stride(j);
+        }
+    }
+
     // -- Access methods
 
     /// @brief Multidimensional index operator: view(i,j,k,...)
     template <typename... Idx>
-    Index operator()(Idx... idx) {
+    reference operator()(Idx... idx) {
         check_bounds(idx...);
-        return INDEX_REF(&data_[index(idx...)]);
+        return accessor_.access(data_, index(idx...));
     }
 
-    /// @brief Multidimensional index operator: view(i,j,k,...)
-    template <typename... Ints>
-    const value_type operator()(Ints... idx) const {
+    template <typename... Idx>
+    value_type operator()(Idx... idx) const {
+        check_bounds(idx...);
         return data_[index(idx...)] FROM_FORTRAN;
     }
 
@@ -165,6 +128,14 @@ public:
     template <typename Int>
     idx_t shape(Int idx) const {
         return shape_[idx];
+    }
+
+    mdspan_type as_mdspan() {
+        return mdspan_type{data_, {mdspan_extents(), mdspan_strides()}};
+    }
+
+    const_mdspan_type as_mdspan() const {
+        return const_mdspan_type{data_, {mdspan_extents(), mdspan_strides()}};
     }
 
 private:
@@ -221,10 +192,29 @@ private:
 
     void dump(std::ostream& os) const;
 
+    template<int... i>
+    mdspan_extents_type _get_mdspan_extents(std::integer_sequence<int, i...> = {}) const {
+        return mdspan_extents_type{(shape_[i])...};
+    }
+
+    mdspan_extents_type mdspan_extents() const {
+        return _get_mdspan_extents(std::make_integer_sequence<int,Rank>{});
+    }
+
+    template<int... i>
+    mdspan_strides_type _get_mdspan_strides(std::integer_sequence<int, i...> = {}) const {
+        return mdspan_strides_type{(static_cast<typename mdspan_strides_type::value_type>(strides_[i]))...};
+    }
+
+    mdspan_strides_type mdspan_strides() const {
+        return _get_mdspan_strides(std::make_integer_sequence<int,Rank>{});
+    }
+
 private:
     Value* data_;
     idx_t strides_[Rank];
     idx_t shape_[Rank];
+    static constexpr accessor_type accessor_{};
 };
 
 template <typename Value, int Rank>
@@ -237,7 +227,6 @@ public:
 
 #undef INDEX_REF
 #undef FROM_FORTRAN
-#undef TO_FORTRAN
 #undef ENABLE_IF_NON_CONST
 
 //------------------------------------------------------------------------------------------------------

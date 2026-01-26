@@ -27,13 +27,28 @@ ecbuild_add_library( TARGET hic
     $<INSTALL_INTERFACE:include>
 )
 
+ecbuild_add_library( TARGET hicsparse
+  TYPE INTERFACE
+  PUBLIC_INCLUDES
+    $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/src>
+    $<BUILD_INTERFACE:${PROJECT_BINARY_DIR}/src>
+    $<INSTALL_INTERFACE:include>
+)
+
 install( FILES ${PROJECT_BINARY_DIR}/src/hic/hic_config.h DESTINATION include/hic )
 install( FILES hic/hic.h                                  DESTINATION include/hic )
 install( FILES hic/hic_runtime.h                          DESTINATION include/hic )
+install( FILES hic/hic_namespace_macro.h                  DESTINATION include/hic )
+install( FILES hic/hic_library_types.h                    DESTINATION include/hic )
+install( FILES hic/hicsparse.h                            DESTINATION include/hic )
+install( FILES hic/hic_dummy/dummyShouldNotBeCalled.h     DESTINATION include/hic/hic_dummy )
 install( FILES hic/hic_dummy/hic_dummy_runtime.h          DESTINATION include/hic/hic_dummy )
+install( FILES hic/hic_dummy/hicsparse_dummy.h            DESTINATION include/hic/hic_dummy )
 
 if( HAVE_CUDA )
   target_link_libraries( hic INTERFACE CUDA::cudart )
+  target_link_libraries( hicsparse INTERFACE hic CUDA::cusparse )
 elseif( HAVE_HIP )
   target_link_libraries( hic INTERFACE hip::host )
+  target_link_libraries( hicsparse INTERFACE hic roc::hipsparse )
 endif()

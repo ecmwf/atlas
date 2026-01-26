@@ -11,6 +11,7 @@
 #pragma once
 
 #include <vector>
+#include <array>
 
 #include "atlas/grid/detail/partitioner/Partitioner.h"
 
@@ -42,6 +43,8 @@ public:
 
     virtual std::string type() const { return "checkerboard"; }
 
+    std::array<int,2> checkerboardDimensions(const Grid&);
+
 private:
     struct Checkerboard {
         idx_t nbands;  // number of bands
@@ -62,6 +65,8 @@ private:
 private:
     idx_t nbands_      = 0;  // number of bands from configuration
     bool regular_      = false;
+    bool split_x_      = true;
+    bool split_y_      = true;
     bool checkerboard_ = true;  // exact (true) or approximate (false) checkerboard
 };
 

@@ -218,8 +218,6 @@ public:
     public:
         XSpace();
 
-        XSpace(const XSpace&);
-
         XSpace(const Spacing&, idx_t ny = 1);
 
         XSpace(const std::vector<Spacing>&);

@@ -112,8 +112,6 @@ Structured::~Structured() = default;
 
 Structured::XSpace::XSpace(): impl_(nullptr) {}
 
-Structured::XSpace::XSpace(const XSpace& xspace) = default;
-
 template <typename NVector>
 Structured::XSpace::XSpace(const std::array<double, 2>& interval, const NVector& N, bool endpoint):
     impl_(new Implementation(interval, N, endpoint)) {}
@@ -296,8 +294,8 @@ Structured::XSpace::Implementation::Implementation(const Spacing& spacing, idx_t
 
 Structured::XSpace::Implementation::Implementation(const std::vector<Spacing>& spacings):
     ny_(spacings.size()),
-    nxmax_(0),
     nxmin_(std::numeric_limits<idx_t>::max()),
+    nxmax_(0),
     nx_(ny_),
     xmin_(ny_),
     xmax_(ny_),
@@ -619,12 +617,18 @@ void Structured::crop(const Domain& dom) {
 }
 
 void Structured::computeTruePeriodicity() {
+    ATLAS_ASSERT(domain_);
+
     if (projection_.strictlyRegional()) {
         periodic_x_ = false;
         return;
     }
-    if (not ZonalBandDomain(domain_)) {
-        periodic_x_ = false;
+    if( domain_.global() ) {
+        periodic_x_ = true;
+        return;
+    }
+    if (ZonalBandDomain(domain_)) {
+        periodic_x_ = true;
         return;
     }
 

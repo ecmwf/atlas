@@ -17,8 +17,8 @@
 #include "eckit/filesystem/PathName.h"
 #include "eckit/io/Buffer.h"
 
-#include "eckit/linalg/SparseMatrix.h"
 
+#include "atlas/linalg/sparse.h"
 #include "atlas/runtime/Exception.h"
 #include "atlas/util/KDTree.h"
 
@@ -51,6 +51,9 @@ public:
     Cache(const Cache& other);
     Cache(const Cache& other, const std::string& filter);
     Cache(const Interpolation&);
+    Cache& operator=(const Cache& other);
+    Cache& operator=(Cache&& other);
+
     operator bool() const { return not cache_.empty(); }
     virtual ~Cache();
     size_t footprint() const {
@@ -82,7 +85,7 @@ private:
 
 class MatrixCacheEntry : public InterpolationCacheEntry {
 public:
-    using Matrix = eckit::linalg::SparseMatrix;
+    using Matrix = atlas::linalg::SparseMatrixStorage;
     ~MatrixCacheEntry() override;
     MatrixCacheEntry(const Matrix* matrix, const std::string& uid = ""): matrix_{matrix}, uid_(uid) {
         ATLAS_ASSERT(matrix_ != nullptr);
@@ -112,6 +115,7 @@ public:
     MatrixCache(std::shared_ptr<const Matrix> m, const std::string& uid = "");
     MatrixCache(const Matrix* m);
     MatrixCache(const Interpolation&);
+
     operator bool() const;
     const Matrix& matrix() const;
     const std::string& uid() const;

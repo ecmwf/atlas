@@ -23,6 +23,7 @@
 #include "atlas/array/ArrayViewDefs.h"
 #include "atlas/array/helpers/ArraySlicer.h"
 #include "atlas/library/config.h"
+#include "atlas/mdspan.h"
 
 //------------------------------------------------------------------------------------------------------
 
@@ -98,6 +99,11 @@ private:
         using type = typename const_slicer_t::template Slice<Args...>::type;
     };
 
+    using mdspan_extents_type = dextents<size_t,RANK>;
+    using mdspan_strides_type = std::array<size_t,RANK>;
+    using mdspan_type         = mdspan<value_type, mdspan_extents_type, layout_stride>;
+    using const_mdspan_type   = mdspan<const value_type, mdspan_extents_type, layout_stride>;
+
 public:
     // -- Constructors
 
@@ -128,11 +134,29 @@ public:
     template <typename ValueTp, typename ArrayShape, typename = std::enable_if_t<std::is_convertible_v<ValueTp*, Value*>>>
     LocalView(ValueTp* data, const ArrayShape& shape) : LocalView(data,shape.data()) {}
 
+
+    template <typename T, typename E, typename L, typename A, typename = std::enable_if_t<std::is_convertible_v<typename A::data_handle_type, Value*> && E::rank() == Rank>>
+    LocalView(mdspan<T,E,L,A>& other) :
+        data_(other.data_handle()), size_(other.size()) {
+        for (int j = 0; j < Rank; ++j) {
+            shape_[j] = other.extent(j);
+            strides_[j] = other.stride(j);
+        }
+    }
+
     ENABLE_IF_CONST_WITH_NON_CONST(value_type)
     operator const LocalView<value_type, Rank>&() const {
         static_assert(std::is_const<Value>::value, "must be const");
         static_assert(!std::is_const<value_type>::value, "must be non-const");
         return (const LocalView<value_type, Rank>&)(*this);
+    }
+
+    const_mdspan_type as_mdspan() const {
+        return const_mdspan_type{this->data(), {mdspan_extents(), mdspan_strides()}};
+    }
+
+    mdspan_type as_mdspan() {
+        return mdspan_type{this->data(), {mdspan_extents(), mdspan_strides()}};
     }
 
     // -- Access methods
@@ -255,6 +279,28 @@ private:
         if (idx_t(last_idx) >= shape_[Dim]) {
             throw_OutOfRange("LocalView", array_dim<Dim>(), last_idx, shape_[Dim]);
         }
+    }
+
+    template<int... i>
+    ATLAS_HOST_DEVICE
+    mdspan_extents_type _get_mdspan_extents(std::integer_sequence<int, i...> = {}) const {
+        return mdspan_extents_type{(shape_[i])...};
+    }
+
+    ATLAS_HOST_DEVICE
+    mdspan_extents_type mdspan_extents() const {
+        return _get_mdspan_extents(std::make_integer_sequence<int,RANK>{});
+    }
+
+    template<int... i>
+    ATLAS_HOST_DEVICE
+    mdspan_strides_type _get_mdspan_strides(std::integer_sequence<int, i...> = {}) const {
+        return mdspan_strides_type{(static_cast<typename mdspan_strides_type::value_type>(strides_[i]))...};
+    }
+
+    ATLAS_HOST_DEVICE
+    mdspan_strides_type mdspan_strides() const {
+        return _get_mdspan_strides(std::make_integer_sequence<int,RANK>{});
     }
 
 private:

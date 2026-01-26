@@ -160,7 +160,7 @@ CASE("matching mesh partitioner") {
     auto match     = MatchingPartitioner{mesh};
     auto& polygons = mesh.polygons();
 
-    static bool do_once = [&]() {
+    [[maybe_unused]] static bool do_once = [&]() {
         for (idx_t i = 0; i < polygons.size(); ++i) {
             auto poly = util::PolygonXY{polygons[i]};
             Log::info() << "polygon[" << i << "]:\n";

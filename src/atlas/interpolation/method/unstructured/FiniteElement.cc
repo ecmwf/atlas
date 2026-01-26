@@ -25,6 +25,7 @@
 #include "atlas/interpolation/element/Triag3D.h"
 #include "atlas/interpolation/method/MethodFactory.h"
 #include "atlas/interpolation/method/Ray.h"
+#include "atlas/linalg/sparse/MakeEckitSparseMatrix.h"
 #include "atlas/mesh/ElementType.h"
 #include "atlas/mesh/Nodes.h"
 #include "atlas/mesh/actions/BuildCellCentres.h"
@@ -33,6 +34,7 @@
 #include "atlas/parallel/GatherScatter.h"
 #include "atlas/parallel/mpi/Buffer.h"
 #include "atlas/parallel/mpi/mpi.h"
+#include "atlas/parallel/omp/omp.h"
 #include "atlas/runtime/Exception.h"
 #include "atlas/runtime/Log.h"
 #include "atlas/runtime/Trace.h"
@@ -80,6 +82,18 @@ void FiniteElement::do_setup(const Grid& source, const Grid& target, const Cache
     };
 
     do_setup(make_nodecolumns(source), functionspace::PointCloud{target});
+}
+
+void FiniteElement::do_setup(const FunctionSpace& source, const FunctionSpace& target, const Cache& cache) { 
+    if (interpolation::MatrixCache(cache)) {
+        setMatrix(cache);
+        source_ = source;
+        target_ = target;
+        ATLAS_ASSERT(matrix().rows() == target.size());
+        ATLAS_ASSERT(matrix().cols() == source.size());
+        return;
+    }
+    do_setup(source, target);
 }
 
 void FiniteElement::do_setup(const FunctionSpace& source, const FunctionSpace& target) {
@@ -152,7 +166,8 @@ void FiniteElement::print(std::ostream& out) const {
     auto stencil_size_loc    = array::make_view<idx_t, 1>(field_stencil_size_loc);
     stencil_size_loc.assign(0);
 
-    for (auto it = matrix().begin(); it != matrix().end(); ++it) {
+    const auto m = atlas::linalg::make_non_owning_eckit_sparse_matrix(matrix());
+    for (auto it = m.begin(); it != m.end(); ++it) {
         idx_t p                   = idx_t(it.row());
         idx_t& i                  = stencil_size_loc(p);
         stencil_points_loc(p, i)  = gidx_src(it.col());
@@ -198,6 +213,15 @@ void FiniteElement::setup(const FunctionSpace& source) {
     const functionspace::NodeColumns src = source;
     ATLAS_ASSERT(src);
 
+    ocoords_.reset(new array::ArrayView<double, 2>(array::make_view<double, 2>(target_xyz_)));
+    idx_t out_npts = ocoords_->shape(0);
+    // return early if no output points on this partition reserve is called on
+    // the triplets but also during the sparseMatrix constructor. This won't
+    // work for empty matrices
+    if (out_npts == 0) {
+        return;
+    }
+
     Mesh meshSource = src.mesh();
 
 
@@ -218,21 +242,16 @@ void FiniteElement::setup(const FunctionSpace& source) {
 
 
     icoords_.reset(new array::ArrayView<double, 2>(array::make_view<double, 2>(source_xyz)));
-    ocoords_.reset(new array::ArrayView<double, 2>(array::make_view<double, 2>(target_xyz_)));
     igidx_.reset(new array::ArrayView<gidx_t, 1>(array::make_view<gidx_t, 1>(src.nodes().global_index())));
     connectivity_              = &meshSource.cells().node_connectivity();
     const mesh::Nodes& i_nodes = meshSource.nodes();
 
-
     idx_t inp_npts = i_nodes.size();
-    idx_t out_npts = ocoords_->shape(0);
 
-    // return early if no output points on this partition reserve is called on
-    // the triplets but also during the sparseMatrix constructor. This won't
-    // work for empty matrices
-    if (out_npts == 0) {
-        return;
-    }
+    auto target_point = [this](idx_t ip) {
+        return PointXYZ{(*ocoords_)(ip, 0), (*ocoords_)(ip, 1), (*ocoords_)(ip, 2)};
+    };
+
 
     array::ArrayView<int, 1> out_ghosts = array::make_view<int, 1>(target_ghost_);
 
@@ -242,13 +261,15 @@ void FiniteElement::setup(const FunctionSpace& source) {
 
     // weights -- one per vertex of element, triangles (3) or quads (4)
 
-    Triplets weights_triplets;               // structure to fill-in sparse matrix
-    weights_triplets.reserve(out_npts * 4);  // preallocate space as if all elements where quads
-
-    // search nearest k cell centres
-
-    const idx_t maxNbElemsToTry = std::max<idx_t>(8, idx_t(Nelements * max_fraction_elems_to_try_));
-    idx_t max_neighbours        = 0;
+    Triplets weights_triplets;              // structure to fill-in sparse matrix
+    weights_triplets.resize(out_npts * 4);  // preallocate space as if all elements where quads
+    auto insert_triplets = [&weights_triplets](idx_t n, const Triplets& triplets) -> bool {
+        if (triplets.size()) {
+            std::copy(triplets.begin(), triplets.end(), weights_triplets.begin()+4*n);
+            return true;
+        }
+        return false;
+    };
 
     double search_radius = 0.;
     if (meshSource.metadata().has("cell_maximum_diagonal_on_unit_sphere")) {
@@ -256,60 +277,67 @@ void FiniteElement::setup(const FunctionSpace& source) {
         ASSERT(search_radius > 0.);
         Log::debug() << "k-d tree: search radius = " << search_radius/1000. << " km" << std::endl;
     }
+    auto find_element_candidates_in_search_radius = [&eTree,&search_radius](const PointXYZ& p) {
+        return eTree->findInSphere(p, search_radius);
+    };
+    auto find_k_nearest_element_candidates = [&eTree](const PointXYZ& p, size_t k) {
+        return eTree->kNearestNeighbours(p, k);
+    };
+    auto try_interpolate_with_element_candidates = [&insert_triplets, this](idx_t n, const ElemIndex3::NodeList& element_candidates) -> bool {
+        if (element_candidates.empty()) {
+            return false;
+        }
+        return insert_triplets(n, projectPointToElements(n, element_candidates));
+    };
+
+
+    // search nearest k cell centres
+    const idx_t maxNbElemsToTry = std::max<idx_t>(8, idx_t(Nelements * max_fraction_elems_to_try_));
+    size_t diagnosed_max_neighbours         = 0;
+    bool allowed_to_diagnose_max_neighbours = Log::debug() && atlas_omp_get_max_threads() > 1;
 
     std::vector<size_t> failures;
 
     ATLAS_TRACE_SCOPE("Computing interpolation matrix") {
-        eckit::ProgressTimer progress("Computing interpolation weights", out_npts, "point", double(5), Log::debug());
-        for (idx_t ip = 0; ip < out_npts; ++ip, ++progress) {
+        std::unique_ptr<eckit::ProgressTimer> progress;
+        if (atlas_omp_get_max_threads() == 1) {
+            progress.reset(new eckit::ProgressTimer{"Computing interpolation weights", static_cast<size_t>(out_npts), "point", double(5), Log::debug()});
+        }
+        atlas_omp_parallel_for (idx_t ip = 0; ip < out_npts; ++ip) {
             if (out_ghosts(ip)) {
                 continue;
             }
 
-            PointXYZ p{(*ocoords_)(ip, 0), (*ocoords_)(ip, 1), (*ocoords_)(ip, 2)};  // lookup point
-
-            idx_t kpts   = 1;
             bool success = false;
-            std::ostringstream failures_log;
-
             if (search_radius != 0.) {
-                ElemIndex3::NodeList cs = eTree->findInSphere(p,search_radius);
-                if (cs.size()) {
-                    Triplets triplets       = projectPointToElements(ip, cs, failures_log);
-
-                    if (triplets.size()) {
-                        std::copy(triplets.begin(), triplets.end(), std::back_inserter(weights_triplets));
-                        success = true;
-                    }
-                }
+                auto p = target_point(ip);
+                success = try_interpolate_with_element_candidates(ip, find_element_candidates_in_search_radius(p));
             }
             else {
-                while (!success && kpts <= maxNbElemsToTry) {
-                    max_neighbours = std::max(kpts, max_neighbours);
-                    ElemIndex3::NodeList cs = eTree->kNearestNeighbours(p, kpts);
-                    Triplets triplets       = projectPointToElements(ip, cs, failures_log);
-
-                    if (triplets.size()) {
-                        std::copy(triplets.begin(), triplets.end(), std::back_inserter(weights_triplets));
-                        success = true;
+                size_t k = 1;
+                auto p = target_point(ip);
+                while (!success && k <= maxNbElemsToTry) {
+                    if (allowed_to_diagnose_max_neighbours) { // avoid race condition
+                        diagnosed_max_neighbours = std::max(k, diagnosed_max_neighbours);
                     }
-                    kpts *= 2;
+                    success = try_interpolate_with_element_candidates(ip, find_k_nearest_element_candidates(p, k));
+                    k *= 2;
                 }
             }
 
             if (!success) {
-                failures.push_back(ip);
-                if (not treat_failure_as_missing_value_) {
-                    Log::debug() << "------------------------------------------------------"
-                                    "---------------------\n";
-                    const PointLonLat pll{out_lonlat(ip, 0), out_lonlat(ip, 1)};
-                    Log::debug() << "Failed to project point (lon,lat)=" << pll << '\n';
-                    Log::debug() << failures_log.str();
+                atlas_omp_critical {
+                    failures.emplace_back(ip);
                 }
+            }
+            if (progress) {
+                ++(*progress);
             }
         }
     }
-    Log::debug() << "Maximum neighbours searched was " << eckit::Plural(max_neighbours, "element") << std::endl;
+    if (diagnosed_max_neighbours) {
+        Log::debug() << "Maximum neighbours searched was " << eckit::Plural(diagnosed_max_neighbours, "element") << std::endl;
+    }
 
     if (failures.size()) {
         if (treat_failure_as_missing_value_) {
@@ -330,9 +358,8 @@ void FiniteElement::setup(const FunctionSpace& source) {
         }
     }
 
-    // fill sparse matrix and return
-    Matrix A(out_npts, inp_npts, weights_triplets);
-    setMatrix(A);
+    // fill sparse matrix and return, this cannot be multithreaded!
+    setMatrix(out_npts, inp_npts, weights_triplets);
 }
 
 struct ElementEdge {
@@ -344,8 +371,7 @@ struct ElementEdge {
     }
 };
 
-Method::Triplets FiniteElement::projectPointToElements(size_t ip, const ElemIndex3::NodeList& elems,
-                                                       std::ostream& /* failures_log */) const {
+Method::Triplets FiniteElement::projectPointToElements(size_t ip, const ElemIndex3::NodeList& elems) const {
     ATLAS_ASSERT(elems.begin() != elems.end());
 
     const size_t inp_points = icoords_->shape(0);
@@ -366,17 +392,22 @@ Method::Triplets FiniteElement::projectPointToElements(size_t ip, const ElemInde
             int nb_cols = connectivity_->cols(elem_id);
             if (nb_cols == 5) {
                 // Check if pentagon degenerates to quad. Otherwise abort.
-                // For now only check if first and last point coincide.
-                auto i1    = (*connectivity_)(elem_id, 0);
-                auto iN    = (*connectivity_)(elem_id, nb_cols - 1);
-                auto first = PointXYZ{(*icoords_)(i1, XX), (*icoords_)(i1, YY), (*icoords_)(i1, ZZ)};
-                auto last  = PointXYZ{(*icoords_)(iN, XX), (*icoords_)(iN, YY), (*icoords_)(iN, ZZ)};
-                if (first == last) {
+                // For now only check if the last point is a duplicate.
+                auto get_p = [&](idx_t i) {
+                    auto n = (*connectivity_)(elem_id, i);
+                    return PointXYZ{(*icoords_)(n, XX), (*icoords_)(n, YY), (*icoords_)(n, ZZ)};
+                };
+                auto p4 = get_p(4);
+                if (p4 == get_p(0)) {
+                    return 4;
+                }
+                if (p4 == get_p(3)) {
                     return 4;
                 }
             }
             return nb_cols;
         }();
+
 
         ATLAS_ASSERT(nb_cols == 3 || nb_cols == 4);
 

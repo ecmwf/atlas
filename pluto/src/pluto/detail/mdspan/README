@@ -1,0 +1,9 @@
+File: mdspan_impl.hpp
+License: See LICENSE file in this directory
+
+Contributed from:
+Repository: https://github.com/kokkos/mdpsan
+Branch: single-header 
+Commit: https://github.com/kokkos/mdspan/tree/5612022afe794f9a33c9993a540803bc3d776906
+Date: June 25 2025
+

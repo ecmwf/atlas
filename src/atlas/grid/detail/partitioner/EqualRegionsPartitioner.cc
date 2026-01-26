@@ -586,7 +586,6 @@ void EqualRegionsPartitioner::partition(int nb_nodes, NodeInt nodes[], int part[
   Create list that tells in original node numbering which part the node belongs
   to
   */
-    remainder = chunk_remainder;
     end       = 0;
     for (p = 0; p < nb_parts; ++p) {
         begin = end;

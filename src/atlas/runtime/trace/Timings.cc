@@ -68,8 +68,8 @@ public:
 private:
     std::string filter_filepath(const std::string& filepath) const;
 
-    friend class Tree;
-    friend class Node;
+    friend struct Tree;
+    friend struct Node;
 };
 
 struct Node {
@@ -78,7 +78,6 @@ struct Node {
         size_t _nest = TimingsRegistry::instance().nest_[index];
 
 
-        const auto& this_stack = TimingsRegistry::instance().stack_[index];
         auto this_stack_hash   = TimingsRegistry::instance().stack_[index].hash();
         auto is_child          = [&](size_t i) -> bool {
             CallStack child_stack = TimingsRegistry::instance().stack_[i];

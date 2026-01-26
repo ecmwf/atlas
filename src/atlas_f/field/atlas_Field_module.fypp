@@ -109,6 +109,8 @@ contains
   procedure, public :: update_device
   procedure, public :: update_host
   procedure, public :: sync_host_device
+  procedure, public :: sync_host
+  procedure, public :: sync_device
 
   procedure, private :: dummy
 
@@ -450,10 +452,9 @@ function atlas_Field__wrap_name_${dtype}$_r${rank}$(name,data) result(field)
   call field%return()
 end function
 function atlas_Field__wrap_${dtype}$_r${rank}$(data) result(field)
-  use, intrinsic :: iso_c_binding
+  use, intrinsic :: iso_c_binding, only : c_int, c_long, c_float, c_double, c_loc, c_int32_t
   use :: fckit_c_interop_module
   use atlas_field_c_binding
-  use, intrinsic :: iso_c_binding, only : c_int, c_long, c_float, c_double
   use fckit_array_module, only : array_strides, array_view1d
   type(atlas_Field) :: field
   ${ftype}$, intent(in), target :: data(${dim[rank]}$)
@@ -778,6 +779,21 @@ subroutine sync_host_device(this)
   use atlas_field_c_binding
   class(atlas_Field), intent(inout) :: this
   call atlas__Field__sync_host_device(this%CPTR_PGIBUG_A)
+end subroutine
+
+!-------------------------------------------------------------------------------
+
+subroutine sync_host(this)
+  use atlas_field_c_binding
+  class(atlas_Field), intent(inout) :: this
+  call atlas__Field__sync_host(this%CPTR_PGIBUG_A)
+end subroutine
+
+!-------------------------------------------------------------------------------
+subroutine sync_device(this)
+  use atlas_field_c_binding
+  class(atlas_Field), intent(inout) :: this
+  call atlas__Field__sync_device(this%CPTR_PGIBUG_A)
 end subroutine
 
 !-------------------------------------------------------------------------------

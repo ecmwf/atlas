@@ -27,6 +27,7 @@ class Grid;
 namespace atlas {
 namespace grid {
 class Partitioner;
+class Distribution;
 }
 }  // namespace atlas
 
@@ -79,6 +80,8 @@ public:
     Mesh(const Grid&, const eckit::Configuration& = util::NoConfig());
 
     Mesh(const Grid&, const grid::Partitioner&, const eckit::Configuration& = util::NoConfig());
+
+    Mesh(const Grid&, const grid::Distribution&, const eckit::Configuration& = util::NoConfig());
 
     /// @brief Construct a mesh from a Stream (serialization)
     explicit Mesh(eckit::Stream&);

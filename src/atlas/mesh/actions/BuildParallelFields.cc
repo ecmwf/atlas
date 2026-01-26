@@ -266,7 +266,6 @@ Field& build_nodes_remote_idx(mesh::Nodes& nodes) {
     auto ridx         = array::make_indexview<idx_t, 1>(nodes.remote_index());
     const auto part   = array::make_view<int, 1>(nodes.partition());
     const auto flags  = array::make_view<int, 1>(nodes.flags());
-    const auto lonlat = array::make_view<double, 2>(nodes.lonlat());
 
     const PeriodicTransform transform_periodic_east(-360.);
     const PeriodicTransform transform_periodic_west(+360.);
@@ -292,7 +291,6 @@ Field& build_nodes_remote_idx(mesh::Nodes& nodes) {
 
     std::vector<std::vector<uid_t>> send_needed(mpi::size());
     std::vector<std::vector<uid_t>> recv_needed(mpi::size());
-    int sendcnt = 0;
     std::map<uid_t, int> lookup;
     for (idx_t jnode = 0; jnode < nb_nodes; ++jnode) {
         uid_t uid = compute_uid(jnode);
@@ -314,7 +312,6 @@ Field& build_nodes_remote_idx(mesh::Nodes& nodes) {
             ATLAS_ASSERT((size_t)proc[part(jnode)] < send_needed.size());
             send_needed[proc[part(jnode)]].push_back(uid);
             send_needed[proc[part(jnode)]].push_back(jnode);
-            sendcnt++;
         }
     }
 
@@ -791,7 +788,6 @@ Field& build_edges_remote_idx(Mesh& mesh) {
     double centroid[2];
     std::vector<std::vector<uid_t>> send_needed(mpi::size());
     std::vector<std::vector<uid_t>> recv_needed(mpi::size());
-    int sendcnt = 0;
     std::map<uid_t, int> lookup;
 
     PeriodicTransform transform;
@@ -849,7 +845,6 @@ Field& build_edges_remote_idx(Mesh& mesh) {
             send_needed[edge_part(jedge)].push_back(node_part(ip1));
             send_needed[edge_part(jedge)].push_back(node_part(ip2));
 #endif
-            sendcnt++;
         }
     }
 
@@ -1057,7 +1052,6 @@ Field& build_cells_remote_idx(mesh::Cells& cells, const mesh::Nodes& nodes) {
 
     std::vector<std::vector<uid_t>> send_needed(mpi::size());
     std::vector<std::vector<uid_t>> recv_needed(mpi::size());
-    int sendcnt = 0;
     std::map<uid_t, int> lookup;
     for (idx_t jcell = 0; jcell < nb_cells; ++jcell) {
         uid_t uid = compute_uid(jcell);
@@ -1079,7 +1073,6 @@ Field& build_cells_remote_idx(mesh::Cells& cells, const mesh::Nodes& nodes) {
             ATLAS_ASSERT((size_t)proc[part(jcell)] < send_needed.size());
             send_needed[proc[part(jcell)]].push_back(uid);
             send_needed[proc[part(jcell)]].push_back(jcell);
-            sendcnt++;
         }
     }
 

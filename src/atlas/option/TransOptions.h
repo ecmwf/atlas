@@ -25,9 +25,10 @@ namespace option {
 
 enum class FFT
 {
-    OFF    = 0,
-    FFT992 = 1,
-    FFTW   = 2,
+    OFF       = 0,
+    FFT992    = 1,
+    FFTW      = 2,
+    pocketfft = 3,
 };
 
 // ----------------------------------------------------------------------------
@@ -73,9 +74,9 @@ public:
 
 // ----------------------------------------------------------------------------
 
-class split_latitudes : public util::Config {
+class split_y : public util::Config {
 public:
-    split_latitudes(bool);
+    split_y(bool);
 };
 
 // ----------------------------------------------------------------------------

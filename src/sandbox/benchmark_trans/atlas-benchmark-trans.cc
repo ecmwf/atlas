@@ -71,6 +71,7 @@ Tool::Tool(int argc, char** argv): AtlasTool(argc, argv) {
     add_option(
         new SimpleOption<std::string>("type", "Type of trans implementation (if not specified, all types are used)"));
     add_option(new SimpleOption<std::string>("matrix_multiply", "backend to use in local trans type"));
+    add_option(new SimpleOption<std::string>("fft", "backend to use in local trans type"));
     add_option(new SimpleOption<bool>("caching", "caching"));
     add_option(new SimpleOption<long>("niter", "number of iterations"));
 }
@@ -185,6 +186,11 @@ int Tool::execute(const Args& args) {
         }
     }
 
+    std::map<std::string, std::vector<std::string>> fft_backends{
+        {"ectrans", {"FFTW"}}, {"local", {"FFTW", "pocketfft"}}};
+    if (args.has("fft")) {
+        fft_backends["local"] = std::vector<std::string>{args.getString("fft")};
+    }
 
     functionspace::Spectral spectral{truncation};
 
@@ -206,53 +212,79 @@ int Tool::execute(const Args& args) {
 
         trans::Cache cache;
 
+        util::Config write_fft;
+
         if (args.getBool("caching", false)) {
+            auto fftw_wisdom_file =
+                            eckit::PathName(atlas::Library::instance().cachePath() + "/"+type+"_fftw_wisdom");
             trans::LegendreCacheCreator cache_creator(grid, truncation, option::type(type));
             if (cache_creator.supported()) {
                 auto cachefile =
                     eckit::PathName(atlas::Library::instance().cachePath() + "/leg_" + cache_creator.uid() + ".bin");
                 if (not cachefile.exists()) {
+                    ATLAS_TRACE("Creating Cache");
                     Log::debug() << "Creating cache: " << cachefile
                                  << " estimated size: " << eckit::Bytes(cache_creator.estimate()) << std::endl;
                     cache_creator.create(cachefile);
                 }
                 Log::debug() << "Reading cache " << cachefile << " size: " << eckit::Bytes(cachefile.size())
                              << std::endl;
-                cache = trans::LegendreCache(cachefile);
+                if (fftw_wisdom_file.exists()) {
+                    ATLAS_TRACE("Reading Legendre + FFT Cache");
+                    cache = trans::LegendreFFTCache(cachefile, fftw_wisdom_file);
+                }
+                else {
+                    ATLAS_TRACE("Reading Legendre Cache");
+                    cache = trans::LegendreCache(cachefile);
+                }
+            }
+            if (not fftw_wisdom_file.exists() && type == "local") {
+                write_fft.set("write_fft", fftw_wisdom_file);
             }
         }
 
-        trans::Trans trans(cache, grid, domain, truncation, option::type(type));
+        for( auto& fft: fft_backends.at(type) ) {
+            ATLAS_TRACE("fft="+fft);
 
-        for (auto backend : linalg_backends.at(type)) {
-            linalg::dense::current_backend(backend);
-            if (linalg::dense::current_backend().available()) {
-                backend      = linalg::dense::current_backend().type();
-                auto min     = std::numeric_limits<double>::max();
-                auto max     = 0.;
-                auto zeropad = [](int n) {
-                    std::stringstream s;
-                    s << std::setw(3) << std::setfill('0') << n;
-                    return s.str();
-                };
-                auto print = [&](const std::string& idx, double seconds) {
-                    Log::info() << "type=" << std::setw(6) << std::left << type;
-                    Log::info() << "      backend=" << std::setw(24) << std::left << backend;
-                    Log::info() << "      invtrans[" << idx << "]: " << seconds << " s" << std::endl;
-                };
-                for (size_t n = 0; n < niter; ++n) {
-                    ATLAS_TRACE("invtrans [backend=" + backend + "]");
-                    auto start = std::chrono::system_clock::now();
-                    trans.invtrans(nb_scalar, sp_scalar.data(), nb_vordiv, sp_vorticity.data(), sp_divergence.data(),
-                                   gp.data());
-                    auto end                                      = std::chrono::system_clock::now();  //
-                    std::chrono::duration<double> elapsed_seconds = end - start;
-                    print(zeropad(n), elapsed_seconds.count());
-                    min = std::min(min, elapsed_seconds.count());
-                    max = std::max(max, elapsed_seconds.count());
+            auto cstart = std::chrono::system_clock::now();
+            trans::Trans trans(cache, grid, domain, truncation, option::type(type) | option::fft(fft) | write_fft);
+            auto cend   = std::chrono::system_clock::now();
+            std::chrono::duration<double> celapsed_seconds = cend - cstart;
+            Log::info() << "type=" << std::setw(8) << std::left << type;
+            Log::info() << "                    fft=" << std::setw(10) << std::left << fft;
+            Log::info() << "  constructor:   " << celapsed_seconds.count() << " s" << std::endl;
+
+            for (auto backend : linalg_backends.at(type)) {
+                linalg::dense::current_backend(backend);
+                if (linalg::dense::current_backend().available()) {
+                    backend      = linalg::dense::current_backend().type();
+                    auto min     = std::numeric_limits<double>::max();
+                    auto max     = 0.;
+                    auto zeropad = [](int n) {
+                        std::stringstream s;
+                        s << std::setw(3) << std::setfill('0') << n;
+                        return s.str();
+                    };
+                    auto print = [&](const std::string& idx, double seconds) {
+                        Log::info() << "type=" << std::setw(8) << std::left << type;
+                        Log::info() << "  backend=" << std::setw(8) << std::left << backend;
+                        Log::info() << "  fft=" << std::setw(10) << std::left << fft;
+                        Log::info() << "  invtrans[" << idx << "]: " << seconds << " s" << std::endl;
+                    };
+                    for (size_t n = 0; n < niter; ++n) {
+                        ATLAS_TRACE("invtrans [backend=" + backend + ", fft="+fft+"]");
+                        auto start = std::chrono::system_clock::now();
+                        trans.invtrans(nb_scalar, sp_scalar.data(), nb_vordiv, sp_vorticity.data(), sp_divergence.data(),
+                                    gp.data());
+                        auto end                                      = std::chrono::system_clock::now();  //
+                        std::chrono::duration<double> elapsed_seconds = end - start;
+                        print(zeropad(n), elapsed_seconds.count());
+                        min = std::min(min, elapsed_seconds.count());
+                        max = std::max(max, elapsed_seconds.count());
+                    }
+                    print("min", min);
+                    print("max", max);
                 }
-                print("min", min);
-                print("max", max);
             }
         }
     }

@@ -104,6 +104,10 @@ util::Metadata& Field::metadata() {
     return get()->metadata();
 }
 
+field::Halo& Field::halo() const {
+    return get()->halo();
+}
+
 /// @brief Resize field to given shape
 void Field::resize(const array::ArrayShape& shape) {
     get()->resize(shape);
@@ -238,6 +242,12 @@ void Field::updateDevice() const {
 void Field::syncHostDevice() const {
     get()->syncHostDevice();
 }
+void Field::syncHost() const {
+    get()->syncHost();
+}
+void Field::syncDevice() const {
+    get()->syncDevice();
+}
 bool Field::hostNeedsUpdate() const {
     return get()->hostNeedsUpdate();
 }
@@ -247,8 +257,14 @@ bool Field::deviceNeedsUpdate() const {
 void Field::setHostNeedsUpdate(bool v) const {
     return get()->setHostNeedsUpdate(v);
 }
+void Field::setHostNeedsUpdate() const {
+    return get()->setHostNeedsUpdate(true);
+}
 void Field::setDeviceNeedsUpdate(bool v) const {
     return get()->setDeviceNeedsUpdate(v);
+}
+void Field::setDeviceNeedsUpdate() const {
+    return get()->setDeviceNeedsUpdate(true);
 }
 bool Field::deviceAllocated() const {
     return get()->deviceAllocated();

@@ -8,11 +8,21 @@
 #include <utility>
 
 #if ATLAS_HAVE_QHULL
+
+// Suppress a few warnings present in third-party libqhullcpp
+ATLAS_SUPPRESS_WARNINGS_PUSH
+ATLAS_SUPPRESS_WARNINGS_INTEGER_SIGN_CHANGE
+ATLAS_SUPPRESS_WARNINGS_CODE_IS_UNREACHABLE
+ATLAS_SUPPRESS_WARNINGS_TEMPLATE_ID_CDTOR
+
 #include <libqhullcpp/Qhull.h>
 #include <libqhullcpp/QhullFacet.h>
 #include <libqhullcpp/QhullFacetList.h>
 #include <libqhullcpp/QhullVertexSet.h>
 #include <libqhullcpp/QhullPoints.h>
+
+ATLAS_SUPPRESS_WARNINGS_POP
+
 #endif
 
 #include "atlas/runtime/Exception.h"

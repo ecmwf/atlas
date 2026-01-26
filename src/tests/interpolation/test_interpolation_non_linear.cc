@@ -91,7 +91,6 @@ CASE("Interpolation with MissingValue") {
         }
     }
 
-
     SECTION("missing-if-any-missing") {
         Interpolation interpolation(Config("type", "finite-element").set("non_linear", "missing-if-any-missing"), fsA,
                                     fsB);

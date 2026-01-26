@@ -83,6 +83,7 @@ public:
 
     std::string linalgDenseBackend() const;
     std::string linalgSparseBackend() const;
+    std::string linalgFFTBackend() const;
 
     void registerDataPath(const std::string&);
 

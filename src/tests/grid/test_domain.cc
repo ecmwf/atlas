@@ -17,6 +17,9 @@
 #include "atlas/runtime/Log.h"
 #include "atlas/util/Config.h"
 
+#include "atlas/mesh.h"
+#include "atlas/functionspace/NodeColumns.h"
+
 #include "tests/AtlasTestEnvironment.h"
 
 namespace atlas {
@@ -107,6 +110,33 @@ CASE("test_domain_global_from_zonalband") {
     EXPECT(zd == true);
     EXPECT(zd.ymin() == -45.);
     EXPECT(zd.ymax() == 45.);
+}
+
+CASE("test github #282") {
+    size_t expected_points = 209019;
+    auto computed_points = [](Domain domain) -> size_t {
+        auto grid = Grid("L576x361", domain);
+        auto fs = functionspace::NodeColumns(Mesh{grid}, option::halo(1));
+        return fs.size();
+    };
+    EXPECT_EQ(expected_points, computed_points(Domain{}));
+    EXPECT_EQ(expected_points, computed_points(GlobalDomain{}));
+    EXPECT_EQ(expected_points, computed_points(GlobalDomain{-180}));
+    EXPECT_EQ(expected_points, computed_points(ZonalBandDomain{{-90,90}}));
+    EXPECT_EQ(expected_points, computed_points(ZonalBandDomain{{-90,90},-180}));
+    EXPECT_EQ(expected_points, computed_points(Domain{util::Config
+        ("type","zonal_band")
+        ("ymin",-90)("ymax",90)}));
+    EXPECT_EQ(expected_points, computed_points(Domain{util::Config
+        ("type","zonal_band")
+        ("west",-180)("ymin",-90)("ymax",90)}));
+    EXPECT_EQ(expected_points, computed_points(RectangularDomain{{-180,180},{-90,90}}));
+    EXPECT_EQ(expected_points, computed_points(Domain{util::Config
+        ("type","rectangular")("units","degrees")
+        ("xmin",0)   ("xmax",360)("ymin",-90)("ymax",90)}));
+    EXPECT_EQ(expected_points, computed_points(Domain{util::Config
+        ("type","rectangular")("units","degrees")
+        ("xmin",-180)("xmax",180)("ymin",-90)("ymax",90)}));
 }
 
 //-----------------------------------------------------------------------------

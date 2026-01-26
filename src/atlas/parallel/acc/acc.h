@@ -13,11 +13,25 @@
 
 namespace atlas::acc {
 
+enum class CompilerId {
+    unknown,
+    nvidia,
+    cray,
+};
+
 int devices();
 void map(void* host_data, void* device_data, std::size_t bytes);
 void unmap(void* host_data);
 bool is_present(void* host_data, std::size_t bytes);
 void* deviceptr(void* host_data);
+CompilerId compiler_id();
 
 }
 
+#if _OPENACC
+#define ATLAS_ACC_STR(x) #x
+#define ATLAS_ACC_STRINGIFY(x) ATLAS_ACC_STR(x)
+#define atlas_acc_pragma(x) _Pragma(ATLAS_ACC_STRINGIFY(x))
+#else
+#define atlas_acc_pragma(x)
+#endif

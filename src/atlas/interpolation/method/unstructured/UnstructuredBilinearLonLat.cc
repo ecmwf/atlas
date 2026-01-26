@@ -22,6 +22,7 @@
 #include "atlas/interpolation/element/Triag2D.h"
 #include "atlas/interpolation/method/MethodFactory.h"
 #include "atlas/interpolation/method/Ray.h"
+#include "atlas/linalg/sparse/MakeEckitSparseMatrix.h"
 #include "atlas/mesh/ElementType.h"
 #include "atlas/mesh/Nodes.h"
 #include "atlas/mesh/actions/BuildCellCentres.h"
@@ -30,6 +31,7 @@
 #include "atlas/parallel/GatherScatter.h"
 #include "atlas/parallel/mpi/Buffer.h"
 #include "atlas/parallel/mpi/mpi.h"
+#include "atlas/parallel/omp/omp.h"
 #include "atlas/runtime/Exception.h"
 #include "atlas/runtime/Log.h"
 #include "atlas/runtime/Trace.h"
@@ -77,6 +79,20 @@ void UnstructuredBilinearLonLat::do_setup(const Grid& source, const Grid& target
     };
 
     do_setup(make_nodecolumns(source), functionspace::PointCloud{target});
+}
+
+void UnstructuredBilinearLonLat::do_setup(const FunctionSpace& source, const FunctionSpace& target, const Cache& cache) {
+    allow_halo_exchange_ = false;
+    //  no halo_exchange because we don't have any halo with delaunay or 3d structured meshgenerator
+    if (interpolation::MatrixCache(cache)) {
+        setMatrix(cache);
+        source_ = source;
+        target_ = target;
+        ATLAS_ASSERT(matrix().rows() == target.size());
+        ATLAS_ASSERT(matrix().cols() == source.size());
+        return;
+    }
+    do_setup(source, target);
 }
 
 void UnstructuredBilinearLonLat::do_setup(const FunctionSpace& source, const FunctionSpace& target) {
@@ -127,8 +143,7 @@ void UnstructuredBilinearLonLat::print(std::ostream& out) const {
     functionspace::NodeColumns src(source_);
     functionspace::NodeColumns tgt(target_);
     out << "atlas::interpolation::method::BilinearRemapping{" << std::endl;
-    out << "max_fraction_elems_to_try: " << max_fraction_elems_to_try_;
-    out << ", treat_failure_as_missing_value: " << treat_failure_as_missing_value_;
+    out << "treat_failure_as_missing_value: " << treat_failure_as_missing_value_;
     if (not tgt) {
         out << "}" << std::endl;
         return;
@@ -148,7 +163,8 @@ void UnstructuredBilinearLonLat::print(std::ostream& out) const {
     auto stencil_size_loc    = array::make_view<idx_t, 1>(field_stencil_size_loc);
     stencil_size_loc.assign(0);
 
-    for (auto it = matrix().begin(); it != matrix().end(); ++it) {
+    const auto m = atlas::linalg::make_non_owning_eckit_sparse_matrix(matrix());
+    for (auto it = m.begin(); it != m.end(); ++it) {
         idx_t p                   = idx_t(it.row());
         idx_t& i                  = stencil_size_loc(p);
         stencil_points_loc(p, i)  = gidx_src(it.col());
@@ -200,6 +216,13 @@ void UnstructuredBilinearLonLat::setup(const FunctionSpace& source) {
 
     auto trace_setup_source = atlas::Trace{Here(), "Setup source"};
 
+    if (target_lonlat_.shape(0) == 0) {
+        // return early if no output points on this partition reserve is called on
+        // the triplets but also during the sparseMatrix constructor. This won't
+        // work for empty matrices
+        return;
+    }
+
     // 3D point coordinates
     Field source_xyz = mesh::actions::BuildXYZField("xyz")(meshSource);
 
@@ -224,57 +247,53 @@ void UnstructuredBilinearLonLat::setup(const FunctionSpace& source) {
     idx_t inp_npts = i_nodes.size();
     idx_t out_npts = olonlat_->shape(0);
 
-    // return early if no output points on this partition reserve is called on
-    // the triplets but also during the sparseMatrix constructor. This won't
-    // work for empty matrices
-    if (out_npts == 0) {
-        return;
-    }
-
     array::ArrayView<int, 1> out_ghosts = array::make_view<int, 1>(target_ghost_);
-
-    idx_t Nelements = meshSource.cells().size();
 
     // weights -- one per vertex of element, triangles (3) or quads (4)
 
-    Triplets weights_triplets;               // structure to fill-in sparse matrix
-    weights_triplets.reserve(out_npts * 4);  // preallocate space as if all elements where quads
+    Triplets weights_triplets;              // structure to fill-in sparse matrix
+    weights_triplets.resize(out_npts * 4);  // preallocate space
+    auto insert_triplets = [&weights_triplets](idx_t n, const Triplets& triplets) -> bool {
+        if (triplets.size()) {
+            std::copy(triplets.begin(), triplets.end(), weights_triplets.begin()+4*n);
+            return true;
+        }
+        return false;
+    };
+
+    auto target_point = [this](idx_t ip) {
+        return PointXYZ{(*oxyz_)(ip, 0), (*oxyz_)(ip, 1), (*oxyz_)(ip, 2)};
+    };
+    auto find_k_nearest_element_candidates = [&eTree](const PointXYZ& p, size_t k) {
+        return eTree->kNearestNeighbours(p, k);
+    };
+    auto try_interpolate_with_element_candidates = [&insert_triplets, this](idx_t n, const ElemIndex3::NodeList& element_candidates) -> bool {
+        if (element_candidates.empty()) {
+            return false;
+        }
+        return insert_triplets(n, projectPointToElements(n, element_candidates));
+    };
 
     // search nearest k cell centres
-
-    const idx_t maxNbElemsToTry = std::max<idx_t>(8, idx_t(Nelements * max_fraction_elems_to_try_));
 
     std::vector<idx_t> failures;
 
     ATLAS_TRACE_SCOPE("Computing interpolation matrix") {
-        eckit::ProgressTimer progress("Computing interpolation weights", out_npts, "point", double(5), Log::debug());
-        for (idx_t ip = 0; ip < out_npts; ++ip, ++progress) {
+        std::unique_ptr<eckit::ProgressTimer> progress;
+        if (atlas_omp_get_max_threads() == 1) {
+            progress.reset(new eckit::ProgressTimer{"Computing interpolation weights", static_cast<size_t>(out_npts), "point", double(5), Log::debug()});
+        }
+        atlas_omp_parallel_for (idx_t ip = 0; ip < out_npts; ++ip) {
             if (out_ghosts(ip)) {
                 continue;
             }
 
-            PointXYZ p{(*oxyz_)(ip, XX), (*oxyz_)(ip, YY), (*oxyz_)(ip, ZZ)};  // lookup point
-
-            idx_t kpts   = 8;
-            bool success = false;
-            std::ostringstream failures_log;
-
-            ElemIndex3::NodeList cs = eTree->kNearestNeighbours(p, kpts);
-            Triplets triplets       = projectPointToElements(ip, cs, failures_log);
-
-            if (triplets.size()) {
-                std::copy(triplets.begin(), triplets.end(), std::back_inserter(weights_triplets));
-                success = true;
-            }
+            auto p = target_point(ip);
+            bool success = try_interpolate_with_element_candidates(ip, find_k_nearest_element_candidates(p, 8));
 
             if (!success) {
-                failures.push_back(ip);
-                if (not treat_failure_as_missing_value_) {
-                    Log::debug() << "------------------------------------------------------"
-                                    "---------------------\n";
-                    Log::debug() << "Failed to project point (lon,lat)=" << (*olonlat_)(ip, LON) << " "
-                                 << (*olonlat_)(ip, LAT) << '\n';
-                    Log::debug() << failures_log.str();
+                atlas_omp_critical {
+                    failures.emplace_back(ip);
                 }
             }
         }
@@ -300,12 +319,10 @@ void UnstructuredBilinearLonLat::setup(const FunctionSpace& source) {
     }
 
     // fill sparse matrix and return
-    Matrix A(out_npts, inp_npts, weights_triplets);
-    setMatrix(A);
+    setMatrix(out_npts, inp_npts, weights_triplets);
 }
 
-Method::Triplets UnstructuredBilinearLonLat::projectPointToElements(size_t ip, const ElemIndex3::NodeList& elems,
-                                                                    std::ostream& /* failures_log */) const {
+Method::Triplets UnstructuredBilinearLonLat::projectPointToElements(size_t ip, const ElemIndex3::NodeList& elems) const {
     ATLAS_ASSERT(elems.begin() != elems.end());
 
     const size_t inp_points = ilonlat_->shape(0);

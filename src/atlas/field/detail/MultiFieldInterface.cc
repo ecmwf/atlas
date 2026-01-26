@@ -8,9 +8,10 @@
  * nor does it submit to any jurisdiction.
  */
 
-#include <cmath>
-#include <cstring>
-#include <sstream>
+#include <algorithm>
+#include <vector>
+#include <string>
+#include <string_view>
 
 #include "atlas/library/config.h"
 #include "atlas/field/MultiField.h"
@@ -24,34 +25,43 @@ namespace field {
 extern "C" {
 MultiFieldImpl* atlas__MultiField__create(eckit::Configuration* config) {
     ATLAS_ASSERT(config != nullptr);
-    auto multifield = new MultiField(*config);
+    MultiFieldImpl* multifield;
+    {
+        MultiField f(*config);
+        multifield = f.get();
+        multifield->attach();
+    }
+    multifield->detach();
     ATLAS_ASSERT(multifield);
-    return multifield->get();
+    return multifield;
 }
 
 MultiFieldImpl* atlas__MultiField__create_shape(int kind, int rank, int shapef[], const char* var_names,
         size_t length, size_t size) {
     array::ArrayShape shape;
     shape.resize(rank);
-    array::ArrayStrides strides;
     for (idx_t j = 0, jf = rank - 1; j < rank; ++j) {
-        shape[j]   = shapef[jf--];
+        shape[j] = shapef[jf--];
     }
 
     std::vector<std::string> var_names_str;
     for (size_t jj = 0; jj < size; ++jj) {
-        char str[length + 1];
-        ATLAS_ASSERT(snprintf(str, sizeof(str), "%s", var_names + jj * length ) >= 0);
-        std::string sstr(str);
-        sstr.erase(std::find_if(sstr.rbegin(), sstr.rend(), [](unsigned char ch) {
+        std::string str(std::string_view(var_names + jj * length, length));
+        str.erase(std::find_if(str.rbegin(), str.rend(), [](unsigned char ch) {
            return !std::isspace(ch);
-        }).base(), sstr.end());
-        var_names_str.push_back(sstr);
+        }).base(), str.end());
+        var_names_str.push_back(str);
     }
 
-    auto multifield = new MultiField(array::DataType{kind}, shape, var_names_str);
+    MultiFieldImpl* multifield;
+    {
+        MultiField f(array::DataType{kind}, shape, var_names_str);
+        multifield = f.get();
+        multifield->attach();
+    }
+    multifield->detach();
     ATLAS_ASSERT(multifield);
-    return multifield->get();
+    return multifield;
 }
 
 void atlas__MultiField__delete(MultiFieldImpl* This) {

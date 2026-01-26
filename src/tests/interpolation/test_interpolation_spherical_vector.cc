@@ -72,7 +72,7 @@ void gmshOutput(const std::string& fileName, const FieldSet& fieldSet) {
 }
 
 // Helper function to generate a NodeColumns functionspace
-const auto generateNodeColums(const std::string& gridName,
+auto generateNodeColums(const std::string& gridName,
                               const std::string& meshName) {
   const auto grid = Grid(gridName);
   const auto mesh = MeshGenerator(meshName).generate(grid);
@@ -80,7 +80,7 @@ const auto generateNodeColums(const std::string& gridName,
 }
 
 // Helper function to create part-empty PointCloud
-const auto generateEmptyPointCloud() {
+auto generateEmptyPointCloud() {
   const auto functionSpace = functionspace::PointCloud(std::vector<PointXY>{});
   return functionSpace;
 }
@@ -116,6 +116,8 @@ struct FunctionSpaceFixtures {
 struct FieldSpecFixtures {
   static const Config& get(const std::string& fixture) {
     static const auto fieldSpecs = std::map<std::string_view, Config>{
+        {"scalar", option::name("test field") | option::variables(1) |
+                        option::type("scalar")},
         {"2vector", option::name("test field") | option::variables(2) |
                         option::type("vector")},
         {"3vector", option::name("test field") | option::variables(3) |
@@ -131,7 +133,7 @@ struct InterpSchemeFixtures {
         option::type("cubedsphere-bilinear") | Config("adjoint", true);
     static const auto finiteElement =
         option::type("finite-element") | Config("adjoint", true);
-    static const auto structuredLinear = option::type("structured-linear2D") |
+    static const auto structuredLinear = option::type("structured-bilinear") |
                                          option::halo(1) |
                                          Config("adjoint", true);
     static const auto structuredCubic = option::type("structured-bicubic") |
@@ -182,9 +184,9 @@ int countNans(const array::ArrayView<double, Rank>& view) {
 
 template <int Rank>
 void testInterpolation(const Config& config) {
-  const auto& sourceFunctionSpace =
+  const auto sourceFunctionSpace =
       FunctionSpaceFixtures::get(config.getString("source_fixture"));
-  const auto& targetFunctionSpace =
+  const auto targetFunctionSpace =
       FunctionSpaceFixtures::get(config.getString("target_fixture"));
 
   auto sourceFieldSet = FieldSet{};
@@ -208,15 +210,19 @@ void testInterpolation(const Config& config) {
 
   auto sourceView = array::make_view<double, Rank>(sourceField);
   auto targetView = array::make_view<double, Rank>(targetField);
-
   ArrayForEach<0>::apply(
       std::tie(sourceLonLat, sourceView),
       [](auto&& lonLat, auto&& sourceColumn) {
         const auto setElems = [&](auto&& sourceElem) {
-          std::tie(sourceElem(0), sourceElem(1)) =
+          if (sourceElem.size() == 1) {
+            sourceElem(0) = vortexVertical(lonLat(0), lonLat(1));
+          }
+          else {
+            std::tie(sourceElem(0), sourceElem(1)) =
               vortexHorizontal(lonLat(0), lonLat(1));
-          if (sourceElem.size() == 3) {
-            sourceElem(2) = vortexVertical(lonLat(0), lonLat(1));
+            if (sourceElem.size() == 3) {
+              sourceElem(2) = vortexVertical(lonLat(0), lonLat(1));
+            }
           }
         };
         if constexpr (Rank == 2) {
@@ -247,10 +253,15 @@ void testInterpolation(const Config& config) {
         [&](auto&& lonLat, auto&& targetColumn, auto&& errorColumn) {
           const auto calcError = [&](auto&& targetElem, auto&& errorElem) {
             auto trueValue = std::vector<double>(targetElem.size());
-            std::tie(trueValue[0], trueValue[1]) =
-                vortexHorizontal(lonLat(0), lonLat(1));
-            if (targetElem.size() == 3) {
-              trueValue[2] = vortexVertical(lonLat(0), lonLat(1));
+            if (targetElem.size() == 1) {
+              trueValue[0] = vortexVertical(lonLat(0), lonLat(1));
+            }
+            else {
+              std::tie(trueValue[0], trueValue[1]) =
+                  vortexHorizontal(lonLat(0), lonLat(1));
+              if (targetElem.size() == 3) {
+                trueValue[2] = vortexVertical(lonLat(0), lonLat(1));
+              }
             }
 
             auto errorSqrd = 0.;
@@ -308,6 +319,17 @@ void testInterpolation(const Config& config) {
   }
 }
 
+CASE("cubed sphere CS-LFR-48 scalar interpolation (3d-field, scalar)") {
+  const auto config =
+      Config("source_fixture", "cubedsphere_mesh")
+          .set("target_fixture", "gaussian_mesh")
+          .set("field_spec_fixture", "scalar")
+          .set("interp_fixture", "cubedsphere_bilinear_spherical")
+          .set("file_id", "spherical_vector_cs2")
+          .set("tol", 0.00096);
+
+  testInterpolation<Rank3dField>((config));
+}
 
 CASE("cubed sphere CS-LFR-48 vector interpolation (3d-field, 2-vector)") {
   const auto config =
@@ -478,21 +500,19 @@ CASE("separate vector field components") {
   const auto targetLonLatView =
       array::make_view<double, 2>(targetFunctionSpace.lonlat());
 
-  const auto createFieldView = [&](const FunctionSpace& functionSpace,
-                                   const std::string& name,
+  const auto createFieldView = [&](const FunctionSpace& functionSpace, const std::string& name, idx_t index,
                                    FieldSet& fieldSet) {
-    // Note: Vector field name can be anything that uniquely identifies field.
-    auto field = functionSpace.createField<double>(option::name(name));
-    field.metadata().set("vector_field_name", "wind");
-    return array::make_view<double, 1>(fieldSet.add(field));
+      // Note: Vector field name can be anything that uniquely identifies field.
+      auto field = functionSpace.createField<double>(option::name(name) | option::vector_component("vector", index++));
+      return array::make_view<double, 1>(fieldSet.add(field));
   };
 
-  auto uSourceView = createFieldView(sourceFunctionSpace, "u", sourceFieldSet);
-  auto vSourceView = createFieldView(sourceFunctionSpace, "v", sourceFieldSet);
+  auto uSourceView = createFieldView(sourceFunctionSpace, "u", 0, sourceFieldSet);
+  auto vSourceView = createFieldView(sourceFunctionSpace, "v", 1, sourceFieldSet);
   const auto uTargetView =
-      createFieldView(targetFunctionSpace, "u", targetFieldSet);
+      createFieldView(targetFunctionSpace, "u", 0, targetFieldSet);
   const auto vTargetView =
-      createFieldView(targetFunctionSpace, "v", targetFieldSet);
+      createFieldView(targetFunctionSpace, "v", 1, targetFieldSet);
 
   uSourceView.assign(0.);
   vSourceView.assign(0.);
@@ -511,7 +531,7 @@ CASE("separate vector field components") {
   targetFieldSet.haloExchange();
 
   auto errorView =
-      createFieldView(targetFunctionSpace, "error", targetFieldSet);
+      createFieldView(targetFunctionSpace, "error", 2, targetFieldSet);
 
   auto maxError = 0.;
   for (auto idx = idx_t{0}; idx < targetFunctionSpace.size(); idx++) {
@@ -535,9 +555,9 @@ CASE("separate vector field components") {
   targetAdjointFieldSet.adjointHaloExchange();
 
   auto uSourceAdjointView =
-      createFieldView(sourceFunctionSpace, "u", sourceAdjointFieldSet);
+      createFieldView(sourceFunctionSpace, "u", 0, sourceAdjointFieldSet);
   auto vSourceAdjointView =
-      createFieldView(sourceFunctionSpace, "v", sourceAdjointFieldSet);
+      createFieldView(sourceFunctionSpace, "v", 1, sourceAdjointFieldSet);
   uSourceAdjointView.assign(0.);
   vSourceAdjointView.assign(0.);
 

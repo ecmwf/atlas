@@ -73,6 +73,7 @@ parallel/omp/sort.h
 util/Config.cc
 util/Config.h
 
+mdspan.h
 )
 
 list( APPEND atlas_grid_srcs
@@ -131,6 +132,8 @@ domain/detail/DomainFactory.cc
 grid.h
 grid/CubedSphereGrid.cc
 grid/CubedSphereGrid.h
+grid/CubedSphereGrid2.cc
+grid/CubedSphereGrid2.h
 grid/Grid.cc
 grid/Grid.h
 grid/SpecRegistry.cc
@@ -155,6 +158,8 @@ grid/Tiles.cc
 
 grid/detail/grid/CubedSphere.cc
 grid/detail/grid/CubedSphere.h
+grid/detail/grid/CubedSphere2.cc
+grid/detail/grid/CubedSphere2.h
 grid/detail/grid/GridBuilder.h
 grid/detail/grid/GridBuilder.cc
 grid/detail/grid/GridFactory.h
@@ -472,6 +477,8 @@ field/FieldCreatorIFS.cc
 field/FieldCreatorIFS.h
 field/FieldSet.cc
 field/FieldSet.h
+field/Halo.cc
+field/Halo.h
 field/MissingValue.cc
 field/MissingValue.h
 field/MultiField.cc
@@ -506,6 +513,9 @@ functionspace/EdgeColumns.h
 functionspace/EdgeColumns.cc
 functionspace/FunctionSpace.h
 functionspace/FunctionSpace.cc
+functionspace/HaloDescription.h
+functionspace/Locate.cc
+functionspace/Locate.h
 functionspace/NodeColumns.h
 functionspace/NodeColumns.cc
 functionspace/StructuredColumns.h
@@ -628,6 +638,8 @@ interpolation/Interpolation.cc
 interpolation/Interpolation.h
 interpolation/NonLinear.cc
 interpolation/NonLinear.h
+interpolation/AssembleGlobalMatrix.h
+interpolation/AssembleGlobalMatrix.cc
 interpolation/method/Method.cc
 interpolation/method/Method.h
 interpolation/method/MethodFactory.cc
@@ -705,12 +717,22 @@ linalg/View.h
 linalg/sparse.h
 linalg/sparse/Backend.h
 linalg/sparse/Backend.cc
+linalg/sparse/MakeEckitSparseMatrix.h
+linalg/sparse/MakeSparseMatrixStorageEckit.h
+linalg/sparse/MakeSparseMatrixStorageEigen.h
 linalg/sparse/SparseMatrixMultiply.h
 linalg/sparse/SparseMatrixMultiply.tcc
 linalg/sparse/SparseMatrixMultiply_EckitLinalg.h
 linalg/sparse/SparseMatrixMultiply_EckitLinalg.cc
+linalg/sparse/SparseMatrixMultiply_HicSparse.h
+linalg/sparse/SparseMatrixMultiply_HicSparse.cc
 linalg/sparse/SparseMatrixMultiply_OpenMP.h
 linalg/sparse/SparseMatrixMultiply_OpenMP.cc
+linalg/sparse/SparseMatrixStorage.cc
+linalg/sparse/SparseMatrixStorage.h
+linalg/sparse/SparseMatrixToTriplets.h
+linalg/sparse/SparseMatrixView.h
+linalg/sparse/SparseMatrixTriplet.h
 linalg/dense.h
 linalg/dense/Backend.h
 linalg/dense/Backend.cc
@@ -718,6 +740,10 @@ linalg/dense/MatrixMultiply.h
 linalg/dense/MatrixMultiply.tcc
 linalg/dense/MatrixMultiply_EckitLinalg.h
 linalg/dense/MatrixMultiply_EckitLinalg.cc
+linalg/fft.h
+linalg/fft/FFT.h
+linalg/fft/FFTW.cc
+linalg/fft/pocketfft.cc
 )
 
 
@@ -800,13 +826,20 @@ endif()
 list( APPEND atlas_parallel_srcs
   parallel/Checksum.cc
   parallel/Checksum.h
+  parallel/Collect.cc
+  parallel/Collect.h
   parallel/GatherScatter.cc
   parallel/GatherScatter.h
   parallel/HaloExchange.cc
   parallel/HaloExchange.h
-  parallel/HaloAdjointExchangeImpl.h
-  parallel/HaloExchangeImpl.h
+  parallel/Locate.cc
+  parallel/Locate.h
   parallel/mpi/Buffer.h
+  parallel/detail/Packer.h
+  parallel/detail/Packer.cc
+  parallel/detail/pack_index.h
+  parallel/detail/adjoint_unpack_index.h
+  parallel/detail/zero_index.h
 )
 
 list( APPEND atlas_util_srcs
@@ -857,8 +890,6 @@ util/SphericalPolygon.cc
 util/SphericalPolygon.h
 util/UnitSphere.h
 util/vector.h
-util/mdspan.h
-util/detail/mdspan/mdspan.hpp
 util/VectorOfAbstract.h
 util/QhullSphericalTriangulation.h
 util/QhullSphericalTriangulation.cc
@@ -866,6 +897,8 @@ util/CGALSphericalTriangulation.h
 util/CGALSphericalTriangulation.cc
 util/detail/Cache.h
 util/detail/KDTree.h
+util/detail/filesystem.cc
+util/detail/filesystem.h
 util/function/MDPI_functions.h
 util/function/MDPI_functions.cc
 util/function/SolidBodyRotation.h
@@ -948,12 +981,11 @@ list( APPEND source_list
 if( atlas_HAVE_GPU )
   include( atlas_host_device )
   list( APPEND source_list
-    parallel/HaloExchangeGPU.h
-    parallel/HaloExchangeGPU.hic
+    parallel/detail/DevicePacker.hic
   )
   atlas_host_device( source_list
     SOURCES
-      parallel/HaloExchangeGPU.hic
+      parallel/detail/DevicePacker.hic
       mesh/Connectivity.cc
   )
 
@@ -1001,6 +1033,8 @@ ecbuild_add_library( TARGET atlas
     eckit_option
     atlas_io
     hic
+    hicsparse
+    pluto
     $<${atlas_HAVE_EIGEN}:Eigen3::Eigen>
     $<${atlas_HAVE_OMP_CXX}:OpenMP::OpenMP_CXX>
     $<${atlas_HAVE_GRIDTOOLS_STORAGE}:GridTools::gridtools>
@@ -1008,6 +1042,7 @@ ecbuild_add_library( TARGET atlas
   PRIVATE_INCLUDES
     ${CGAL_INCLUDE_DIRS}
     ${FFTW_INCLUDES}
+    ${POCKETFFT_INCLUDE_DIRS}
     ${PROJ_INCLUDE_DIRS}
 
   PUBLIC_INCLUDES
@@ -1021,8 +1056,10 @@ if( HAVE_ACC AND CMAKE_Fortran_COMPILER_ID MATCHES NVHPC )
   target_link_options( atlas INTERFACE
       $<$<LINK_LANG_AND_ID:C,NVHPC>:SHELL:${ACC_LINK_OPTIONS}>
       $<$<LINK_LANG_AND_ID:CXX,NVHPC>:SHELL:${ACC_LINK_OPTIONS}>
-      $<$<LINK_LANG_AND_ID:Fortran,NVHPC>:SHELL:${ACC_LINK_OPTIONS}>
-      $<$<LINK_LANG_AND_ID:CUDA,NVIDIA>:SHELL:${ACC_LINK_OPTIONS}> )
+      $<$<LINK_LANG_AND_ID:Fortran,NVHPC>:SHELL:${ACC_LINK_OPTIONS}> )
+      #   $<$<LINK_LANG_AND_ID:CUDA,NVIDIA>:SHELL:${ACC_LINK_OPTIONS}>
+      #      This only works when CUDA HOST COMPILER is NVIDIA, by default it is g++ so we cannot rely on this.
+      #      CUDA executables should set LINKER_LANGUAGE to C or CXX instead, which will have ACC_LINK_OPTIONS
 endif()
 
 target_compile_features( atlas PUBLIC cxx_std_17 )

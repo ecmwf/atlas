@@ -9,7 +9,7 @@ on:
 
 jobs:
   publish:
-    uses: ecmwf-actions/reusable-workflows/.github/workflows/cd-docs.yml@v2
+    uses: ecmwf/reusable-workflows/.github/workflows/cd-docs.yml@v2
     secrets: inherit
     with:
       config: .github/docs-config.yml

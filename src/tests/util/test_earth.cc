@@ -11,8 +11,11 @@
 #include <cmath>
 #include <limits>
 
+#include "eckit/eckit_version.h"
+
 #include "atlas/util/Earth.h"
 #include "atlas/util/Point.h"
+#include "atlas/util/Geometry.h"
 
 #include "tests/AtlasTestEnvironment.h"
 
@@ -168,6 +171,16 @@ CASE("test_earth_great_circle_latitude_given_longitude") {
 
     EXPECT(eckit::types::is_approximately_equal(lat, -6.81, 0.01));
 }
+
+CASE("test_across_pole") {
+    if (eckit_version_int() < 12400) {
+        return;
+    }
+    const PointLonLat P1{-16.875,-105.255};
+    atlas::geometry::Earth geo;
+    EXPECT_APPROX_EQ(geo.xyz(P1), PointXYZ(-1.60418e+06,486624,-6.14673e+06), 50.);
+}
+
 
 }  // namespace test
 }  // namespace atlas

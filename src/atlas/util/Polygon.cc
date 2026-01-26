@@ -191,8 +191,6 @@ PolygonCoordinates::PolygonCoordinates(const PointContainer& points, bool remove
     coordinatesMax_ = Point2{std::numeric_limits<double>::lowest(), std::numeric_limits<double>::lowest()};
     centroid_       = Point2{0., 0.};
 
-    size_t nb_removed_points_due_to_alignment = 0;
-
     for (size_t i = 0; i < points.size(); ++i) {
         const Point2& A = points[i];
         coordinatesMin_ = Point2::componentsMin(coordinatesMin_, A);
@@ -207,7 +205,6 @@ PolygonCoordinates::PolygonCoordinates(const PointContainer& points, bool remove
             const Point2& C = coordinates_[coordinates_.size() - 2];
             if (eckit::types::is_approximately_equal(0., cross_product_analog(A, B, C), 1.e-10)) {
                 coordinates_.back() = A;
-                ++nb_removed_points_due_to_alignment;
                 continue;
             }
         }

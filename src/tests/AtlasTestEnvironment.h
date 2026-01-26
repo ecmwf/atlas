@@ -217,6 +217,12 @@ bool approx_eq(const Point2& v1, const Point2& v2) {
 bool approx_eq(const Point2& v1, const Point2& v2, const double& t) {
     return approx_eq(v1[0], v2[0], t) && approx_eq(v1[1], v2[1], t);
 }
+bool approx_eq(const Point3& v1, const Point3& v2) {
+    return approx_eq(v1[0], v2[0]) && approx_eq(v1[1], v2[1]) && approx_eq(v1[2], v2[2]);
+}
+bool approx_eq(const Point3& v1, const Point3& v2, const double& t) {
+    return approx_eq(v1[0], v2[0], t) && approx_eq(v1[1], v2[1], t) && approx_eq(v1[2], v2[2], t);
+}
 
 template <typename T1, typename T2>
 std::string expect_message(const std::string& condition, const T1& lhs, const T2& rhs, const eckit::CodeLocation& loc) {
@@ -224,6 +230,16 @@ std::string expect_message(const std::string& condition, const T1& lhs, const T2
     msg << eckit::Colour::red << condition << " FAILED @ " << print(loc) << eckit::Colour::reset << "\n"
         << eckit::Colour::red << " --> lhs = " << print(lhs) << eckit::Colour::reset << "\n"
         << eckit::Colour::red << " --> rhs = " << print(rhs) << eckit::Colour::reset;
+    return msg.str();
+}
+
+template <typename T1, typename T2, typename T3>
+std::string expect_message(const std::string& condition, const T1& lhs, const T2& rhs, const T3& tol, const eckit::CodeLocation& loc) {
+    std::stringstream msg;
+    msg << eckit::Colour::red << condition << " FAILED @ " << print(loc) << eckit::Colour::reset << "\n"
+        << eckit::Colour::red << " --> lhs = " << print(lhs) << eckit::Colour::reset << "\n"
+        << eckit::Colour::red << " --> rhs = " << print(rhs) << eckit::Colour::reset << "\n"
+        << eckit::Colour::red << " --> tol = " << print(tol) << eckit::Colour::reset;
     return msg.str();
 }
 
@@ -242,12 +258,12 @@ std::string expect_message(const std::string& condition, const T1& lhs, const T2
         }                                                                                                            \
     } while (false)
 
-#define __EXPECT_APPROX_EQ_TOL(lhs, rhs, tol)                                                                  \
-    do {                                                                                                       \
-        if (!(approx_eq(lhs, rhs, tol))) {                                                                     \
-            current_test().expect_failed(                                                                      \
-                expect_message("EXPECT_APPROX_EQ( " #lhs ", " #rhs ", " #tol " )", lhs, rhs, Here()), Here()); \
-        }                                                                                                      \
+#define __EXPECT_APPROX_EQ_TOL(lhs, rhs, tol)                                                                       \
+    do {                                                                                                            \
+        if (!(approx_eq(lhs, rhs, tol))) {                                                                          \
+            current_test().expect_failed(                                                                           \
+                expect_message("EXPECT_APPROX_EQ( " #lhs ", " #rhs ", " #tol " )", lhs, rhs, tol, Here()), Here()); \
+        }                                                                                                           \
     } while (false)
 
 #define EXPECT_APPROX_EQ(...) __ATLAS_SPLICE(__EXPECT_APPROX_EQ__, __ATLAS_NARG(__VA_ARGS__))(__VA_ARGS__)
@@ -329,15 +345,17 @@ void debug_reset() {
 }
 
 bool getEnv(const std::string& env, bool default_value) {
-    if (::getenv(env.c_str())) {
-        return eckit::Translator<std::string, bool>()(::getenv(env.c_str()));
+    const char* cenv = ::getenv(env.c_str());
+    if (cenv != nullptr) {
+        return eckit::Translator<std::string, bool>()(cenv);
     }
     return default_value;
 }
 
 int getEnv(const std::string& env, int default_value) {
-    if (::getenv(env.c_str())) {
-        return eckit::Translator<std::string, int>()(::getenv(env.c_str()));
+    const char* cenv = ::getenv(env.c_str());
+    if (cenv != nullptr) {
+        return eckit::Translator<std::string, int>()(cenv);
     }
     return default_value;
 }

@@ -37,7 +37,7 @@ flt::flt(bool flt) {
 
 fft::fft(FFT fft) {
     static const std::map<FFT, std::string> FFT_to_string = {
-        {FFT::OFF, "OFF"}, {FFT::FFT992, "FFT992"}, {FFT::FFTW, "FFTW"}};
+        {FFT::OFF, "OFF"}, {FFT::FFT992, "FFT992"}, {FFT::FFTW, "FFTW"}, {FFT::pocketfft, "pocketfft"}};
     set("fft", FFT_to_string.at(fft));
 }
 
@@ -45,8 +45,8 @@ fft::fft(const std::string& fft) {
     set("fft", fft);
 }
 
-split_latitudes::split_latitudes(bool split_latitudes) {
-    set("split_latitudes", split_latitudes);
+split_y::split_y(bool split_y) {
+    set("split_y", split_y);
 }
 
 write_legendre::write_legendre(const eckit::PathName& filepath) {

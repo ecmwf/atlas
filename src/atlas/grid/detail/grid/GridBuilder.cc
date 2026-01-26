@@ -52,7 +52,7 @@ int regex_match_impl(const std::string& string, const std::string& regex, std::v
     if (use_substr) {
         matchcount = regex_count_parens(regex);
     }
-    regmatch_t result[matchcount + 1];
+    std::vector<regmatch_t> result(matchcount + 1);
     int compiled_ok =
         !regcomp(&re, regex.c_str(), REG_EXTENDED + (use_case ? 0 : REG_ICASE) + (use_substr ? 0 : REG_NOSUB));
 
@@ -62,7 +62,7 @@ int regex_match_impl(const std::string& string, const std::string& regex, std::v
 
     ATLAS_ASSERT(compiled_ok);
 
-    int found = !regexec(&re, string.c_str(), matchcount + 1, result, 0);
+    int found = !regexec(&re, string.c_str(), matchcount + 1, result.data(), 0);
     if (found && use_substr) {
         substr.resize(matchcount);
         // match zero is the whole string; ignore it.
@@ -121,6 +121,7 @@ static void init() {
 namespace detail {
 namespace grid {
 void force_link_CubedSphere();
+void force_link_CubedSphere2();
 void force_link_Gaussian();
 void force_link_LonLat();
 void force_link_Regional();
@@ -130,6 +131,7 @@ void force_link_Regional_var_resolution();
 
 const GridBuilder::Registry& GridBuilder::nameRegistry() {
     detail::grid::force_link_CubedSphere();
+    detail::grid::force_link_CubedSphere2();
     detail::grid::force_link_Gaussian();
     detail::grid::force_link_LonLat();
     detail::grid::force_link_Regional();

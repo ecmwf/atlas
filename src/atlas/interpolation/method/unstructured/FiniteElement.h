@@ -57,7 +57,7 @@ protected:
    * point to the nearest element(s), returning the (normalized) interpolation
    * weights
    */
-    Triplets projectPointToElements(size_t ip, const ElemIndex3::NodeList& elems, std::ostream& failures_log) const;
+    Triplets projectPointToElements(size_t ip, const ElemIndex3::NodeList& elems) const;
 
     virtual const FunctionSpace& source() const override { return source_; }
     virtual const FunctionSpace& target() const override { return target_; }
@@ -65,8 +65,8 @@ protected:
 private:
     using Method::do_setup;
     virtual void do_setup(const FunctionSpace& source, const FunctionSpace& target) override;
-
     virtual void do_setup(const Grid& source, const Grid& target, const Cache&) override;
+    virtual void do_setup(const FunctionSpace& source, const FunctionSpace& target, const Cache&) override;
 
 protected:
     mesh::MultiBlockConnectivity* connectivity_;

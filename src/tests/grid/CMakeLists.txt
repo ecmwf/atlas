@@ -41,6 +41,7 @@ foreach(test
         test_grids
         test_state
         test_cubedsphere
+        test_cubedsphere_2
         )
     ecbuild_add_test( TARGET atlas_${test} SOURCES ${test}.cc LIBS atlas ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT} )
 endforeach()
@@ -56,7 +57,7 @@ ecbuild_add_test( TARGET  atlas_test_distribution_regular_bands
   SOURCES test_distribution_regular_bands.cc
   LIBS atlas
   ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
-  CONDITION atlas_HAVE_ATLAS_FUNCTIONSPACE
+  CONDITION atlas_HAVE_ATLAS_FUNCTIONSPACE AND MPI_SLOTS GREATER_EQUAL 4
 )
 
 

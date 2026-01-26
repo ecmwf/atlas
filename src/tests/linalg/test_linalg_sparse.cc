@@ -1,5 +1,5 @@
 /*
- * (C) Copyright 1996- ECMWF.
+ * (C) Copyright 2024- ECMWF.
  *
  * This software is licensed under the terms of the Apache Licence Version 2.0
  * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
@@ -8,16 +8,8 @@
  * nor does it submit to any jurisdiction.
  */
 
-#include <tuple>
-#include <vector>
-
-#include "eckit/linalg/Matrix.h"
-#include "eckit/linalg/Vector.h"
-
-#include "atlas/array.h"
-#include "atlas/linalg/sparse.h"
-
 #include "tests/AtlasTestEnvironment.h"
+#include "tests/linalg/helper_linalg_sparse.h"
 
 
 using namespace atlas::linalg;
@@ -25,97 +17,14 @@ using namespace atlas::linalg;
 namespace atlas {
 namespace test {
 
+using SparseMatrix = eckit::linalg::SparseMatrix;
+
 //----------------------------------------------------------------------------------------------------------------------
 
 // strings to be used in the tests
 static std::string eckit_linalg = sparse::backend::eckit_linalg::type();
 static std::string openmp       = sparse::backend::openmp::type();
-
-//----------------------------------------------------------------------------------------------------------------------
-
-// Only reason to define these derived classes is for nicer constructors and convenience in the tests
-
-class Vector : public eckit::linalg::Vector {
-public:
-    using Scalar = eckit::linalg::Scalar;
-    using eckit::linalg::Vector::Vector;
-    Vector(const std::initializer_list<Scalar>& v): eckit::linalg::Vector::Vector(v.size()) {
-        size_t i = 0;
-        for (auto& s : v) {
-            operator[](i++) = s;
-        }
-    }
-};
-
-class Matrix : public eckit::linalg::Matrix {
-public:
-    using Scalar = eckit::linalg::Scalar;
-    using eckit::linalg::Matrix::Matrix;
-
-    Matrix(const std::initializer_list<std::vector<Scalar>>& m):
-        eckit::linalg::Matrix::Matrix(m.size(), m.size() ? m.begin()->size() : 0) {
-        size_t r = 0;
-        for (auto& row : m) {
-            for (size_t c = 0; c < cols(); ++c) {
-                operator()(r, c) = row[c];
-            }
-            ++r;
-        }
-    }
-};
-
-// 2D array constructable from eckit::linalg::Matrix
-// Indexing/memorylayout and data type can be customized for testing
-template <typename Value, Indexing indexing = Indexing::layout_left>
-struct ArrayMatrix {
-    array::ArrayView<Value, 2>& view() { return view_; }
-    ArrayMatrix(const eckit::linalg::Matrix& m): ArrayMatrix(m.rows(), m.cols()) {
-        for (int r = 0; r < m.rows(); ++r) {
-            for (int c = 0; c < m.cols(); ++c) {
-                auto& v = layout_left ? view_(r, c) : view_(c, r);
-                v       = m(r, c);
-            }
-        }
-    }
-    ArrayMatrix(int r, int c): array(make_shape(r, c)), view_(array::make_view<Value, 2>(array)) {}
-
-private:
-    static constexpr bool layout_left = (indexing == Indexing::layout_left);
-    static array::ArrayShape make_shape(int rows, int cols) {
-        return layout_left ? array::make_shape(rows, cols) : array::make_shape(cols, rows);
-    }
-    array::ArrayT<Value> array;
-    array::ArrayView<Value, 2> view_;
-};
-
-// 1D array constructable from eckit::linalg::Vector
-template <typename Value>
-struct ArrayVector {
-    array::ArrayView<Value, 1>& view() { return view_; }
-    ArrayVector(const eckit::linalg::Vector& v): ArrayVector(v.size()) {
-        for (int n = 0; n < v.size(); ++n) {
-            view_[n] = v[n];
-        }
-    }
-    ArrayVector(int size): array(size), view_(array::make_view<Value, 1>(array)) {}
-
-private:
-    array::ArrayT<Value> array;
-    array::ArrayView<Value, 1> view_;
-};
-
-
-//----------------------------------------------------------------------------------------------------------------------
-
-template <typename T>
-void expect_equal(T* v, T* r, size_t s) {
-    EXPECT(is_approximately_equal(eckit::testing::make_view(v, s), eckit::testing::make_view(r, s), T(1.e-5)));
-}
-
-template <class T1, class T2>
-void expect_equal(const T1& v, const T2& r) {
-    expect_equal(v.data(), r.data(), std::min(v.size(), r.size()));
-}
+static std::string hicsparse    = sparse::backend::hicsparse::type();
 
 //----------------------------------------------------------------------------------------------------------------------
 
@@ -183,15 +92,21 @@ CASE("test backend functionalities") {
     EXPECT_EQ(sparse::current_backend().getString("backend", "undefined"), "undefined");
     EXPECT_EQ(sparse::default_backend(eckit_linalg).getString("backend"), "default");
 
+    sparse::current_backend(hicsparse);
+    EXPECT_EQ(sparse::current_backend().type(), "hicsparse");
+    EXPECT_EQ(sparse::current_backend().getString("backend", "undefined"), "undefined");
+
     sparse::default_backend(eckit_linalg).set("backend", "generic");
     EXPECT_EQ(sparse::default_backend(eckit_linalg).getString("backend"), "generic");
 
     const sparse::Backend backend_default      = sparse::Backend();
     const sparse::Backend backend_openmp       = sparse::backend::openmp();
     const sparse::Backend backend_eckit_linalg = sparse::backend::eckit_linalg();
-    EXPECT_EQ(backend_default.type(), openmp);
+    const sparse::Backend backend_hicsparse    = sparse::backend::hicsparse();
+    EXPECT_EQ(backend_default.type(), hicsparse);
     EXPECT_EQ(backend_openmp.type(), openmp);
     EXPECT_EQ(backend_eckit_linalg.type(), eckit_linalg);
+    EXPECT_EQ(backend_hicsparse.type(), hicsparse);
 
     EXPECT_EQ(std::string(backend_openmp), openmp);
     EXPECT_EQ(std::string(backend_eckit_linalg), eckit_linalg);
@@ -250,13 +165,75 @@ CASE("sparse_matrix vector multiply (spmv)") {
         SECTION("View of atlas::Array [backend=" + backend + "]") {
             ArrayVector<double> x(Vector{1., 2., 3.});
             ArrayVector<double> y(3);
-            sparse_matrix_multiply(A, x.view(), y.view());
+            auto x_view = x.view();
+            auto y_view = y.view();
+            sparse_matrix_multiply(A, x_view, y_view);
             expect_equal(y.view(), Vector{-7., 4., 6.});
             // sparse_matrix_multiply of sparse matrix and vector of non-matching sizes should fail
             {
                 ArrayVector<double> x2(2);
-                EXPECT_THROWS_AS(sparse_matrix_multiply(A, x2.view(), y.view()), eckit::AssertionFailed);
+                auto x2_view = x2.view();
+                EXPECT_THROWS_AS(sparse_matrix_multiply(A, x2_view, y_view), eckit::AssertionFailed);
             }
+        }
+
+        SECTION("View of atlas::Array [backend=" + backend + "]") {
+            ArrayVector<double> x(Vector{1., 2., 3.});
+            ArrayVector<double> y(3);
+            auto x_view = x.view();
+            auto y_view = y.view();
+            auto spmm = SparseMatrixMultiply{backend};
+            spmm(A, x_view, y_view);
+            expect_equal(y_view, Vector{-7., 4., 6.});
+        }
+
+        SECTION("View of atlas::Array [backend=" + backend + "]") {
+            ArrayVector<double> x(Vector{1., 2., 3.});
+            ArrayVector<double> y(3);
+            auto x_view = x.view();
+            auto y_view = y.view();
+            auto spmm = SparseMatrixMultiply{backend};
+            spmm.multiply(A, x_view, y_view);
+            expect_equal(y_view, Vector{-7., 4., 6.});
+        }
+    }
+}
+
+CASE("sparse_matrix vector multiply-add (spmv)") {
+    // "square" matrix
+    // A =  2  . -3
+    //      .  2  .
+    //      .  .  2
+    // x = 1 2 3
+    // y = 1 2 3
+    SparseMatrix A{3, 3, {{0, 0, 2.}, {0, 2, -3.}, {1, 1, 2.}, {2, 2, 2.}}};
+
+    for (std::string backend : {openmp, eckit_linalg}) {
+        sparse::current_backend(backend);
+
+        SECTION("View of atlas::Array [backend=" + backend + "]") {
+            ArrayVector<double> x(Vector{1., 2., 3.});
+            ArrayVector<double> y(Vector{4., 5., 6.});
+            auto x_view = x.view();
+            auto y_view = y.view();
+            sparse_matrix_multiply_add(A, x_view, y_view);
+            expect_equal(y.view(), Vector{-3., 9., 12.});
+            // sparse_matrix_multiply_add of sparse matrix and vector of non-matching sizes should fail
+            {
+                ArrayVector<double> x2(2);
+                auto x2_view = x2.view();
+                EXPECT_THROWS_AS(sparse_matrix_multiply_add(A, x2_view, y_view), eckit::AssertionFailed);
+            }
+        }
+
+        SECTION("sparse_matrix_multiply_add [backend=" + backend + "]") {
+            ArrayVector<double> x(Vector{1., 2., 3.});
+            ArrayVector<double> y(Vector{1., 2., 3.});
+            auto x_view = x.view();
+            auto y_view = y.view();
+            auto spmm = SparseMatrixMultiply{sparse::backend::openmp()};
+            spmm.multiply_add(A, x_view, y_view);
+            expect_equal(y_view, Vector{-6., 6., 9.});
         }
     }
 }
@@ -295,8 +272,10 @@ CASE("sparse_matrix matrix multiply (spmm)") {
         SECTION("View of atlas::Array PointsRight [backend=" + sparse::current_backend().type() + "]") {
             ArrayMatrix<double, Indexing::layout_right> ma(m);
             ArrayMatrix<double, Indexing::layout_right> c(3, 2);
-            sparse_matrix_multiply(A, ma.view(), c.view(), Indexing::layout_right);
-            expect_equal(c.view(), c_exp);
+            auto ma_view = ma.view();
+            auto c_view  = c.view();
+            sparse_matrix_multiply(A, ma_view, c_view, Indexing::layout_right);
+            expect_equal(c_view, c_exp);
         }
     }
 
@@ -305,8 +284,10 @@ CASE("sparse_matrix matrix multiply (spmm)") {
         auto backend = sparse::backend::openmp();
         ArrayMatrix<float> ma(m);
         ArrayMatrix<float> c(3, 2);
-        sparse_matrix_multiply(A, ma.view(), c.view(), backend);
-        expect_equal(c.view(), ArrayMatrix<float>(c_exp).view());
+        auto ma_view = ma.view();
+        auto c_view  = c.view();
+        sparse_matrix_multiply(A, ma_view, c_view, backend);
+        expect_equal(c_view, ArrayMatrix<float>(c_exp).view());
     }
 
     SECTION("SparseMatrixMultiply [backend=openmp] 1") {
@@ -314,8 +295,10 @@ CASE("sparse_matrix matrix multiply (spmm)") {
         auto spmm = SparseMatrixMultiply{sparse::backend::openmp()};
         ArrayMatrix<float> ma(m);
         ArrayMatrix<float> c(3, 2);
-        spmm(A, ma.view(), c.view());
-        expect_equal(c.view(), ArrayMatrix<float>(c_exp).view());
+        auto ma_view = ma.view();
+        auto c_view  = c.view();
+        spmm(A, ma_view, c_view);
+        expect_equal(c_view, ArrayMatrix<float>(c_exp).view());
     }
 
     SECTION("SparseMatrixMultiply [backend=openmp] 2") {
@@ -323,10 +306,66 @@ CASE("sparse_matrix matrix multiply (spmm)") {
         auto spmm = SparseMatrixMultiply{openmp};
         ArrayMatrix<float> ma(m);
         ArrayMatrix<float> c(3, 2);
-        spmm(A, ma.view(), c.view());
-        expect_equal(c.view(), ArrayMatrix<float>(c_exp).view());
+        auto ma_view = ma.view();
+        auto c_view  = c.view();
+        spmm(A, ma_view, c_view);
+        expect_equal(c_view, ArrayMatrix<float>(c_exp).view());
+    }
+
+    SECTION("SparseMatrixMultiply::multiply [backend=openmp]") {
+        sparse::current_backend(eckit_linalg);  // expected to be ignored
+        auto spmm = SparseMatrixMultiply{openmp};
+        ArrayMatrix<float> ma(m);
+        ArrayMatrix<float> c(3, 2);
+        auto ma_view = ma.view();
+        auto c_view  = c.view();
+        spmm.multiply(A, ma_view, c_view);
+        expect_equal(c_view, ArrayMatrix<float>(c_exp).view());
     }
 }
+
+CASE("sparse_matrix matrix multiply-add (spmm)") {
+    // "square"
+    // A =  2  . -3
+    //      .  2  .
+    //      .  .  2
+    SparseMatrix A{3, 3, {{0, 0, 2.}, {0, 2, -3.}, {1, 1, 2.}, {2, 2, 2.}}};
+    Matrix m{{1., 2.}, {3., 4.}, {5., 6.}};
+    Matrix y_exp{{-12., -12.}, {9., 12.}, {15., 18.}};
+
+    for (std::string backend : {openmp, eckit_linalg}) {
+        sparse::current_backend(backend);
+
+        SECTION("View of atlas::Array PointsRight [backend=" + sparse::current_backend().type() + "]") {
+            ArrayMatrix<double, Indexing::layout_right> x(m);
+            ArrayMatrix<double, Indexing::layout_right> y(m);
+            auto x_view = x.view();
+            auto y_view = y.view();
+            sparse_matrix_multiply_add(A, x_view, y_view, Indexing::layout_right);
+            expect_equal(y_view, y_exp);
+        }
+    }
+
+    SECTION("sparse_matrix_multiply_add [backend=openmp]") {
+        ArrayMatrix<double> x(m);
+        ArrayMatrix<double> y(m);
+        auto x_view = x.view();
+        auto y_view = y.view();
+        sparse_matrix_multiply_add(A, x_view, y_view, sparse::backend::openmp());
+        expect_equal(y_view, ArrayMatrix<double>(y_exp).view());
+    }
+
+    SECTION("SparseMatrixMultiply::multiply_add [backend=openmp]") {
+        auto spmm = SparseMatrixMultiply{sparse::backend::openmp()};
+        ArrayMatrix<double> x(m);
+        ArrayMatrix<double> y(m);
+        auto x_view = x.view();
+        auto y_view = y.view();
+        spmm.multiply_add(A, x_view, y_view);
+        expect_equal(y_view, ArrayMatrix<double>(y_exp).view());
+    }
+}
+
 
 //----------------------------------------------------------------------------------------------------------------------
 

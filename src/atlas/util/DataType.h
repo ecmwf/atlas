@@ -47,16 +47,18 @@ public:
     static constexpr kind_t KIND_INT64  = -8;
     static constexpr kind_t KIND_REAL32 = 4;
     static constexpr kind_t KIND_REAL64 = 8;
+    static constexpr kind_t KIND_UINT32 = -15;
     static constexpr kind_t KIND_UINT64 = -16;
 
     template <typename DATATYPE>
     static DataType create();
 
-    static DataType byte() { return DataType(KIND_BYTE); }
-    static DataType int32() { return DataType(KIND_INT32); }
-    static DataType int64() { return DataType(KIND_INT64); }
+    static DataType byte()   { return DataType(KIND_BYTE); }
+    static DataType int32()  { return DataType(KIND_INT32); }
+    static DataType int64()  { return DataType(KIND_INT64); }
     static DataType real32() { return DataType(KIND_REAL32); }
     static DataType real64() { return DataType(KIND_REAL64); }
+    static DataType uint32() { return DataType(KIND_UINT32); }
     static DataType uint64() { return DataType(KIND_UINT64); }
 
     template <typename DATATYPE>
@@ -74,11 +76,12 @@ public:
     static bool kind_valid(kind_t);
 
 private:
-    static std::string byte_str() { return "byte"; }
-    static std::string int32_str() { return "int32"; }
-    static std::string int64_str() { return "int64"; }
+    static std::string byte_str()   { return "byte"; }
+    static std::string int32_str()  { return "int32"; }
+    static std::string int64_str()  { return "int64"; }
     static std::string real32_str() { return "real32"; }
     static std::string real64_str() { return "real64"; }
+    static std::string uint32_str() { return "uint32"; }
     static std::string uint64_str() { return "uint64"; }
 
     [[noreturn]] static void throw_not_recognised(kind_t);
@@ -91,7 +94,9 @@ public:
     DataType& operator=(const DataType&);
     std::string str() const { return kind_to_str(kind_); }
     kind_t kind() const { return kind_; }
-    size_t size() const { return (kind_ == KIND_UINT64) ? 8 : std::abs(kind_); }
+    size_t size() const { return (kind_ == KIND_UINT32) ? 4 :
+                                 (kind_ == KIND_UINT64) ? 8 :
+                                 std::abs(kind_); }
 
     friend bool operator==(DataType dt1, DataType dt2);
     friend bool operator!=(DataType dt1, DataType dt2);
@@ -163,6 +168,16 @@ inline std::string DataType::str<const double>() {
     return real64_str();
 }
 template <>
+inline std::string DataType::str<unsigned int>() {
+    static_assert(sizeof(unsigned int) == 4, "");
+    return uint32_str();
+}
+template <>
+inline std::string DataType::str<const unsigned int>() {
+    static_assert(sizeof(unsigned int) == 4, "");
+    return uint32_str();
+}
+template <>
 inline std::string DataType::str<unsigned long>() {
     static_assert(sizeof(unsigned long) == 8, "");
     return uint64_str();
@@ -194,6 +209,10 @@ inline std::string DataType::str(const long&) {
 template <>
 inline std::string DataType::str(const long long&) {
     return str<long long>();
+}
+template <>
+inline std::string DataType::str(const unsigned int&) {
+    return str<unsigned int>();
 }
 template <>
 inline std::string DataType::str(const unsigned long&) {
@@ -252,6 +271,16 @@ inline constexpr DataType::kind_t DataType::kind<const long long>() {
     return KIND_INT64;
 }
 template <>
+inline constexpr DataType::kind_t DataType::kind<unsigned int>() {
+    static_assert(sizeof(unsigned int) == 4, "");
+    return KIND_UINT32;
+}
+template <>
+inline constexpr DataType::kind_t DataType::kind<const unsigned int>() {
+    static_assert(sizeof(unsigned int) == 4, "");
+    return KIND_UINT32;
+}
+template <>
 inline constexpr DataType::kind_t DataType::kind<unsigned long>() {
     static_assert(sizeof(unsigned long) == 8, "");
     return KIND_UINT64;
@@ -304,6 +333,10 @@ inline constexpr DataType::kind_t DataType::kind(const unsigned long&) {
     return kind<unsigned long>();
 }
 template <>
+inline constexpr DataType::kind_t DataType::kind(const unsigned int&) {
+    return kind<unsigned int>();
+}
+template <>
 inline constexpr DataType::kind_t DataType::kind(const float&) {
     return kind<float>();
 }
@@ -317,6 +350,8 @@ inline DataType::kind_t DataType::str_to_kind(const std::string& datatype) {
         return KIND_INT32;
     else if (datatype == "int64")
         return KIND_INT64;
+    else if (datatype == "uint32")
+        return KIND_UINT32;
     else if (datatype == "uint64")
         return KIND_UINT64;
     else if (datatype == "real32")
@@ -336,6 +371,8 @@ inline std::string DataType::kind_to_str(kind_t kind) {
             return int32_str();
         case KIND_INT64:
             return int64_str();
+        case KIND_UINT32:
+            return uint32_str();
         case KIND_UINT64:
             return uint64_str();
         case KIND_REAL32:
@@ -353,6 +390,7 @@ inline bool DataType::kind_valid(kind_t kind) {
         case KIND_BYTE:
         case KIND_INT32:
         case KIND_INT64:
+        case KIND_UINT32:
         case KIND_UINT64:
         case KIND_REAL32:
         case KIND_REAL64:

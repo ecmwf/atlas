@@ -127,7 +127,7 @@ CASE("test_match") {
 
     FunctionSpace output_fs = output_functionspace_match();
 
-    Interpolation interpolation(option::type("structured-linear2D"), input_fs, output_fs);
+    Interpolation interpolation(option::type("structured-bilinear"), input_fs, output_fs);
 
     FieldSet fields_source = create_source_fields(input_fs, nb_fields, nb_levels);
     FieldSet fields_target = create_target_fields(output_fs, nb_fields, nb_levels);
@@ -149,7 +149,7 @@ CASE("test_nomatch") {
 
     if (false)  // expected to throw
     {
-        Interpolation interpolation(option::type("structured-linear2D"), input_fs, output_fs);
+        Interpolation interpolation(option::type("structured-bilinear"), input_fs, output_fs);
 
         FieldSet fields_source = create_source_fields(input_fs, nb_fields, nb_levels);
         FieldSet fields_target = create_target_fields(output_fs, nb_fields, nb_levels);
@@ -173,7 +173,7 @@ CASE("test_nomatch 2") {
 
     if (false)  // expected to throw
     {
-        Interpolation interpolation(option::type("structured-linear2D"), input_fs, output_fs);
+        Interpolation interpolation(option::type("structured-bilinear"), input_fs, output_fs);
 
         FieldSet fields_source = create_source_fields(input_fs, nb_fields, nb_levels);
         FieldSet fields_target = create_target_fields(output_fs, nb_fields, nb_levels);

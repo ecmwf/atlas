@@ -248,14 +248,12 @@ CASE("cubedsphere_tileCubePeriodicity_test") {
     };
     Grid grid{grid_names[0]};
 
-    int jn{0};
     for (auto crd : grid.xy()) {
         atlas::PointXY initialXY{crd[XX], crd[YY]};
         double xy[2]           = {initialXY.x(), initialXY.y()};
         idx_t t                = lfricTiles.indexFromXY(xy);
         atlas::PointXY finalXY = lfricTiles.tileCubePeriodicity(initialXY, t);
         EXPECT_APPROX_EQ(initialXY, finalXY);
-        ++jn;
     }
 
     std::vector<atlas::PointXY> startingXYTile0{{0., 315.},  {90., 315.},  {0., 225.},   {90., 225.},  {0., 135.},

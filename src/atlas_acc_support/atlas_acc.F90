@@ -12,6 +12,17 @@ public :: atlas_acc_deviceptr
 
 contains
 
+function atlas_acc_compiler_id() bind(C,name="atlas_acc_compiler_id") result(compiler_id)
+  use, intrinsic :: iso_c_binding, only : c_int
+  integer(c_int) :: compiler_id
+  ! compiler_id must match number in atlas_acc.h enum type
+#ifdef _CRAYFTN
+  compiler_id = 2 ! cray
+#else
+  compiler_id = 0 ! unknown
+#endif
+end function
+
 function atlas_acc_get_num_devices() bind(C,name="atlas_acc_get_num_devices") result(num_devices)
   use, intrinsic :: iso_c_binding, only : c_int
   integer(c_int) :: num_devices

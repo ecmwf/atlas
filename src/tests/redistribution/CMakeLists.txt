@@ -10,7 +10,7 @@ if( atlas_HAVE_ATLAS_FUNCTIONSPACE )
 if( HAVE_FORTRAN )
   add_fctest( TARGET atlas_fctest_redistribution
     MPI 4
-    CONDITION        eckit_HAVE_MPI
+    CONDITION        eckit_HAVE_MPI AND MPI_SLOTS GREATER_EQUAL 4
     LINKER_LANGUAGE  Fortran
     SOURCES          fctest_redistribution.F90
     LIBS             atlas_f

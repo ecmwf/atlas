@@ -48,7 +48,7 @@ CellFinder::CellFinder(const Mesh& mesh, const util::Config& config): mesh_{mesh
 
 CellFinder::Cell CellFinder::getCell(const PointLonLat& lonlat, size_t listSize, double edgeEpsilon, double epsilon) const {
     // Convert xy to alphabeta and t;
-    const auto& tiles    = projection_->getCubedSphereTiles();
+    // const auto& tiles    = projection_->getCubedSphereTiles();
 
     // Get mesh nodes and connectivity table.
     const auto nodeXyView            = array::make_view<double, 2>(mesh_.nodes().xy());

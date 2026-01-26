@@ -8,6 +8,7 @@
 #include "atlas/mesh/MeshBuilder.h"
 
 #include <algorithm>
+#include <numeric>
 
 #include "atlas/array/MakeView.h"
 #include "atlas/grid/Grid.h"
@@ -24,18 +25,18 @@
 namespace atlas {
 
 namespace detail {
-atlas::UnstructuredGrid assemble_unstructured_grid(size_t nb_nodes, const double lons[], const double lats[],
-                                                   const int ghosts[], const eckit::mpi::Comm& comm) {
+atlas::UnstructuredGrid assemble_unstructured_grid(size_t nb_nodes, const double lon[], const double lat[],
+                                                   const int ghost[], const eckit::mpi::Comm& comm) {
 
     // First serialize owned lons and lats into single vector
-    const size_t nb_owned_nodes = std::count(ghosts, ghosts + nb_nodes, 0);
-    std::vector<double> owned_lonlats(2 * nb_owned_nodes);
+    const size_t nb_owned_nodes = std::count(ghost, ghost + nb_nodes, 0);
+    std::vector<double> owned_lonlat(2 * nb_owned_nodes);
     int counter = 0;
     for (size_t n = 0; n < nb_nodes; ++n) {
-        if (ghosts[n] == 0) {
-            owned_lonlats[counter] = lons[n];
+        if (ghost[n] == 0) {
+            owned_lonlat[counter] = lon[n];
             counter++;
-            owned_lonlats[counter] = lats[n];
+            owned_lonlat[counter] = lat[n];
             counter++;
         }
     }
@@ -45,14 +46,14 @@ atlas::UnstructuredGrid assemble_unstructured_grid(size_t nb_nodes, const double
     size_t nb_nodes_global = 0;
     comm.allReduce(nb_owned_nodes, nb_nodes_global, eckit::mpi::sum());
 
-    std::vector<double> global_lonlats(2 * nb_nodes_global);
+    std::vector<double> global_lonlat(2 * nb_nodes_global);
     eckit::mpi::Buffer<double> buffer(comm.size());
-    comm.allGatherv(owned_lonlats.begin(), owned_lonlats.end(), buffer);
-    global_lonlats = std::move(buffer.buffer);
+    comm.allGatherv(owned_lonlat.begin(), owned_lonlat.end(), buffer);
+    global_lonlat = std::move(buffer.buffer);
 
     std::vector<atlas::PointXY> points(nb_nodes_global);
     for (size_t n = 0; n < nb_nodes_global; ++n) {
-        points[n] = atlas::PointXY({global_lonlats[2*n], global_lonlats[2*n + 1]});
+        points[n] = atlas::PointXY({global_lonlat[2*n], global_lonlat[2*n + 1]});
     }
 
     return atlas::UnstructuredGrid(new std::vector<atlas::PointXY>(points.begin(), points.end()));
@@ -63,21 +64,23 @@ atlas::UnstructuredGrid assemble_unstructured_grid(size_t nb_nodes, const double
 // consistently with each other.
 //
 // This check makes a few assumptions
-// - the global_indices passed to the MeshBuilder are a 1-based contiguous index
+// - the global_index passed to the MeshBuilder are a global_index_base-based contiguous index
 // - the Grid is one of StructuredGrid or UnstructedGrid. This restriction is because a
 //   CubedSphereGrid doesn't present a simple interface for the coordinates at the N'th point.
 // - the Mesh grid points are the grid nodes, and not the grid cell-centers (e.g., HEALPix or CubedSphere meshes)
-void validate_grid_vs_mesh(const atlas::Grid& grid, size_t nb_nodes, const double lons[], const double lats[],
-                           const int ghosts[], const gidx_t global_indices[], const eckit::mpi::Comm& comm) {
-    // Check assumption that global_indices look like a 1-based contiguous index
-    const size_t nb_owned_nodes = std::count(ghosts, ghosts + nb_nodes, 0);
+void validate_grid_vs_mesh(const eckit::mpi::Comm& comm, const atlas::Grid& grid,
+                           size_t nb_nodes, const double lon[], const double lat[], size_t lonstride, size_t latstride,
+                           const int ghost[], const gidx_t global_index[], gidx_t global_index_base) {
+    // Check assumption that global_index look like a global_index_based contiguous index
+    const size_t nb_owned_nodes = std::count(ghost, ghost + nb_nodes, 0);
     size_t nb_nodes_global = 0;
     comm.allReduce(nb_owned_nodes, nb_nodes_global, eckit::mpi::sum());
     for (size_t n = 0; n < nb_nodes; ++n) {
-        if (ghosts[n] == 0) {
-            // Check global_indices is consistent with a 1-based contiguous index over nodes
-            ATLAS_ASSERT(global_indices[n] >= 1);
-            ATLAS_ASSERT(global_indices[n] <= nb_nodes_global);
+        if (ghost[n] == 0) {
+            // Check global_index is consistent with a global_index_base contiguous index over nodes
+            auto g = global_index[n] - global_index_base;
+            ATLAS_ASSERT(g >= 0);
+            ATLAS_ASSERT(g < nb_nodes_global);
         }
     }
 
@@ -90,9 +93,9 @@ void validate_grid_vs_mesh(const atlas::Grid& grid, size_t nb_nodes, const doubl
     if (grid.type() == "unstructured") {
         const atlas::UnstructuredGrid ugrid(grid);
         for (size_t n = 0; n < nb_nodes; ++n) {
-            if (ghosts[n] == 0) {
-                ugrid.lonlat(global_indices[n] - 1, lonlat);
-                if (!equal_within_roundoff(lonlat[0], lons[n]) || !equal_within_roundoff(lonlat[1], lats[n])) {
+            if (ghost[n] == 0) {
+                ugrid.lonlat(global_index[n] - global_index_base, lonlat);
+                if (!equal_within_roundoff(lonlat[0], lon[n]) || !equal_within_roundoff(lonlat[1], lat[n])) {
                     throw_Exception("In MeshBuilder: UnstructuredGrid from config does not match mesh coordinates", Here());
                 }
             }
@@ -100,20 +103,20 @@ void validate_grid_vs_mesh(const atlas::Grid& grid, size_t nb_nodes, const doubl
     } else if (grid.type() == "structured") {
         const atlas::StructuredGrid sgrid(grid);
         for (size_t n = 0; n < nb_nodes; ++n) {
-            if (ghosts[n] == 0) {
+            if (ghost[n] == 0) {
                 idx_t i, j;
-                sgrid.index2ij(global_indices[n] - 1, i, j);
+                sgrid.index2ij(global_index[n] - global_index_base, i, j);
                 sgrid.lonlat(i, j, lonlat);
-                if (!equal_within_roundoff(lonlat[0], lons[n]) || !equal_within_roundoff(lonlat[1], lats[n])) {
+                if (!equal_within_roundoff(lonlat[0], lon[n]) || !equal_within_roundoff(lonlat[1], lat[n])) {
                     throw_Exception("In MeshBuilder: StructuredGrid from config does not match mesh coordinates", Here());
                 }
             }
         }
     } else {
         for (size_t n = 0; n < nb_nodes; ++n) {
-            if (ghosts[n] == 0) {
-                auto point = *(grid.lonlat().begin() + static_cast<size_t>(global_indices[n] - 1));
-                if (!equal_within_roundoff(point.lon(), lons[n]) || !equal_within_roundoff(point.lat(), lats[n])) {
+            if (ghost[n] == 0) {
+                auto point = *(grid.lonlat().begin() + static_cast<size_t>(global_index[n] - global_index_base));
+                if (!equal_within_roundoff(point.lon(), lon[n]) || !equal_within_roundoff(point.lat(), lat[n])) {
                     throw_Exception("In MeshBuilder: Grid from config does not match mesh coordinates", Here());
                 }
             }
@@ -126,67 +129,98 @@ namespace mesh {
 
 //----------------------------------------------------------------------------------------------------------------------
 
-Mesh MeshBuilder::operator()(const std::vector<double>& lons, const std::vector<double>& lats,
-                             const std::vector<int>& ghosts, const std::vector<gidx_t>& global_indices,
-                             const std::vector<idx_t>& remote_indices, const idx_t remote_index_base,
-                             const std::vector<int>& partitions,
-                             const std::vector<std::array<gidx_t, 3>>& tri_boundary_nodes,
-                             const std::vector<gidx_t>& tri_global_indices,
-                             const std::vector<std::array<gidx_t, 4>>& quad_boundary_nodes,
-                             const std::vector<gidx_t>& quad_global_indices,
+Mesh MeshBuilder::operator()(const std::vector<double>& lon, const std::vector<double>& lat,
+                             const std::vector<int>& ghost, const std::vector<gidx_t>& global_index,
+                             const std::vector<idx_t>& remote_index, const idx_t remote_index_base,
+                             const std::vector<int>& partition,
+                             const std::vector<std::array<gidx_t, 3>>& triag_nodes_global,
+                             const std::vector<gidx_t>& triag_global_index,
+                             const std::vector<std::array<gidx_t, 4>>& quad_nodes_global,
+                             const std::vector<gidx_t>& quad_global_index,
                              const eckit::Configuration& config) const {
-    const size_t nb_nodes = global_indices.size();
-    const size_t nb_tris  = tri_global_indices.size();
-    const size_t nb_quads = quad_global_indices.size();
+    constexpr gidx_t global_index_base = 1;
 
-    ATLAS_ASSERT(nb_nodes == lons.size());
-    ATLAS_ASSERT(nb_nodes == lats.size());
-    ATLAS_ASSERT(nb_nodes == ghosts.size());
-    ATLAS_ASSERT(nb_nodes == remote_indices.size());
-    ATLAS_ASSERT(nb_nodes == partitions.size());
-    ATLAS_ASSERT(nb_tris == tri_boundary_nodes.size());
-    ATLAS_ASSERT(nb_quads == quad_boundary_nodes.size());
-
-    return operator()(nb_nodes, lons.data(), lats.data(), ghosts.data(), global_indices.data(), remote_indices.data(),
-                      remote_index_base, partitions.data(), nb_tris,
-                      reinterpret_cast<const gidx_t*>(tri_boundary_nodes.data()), tri_global_indices.data(), nb_quads,
-                      reinterpret_cast<const gidx_t*>(quad_boundary_nodes.data()), quad_global_indices.data(),
-                      config);
+    return operator()(
+        span<const gidx_t>{global_index.data(),global_index.size()},
+        span<const double>{lon.data(), lon.size()},  span<const double>{lat.data(), lat.size()},
+        span<const double>{lon.data(), lon.size()},  span<const double>{lat.data(), lat.size()},
+        span<const int>{ghost.data(), ghost.size()}, span<const int>{partition.data(), partition.size()},
+        span<const idx_t>{remote_index.data(), remote_index.size()}, remote_index_base,
+        span<const gidx_t>{triag_global_index.data(), triag_global_index.size()},
+        mdspan<const gidx_t,extents<size_t,dynamic_extent,3>>{reinterpret_cast<const gidx_t*>(triag_nodes_global.data()),triag_nodes_global.size()},
+        span<const gidx_t>{quad_global_index.data(), quad_global_index.size()},
+        mdspan<const gidx_t,extents<size_t,dynamic_extent,4>>{reinterpret_cast<const gidx_t*>(quad_nodes_global.data()),quad_nodes_global.size()},
+        global_index_base,
+        config);
 }
 
-Mesh MeshBuilder::operator()(size_t nb_nodes, const double lons[], const double lats[], const int ghosts[],
-                             const gidx_t global_indices[], const idx_t remote_indices[], const idx_t remote_index_base,
-                             const int partitions[], size_t nb_tris, const gidx_t tri_boundary_nodes[],
-                             const gidx_t tri_global_indices[], size_t nb_quads, const gidx_t quad_boundary_nodes[],
-                             const gidx_t quad_global_indices[],
+Mesh MeshBuilder::operator()(size_t nb_nodes, const double lon[], const double lat[], const int ghost[],
+                             const gidx_t global_index[], const idx_t remote_index[], const idx_t remote_index_base,
+                             const int partition[], size_t nb_triags, const gidx_t triag_nodes_global[],
+                             const gidx_t triag_global_index[], size_t nb_quads, const gidx_t quad_nodes_global[],
+                             const gidx_t quad_global_index[],
                              const eckit::Configuration& config) const {
+    constexpr gidx_t global_index_base = 1;
     return this->operator()(
-        nb_nodes, global_indices,
-        lons, lats, 1, 1,
-        lons, lats, 1, 1,
-        ghosts, partitions, remote_indices, remote_index_base,
-        nb_tris, tri_global_indices, tri_boundary_nodes,
-        nb_quads, quad_global_indices, quad_boundary_nodes,
+        nb_nodes, global_index,
+        lon, lat,
+        ghost, partition, remote_index, remote_index_base,
+        nb_triags, triag_global_index, triag_nodes_global,
+        nb_quads, quad_global_index, quad_nodes_global,
+        global_index_base,
         config
     );
 }
 
-Mesh MeshBuilder::operator()(size_t nb_nodes, const gidx_t global_indices[],
+Mesh MeshBuilder::operator()(
+    size_t nb_nodes, const gidx_t global_index[],
+    const double lon[], const double lat[],
+    const int ghost[], const int partition[], const idx_t remote_index[], const idx_t remote_index_base,
+    size_t nb_triags, const gidx_t triag_nodes_global[], const gidx_t triag_global_index[],
+    size_t nb_quads,  const gidx_t quad_nodes_global[],  const gidx_t quad_global_index[],
+    gidx_t global_index_base,
+    const eckit::Configuration& config) const {
+    return this->operator()(
+        nb_nodes, global_index,
+        lon, lat, 1, 1,
+        lon, lat, 1, 1,
+        ghost, partition, remote_index, remote_index_base,
+        nb_triags, triag_global_index, triag_nodes_global,
+        nb_quads, quad_global_index, quad_nodes_global,
+        global_index_base,
+        config
+    );
+}
+
+
+Mesh MeshBuilder::operator()(size_t nb_nodes, const gidx_t global_index[],
                              const double x[], const double y[], size_t xstride, size_t ystride,
                              const double lon[], const double lat[], size_t lonstride, size_t latstride,
-                             const int ghosts[], const int partitions[], const idx_t remote_index[], const idx_t remote_index_base,
+                             const int ghost[], const int partitions[], const idx_t remote_index[], const idx_t remote_index_base,
                              size_t nb_triags, const gidx_t triag_global_index[], const gidx_t triag_nodes_global[],
                              size_t nb_quads,  const gidx_t quad_global_index[],  const gidx_t quad_nodes_global[],
                              const eckit::Configuration& config) const {
-    auto* lons = lon;
-    auto* lats = lat;
-    auto* remote_indices = remote_index;
-    auto nb_tris = nb_triags;
-    auto* tri_boundary_nodes = triag_nodes_global;
-    auto* tri_global_indices = triag_global_index;
-    auto* quad_boundary_nodes = quad_nodes_global;
-    auto* quad_global_indices = quad_global_index;
+    constexpr gidx_t global_index_base = 1;
+    return this->operator()(
+        nb_nodes, global_index,
+        x, y, xstride, ystride,
+        lon, lat, lonstride, latstride,
+        ghost, partitions, remote_index, remote_index_base,
+        nb_triags, triag_global_index, triag_nodes_global,
+        nb_quads, quad_global_index, quad_nodes_global,
+        global_index_base,
+        config);
+}
 
+
+Mesh MeshBuilder::operator()(size_t nb_nodes, const gidx_t global_index[],
+                             const double x[], const double y[], size_t xstride, size_t ystride,
+                             const double lon[], const double lat[], size_t lonstride, size_t latstride,
+                             const int ghost[], const int partitions[], const idx_t remote_index[], const idx_t remote_index_base,
+                             size_t nb_triags, const gidx_t triag_global_index[], const gidx_t triag_nodes_global[],
+                             size_t nb_quads,  const gidx_t quad_global_index[],  const gidx_t quad_nodes_global[],
+                             gidx_t global_index_base,
+                             const eckit::Configuration& config) const {
     // Get MPI comm from config name or fall back to atlas default comm
     auto mpi_comm_name = [](const auto& config) {
         return config.getString("mpi_comm", atlas::mpi::comm().name());
@@ -202,13 +236,13 @@ Mesh MeshBuilder::operator()(size_t nb_nodes, const gidx_t global_indices[],
         if (config.has("grid.type") && (config.getString("grid.type") == "unstructured")
             && !config.has("grid.xy")) {
             // Assemble the unstructured grid by gathering input lons,lats across ranks
-            grid = ::atlas::detail::assemble_unstructured_grid(nb_nodes, lons, lats, ghosts, comm);
+            grid = ::atlas::detail::assemble_unstructured_grid(nb_nodes, lon, lat, ghost, comm);
         } else {
             // Build grid directly from config
             grid = atlas::Grid(config.getSubConfiguration("grid"));
             const bool validate = config.getBool("validate", false);
             if (validate) {
-                ::atlas::detail::validate_grid_vs_mesh(grid, nb_nodes, lons, lats, ghosts, global_indices, comm);
+                ::atlas::detail::validate_grid_vs_mesh(comm, grid, nb_nodes, lon, lat, lonstride, latstride, ghost, global_index, global_index_base);
             }
         }
         mesh.setGrid(grid);
@@ -219,20 +253,20 @@ Mesh MeshBuilder::operator()(size_t nb_nodes, const gidx_t global_indices[],
     mesh.nodes().resize(nb_nodes);
     auto xy        = array::make_view<double, 2>(mesh.nodes().xy());
     auto lonlat    = array::make_view<double, 2>(mesh.nodes().lonlat());
-    auto ghost     = array::make_view<int, 1>(mesh.nodes().ghost());
+    auto ghostv    = array::make_view<int, 1>(mesh.nodes().ghost());
     auto gidx      = array::make_view<gidx_t, 1>(mesh.nodes().global_index());
     auto ridx      = array::make_indexview<idx_t, 1>(mesh.nodes().remote_index());
     auto partition = array::make_view<int, 1>(mesh.nodes().partition());
     auto halo      = array::make_view<int, 1>(mesh.nodes().halo());
 
     for (size_t i = 0; i < nb_nodes; ++i) {
-        xy(i, size_t(XX))      = x[i];
-        xy(i, size_t(YY))      = y[i];
-        lonlat(i, size_t(LON)) = lons[i];
-        lonlat(i, size_t(LAT)) = lats[i];
-        ghost(i)               = ghosts[i];
-        gidx(i)                = global_indices[i];
-        ridx(i)                = remote_indices[i] - remote_index_base;
+        xy(i, size_t(XX))      = x[i*xstride];
+        xy(i, size_t(YY))      = y[i*ystride];
+        lonlat(i, size_t(LON)) = lon[i*lonstride];
+        lonlat(i, size_t(LAT)) = lat[i*latstride];
+        ghostv(i)              = ghost[i];
+        gidx(i)                = global_index[i] - global_index_base + 1; // Make 1-based!
+        ridx(i)                = remote_index[i] - remote_index_base;
         partition(i)           = partitions[i];
     }
     halo.assign(0);
@@ -240,17 +274,17 @@ Mesh MeshBuilder::operator()(size_t nb_nodes, const gidx_t global_indices[],
     // Populate cell/element data
 
     // First, count how many cells of each type are on this processor
-    // Then optimize away the element type if globally nb_tris or nb_quads is zero
-    size_t sum_nb_tris = 0;
-    comm.allReduce(nb_tris, sum_nb_tris, eckit::mpi::sum());
-    const bool add_tris = (sum_nb_tris > 0);
+    // Then optimize away the element type if globally nb_triags or nb_quads is zero
+    size_t sum_nb_triags = 0;
+    comm.allReduce(nb_triags, sum_nb_triags, eckit::mpi::sum());
+    const bool add_triags = (sum_nb_triags > 0);
 
     size_t sum_nb_quads = 0;
     comm.allReduce(nb_quads, sum_nb_quads, eckit::mpi::sum());
     const bool add_quads = (sum_nb_quads > 0);
 
-    if (add_tris) {
-        mesh.cells().add(mesh::ElementType::create("Triangle"), nb_tris);
+    if (add_triags) {
+        mesh.cells().add(mesh::ElementType::create("Triangle"), nb_triags);
     }
     if (add_quads) {
         mesh.cells().add(mesh::ElementType::create("Quadrilateral"), nb_quads);
@@ -260,22 +294,21 @@ Mesh MeshBuilder::operator()(size_t nb_nodes, const gidx_t global_indices[],
     auto cells_part = array::make_view<int, 1>(mesh.cells().partition());
     auto cells_gidx = array::make_view<gidx_t, 1>(mesh.cells().global_index());
 
-    // Find position of idx inside global_indices
-    const auto position_of = [&nb_nodes, &global_indices](const gidx_t idx) {
-        const auto& it = std::find(global_indices, global_indices + nb_nodes, idx);
-        ATLAS_ASSERT(it != global_indices + nb_nodes);
-        return std::distance(global_indices, it);
-    };
+    std::unordered_map<gidx_t,idx_t> global_to_local_index;
+    global_to_local_index.reserve(nb_nodes);
+    for (gidx_t j=0; j<nb_nodes; ++j) {
+        global_to_local_index.insert({global_index[j],j});
+    }
 
     size_t idx = 0;
-    if (add_tris) {
+    if (add_triags) {
         idx_t buffer[3];
-        for (size_t tri = 0; tri < nb_tris; ++tri) {
+        for (size_t tri = 0; tri < nb_triags; ++tri) {
             for (size_t i = 0; i < 3; ++i) {
-                buffer[i] = position_of(tri_boundary_nodes[3 * tri + i]);
+                buffer[i] = global_to_local_index.at(triag_nodes_global[3 * tri + i]);
             }
             node_connectivity.set(idx, buffer);
-            cells_gidx(idx) = tri_global_indices[tri];
+            cells_gidx(idx) = triag_global_index[tri] - global_index_base + 1; // make 1-based
             idx++;
         }
     }
@@ -283,25 +316,75 @@ Mesh MeshBuilder::operator()(size_t nb_nodes, const gidx_t global_indices[],
         idx_t buffer[4];
         for (size_t quad = 0; quad < nb_quads; ++quad) {
             for (size_t i = 0; i < 4; ++i) {
-                buffer[i] = position_of(quad_boundary_nodes[4 * quad + i]);
+                buffer[i] = global_to_local_index.at(quad_nodes_global[4 * quad + i]);
             }
             node_connectivity.set(idx, buffer);
-            cells_gidx(idx) = quad_global_indices[quad];
+            cells_gidx(idx) = quad_global_index[quad] - global_index_base + 1; // make 1-based
             idx++;
         }
     }
 
-    ATLAS_ASSERT(idx == nb_tris + nb_quads);
+    ATLAS_ASSERT(idx == nb_triags + nb_quads);
 
     cells_part.assign(comm.rank());
 
     return mesh;
 }
 
+Mesh MeshBuilder::operator()(
+    span<const gidx_t> global_index,
+    strided_span<const double> x,   strided_span<const double> y,
+    strided_span<const double> lon, strided_span<const double> lat,
+    span<const int> ghost, span<const int> partition,
+    span<const idx_t> remote_index, const idx_t remote_index_base,
+    span<const gidx_t> triag_global_index, mdspan<const gidx_t, extents<size_t,dynamic_extent,3>> triag_nodes_global,
+    span<const gidx_t> quad_global_index,  mdspan<const gidx_t, extents<size_t,dynamic_extent,4>> quad_nodes_global,
+    const gidx_t global_index_base,
+    const eckit::Configuration& config) const {
+
+    const size_t nb_nodes  = global_index.size();
+    const size_t nb_triags = triag_global_index.size();
+    const size_t nb_quads  = quad_global_index.size();
+
+    ATLAS_ASSERT(nb_nodes  == lon.size());
+    ATLAS_ASSERT(nb_nodes  == lat.size());
+    ATLAS_ASSERT(nb_nodes  == ghost.size());
+    ATLAS_ASSERT(nb_nodes  == remote_index.size());
+    ATLAS_ASSERT(nb_nodes  == partition.size());
+    ATLAS_ASSERT(nb_triags == triag_nodes_global.extent(0));
+    ATLAS_ASSERT(nb_quads  == quad_nodes_global.extent(0));
+
+    return operator()(
+        nb_nodes, global_index.data_handle(),
+        x.data_handle(),   y.data_handle(),   x.stride(0),   y.stride(0),
+        lon.data_handle(), lat.data_handle(), lon.stride(0), lat.stride(0),
+        ghost.data_handle(), partition.data_handle(), remote_index.data_handle(), remote_index_base,
+        nb_triags, triag_global_index.data_handle(), triag_nodes_global.data_handle(),
+        nb_quads,  quad_global_index.data_handle(),  quad_nodes_global.data_handle(),
+        global_index_base,
+        config);
+}
+
 //----------------------------------------------------------------------------------------------------------------------
 
 Mesh TriangularMeshBuilder::operator()(size_t nb_nodes,  const gidx_t nodes_global_index[], const double x[], const double y[], const double lon[], const double lat[],
                                        size_t nb_triags, const gidx_t triangle_global_index[], const gidx_t triangle_nodes_global_index[]) const {
+    constexpr gidx_t global_index_base = 1;
+    constexpr size_t stride_1 = 1;
+    return this->operator()(
+        nb_nodes, nodes_global_index, x, y, stride_1, stride_1, lon, lat, stride_1, stride_1,
+        nb_triags, triangle_global_index, triangle_nodes_global_index,
+        global_index_base
+    );
+}
+
+//----------------------------------------------------------------------------------------------------------------------
+
+Mesh TriangularMeshBuilder::operator()(size_t nb_nodes,  const gidx_t nodes_global_index[],
+                                       const double x[], const double y[], size_t xstride, size_t ystride,
+                                       const double lon[], const double lat[], size_t lonstride, size_t latstride,
+                                       size_t nb_triags, const gidx_t triangle_global_index[], const gidx_t triangle_nodes_global_index[],
+                                       gidx_t global_index_base) const {
     std::vector<int> ghost(nb_nodes,0);
     std::vector<int> partition(nb_nodes,0);
     std::vector<idx_t> remote_index(nb_nodes);
@@ -309,15 +392,16 @@ Mesh TriangularMeshBuilder::operator()(size_t nb_nodes,  const gidx_t nodes_glob
     std::iota(remote_index.begin(), remote_index.end(), remote_index_base);
 
     size_t nb_quads = 0;
-    std::vector<gidx_t> quad_nodes_global_index;
-    std::vector<gidx_t> quad_global_index;
+    gidx_t quad_global_index[] = {};
+    gidx_t quad_nodes_global_index[] = {};
 
     return meshbuilder_(
         nb_nodes, nodes_global_index,
-        x, y, 1, 1, lon, lat, 1, 1,
+        x, y, xstride, ystride, lon, lat, lonstride, latstride,
         ghost.data(), partition.data(), remote_index.data(), remote_index_base,
         nb_triags, triangle_global_index, triangle_nodes_global_index,
-        nb_quads, quad_global_index.data(), quad_nodes_global_index.data());
+        nb_quads, quad_global_index, quad_nodes_global_index,
+        global_index_base);
 }
 
 //----------------------------------------------------------------------------------------------------------------------

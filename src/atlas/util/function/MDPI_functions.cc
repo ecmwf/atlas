@@ -44,7 +44,6 @@ double MDPI_vortex(double lon, double lat) {
     constexpr double dR0    = 3.0;
     constexpr double dD     = 5.0;
     constexpr double dT     = 6.0;
-    constexpr double length = 1.2 * M_PI;
 
     auto sqr                  = [](const double x) { return x * x; };
     auto sech                 = [](const double x) { return 1. / std::cosh(x); };
@@ -78,9 +77,7 @@ double MDPI_gulfstream(double lon, double lat) {
     constexpr double d2r = Constants::degreesToRadians();
 
     auto sqr                  = [](const double x) { return x * x; };
-    auto sech                 = [](const double x) { return 1. / std::cosh(x); };
 
-    constexpr double length     =   1.2 * M_PI;
     constexpr double gf_coef    =   1.0;       // Coefficient for a Gult Stream term (0.0 = no Gulf Stream)
     constexpr double gf_ori_lon = -80.0 * d2r; // Origin of the Gulf Stream (longitude in deg)
     constexpr double gf_ori_lat =  25.0 * d2r; // Origin of the Gulf Stream (latitude in deg)
@@ -92,7 +89,7 @@ double MDPI_gulfstream(double lon, double lat) {
     double dr0 = std::sqrt(sqr(gf_end_lon - gf_ori_lon) + sqr(gf_end_lat - gf_ori_lat));
     double dr1 = std::sqrt(sqr(gf_dmp_lon - gf_ori_lon) + sqr(gf_dmp_lat - gf_ori_lat));
 
-    double gf_per_lon = [lon,d2r]() {
+    double gf_per_lon = [lon]() {
         double gf_per_lon = lon;
         while (gf_per_lon > 180.) {
             gf_per_lon -= 360.;

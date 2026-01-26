@@ -10,6 +10,8 @@
 
 #include <sstream>
 
+#include "pluto/pluto.h"
+
 #include "atlas/array.h"
 #include "atlas/array/ArrayView.h"
 #include "atlas/array/IndexView.h"
@@ -50,7 +52,9 @@ ArrayView<const Value, Rank> make_host_view(const Array& array) {
 template <typename Value, int Rank>
 ArrayView<Value, Rank> make_device_view(Array& array) {
 #if ATLAS_HAVE_GPU
-    ATLAS_ASSERT(array.deviceAllocated(),"make_device_view: Array not allocated on device");
+    if (pluto::devices()) {
+        ATLAS_ASSERT(array.deviceAllocated() || pluto::devices(), "make_device_view: Array not allocated on device");
+    }
     return ArrayView<Value, Rank>((array.device_data<Value>()), array.shape(), array.device_strides());
 #else
     return make_host_view<Value, Rank>(array);
@@ -60,7 +64,9 @@ ArrayView<Value, Rank> make_device_view(Array& array) {
 template <typename Value, int Rank>
 ArrayView<const Value, Rank> make_device_view(const Array& array) {
 #if ATLAS_HAVE_GPU
-    ATLAS_ASSERT(array.deviceAllocated(),"make_device_view: Array not allocated on device");
+    if (pluto::devices()) {
+        ATLAS_ASSERT(array.deviceAllocated(), "make_device_view: Array not allocated on device");
+    }
     return ArrayView<const Value, Rank>(array.device_data<const Value>(), array.shape(), array.device_strides());
 #else
     return make_host_view<const Value, Rank>(array);
@@ -132,6 +138,7 @@ namespace array {
     EXPLICIT_TEMPLATE_INSTANTIATION_TYPE_RANK(long, RANK)   \
     EXPLICIT_TEMPLATE_INSTANTIATION_TYPE_RANK(float, RANK)  \
     EXPLICIT_TEMPLATE_INSTANTIATION_TYPE_RANK(double, RANK) \
+    EXPLICIT_TEMPLATE_INSTANTIATION_TYPE_RANK(unsigned int, RANK) \
     EXPLICIT_TEMPLATE_INSTANTIATION_TYPE_RANK(unsigned long, RANK)
 
 
@@ -159,7 +166,7 @@ EXPLICIT_TEMPLATE_INSTATIATION(9)
     EXPLICIT_TEMPLATE_INSTANTIATION_INDEXVIEW_TYPE_RANK(long, RANK)
 
 EXPLICIT_TEMPLATE_INSTANTIATION_INDEXVIEW(1)
-EXPLICIT_TEMPLATE_INSTANTIATION_INDEXVIEW(2)
+// EXPLICIT_TEMPLATE_INSTANTIATION_INDEXVIEW(2)
 
 #undef EXPLICIT_TEMPLATE_INSTANTIATION_INDEXVIEW
 #undef EXPLICIT_TEMPLATE_INSTANTIATION_INDEXVIEW

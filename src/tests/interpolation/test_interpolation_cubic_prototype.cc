@@ -330,7 +330,7 @@ CASE("test 3d cubic interpolation") {
 
     SECTION("official version") {
         auto matrix_free = Config("matrix_free", true);
-        Interpolation interpolation(option::type("tricubic") | matrix_free, fs, departure_points);
+        Interpolation interpolation(option::type("structured-tricubic") | matrix_free, fs, departure_points);
 
         Field output = Field("output", make_datatype<double>(), make_shape(departure_points.size()));
         interpolation.execute(input, output);
@@ -367,7 +367,7 @@ CASE("test 3d cubic interpolation") {
                 }
             }
         }
-        Interpolation interpolation(option::type("tricubic") | matrix_free, fs, dp_field);
+        Interpolation interpolation(option::type("structured-tricubic") | matrix_free, fs, dp_field);
 
         Field output = fs.createField<double>();
         interpolation.execute(input, output);

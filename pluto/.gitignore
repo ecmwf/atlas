@@ -1,0 +1,14 @@
+.tags*
+CMakeLists.txt.user*
+*.autosave
+doc/html
+doc/latex
+*.sublime-workspace
+*.swp
+.nfs*
+build/*
+install/*
+env.sh
+*.DS_Store
+.vscode
+

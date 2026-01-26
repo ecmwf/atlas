@@ -38,6 +38,17 @@ MethodBuilder<NearestNeighbour> __builder("nearest-neighbour");
 
 }  // namespace
 
+void NearestNeighbour::do_setup(const FunctionSpace& source, const FunctionSpace& target, const Cache& cache) {
+    if (interpolation::MatrixCache(cache)) {
+        setMatrix(cache);
+        source_ = source;
+        target_ = target;
+    }
+    else {
+        do_setup(source, target);
+    }
+}
+
 void NearestNeighbour::do_setup(const Grid& source, const Grid& target, const Cache&) {
     if (mpi::size() > 1) {
         ATLAS_NOTIMPLEMENTED;
@@ -102,8 +113,7 @@ void NearestNeighbour::do_setup(const FunctionSpace& source, const FunctionSpace
     }
 
     // fill sparse matrix and return
-    Matrix A(out_npts, inp_npts, weights_triplets);
-    setMatrix(A);
+    setMatrix( out_npts, inp_npts, weights_triplets );
 }
 
 }  // namespace method

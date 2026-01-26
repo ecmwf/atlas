@@ -1,3 +1,4 @@
+#! /usr/bin/env python3
 # -*- coding: utf-8 -*-
 # (C) Copyright 1996-2017 ECMWF.
 # 
@@ -7,7 +8,6 @@
 # granted to it by virtue of its status as an intergovernmental organisation nor
 # does it submit to any jurisdiction.
 
-#! /usr/bin/env python3
 
 from argparse import ArgumentParser
 import re

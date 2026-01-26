@@ -14,6 +14,7 @@
 #include "atlas/functionspace/NodeColumns.h"
 #include "atlas/functionspace/PointCloud.h"
 #include "atlas/functionspace/StructuredColumns.h"
+#include "atlas/mesh/Mesh.h"
 #include "atlas/parallel/mpi/mpi.h"
 #include "atlas/redistribution/detail/RedistributeGeneric.h"
 #include "atlas/redistribution/detail/RedistributionImplFactory.h"
@@ -44,11 +45,14 @@ Field getGhostField(const FunctionSpace& functionspace) {
         // TODO: Move something like this into the functionspace::EdgeColumns and functionspace::CellColumns
         auto& comm = mpi::comm(functionspace.mpi_comm());
 
-        // Get mesh elements.
-        const auto& elems = functionspace::EdgeColumns(functionspace)
-                                ? functionspace::EdgeColumns(functionspace).edges()
-                                : functionspace::CellColumns(functionspace).cells();
 
+        // Get mesh elements.
+        Mesh mesh = functionspace::EdgeColumns(functionspace)
+                  ? functionspace::EdgeColumns(functionspace).mesh()
+                  : functionspace::CellColumns(functionspace).mesh();
+        const auto& elems = functionspace::EdgeColumns(functionspace)
+                          ? mesh.edges()
+                          : mesh.cells();
 
         // Make ghost field.
         auto ghost_field = Field("ghost", array::make_datatype<int>(), array::make_shape(functionspace.size()));

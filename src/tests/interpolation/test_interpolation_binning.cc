@@ -7,19 +7,18 @@
 
 
 #include <string>
+#include <utility>
 
-#include "atlas/array.h"
-#include "atlas/field.h"
 #include "atlas/field/FieldSet.h"
 #include "atlas/functionspace/CubedSphereColumns.h"
+#include "atlas/functionspace/FunctionSpace.h"
 #include "atlas/functionspace/NodeColumns.h"
 #include "atlas/functionspace/StructuredColumns.h"
-#include "atlas/grid.h"
 #include "atlas/interpolation.h"
-#include "atlas/mesh.h"
 #include "atlas/meshgenerator/MeshGenerator.h"
 #include "atlas/option/Options.h"
 #include "atlas/output/Gmsh.h"
+#include "atlas/runtime/Exception.h"
 #include "atlas/runtime/Log.h"
 #include "atlas/util/Config.h"
 #include "atlas/util/CoordinateEnums.h"
@@ -33,252 +32,271 @@ namespace test {
 
 
 /// function to generate a synthetic field (vortex field)
-Field getVortexField(
-  const functionspace::NodeColumns& csfs,
-  const std::string& vfield_name,
-  const size_t nb_levels) {
-  const auto lonlat = array::make_view<double, 2>(csfs.lonlat());
+Field getVortexField(const FunctionSpace& functionSpace) {
+    const auto lonlat = array::make_view<double, 2>(functionSpace.lonlat());
 
-  auto vfield = csfs.createField<double>(option::name(vfield_name) |
-                                         option::levels(nb_levels));
-  auto vfield_view = array::make_view<double, 2>(vfield);
-  double mean_field = 1.;
-  for (idx_t l=0; l < vfield.shape(1); ++l) {
-    for (idx_t i=0; i < vfield.shape(0); ++i) {
-      vfield_view(i, l) = mean_field + util::function::vortex_rollup(
-        lonlat(i, atlas::LON), lonlat(i, atlas::LAT), 1.);
+    auto vField     = functionSpace.createField<double>(option::name{"vortex field"});
+    auto vFieldView = array::make_view<double, 1>(vField);
+    for (idx_t idx = 0; idx < vField.shape(0); ++idx) {
+        vFieldView(idx) = util::function::vortex_rollup(lonlat(idx, atlas::LON), lonlat(idx, atlas::LAT), 1.);
     }
-  }
 
-  return vfield;
+    return vField;
 }
 
+/// Generate and the difference between a target field and the analytic solution
+Field getErrorField(const Field& targetField) {
+    auto errorField               = targetField.functionspace().createField<double>(option::name("error field"));
+    const auto referenceField     = getVortexField(targetField.functionspace());
+    auto errorFieldView           = array::make_view<double, 1>(errorField);
+    const auto referenceFieldView = array::make_view<double, 1>(referenceField);
+    const auto targetFieldView    = array::make_view<double, 1>(targetField);
+    for (idx_t idx = 0; idx < errorField.shape(0); ++idx) {
+        errorFieldView(idx) = targetFieldView(idx) - referenceFieldView(idx);
+    }
+    return errorField;
+}
 
 /// function to write a field set in a Gmsh file
-void makeGmshOutput(const std::string& file_name,
-                    const Mesh& mesh,
-                    const FieldSet& fields) {
-  const auto& fs = fields[0].functionspace();
+void makeGmshOutput(const std::string& fileNamePrefix, const FieldSet& fields) {
+    const auto& fs = fields[0].functionspace();
 
-  const auto config_gmsh =
-    util::Config("coordinates", "xyz") |
-    util::Config("ghost", true) |
-    util::Config("info", true);
-  const auto gmsh = output::Gmsh(file_name, config_gmsh);
-  gmsh.write(mesh);
-  gmsh.write(fields, fs);
+    const auto mesh = [&]() {
+        if (const auto nc = functionspace::NodeColumns(fs)) {
+            return nc.mesh();
+        }
+        if (const auto sc = functionspace::StructuredColumns(fs)) {
+            return MeshGenerator{"structured", option::halo(sc.halo())}.generate(sc.grid());
+        }
+        throw_Exception("Unsupported function space type for Gmsh output: " + fs.type());
+    }();
+
+    const auto gmshConfig =
+        util::Config("coordinates", "xyz") | util::Config("ghost", true) | util::Config("info", true);
+    const auto gmsh = output::Gmsh(fileNamePrefix, gmshConfig);
+    gmsh.write(mesh);
+    gmsh.write(fields, fs);
 }
 
 
 /// function to carry out a dot product
-double dotProd(const Field& field01, const Field& field02) {
-  double dprod{};
+double dotProd(const Field& fieldA, const Field& fieldB) {
+    double dprod{};
 
-  const auto field01_view = array::make_view<double, 2>(field01);
-  const auto field02_view = array::make_view<double, 2>(field02);
+    const auto field01_view = array::make_view<double, 1>(fieldA);
+    const auto field02_view = array::make_view<double, 1>(fieldB);
 
-  for (idx_t l=0; l < field01_view.shape(1); ++l) {
-    for (idx_t i=0; i < field01_view.shape(0); ++i) {
-      dprod += field01_view(i, l) * field02_view(i, l);
+    for (idx_t i = 0; i < field01_view.shape(0); ++i) {
+        dprod += field01_view(i) * field02_view(i);
     }
-  }
-  eckit::mpi::comm().allReduceInPlace(dprod, eckit::mpi::Operation::SUM);
+    eckit::mpi::comm().allReduceInPlace(dprod, eckit::mpi::Operation::SUM);
 
-  return dprod;
+    return dprod;
 }
 
 
-//--
+void regriddingTest(const util::Config& config) {
+    const auto sourceGridName = config.getString("source_grid");
+    const auto targetGridName = config.getString("target_grid");
+    const auto sourceGrid     = Grid{sourceGridName};
+    const auto targetGrid     = Grid{targetGridName};
 
+    const auto [sourceFunctionSpace, targetFunctionSpace] = [&]() -> std::pair<FunctionSpace, FunctionSpace> {
+        const auto fSpaceName = config.getString("functionspace");
+        const size_t haloSize = config.getInt("halo");
+        if (fSpaceName == "NodeColumns") {
+            const auto meshGenerator = MeshGenerator{config.getString("mesh_generator"), option::halo{haloSize}};
 
-/// test to carry out the rigridding from 'high' to 'low' resolution,
-/// for a given type of grid (CS-LFR)
-///
-/// after the regridding, the field set that has been generated is stored
-/// in a Gmsh file (data visualization);
-///
-CASE("rigridding from high to low resolution; grid type: CS-LFR") {
+            const auto sourceMesh = meshGenerator.generate(sourceGrid);
+            const auto targetMesh = meshGenerator.generate(targetGrid);
 
-  // source grid (high res.)
-  auto csgrid_s = Grid("CS-LFR-100");
-  auto csmesh_s = MeshGenerator("cubedsphere_dual").generate(csgrid_s);
-  auto csfs_s = functionspace::NodeColumns(csmesh_s);
+            return {functionspace::NodeColumns{sourceMesh, option::halo{haloSize}},
+                    functionspace::NodeColumns{targetMesh}};
+        }
+        if (fSpaceName == "StructuredColumns") {
+            return {functionspace::StructuredColumns{sourceGrid, option::halo{haloSize}},
+                    functionspace::StructuredColumns{targetGrid, option::halo{3}}};
+        }
+        throw_Exception("Unsupported functionspace type: " + fSpaceName);
+    }();
 
-  // target grid (low res.)
-  auto csgrid_t = Grid("CS-LFR-50");
-  auto csmesh_t = MeshGenerator("cubedsphere_dual").generate(csgrid_t);
-  auto csfs_t = functionspace::NodeColumns(csmesh_t);
+    const auto sourceField = getVortexField(sourceFunctionSpace);
+    auto targetField       = targetFunctionSpace.createField<double>(option::name("field_target"));
 
-  size_t nb_levels = 1;
+    const auto binningScheme = option::type{"binning"} | util::Config{"scheme", config.getSubConfiguration("scheme")};
+    auto binning             = Interpolation{binningScheme, sourceFunctionSpace, targetFunctionSpace};
 
-  auto field_01_s = getVortexField(csfs_s, "field_01_s", nb_levels);
+    sourceField.haloExchange();
+    binning.execute(sourceField, targetField);
+    targetField.haloExchange();
 
-  FieldSet fs_s;
-  fs_s.add(field_01_s);
+    auto targetFieldSet = FieldSet{};
+    targetFieldSet.add(targetField);
+    targetFieldSet.add(getErrorField(targetField));
 
-  auto field_01_t = csfs_t.createField<double>(option::name("field_01_t") |
-                                               option::levels(nb_levels));
+    auto sourceFieldSet = FieldSet{};
+    sourceFieldSet.add(sourceField);
 
-  FieldSet fs_t;
-  fs_t.add(field_01_t);
-
-
-  const auto scheme = util::Config("type", "binning") |
-                      util::Config("scheme", option::type("cubedsphere-bilinear"));
-
-  Interpolation regrid_high2low(scheme, csfs_s, csfs_t);
-
-  // performing the regridding from high to low resolution
-  regrid_high2low.execute(fs_s, fs_t);
-
-  fs_t["field_01_t"].haloExchange();
-
-
-  //--
-
-  const std::string fname_s("regridding_h2l_cs_s.msh");
-
-  makeGmshOutput(fname_s, csmesh_s, fs_s["field_01_s"]);
-
-  const std::string fname_t("regridding_h2l_cs_t.msh");
-
-  makeGmshOutput(fname_t, csmesh_t, fs_t["field_01_t"]);
+    const auto binningType = binningScheme.getString("scheme.type");
+    makeGmshOutput(sourceGridName + "_to_" + targetGridName + "_" + binningType + "_source.msh", sourceFieldSet);
+    makeGmshOutput(sourceGridName + "_to_" + targetGridName + "_" + binningType + "_target.msh", targetFieldSet);
 }
 
+CASE("Regridding from high to low resolution: cubed sphere, bilinear") {
+    const auto config = util::Config{"source_grid", "CS-LFR-112"} | util::Config{"target_grid", "CS-LFR-28"} |
+                        util::Config{"functionspace", "NodeColumns"} | util::Config{"halo", 1} |
+                        util::Config{"mesh_generator", "cubedsphere_dual"} |
+                        util::Config{"scheme", option::type{"cubedsphere-bilinear"}};
 
-/// test to carry out the rigridding from 'high' to 'low' resolution,
-/// for a given type of grid (O)
-///
-/// after the regridding, the field set that has been generated is stored
-/// in a Gmsh file (data visualization);
-///
-CASE("rigridding from high to low resolution; grid type: O") {
-
-  // source grid (high res.)
-  auto ncgrid_s = Grid("O32");
-  auto ncmesh_s = MeshGenerator("structured").generate(ncgrid_s);
-  auto ncfs_s = functionspace::StructuredColumns(ncgrid_s, option::halo(3));
-
-  // target grid (low res.)
-  auto ncgrid_t = Grid("O16");
-  auto ncmesh_t = MeshGenerator("structured").generate(ncgrid_t);
-  auto ncfs_t = functionspace::StructuredColumns(ncgrid_t, option::halo(3));
-
-  size_t nb_levels = 1;
-
-  auto field_01_s = getVortexField(ncfs_s, "field_01_s", nb_levels);
-
-  FieldSet fs_s;
-  fs_s.add(field_01_s);
-
-  auto field_01_t = ncfs_t.createField<double>(option::name("field_01_t") |
-                                               option::levels(nb_levels));
-
-  FieldSet fs_t;
-  fs_t.add(field_01_t);
-
-
-  const auto scheme = util::Config("type", "binning") |
-                      util::Config("scheme", option::type("structured-bilinear"));
-
-  Interpolation regrid_high2low(scheme, ncfs_s, ncfs_t);
-
-  // performing the regridding from high to low resolution
-  regrid_high2low.execute(fs_s, fs_t);
-
-  fs_t["field_01_t"].haloExchange();
-
-
-  //--
-
-  const std::string fname_s("regridding_h2l_nc_s.msh");
-
-  makeGmshOutput(fname_s, ncmesh_s, fs_s["field_01_s"]);
-
-  const std::string fname_t("regridding_h2l_nc_t.msh");
-
-  makeGmshOutput(fname_t, ncmesh_t, fs_t["field_01_t"]);
+    regriddingTest(config);
 }
 
+CASE("Regridding from high to low resolution: cubed sphere, nearest neighbour") {
+    const auto config = util::Config{"source_grid", "CS-LFR-112"} | util::Config{"target_grid", "CS-LFR-28"} |
+                        util::Config{"functionspace", "NodeColumns"} | util::Config{"halo", 0} |
+                        util::Config{"mesh_generator", "cubedsphere_dual"} |
+                        util::Config{"scheme", option::type{"nearest-neighbour"}};
+
+    regriddingTest(config);
+}
+
+CASE("Regridding from high to low resolution: cubed sphere, finite element") {
+    const auto config = util::Config{"source_grid", "CS-LFR-112"} | util::Config{"target_grid", "CS-LFR-28"} |
+                        util::Config{"functionspace", "NodeColumns"} | util::Config{"halo", 1} |
+                        util::Config{"mesh_generator", "cubedsphere_dual"} |
+                        util::Config{"scheme", option::type{"finite-element"}};
+
+    regriddingTest(config);
+}
+
+CASE("Regridding from high to low resolution: gaussian, structured bilinear") {
+    const auto config = util::Config{"source_grid", "O48"} | util::Config{"target_grid", "O24"} |
+                        util::Config{"functionspace", "StructuredColumns"} | util::Config{"halo", 3} |
+                        util::Config{"scheme", option::type{"structured-bilinear"}};
+
+    regriddingTest(config);
+}
+
+CASE("plot binning kernel") {
+    const auto sourceGrid = Grid{"CS-LFR-20"};
+    const auto targetGrid = Grid{"CS-LFR-5"};
+
+    const auto haloOption = option::halo(1);
+
+    const auto sourceMesh = MeshGenerator("cubedsphere_dual", haloOption).generate(sourceGrid);
+    const auto targetMesh = MeshGenerator("cubedsphere_dual").generate(targetGrid);
+
+    const auto sourceFunctionSpace = functionspace::NodeColumns{sourceMesh, haloOption};
+    const auto targetFunctionSpace = functionspace::NodeColumns{targetMesh};
+
+    const auto binningScheme = option::type{"binning"} | util::Config{"scheme", option::type{"cubedsphere-bilinear"}};
+    auto binning             = Interpolation{binningScheme, sourceFunctionSpace, targetFunctionSpace};
+
+    const auto binningMatrixStorage = interpolation::MatrixCache(binning).matrix();
+    const auto binningMatrix        = linalg::make_non_owning_eckit_sparse_matrix(binningMatrixStorage);
+
+    const auto targetGhostView = array::make_view<int, 1>(targetFunctionSpace.ghost());
+    const auto targetRidxView  = array::make_indexview<idx_t, 1>(targetFunctionSpace.remote_index());
+    const auto targetPartView  = array::make_view<int, 1>(targetFunctionSpace.partition());
+
+    const auto targetRemoteIndices = std::vector{0, 2, 12};
+    const auto targetPartition     = 0;
+
+    auto kernelField     = sourceFunctionSpace.createField<double>(option::name("kernel_field"));
+    auto kernelFieldView = array::make_view<double, 1>(kernelField);
+    kernelFieldView.assign(0.);
+
+    for (auto matrixItr = binningMatrix.begin(); matrixItr != binningMatrix.end(); ++matrixItr) {
+        const auto rowIdx = matrixItr.row();
+        const auto colIdx = matrixItr.col();
+
+        if (targetGhostView(rowIdx)) {
+            continue;
+        }
+
+        for (const auto targetRemoteIndex : targetRemoteIndices) {
+            if (targetRidxView(rowIdx) == targetRemoteIndex && targetPartView(rowIdx) == targetPartition) {
+                kernelFieldView(colIdx) += *matrixItr;
+            }
+        }
+    }
+    // Force halo weights into owned region of field.
+    sourceFunctionSpace.adjointHaloExchange(kernelField);
+    sourceFunctionSpace.haloExchange(kernelField);
+
+    makeGmshOutput("binning_kernel.msh", kernelField);
+}
 
 /// test to carry out the 'dot-product' test for the rigridding from
 /// 'high' to 'low' resolution, for a given type of grid (CS-LFR)
 ///
-CASE("dot-product test for the rigridding from high to low resolution; grid type: CS-LFR") {
+CASE("dot-product test for the rigridding from high to low resolution; grid type: Cubed Sphere") {
+    // source grid (high res.)
+    const auto sourceGrid          = Grid("CS-LFR-100");
+    const auto sourceMesh          = MeshGenerator("cubedsphere_dual").generate(sourceGrid);
+    const auto sourceFunctionSpace = functionspace::NodeColumns(sourceMesh);
 
-  // source grid (high res.)
-  auto csgrid_s = Grid("CS-LFR-100");
-  auto csmesh_s = MeshGenerator("cubedsphere_dual").generate(csgrid_s);
-  auto csfs_s = functionspace::NodeColumns(csmesh_s);
+    // target grid (low res.)
+    const auto targetGrid          = Grid("CS-LFR-50");
+    const auto targetMesh          = MeshGenerator("cubedsphere_dual").generate(targetGrid);
+    const auto targetFunctionSpace = functionspace::NodeColumns(targetMesh);
 
-  // target grid (low res.)
-  auto csgrid_t = Grid("CS-LFR-50");
-  auto csmesh_t = MeshGenerator("cubedsphere_dual").generate(csgrid_t);
-  auto csfs_t = functionspace::NodeColumns(csmesh_t);
+    // source field
+    const auto sourceField = getVortexField(sourceFunctionSpace);
 
-  size_t nb_levels = 1;
+    auto sourceFieldSet = FieldSet{};
+    sourceFieldSet.add(sourceField);
 
-  // source field
-  auto field_01_s = getVortexField(csfs_s, "field_01_s", nb_levels);
+    // target field
+    auto targetField = targetFunctionSpace.createField<double>(option::name("field_01_t"));
 
-  FieldSet fs_s;
-  fs_s.add(field_01_s);
+    auto targetFieldSet = FieldSet{};
+    targetFieldSet.add(targetField);
 
-  // target field
-  auto field_01_t = csfs_t.createField<double>(option::name("field_01_t") |
-                                               option::levels(nb_levels));
+    const auto scheme = util::Config("type", "binning") | util::Config("scheme", option::type("cubedsphere-bilinear")) |
+                        util::Config("adjoint", true);
 
-  FieldSet fs_t;
-  fs_t.add(field_01_t);
+    Interpolation binning(scheme, sourceFunctionSpace, targetFunctionSpace);
 
-  const auto scheme = util::Config("type", "binning") |
-                      util::Config("scheme", option::type("cubedsphere-bilinear")) |
-                      util::Config("adjoint", true);
-
-  Interpolation regrid_high2low(scheme, csfs_s, csfs_t);
-
-  // performing the regridding from high to low resolution
-  regrid_high2low.execute(fs_s, fs_t);
+    // performing the regridding from high to low resolution
+    binning.execute(sourceFieldSet, targetFieldSet);
 
 
-  fs_t["field_01_t"].haloExchange();
+    targetFieldSet["field_01_t"].haloExchange();
 
-  // target field (adjoint)
-  auto field_01_ad_t = csfs_t.createField<double>(option::name("field_01_ad_t") |
-                                                  option::levels(nb_levels));
-  array::make_view<double, 2>(field_01_ad_t).assign(
-    array::make_view<double, 2>(field_01_t));
-  field_01_ad_t.adjointHaloExchange();
+    // target field (adjoint)
+    auto targetFieldStar = targetFunctionSpace.createField<double>(option::name("field_01_ad_t"));
+    array::make_view<double, 1>(targetFieldStar).assign(array::make_view<double, 1>(targetField));
+    targetFieldStar.adjointHaloExchange();
 
-  FieldSet fs_ad_t;
-  fs_ad_t.add(field_01_ad_t);
+    auto targetFieldSetStar = FieldSet{};
+    targetFieldSetStar.add(targetFieldStar);
 
-  // source field (adjoint)
-  auto field_01_ad_s = csfs_s.createField<double>(option::name("field_01_ad_s") |
-                                                  option::levels(nb_levels));
-  array::make_view<double, 2>(field_01_ad_s).assign(0.);
+    // source field (adjoint)
+    auto sourceFieldStar = sourceFunctionSpace.createField<double>(option::name("field_01_ad_s"));
+    array::make_view<double, 1>(sourceFieldStar).assign(0.);
 
-  FieldSet fs_ad_s;
-  fs_ad_s.add(field_01_ad_s);
+    auto sourceFieldSetStar = FieldSet{};
+    sourceFieldSetStar.add(sourceFieldStar);
 
-  // performing adjoint operation
-  regrid_high2low.execute_adjoint(fs_ad_s, fs_ad_t);
+    // performing adjoint operation
+    binning.execute_adjoint(sourceFieldSetStar, targetFieldSetStar);
 
 
-  const auto t_dot_t = dotProd(fs_t["field_01_t"], fs_t["field_01_t"]);
-  const auto s_dot_ad_s = dotProd(fs_s["field_01_s"], fs_ad_s["field_01_ad_s"]);
+    const auto targetDotTarget     = dotProd(targetField, targetField);
+    const auto sourceDotSourceStar = dotProd(sourceField, sourceFieldStar);
 
-  double scaled_diff = std::abs(t_dot_t - s_dot_ad_s)/std::abs(t_dot_t);
+    double scaled_diff = std::abs(targetDotTarget - sourceDotSourceStar) / std::abs(targetDotTarget);
 
-  // carrrying out a dot-product test ...
-  Log::info() << "\n- dot-product test:\n"
-              << "(Ax) . (Ax) = " << t_dot_t << "; "
-              << "x . (A^t A x) = " << s_dot_ad_s << "; "
-              << "scaled difference = " << scaled_diff << "\n" << std::endl;
+    // carrrying out a dot-product test ...
+    Log::info() << "\n- dot-product test:\n"
+                << "(Ax) . (Ax) = " << targetDotTarget << "; "
+                << "x . (A^t A x) = " << sourceDotSourceStar << "; "
+                << "scaled difference = " << scaled_diff << "\n"
+                << std::endl;
 
-  EXPECT(scaled_diff < 1e-12);
+    EXPECT(scaled_diff < 1e-12);
 }
-
 
 }  // namespace test
 }  // namespace atlas
@@ -286,4 +304,6 @@ CASE("dot-product test for the rigridding from high to low resolution; grid type
 
 //--
 
-int main(int argc, char** argv) { return atlas::test::run(argc, argv); }
+int main(int argc, char** argv) {
+    return atlas::test::run(argc, argv);
+}

@@ -1,0 +1,18 @@
+
+macro(pluto_declare_hic_source_files src_)
+  if( HAVE_HIP )
+    set_source_files_properties( ${src_} PROPERTIES LANGUAGE HIP )
+  endif()
+  if( HAVE_CUDA )
+    set_source_files_properties( ${src_} PROPERTIES LANGUAGE CUDA )
+  endif()
+endmacro()
+
+macro(pluto_target_linker_language_hic target)
+  if( HAVE_HIP )
+    set_target_properties(${target} PROPERTIES LINKER_LANGUAGE HIP)
+  endif()
+  if( HAVE_CUDA )
+    set_target_properties(${target} PROPERTIES LINKER_LANGUAGE CUDA)
+  endif()
+endmacro()

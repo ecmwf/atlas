@@ -30,7 +30,7 @@ size_t compute_aligned_size(size_t size, size_t alignment) {
 }  // namespace
 
 ArraySpec::ArraySpec():
-    size_(), rank_(), datatype_(DataType::KIND_REAL64), allocated_size_(), contiguous_(true), default_layout_(true) {}
+    size_(), rank_(), allocated_size_(), datatype_(DataType::KIND_REAL64), contiguous_(true), default_layout_(true) {}
 
 ArraySpec::ArraySpec(const ArrayShape& shape): ArraySpec(shape, ArrayAlignment()) {}
 ArraySpec::ArraySpec(DataType datatype, const ArrayShape& shape): ArraySpec(shape) {
@@ -183,6 +183,17 @@ void ArraySpec::allocate_fortran_specs() {
         stridesf_[j] = strides_[rank_ - 1 - layout_[j]];
         device_stridesf_[j] = device_strides_[rank_ - 1 - j];
     }
+}
+
+
+static thread_local std::string label_;
+
+std::string_view label::get() {
+    return label_;
+}
+
+void label::set(std::string_view s) {
+    label_.assign(s.data(),s.size());
 }
 
 }  // namespace array

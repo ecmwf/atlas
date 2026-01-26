@@ -16,10 +16,12 @@
 
 #include "atlas/interpolation/Cache.h"
 #include "atlas/interpolation/NonLinear.h"
+#include "atlas/linalg/sparse/SparseMatrixStorage.h"
 #include "atlas/util/Metadata.h"
 #include "atlas/util/Object.h"
 #include "eckit/config/Configuration.h"
 #include "eckit/linalg/SparseMatrix.h"
+#include "atlas/linalg/sparse/MakeSparseMatrixStorageEckit.h"
 
 namespace atlas {
 class Field;
@@ -55,6 +57,7 @@ public:
     void setup(const FunctionSpace& source, const Field& target);
     void setup(const FunctionSpace& source, const FieldSet& target);
     void setup(const Grid& source, const Grid& target, const Cache&);
+    void setup(const FunctionSpace& source, const FunctionSpace& target, const Cache&);
 
     Metadata execute(const FieldSet& source, FieldSet& target) const;
     Metadata execute(const Field& source, Field& target) const;
@@ -87,28 +90,30 @@ protected:
 
     using Triplet  = eckit::linalg::Triplet;
     using Triplets = std::vector<Triplet>;
-    using Matrix   = eckit::linalg::SparseMatrix;
+    using Matrix   = atlas::linalg::SparseMatrixStorage;
 
     static void normalise(Triplets& triplets);
 
-    void haloExchange(const FieldSet&) const;
-    void haloExchange(const Field&) const;
+    void haloExchange(const FieldSet&, bool on_device = false) const;
+    void haloExchange(const Field&, bool on_device = false) const;
 
-    void adjointHaloExchange(const FieldSet&) const;
-    void adjointHaloExchange(const Field&) const;
+    void adjointHaloExchange(const FieldSet&, bool on_device = false) const;
+    void adjointHaloExchange(const Field&, bool on_device = false) const;
 
     // NOTE : Matrix-free or non-linear interpolation operators do not have matrices, so do not expose here
     friend class atlas::test::Access;
     friend class interpolation::MatrixCache;
 
 protected:
-    void setMatrix(Matrix& m, const std::string& uid = "") {
+
+    void setMatrix(Matrix&& m, const std::string& uid = "") {
         if (not matrix_shared_) {
             matrix_shared_ = std::make_shared<Matrix>();
         }
-        matrix_shared_->swap(m);
+        *matrix_shared_ = std::move(m);
         matrix_cache_ = interpolation::MatrixCache(matrix_shared_, uid);
         matrix_       = &matrix_cache_.matrix();
+
     }
 
     void setMatrix(interpolation::MatrixCache matrix_cache) {
@@ -118,12 +123,26 @@ protected:
         matrix_shared_.reset();
     }
 
+    void setMatrix(eckit::linalg::SparseMatrix&& m, const std::string& uid = "") {
+        setMatrix( linalg::make_sparse_matrix_storage(std::move(m)), uid );
+    }
+
+    void setMatrix(std::size_t rows, std::size_t cols, const Triplets& triplets, const std::string& uid = "") {
+        setMatrix( eckit::linalg::SparseMatrix{rows, cols, triplets}, uid);
+    }
+
     bool matrixAllocated() const { return matrix_shared_.use_count(); }
 
-    const Matrix& matrix() const { return *matrix_; }
+    const Matrix& matrix() const {
+        ATLAS_ASSERT(matrix_ != nullptr);
+        return *matrix_;
+    }
+
+    const Matrix& adjoint_matrix() const;
 
     virtual void do_setup(const FunctionSpace& source, const FunctionSpace& target) = 0;
     virtual void do_setup(const Grid& source, const Grid& target, const Cache&)     = 0;
+    virtual void do_setup(const FunctionSpace& source, const FunctionSpace& target, const Cache&) = 0;
     virtual void do_setup(const FunctionSpace& source, const Field& target);
     virtual void do_setup(const FunctionSpace& source, const FieldSet& target);
 
@@ -160,10 +179,10 @@ private:
     interpolation::MatrixCache matrix_cache_;
     NonLinear nonLinear_;
     std::string linalg_backend_;
-    Matrix matrix_transpose_;
+    bool adjoint_{false};
+    mutable std::unique_ptr<Matrix> matrix_transpose_;
 
 protected:
-    bool adjoint_{false};
     bool allow_halo_exchange_{true};
     std::vector<idx_t> missing_;
 };

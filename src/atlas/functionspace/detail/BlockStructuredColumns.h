@@ -98,7 +98,7 @@ public:
     idx_t nblks() const { return nblks_; }
 
     const Vertical& vertical() const { return structuredcolumns_->vertical(); }
-    const StructuredGrid& grid() const { return structuredcolumns_->grid(); }
+    const StructuredGrid& grid() const override { return structuredcolumns_->grid(); }
 
     idx_t levels() const { return structuredcolumns_->levels(); }
     Field lonlat() const override { return structuredcolumns_->lonlat(); }
@@ -121,6 +121,8 @@ public:
 
     std::string checksum(const FieldSet&) const;
     std::string checksum(const Field&) const;
+
+    const util::PartitionPolygon& polygon(idx_t halo = 0) const override { return structuredcolumns_->polygon(halo); }
 
 private:  // methods
     array::ArrayShape config_shape(const eckit::Configuration&) const;

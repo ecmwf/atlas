@@ -71,16 +71,16 @@ static Config processed_config(const eckit::Configuration& _config) {
     }
     std::string scheme_str = _config.getString("method", "linear");
     if (scheme_str == "linear") {
-        config.set("type", "structured-linear2D");
+        config.set("type", "structured-bilinear");
         config.set("halo", 1);
         // The stencil does not require any halo, but we set it to 1 for pole treatment!
     }
     if (scheme_str == "cubic") {
-        config.set("type", "structured-cubic2D");
+        config.set("type", "structured-bicubic");
         config.set("halo", 2);
     }
     if (scheme_str == "quasicubic") {
-        config.set("type", "structured-quasicubic2D");
+        config.set("type", "structured-biquasicubic");
         config.set("halo", 2);
     }
     config.set("name", scheme_str);

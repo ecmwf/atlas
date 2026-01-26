@@ -137,6 +137,39 @@ public:  // methods
     void adjointHaloExchange(bool on_device = false) const;
     void set_dirty(bool = true) const;
 
+    void updateHost() const;
+    void updateHost(std::initializer_list<std::string> names) const;
+    void updateHost(std::initializer_list<int> indices) const;
+    void updateDevice() const;
+    void updateDevice(std::initializer_list<std::string> names) const;
+    void updateDevice(std::initializer_list<int> indices) const;
+    void allocateDevice() const;
+    void allocateDevice(std::initializer_list<std::string> names) const;
+    void allocateDevice(std::initializer_list<int> indices) const;
+    void deallocateDevice() const;
+    void deallocateDevice(std::initializer_list<std::string> names) const;
+    void deallocateDevice(std::initializer_list<int> indices) const;
+    void setDeviceNeedsUpdate(bool) const;
+    void setDeviceNeedsUpdate(bool, std::initializer_list<std::string> names) const;
+    void setDeviceNeedsUpdate(bool, std::initializer_list<int> indices) const;
+    void setHostNeedsUpdate(bool) const;
+    void setHostNeedsUpdate(bool, std::initializer_list<std::string> names) const;
+    void setHostNeedsUpdate(bool, std::initializer_list<int> indices) const;
+    void setDeviceNeedsUpdate() const;
+    void setDeviceNeedsUpdate(std::initializer_list<std::string> names) const;
+    void setDeviceNeedsUpdate(std::initializer_list<int> indices) const;
+    void setHostNeedsUpdate() const;
+    void setHostNeedsUpdate(std::initializer_list<std::string> names) const;
+    void setHostNeedsUpdate(std::initializer_list<int> indices) const;
+    void syncHost() const;
+    void syncHost(std::initializer_list<std::string> names) const;
+    void syncHost(std::initializer_list<int> indices) const;
+    void syncDevice() const;
+    void syncDevice(std::initializer_list<std::string> names) const;
+    void syncDevice(std::initializer_list<int> indices) const;
+
+
+
 protected:                                // data
     std::vector<Field> fields_;           ///< field storage
     std::string name_;                    ///< internal name
@@ -257,10 +290,36 @@ public:  // methods
     const util::Metadata& metadata() const;
     util::Metadata& metadata();
 
+    void set_dirty(bool = true) const;
+
     void haloExchange(bool on_device = false) const { get()->haloExchange(on_device); }
     void adjointHaloExchange(bool on_device = false) const { get()->adjointHaloExchange(on_device); }
 
-    void set_dirty(bool = true) const;
+    // -- Methods related to host-device synchronisation
+    void updateHost() const { get()->updateHost(); }
+    void updateHost(std::initializer_list<std::string> names) const { get()->updateHost(names); }
+    void updateHost(std::initializer_list<int> indices) const { get()->updateHost(indices); }
+    void updateDevice() const { get()->updateDevice(); }
+    void updateDevice(std::initializer_list<std::string> names) const { get()->updateDevice(names); }
+    void updateDevice(std::initializer_list<int> indices) const{ get()->updateDevice(indices); }
+    void allocateDevice() const { get()->allocateDevice(); }
+    void allocateDevice(std::initializer_list<std::string> names) const { get()->allocateDevice(names); }
+    void allocateDevice(std::initializer_list<int> indices) const { get()->allocateDevice(indices); }
+    void deallocateDevice() const { get()->deallocateDevice(); }
+    void deallocateDevice(std::initializer_list<std::string> names) const { get()->deallocateDevice(names); }
+    void deallocateDevice(std::initializer_list<int> indices) const { get()->deallocateDevice(indices); }
+    void setDeviceNeedsUpdate(bool value) const { get()->setDeviceNeedsUpdate(value); }
+    void setDeviceNeedsUpdate(bool value, std::initializer_list<std::string> names) const { get()->setDeviceNeedsUpdate(value, names); }
+    void setDeviceNeedsUpdate(bool value, std::initializer_list<int> indices) const { get()->setDeviceNeedsUpdate(value, indices); }
+    void setHostNeedsUpdate(bool value) const { get()->setHostNeedsUpdate(value); }
+    void setHostNeedsUpdate(bool value, std::initializer_list<std::string> names) const { get()->setHostNeedsUpdate(value, names); }
+    void setHostNeedsUpdate(bool value, std::initializer_list<int> indices) const { get()->setHostNeedsUpdate(value, indices); }
+    void syncHost() const { get()->syncHost(); }
+    void syncHost(std::initializer_list<std::string> names) const { get()->syncHost(names); }
+    void syncHost(std::initializer_list<int> indices) const { get()->syncHost(indices); }
+    void syncDevice() const { get()->syncDevice(); }
+    void syncDevice(std::initializer_list<std::string> names) const { get()->syncDevice(names); }
+    void syncDevice(std::initializer_list<int> indices) const { get()->syncDevice(indices); }
 
     // Deprecated API
     DEPRECATED("use 'has' instead") bool has_field(const std::string& name) const { return get()->has(name); }

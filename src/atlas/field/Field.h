@@ -24,6 +24,7 @@
 #include "atlas/library/config.h"
 #include "atlas/util/Config.h"
 #include "atlas/util/ObjectHandle.h"
+#include "atlas/field/Halo.h"
 
 namespace eckit {
 class Parametrisation;
@@ -181,17 +182,23 @@ public:
 
     void set_dirty(bool = true) const;
 
+    field::Halo& halo() const;
+
     void haloExchange(bool on_device = false) const;
     void adjointHaloExchange(bool on_device = false) const;
 
     // -- Methods related to host-device synchronisation
     void updateHost() const;
     void updateDevice() const;
+    void syncHost() const;
+    void syncDevice() const;
     void syncHostDevice() const;
     bool hostNeedsUpdate() const;
     bool deviceNeedsUpdate() const;
     void setHostNeedsUpdate(bool) const;
     void setDeviceNeedsUpdate(bool) const;
+    void setHostNeedsUpdate() const;
+    void setDeviceNeedsUpdate() const;
     bool deviceAllocated() const;
     void allocateDevice();
     void deallocateDevice();

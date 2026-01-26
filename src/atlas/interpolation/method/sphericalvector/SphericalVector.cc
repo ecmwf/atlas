@@ -18,6 +18,7 @@
 #include "atlas/interpolation/method/MethodFactory.h"
 #include "atlas/interpolation/method/sphericalvector/ComplexMatrixMultiply.h"
 #include "atlas/interpolation/method/sphericalvector/Types.h"
+#include "atlas/linalg/sparse/MakeEckitSparseMatrix.h"
 #include "atlas/option/Options.h"
 #include "atlas/parallel/omp/omp.h"
 #include "atlas/runtime/Exception.h"
@@ -52,6 +53,11 @@ void SphericalVector::do_setup(const Grid& source, const Grid& target,
   ATLAS_NOTIMPLEMENTED;
 }
 
+void SphericalVector::do_setup(const FunctionSpace& source, const FunctionSpace& target,
+                               const Cache&) {
+  ATLAS_NOTIMPLEMENTED;
+}
+
 void SphericalVector::do_setup(const FunctionSpace& source,
                                const FunctionSpace& target) {
   ATLAS_TRACE("interpolation::method::SphericalVector::do_setup");
@@ -62,15 +68,21 @@ void SphericalVector::do_setup(const FunctionSpace& source,
     return;
   }
 
-  setMatrix(Interpolation(interpolationScheme_, source_, target_));
+  interpolationScheme_.set("adjoint", false); // The temporary interpolation object should not compute the adjoint
+  auto matrix_cache = MatrixCache(Interpolation(interpolationScheme_, source_, target_));
+  setMatrix(matrix_cache);
+  if (adjoint_) {
+    adjoint_matrix();
+  }
 
   // Get matrix data.
-  const auto nRows = static_cast<Index>(matrix().rows());
-  const auto nCols = static_cast<Index>(matrix().cols());
-  const auto nNonZeros = static_cast<std::size_t>(matrix().nonZeros());
-  const auto* outerIndices = matrix().outer();
-  const auto* innerIndices = matrix().inner();
-  const auto* baseWeights = matrix().data();
+  const auto m = atlas::linalg::make_host_view<eckit::linalg::Scalar>(matrix());
+  const auto nRows = static_cast<Index>(m.rows());
+  const auto nCols = static_cast<Index>(m.cols());
+  const auto nNonZeros = static_cast<std::size_t>(m.nnz());
+  const auto* outerIndices = m.outer();
+  const auto* innerIndices = m.inner();
+  const auto* baseWeights  = m.value();
 
   // Note: need to store copy of weights as Eigen3 sorts compressed rows by j
   // whereas eckit does not.

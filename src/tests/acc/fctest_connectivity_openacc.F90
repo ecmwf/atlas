@@ -10,7 +10,7 @@
 ! @author Willem Deconinck
 
 #include "fckit/fctest.h"
-
+#include "atlas/atlas_f.h"
 
 ! -----------------------------------------------------------------------------
 
@@ -21,6 +21,15 @@ TESTSUITE_INIT()
   use fckit_module
   call fckit_main%init()
 END_TESTSUITE_INIT
+
+TESTSUITE_FINALIZE()
+#if ATLAS_FCKIT_VERSION_AT_LEAST(0,13,3) || ATLAS_FCKIT_DEVELOP
+  use fckit_module
+  call fckit_mpi%finalize()
+#endif
+  write(0,*) "END TESTSUITE"
+END_TESTSUITE_FINALIZE
+
 
 TEST( test_connectivity )
 #if 1

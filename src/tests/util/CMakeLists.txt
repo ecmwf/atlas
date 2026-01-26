@@ -69,7 +69,7 @@ ecbuild_add_test( TARGET atlas_test_vector
 
 ecbuild_add_test( TARGET atlas_test_metadata
   MPI        4
-  CONDITION  eckit_HAVE_MPI
+  CONDITION  eckit_HAVE_MPI AND MPI_SLOTS GREATER_EQUAL 4
   SOURCES    test_metadata.cc
   LIBS       atlas
   ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}

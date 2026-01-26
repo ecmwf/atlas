@@ -50,6 +50,8 @@ public:
     virtual void updateHost() const                 = 0;
     virtual bool valid() const                      = 0;
     virtual void syncHostDevice() const             = 0;
+    virtual void syncHost() const                   = 0;
+    virtual void syncDevice() const                 = 0;
     virtual void allocateDevice() const             = 0;
     virtual void deallocateDevice() const           = 0;
     virtual bool deviceAllocated() const            = 0;

@@ -26,8 +26,13 @@ namespace util {
 class FactoryBase;
 
 class FactoryRegistry {
-protected:
-    FactoryRegistry(const std::string& factory);
+private:
+    struct Private{ explicit Private() = default; };
+public:
+    // Constructor, essentially private because nobody can create an explicit Private object.
+    // Construction must happen via instance() function below
+    FactoryRegistry(const std::string& factory, Private);
+
     virtual ~FactoryRegistry();
 
 private:
@@ -43,19 +48,28 @@ public:
     void add(const std::string& builder, FactoryBase*);
     void remove(const std::string& builder);
     FactoryBase* get(const std::string& builder) const;
+
+    static std::shared_ptr<FactoryRegistry> instance(const std::string& factory);
 };
 
-template <typename T>
-struct FactoryRegistryT : public FactoryRegistry {
+class FactoryDeprecated {
 public:
-    static std::shared_ptr<FactoryRegistryT<T>> instance() {
-        static std::shared_ptr<FactoryRegistryT<T>> env(new FactoryRegistryT<T>(T::className()));
-        return env;
+    operator bool() const { return value_; }
+    FactoryDeprecated(bool v) :
+        value_(v) {
     }
-    virtual ~FactoryRegistryT() {}
+    FactoryDeprecated() :
+        value_(true) {
+    }
+    FactoryDeprecated(const char* message) :
+        value_(true),
+        message_{message} {
+    }
 
-protected:
-    FactoryRegistryT(const std::string& factory): FactoryRegistry(factory) {}
+    const std::string& message() const { return message_; }
+private:
+    bool value_;
+    std::string message_;
 };
 
 class FactoryBase {
@@ -63,9 +77,10 @@ private:
     FactoryRegistry& registry_;
     std::string builder_;
     std::shared_ptr<FactoryRegistry> attached_registry_;
+    FactoryDeprecated deprecated_;
 
 protected:
-    FactoryBase(FactoryRegistry&, const std::string& builder);
+    FactoryBase(FactoryRegistry&, const std::string& builder, const FactoryDeprecated& deprecated = FactoryDeprecated(false));
     virtual ~FactoryBase();
     void attach_registry(const std::shared_ptr<FactoryRegistry>& registry) { attached_registry_ = registry; }
     friend class FactoryRegistry;
@@ -73,6 +88,7 @@ protected:
 public:
     const std::string& factoryBuilder() const { return builder_; }
     const std::string& factoryName() const { return registry_.factory(); }
+    const FactoryDeprecated& deprecated() const { return deprecated_; }
 };
 
 template <typename T>
@@ -83,15 +99,15 @@ public:
     static bool has(const std::string& builder) { return registry().has(builder); }
     static T* get(const std::string& builder) { return dynamic_cast<T*>(registry().get(builder)); }
 
-    Factory(const std::string& builder = ""): FactoryBase(registry(), builder) {
+    Factory(const std::string& builder = "", const FactoryDeprecated& deprecated = FactoryDeprecated(false)): FactoryBase(registry(), builder, deprecated) {
         if (not builder.empty()) {
-            attach_registry(FactoryRegistryT<T>::instance());
+            attach_registry(FactoryRegistry::instance(T::className()));
         }
     }
 
 protected:
     virtual ~Factory(){};
-    static FactoryRegistry& registry() { return *FactoryRegistryT<T>::instance().get(); }
+    static FactoryRegistry& registry() { return *FactoryRegistry::instance(T::className()).get(); }
 };
 
 //----------------------------------------------------------------------------------------------------------------------

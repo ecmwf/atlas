@@ -1,0 +1,8 @@
+
+include( CMakeFindDependencyMacro )
+
+set( pluto_HAVE_CUDA @HAVE_CUDA@ )
+set( pluto_HAVE_HIP  @HAVE_HIP@ )
+
+find_dependency( hic HINTS ${CMAKE_CURRENT_LIST_DIR}/../hic @hic_DIR@ @hic_BINARY_DIR@ )
+
