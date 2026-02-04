@@ -50,7 +50,7 @@ using PolygonArray = std::vector<util::ConvexSphericalPolygon>;
 ConservativeSphericalPolygonInterpolationLimiter::
 ConservativeSphericalPolygonInterpolationLimiter(const ConservativeSphericalPolygonInterpolation& interpolation):
     interpolation_(interpolation), src_cell_data_(interpolation.src_cell_data_), tgt_cell_data_(interpolation.tgt_cell_data_),
-    limiter_(interpolation.limiter_), order_(interpolation.order_), matrix_free_(interpolation.matrix_free_),
+    limiter_(interpolation.limiter_), order_(interpolation.order_),
     src_fs_(interpolation.source()), tgt_fs_(interpolation.target()), data_(interpolation.data_) {
     // sharable_data_ = std::make_shared<Data>();
     // cache_         = Cache(sharable_data_);
@@ -86,7 +86,6 @@ void ConservativeSphericalPolygonInterpolationLimiter::limit(const Field& src_fi
         std::vector<SrcActed> src_acted_tgt;
         const auto src_vals = array::make_view<double, 1>(src_field);
         auto tgt_vals       = array::make_view<double, 1>(tgt_field);
-        double eps = std::numeric_limits<double>::epsilon();
         const auto& tgt_iparam = data_->tgt_iparam_;
         const auto& src_iparam = data_->src_iparam_;
         const auto& src_points = data_->src_.points;
@@ -102,9 +101,7 @@ void ConservativeSphericalPolygonInterpolationLimiter::limit(const Field& src_fi
             }
             src_acted_tgt.resize(src_vals.size());
             auto& mpi_comm = mpi::comm();
-            std::vector<Indices> send_marked_scells;
             std::set<Indices> send_marked_scells_set;
-            eckit::mpi::Buffer<Indices> recv_marked_scells_buf(mpi_comm.size());
             ConservativeSphericalPolygonInterpolation::Workspace_get_cell_neighbours w_cell;
 
             for (idx_t tcsp = 0; tcsp < data_->tgt_.csp_size; ++tcsp) {
@@ -167,7 +164,8 @@ void ConservativeSphericalPolygonInterpolationLimiter::limit(const Field& src_fi
                 }
             }
 
-            send_marked_scells = std::vector<Indices>(send_marked_scells_set.begin(), send_marked_scells_set.end());
+            std::vector<Indices> send_marked_scells(send_marked_scells_set.begin(), send_marked_scells_set.end());
+            eckit::mpi::Buffer<Indices> recv_marked_scells_buf(mpi_comm.size());
             // mpi_comm.allGatherv(send_marked_scells.begin(), send_marked_scells.end(), recv_marked_scells_buf);
 
             if (! limiter_override_tgt) {
@@ -182,7 +180,7 @@ void ConservativeSphericalPolygonInterpolationLimiter::limit(const Field& src_fi
             }
         }
         else {
-            Log::info() << "Limiter support only CellColumns data." << std::endl;
+            Log::info() << "Limiter supports only CellColumns data." << std::endl;
             ATLAS_NOTIMPLEMENTED;
         }
     }

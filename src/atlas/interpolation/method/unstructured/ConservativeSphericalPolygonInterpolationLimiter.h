@@ -49,7 +49,6 @@ private:
     bool tgt_cell_data_;
     std::string limiter_;
     int order_;
-    bool matrix_free_;
     const FunctionSpace src_fs_;
     const FunctionSpace tgt_fs_;
 

@@ -262,7 +262,6 @@ private:
     void dump_intersection(const std::string, const Polygon& plg_1, const PolygonArray& plg_2_array,
                            const Indices& plg_2_idx_array) const;
 
-    struct Workspace_get_cell_neighbours;
     std::vector<idx_t> get_cell_neighbours(Mesh&, idx_t jcell, Workspace_get_cell_neighbours&) const;
 
     struct Workspace_get_node_neighbours;
