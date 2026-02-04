@@ -63,15 +63,17 @@ void ConservativeSphericalPolygonInterpolationLimiter::limit(const Field& src_fi
         // set this environment variable to replace target_field with values showing
         //   0: target_field as it is
         //   1: values corrections from the limiter
+        //   2: tcells marked for fixing
         unsigned int limiter_override_tgt = 0;
         const char* ATLAS_INTERPOLATION_LIMITER = ::getenv("ATLAS_INTERPOLATION_LIMITER");
         if (ATLAS_INTERPOLATION_LIMITER != nullptr) {
                 limiter_override_tgt = std::atof(ATLAS_INTERPOLATION_LIMITER);
         }
-        if (limiter_override_tgt > 1) {
-            Log::error() << "ATLAS_INTERPOLATION_LIMITER can be 0 (default) or 1.\n";
-            Log::error() << "   0: default, show target values after a limiter.\n";
-            Log::error() << "   1: show limiter correction values" << std::endl;
+        if (limiter_override_tgt > 2) {
+            Log::error() << "ATLAS_INTERPOLATION_LIMITER can be:\n";
+            Log::error() << "\t0 (default)\n";
+            Log::error() << "\t1 (limiter correction field)\n";
+            Log::error() << "\t2 (violation target cells)" << std::endl;
             ATLAS_ASSERT(false);
         }
         Field tgt_lim_field = tgt_fs_.createField<double>();
@@ -126,6 +128,9 @@ void ConservativeSphericalPolygonInterpolationLimiter::limit(const Field& src_fi
                     if (limiter_ == "zeroslope") {
                         send_marked_scells_set.insert(iparam.csp_ids);
 
+                        if (limiter_override_tgt == 2) {
+                            tgt_lim_vals(tcell) = 1.;
+                        }
                         for (idx_t i_scsp = 0; i_scsp < iparam.csp_ids.size(); ++i_scsp) {
                             idx_t scsp_id = iparam.csp_ids[i_scsp];
                             idx_t scell   = interpolation_.csp_to_cell(scsp_id, data_->src_);
@@ -148,7 +153,12 @@ void ConservativeSphericalPolygonInterpolationLimiter::limit(const Field& src_fi
                                 SrcActed& it = src_acted_tgt[scell];
                                 if (std::find(it.tcells_done.begin(), it.tcells_done.end(), tcell_collateral) == it.tcells_done.end()) {
                                     it.tcells_done.push_back(tcell_collateral);
-                                    tgt_lim_vals(tcell_collateral) -= tgt_lim_val;
+                                    if (limiter_override_tgt == 2 && tgt_lim_vals(tcell_collateral) < 0.5) {
+                                        tgt_lim_vals(tcell_collateral) = -1;
+                                    }
+                                    else {
+                                        tgt_lim_vals(tcell_collateral) -= tgt_lim_val;
+                                    }
                                 }
                             }
                         }
