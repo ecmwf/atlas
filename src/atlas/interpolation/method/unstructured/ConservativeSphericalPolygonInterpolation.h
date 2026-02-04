@@ -13,6 +13,7 @@
 
 #include "atlas/functionspace.h"
 #include "atlas/interpolation/method/Method.h"
+// #include "atlas/interpolation/method/unstructured/ConservativeSphericalPolygonInterpolationLimiter.h"
 #include "atlas/util/ConvexSphericalPolygon.h"
 
 namespace atlas {
@@ -20,6 +21,9 @@ namespace interpolation {
 namespace method {
 
 using Indices = std::vector<idx_t>;
+
+
+class ConservativeSphericalPolygonInterpolationLimiter;
 
 
 class ConservativeSphericalPolygonInterpolation : public Method {
@@ -40,6 +44,7 @@ private:
 
     private:
         friend class ConservativeSphericalPolygonInterpolation;
+        friend class ConservativeSphericalPolygonInterpolationLimiter;
 
         struct PolygonsData {
             enum class Context { SOURCE, TARGET } context;
@@ -128,6 +133,7 @@ public:
 
     private:
         friend class ConservativeSphericalPolygonInterpolation;
+        friend class ConservativeSphericalPolygonInterpolationLimiter;
         Cache(std::shared_ptr<InterpolationCacheEntry> entry);
         const Data* entry_{nullptr};
     };
@@ -208,6 +214,8 @@ public:
 
 
 public:
+    friend class ConservativeSphericalPolygonInterpolationLimiter;
+
     ConservativeSphericalPolygonInterpolation(const Config& = util::NoConfig());
 
     using Method::do_setup;
@@ -228,6 +236,16 @@ public:
     inline const PointXYZ& tgt_points(size_t id) const { return data_->tgt_.points[id]; }
 
     interpolation::Cache createCache() const override;
+
+
+private:
+
+struct Workspace_get_cell_neighbours {
+    PointXYZ p0;
+    PointLonLat p0_ll;
+    PointXYZ p1;
+    PointLonLat p1_ll;
+};
 
 private:
 

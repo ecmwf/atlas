@@ -18,6 +18,7 @@
 #include "atlas/grid.h"
 #include "atlas/interpolation/Interpolation.h"
 #include "atlas/interpolation/method/MethodFactory.h"
+#include "atlas/interpolation/method/unstructured/ConservativeSphericalPolygonInterpolationLimiter.h"
 #include "atlas/library/FloatingPointExceptions.h"
 #include "atlas/mesh/actions/BuildHalo.h"
 #include "atlas/mesh/actions/BuildNode2CellConnectivity.h"
@@ -33,6 +34,7 @@
 
 #include "eckit/log/Bytes.h"
 #include "eckit/log/ProgressTimer.h"
+#include "eckit/mpi/Comm.h"
 
 #define PRINT_BAD_POLYGONS 0
 
@@ -275,14 +277,6 @@ inline int ConservativeSphericalPolygonInterpolation::prev_index(int current_ind
 #endif
     return (current_index >= 1) ? current_index - 1 : current_index - 1 + size;
 }
-
-
-struct ConservativeSphericalPolygonInterpolation::Workspace_get_cell_neighbours {
-    PointXYZ p0;
-    PointLonLat p0_ll;
-    PointXYZ p1;
-    PointLonLat p1_ll;
-};
 
 
 // get counter-clockwise sorted neighbours of a cell
@@ -2145,105 +2139,8 @@ void ConservativeSphericalPolygonInterpolation::do_execute(const Field& src_fiel
         }
     }
 
-    struct SrcActed {
-        Indices tcells_done;
-    };
-
-    if (order_ == 2 && (limiter_ != "none")) {
-        // set this environment variable to replace target_field with values showing
-        //   0: target_field as it is
-        //   1: values corrections from the limiter
-        unsigned int limiter_override_tgt = 0;
-        const char* ATLAS_INTERPOLATION_LIMITER = ::getenv("ATLAS_INTERPOLATION_LIMITER");
-        if (ATLAS_INTERPOLATION_LIMITER != nullptr) {
-                limiter_override_tgt = std::atof(ATLAS_INTERPOLATION_LIMITER);
-        }
-        if (limiter_override_tgt > 1) {
-            Log::error() << "ATLAS_INTERPOLATION_LIMITER can be 0 (default) or 1.\n";
-            Log::error() << "   0: default, show target values after a limiter.\n";
-            Log::error() << "   1: show limiter correction values" << std::endl;
-            ATLAS_ASSERT(false);
-        }
-        Field tgt_lim_field = tgt_fs_.createField<double>();
-        auto tgt_lim_vals   = array::make_view<double, 1>(tgt_lim_field);
-        for (idx_t tcell = 0; tcell < tgt_lim_vals.size(); ++tcell) {
-            tgt_lim_vals(tcell) = 0.;
-        }
-
-        std::vector<SrcActed> src_acted_tgt;
-        src_acted_tgt.resize(src_vals.size());
-        double eps = std::numeric_limits<double>::epsilon();
-
-        if (tgt_cell_data_ && src_cell_data_) {
-            for (idx_t tcsp = 0; tcsp < data_->tgt_.csp_size; ++tcsp) {
-                const auto& iparam = tgt_iparam[tcsp];
-                double smax = std::numeric_limits<double>::min();
-                double smin = std::numeric_limits<double>::max();
-                for (idx_t i_scsp = 0; i_scsp < iparam.csp_ids.size(); ++i_scsp) {
-                    idx_t scsp_id = iparam.csp_ids[i_scsp];
-                    idx_t scell   = csp_to_cell(scsp_id, data_->src_);
-                    smax = std::max(smax, src_vals(scell));
-                    smin = std::min(smin, src_vals(scell));
-                }
-                idx_t tcell = csp_to_cell(tcsp, data_->tgt_);
-                double smin_numadj = smin - (1e6 + 1e8 * std::abs(smin)) * eps;
-                double smax_numadj = smax + (1e6 + 1e8 * std::abs(smin)) * eps;
-                bool undershoot = (tgt_vals(tcell) < smin_numadj);
-                bool overshoot = (tgt_vals(tcell) > smax_numadj);
-                if (undershoot || overshoot) {
-                    if (limiter_ == "zeroslope") {
-                        for (idx_t i_scsp = 0; i_scsp < iparam.csp_ids.size(); ++i_scsp) {
-                            idx_t scsp_id = iparam.csp_ids[i_scsp];
-                            idx_t scell   = csp_to_cell(scsp_id, data_->src_);
-                            const PointXYZ& src_barycentre = src_points[scell];
-                            PointXYZ scell_grad  = src_grads[scell];
-                            scell_grad           = scell_grad - PointXYZ::mul(src_barycentre, PointXYZ::dot(scell_grad, src_barycentre));
-                            auto& siparam = src_iparam[scsp_id];
-                            for (idx_t i_tcsp_collateral = 0; i_tcsp_collateral < siparam.csp_ids.size(); ++i_tcsp_collateral) {
-                                auto tcsp_collateral = siparam.csp_ids[i_tcsp_collateral];
-                                const auto& iparam_collateral = tgt_iparam[tcsp_collateral];
-                                auto tcell_collateral = csp_to_cell(tcsp_collateral, data_->tgt_);
-                                // find the index of scell entry in iparam_collateral.csp_ids
-                                auto scell_it = std::find(iparam_collateral.csp_ids.begin(), iparam_collateral.csp_ids.end(), scell);
-                                idx_t scell_idx = scell_it - iparam_collateral.csp_ids.begin();
-                                ATLAS_ASSERT(iparam_collateral.csp_ids[scell_idx] == scell);
-                                double tgt_lim_val = iparam_collateral.weights[scell_idx] * PointXYZ::dot(scell_grad, iparam_collateral.centroids[scell_idx] - src_barycentre);
-                                if (tgt_areas[tcell_collateral] > 0.) {
-                                    tgt_lim_val /= tgt_areas[tcell_collateral];
-                                }
-                                SrcActed& it = src_acted_tgt[scell];
-                                if (std::find(it.tcells_done.begin(), it.tcells_done.end(), tcell_collateral) == it.tcells_done.end()) {
-                                    it.tcells_done.push_back(tcell_collateral);
-                                    tgt_lim_vals(tcell_collateral) -= tgt_lim_val;
-                                }
-                            }
-                        }
-                    }
-                    else if (limiter_ == "clip") {
-                        if (overshoot) {
-                            tgt_lim_vals(tcell) = smax - tgt_vals(tcell);
-                        }
-                        else if (undershoot) {
-                            tgt_lim_vals(tcell) = smin - tgt_vals(tcell);
-                        }
-                    }
-                }
-            }
-            if (! limiter_override_tgt) {
-                for (idx_t tcell = 0; tcell < tgt_vals.size(); ++tcell) {
-                    tgt_vals(tcell) += tgt_lim_vals(tcell);
-                }
-            }
-            else {
-                for (idx_t tcell = 0; tcell < tgt_vals.size(); ++tcell) {
-                    tgt_vals(tcell) = tgt_lim_vals(tcell);
-                }
-            }
-        }
-        else {
-            ATLAS_NOTIMPLEMENTED;
-        }
-    }
+    ConservativeSphericalPolygonInterpolationLimiter csp_limiter(*this);
+    csp_limiter.limit(src_field, tgt_field);
 
     stopwatch.stop();
     

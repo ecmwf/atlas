@@ -700,6 +700,8 @@ interpolation/method/structured/kernels/QuasiCubic3DKernel.h
 interpolation/method/structured/kernels/QuasiCubicHorizontalKernel.h
 interpolation/method/unstructured/ConservativeSphericalPolygonInterpolation.cc
 interpolation/method/unstructured/ConservativeSphericalPolygonInterpolation.h
+interpolation/method/unstructured/ConservativeSphericalPolygonInterpolationLimiter.cc
+interpolation/method/unstructured/ConservativeSphericalPolygonInterpolationLimiter.h
 interpolation/method/unstructured/FiniteElement.cc
 interpolation/method/unstructured/FiniteElement.h
 interpolation/method/unstructured/SphericalMeanValue.cc
