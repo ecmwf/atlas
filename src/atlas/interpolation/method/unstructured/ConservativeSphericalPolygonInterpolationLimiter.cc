@@ -169,8 +169,15 @@ void ConservativeSphericalPolygonInterpolationLimiter::limit(const Field& src_fi
             // mpi_comm.allGatherv(send_marked_scells.begin(), send_marked_scells.end(), recv_marked_scells_buf);
 
             if (! limiter_override_tgt) {
-                for (idx_t tcell = 0; tcell < tgt_vals.size(); ++tcell) {
-                    tgt_vals(tcell) -= tgt_lim_vals(tcell);
+                if (interpolation_.matrix_free_) {
+                    for (idx_t tcell = 0 ; tcell < tgt_vals.size(); ++tcell) {
+                        tgt_vals(tcell) += tgt_lim_vals(tcell);
+                    }
+                }
+                else {
+                    for (idx_t tcell = 0 ; tcell < tgt_vals.size(); ++tcell) {
+                        tgt_vals(tcell) -= tgt_lim_vals(tcell);
+                    }
                 }
             }
             else {
