@@ -25,6 +25,7 @@
 #include "eckit/log/PrefixTarget.h"
 #include "eckit/mpi/Comm.h"
 #include "eckit/runtime/Main.h"
+#include "eckit/system/LibraryManager.h"
 #include "eckit/testing/Test.h"
 #include "eckit/types/Types.h"
 
@@ -336,8 +337,8 @@ static std::string debug_prefix(const std::string& libname) {
 }
 
 void debug_addTarget(eckit::LogTarget* target) {
-    for (std::string libname : eckit::system::Library::list()) {
-        const eckit::system::Library& lib = eckit::system::Library::lookup(libname);
+    for (std::string libname : eckit::system::LibraryManager::list()) {
+        const eckit::system::Library& lib = eckit::system::LibraryManager::lookup(libname);
         if (lib.debug()) {
             lib.debugChannel().addTarget(new eckit::PrefixTarget(debug_prefix(libname), target));
         }
@@ -347,8 +348,8 @@ void debug_addTarget(eckit::LogTarget* target) {
 }
 
 void debug_setTarget(eckit::LogTarget* target) {
-    for (std::string libname : eckit::system::Library::list()) {
-        const eckit::system::Library& lib = eckit::system::Library::lookup(libname);
+    for (std::string libname : eckit::system::LibraryManager::list()) {
+        const eckit::system::Library& lib = eckit::system::LibraryManager::lookup(libname);
         if (lib.debug()) {
             lib.debugChannel().setTarget(new eckit::PrefixTarget(debug_prefix(libname), target));
         }
@@ -358,8 +359,8 @@ void debug_setTarget(eckit::LogTarget* target) {
 }
 
 void debug_reset() {
-    for (std::string libname : eckit::system::Library::list()) {
-        const eckit::system::Library& lib = eckit::system::Library::lookup(libname);
+    for (std::string libname : eckit::system::LibraryManager::list()) {
+        const eckit::system::Library& lib = eckit::system::LibraryManager::lookup(libname);
         if (lib.debug()) {
             lib.debugChannel().reset();
         }

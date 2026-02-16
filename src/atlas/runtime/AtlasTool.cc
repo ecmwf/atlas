@@ -20,6 +20,8 @@
 #include "atlas/library/config.h"
 #include "atlas/runtime/AtlasTool.h"
 
+#include "eckit/system/LibraryManager.h"
+
 namespace atlas {
 static void usage(const std::string& name) {
     Log::info() << "dummy usage" << std::endl;
@@ -45,8 +47,8 @@ static std::string debug_prefix(const std::string& libname) {
 }
 
 void debug_addTarget(eckit::LogTarget* target) {
-    for (std::string libname : eckit::system::Library::list()) {
-        const eckit::system::Library& lib = eckit::system::Library::lookup(libname);
+    for (std::string libname : eckit::system::LibraryManager::list()) {
+        const eckit::system::Library& lib = eckit::system::LibraryManager::lookup(libname);
         if (lib.debug()) {
             lib.debugChannel().addTarget(new eckit::PrefixTarget(debug_prefix(libname), target));
         }
@@ -57,8 +59,8 @@ void debug_addTarget(eckit::LogTarget* target) {
 }
 
 void debug_setTarget(eckit::LogTarget* target) {
-    for (std::string libname : eckit::system::Library::list()) {
-        const eckit::system::Library& lib = eckit::system::Library::lookup(libname);
+    for (std::string libname : eckit::system::LibraryManager::list()) {
+        const eckit::system::Library& lib = eckit::system::LibraryManager::lookup(libname);
         if (lib.debug()) {
             lib.debugChannel().setTarget(new eckit::PrefixTarget(debug_prefix(libname), target));
         }
@@ -69,8 +71,8 @@ void debug_setTarget(eckit::LogTarget* target) {
 }
 
 void debug_reset() {
-    for (std::string libname : eckit::system::Library::list()) {
-        const eckit::system::Library& lib = eckit::system::Library::lookup(libname);
+    for (std::string libname : eckit::system::LibraryManager::list()) {
+        const eckit::system::Library& lib = eckit::system::LibraryManager::lookup(libname);
         if (lib.debug()) {
             lib.debugChannel().reset();
         }
