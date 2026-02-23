@@ -62,6 +62,7 @@ struct AtlasTransEnvironment : public AtlasTestEnvironment {
         if (mpi::comm().size() == 1) {
             trans_use_mpi(false);
         }
+        trans_init();
     }
 
     ~AtlasTransEnvironment() { trans_finalize(); }
