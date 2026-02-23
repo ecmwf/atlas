@@ -154,8 +154,10 @@ double ConservativeSphericalPolygonInterpolationLimiter::limit(const Field& src_
                                 SrcActed& it = src_acted_tgt[scell];
                                 if (std::find(it.tcells_done.begin(), it.tcells_done.end(), tcell_collateral) == it.tcells_done.end()) {
                                     it.tcells_done.push_back(tcell_collateral);
-                                    if (limiter_override_tgt == 2 && tgt_lim_vals(tcell_collateral) < 0.5) {
-                                        tgt_lim_vals(tcell_collateral) = -1;
+                                    if (limiter_override_tgt == 2) {
+                                        if (tgt_lim_vals(tcell_collateral) < 0.5) {
+                                            tgt_lim_vals(tcell_collateral) = -1.;
+                                        }
                                     }
                                     else {
                                         tgt_lim_vals(tcell_collateral) -= tgt_lim_val;
@@ -175,22 +177,15 @@ double ConservativeSphericalPolygonInterpolationLimiter::limit(const Field& src_
                 }
             }
 
-            std::vector<Indices> send_marked_scells(send_marked_scells_set.begin(), send_marked_scells_set.end());
-            eckit::mpi::Buffer<Indices> recv_marked_scells_buf(mpi_comm.size());
+            // std::vector<Indices> send_marked_scells(send_marked_scells_set.begin(), send_marked_scells_set.end());
+            // eckit::mpi::Buffer<Indices> recv_marked_scells_buf(mpi_comm.size());
             // mpi_comm.allGatherv(send_marked_scells.begin(), send_marked_scells.end(), recv_marked_scells_buf);
 
             if (! limiter_override_tgt) {
-                if (interpolation_.matrix_free_) {
-                    for (idx_t tcell = 0 ; tcell < tgt_vals.size(); ++tcell) {
-                        mass_change += tgt_lim_vals(tcell)  * tgt_areas[tcell];
-                        tgt_vals(tcell) += tgt_lim_vals(tcell);
-                    }
-                }
-                else {
-                    for (idx_t tcell = 0 ; tcell < tgt_vals.size(); ++tcell) {
-                        mass_change += tgt_lim_vals(tcell) * tgt_areas[tcell];
-                        tgt_vals(tcell) -= tgt_lim_vals(tcell);
-                    }
+                double factor = interpolation_.matrix_free_ ? 1. : -1.;
+                for (idx_t tcell = 0 ; tcell < tgt_vals.size(); ++tcell) {
+                    mass_change += factor * tgt_lim_vals(tcell)  * tgt_areas[tcell];
+                    tgt_vals(tcell) += factor * tgt_lim_vals(tcell);
                 }
             }
             else {
