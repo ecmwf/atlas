@@ -58,7 +58,8 @@ ConservativeSphericalPolygonInterpolationLimiter(const ConservativeSphericalPoly
 }
 
 
-void ConservativeSphericalPolygonInterpolationLimiter::limit(const Field& src_field, Field& tgt_field) {
+double ConservativeSphericalPolygonInterpolationLimiter::limit(const Field& src_field, Field& tgt_field) {
+    double mass_change = 0.;
     if (order_ == 2 && (limiter_ != "none")) {
         // set this environment variable to replace target_field with values showing
         //   0: target_field as it is
@@ -73,7 +74,7 @@ void ConservativeSphericalPolygonInterpolationLimiter::limit(const Field& src_fi
             Log::error() << "ATLAS_INTERPOLATION_LIMITER can be:\n";
             Log::error() << "\t0 (default)\n";
             Log::error() << "\t1 (limiter correction field)\n";
-            Log::error() << "\t2 (violation target cells)" << std::endl;
+            Log::error() << "\t2 (violation & collateral target cells)" << std::endl;
             ATLAS_ASSERT(false);
         }
         Field tgt_lim_field = tgt_fs_.createField<double>();
@@ -181,17 +182,20 @@ void ConservativeSphericalPolygonInterpolationLimiter::limit(const Field& src_fi
             if (! limiter_override_tgt) {
                 if (interpolation_.matrix_free_) {
                     for (idx_t tcell = 0 ; tcell < tgt_vals.size(); ++tcell) {
+                        mass_change += tgt_lim_vals(tcell);
                         tgt_vals(tcell) += tgt_lim_vals(tcell);
                     }
                 }
                 else {
                     for (idx_t tcell = 0 ; tcell < tgt_vals.size(); ++tcell) {
+                        mass_change += tgt_lim_vals(tcell);
                         tgt_vals(tcell) -= tgt_lim_vals(tcell);
                     }
                 }
             }
             else {
                 for (idx_t tcell = 0; tcell < tgt_vals.size(); ++tcell) {
+                    mass_change += tgt_lim_vals(tcell) - tgt_vals(tcell);
                     tgt_vals(tcell) = tgt_lim_vals(tcell);
                 }
             }
@@ -204,6 +208,7 @@ void ConservativeSphericalPolygonInterpolationLimiter::limit(const Field& src_fi
     else {
         Log::info() << "Nothing done. ./bu  This limiter is only supported for the 2nd order ConservativeSphericalPolygon." << std::endl;
     }
+    return mass_change;
 }
 
 }  // namespace method

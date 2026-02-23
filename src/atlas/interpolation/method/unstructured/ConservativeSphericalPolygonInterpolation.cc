@@ -2139,7 +2139,7 @@ void ConservativeSphericalPolygonInterpolation::do_execute(const Field& src_fiel
     }
 
     ConservativeSphericalPolygonInterpolationLimiter csp_limiter(*this);
-    csp_limiter.limit(src_field, tgt_field);
+    auto limiter_mass_change = csp_limiter.limit(src_field, tgt_field);
 
     stopwatch.stop();
     
@@ -2190,6 +2190,7 @@ void ConservativeSphericalPolygonInterpolation::do_execute(const Field& src_fiel
                 tgt_mass += tgt_vals(tpt) * tgt_areas[tpt];
             }
         }
+        tgt_mass += limiter_mass_change;
         double inv_src_mass = 1.;
         if (src_mass > 0.) {
             inv_src_mass = 1. / src_mass;
@@ -2201,6 +2202,7 @@ void ConservativeSphericalPolygonInterpolation::do_execute(const Field& src_fiel
         remap_stat_.errors[Statistics::ERR_REMAP_CONS] = err_remap_cons;
         remap_stat_.errors[Statistics::ERR_REMAP_RELCONS] = err_remap_relcons;
         remap_stat_.errors[Statistics::MASS_SRC] = src_mass;
+        remap_stat_.errors[Statistics::MASS_LIMITER] = limiter_mass_change;
         remap_stat_.errors[Statistics::MASS_TGT] = tgt_mass;
     }
 
@@ -2500,7 +2502,8 @@ void ConservativeSphericalPolygonInterpolation::Statistics::fillMetadata(Metadat
         metadata.set("errors.conservation", errors[ERR_REMAP_CONS]);
         metadata.set("errors.conservation_as_percent_of_source", errors[ERR_REMAP_RELCONS]);
         metadata.set("mass.src", errors[MASS_SRC]);
-        metadata.set("mass.tgt", errors[MASS_TGT]);
+        metadata.set("mass.mass_limiter", errors[MASS_LIMITER]);
+        metadata.set("mass.tgt_after_limiter", errors[MASS_TGT]);
     }
     if (accuracy) {
         metadata.set("errors.to_exact_solution_sum", errors[ERR_REMAP_L2]);

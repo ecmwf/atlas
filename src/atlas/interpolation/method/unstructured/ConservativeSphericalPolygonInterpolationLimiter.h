@@ -34,7 +34,7 @@ public:
     ConservativeSphericalPolygonInterpolationLimiter(const ConservativeSphericalPolygonInterpolation& interpolation);
 
     const ConservativeSphericalPolygonInterpolation& interpolation() const { return interpolation_; }
-    void limit(const Field& src_field, Field& tgt_field);
+    double limit(const Field& src_field, Field& tgt_field);
 
     // interpolation::Cache createCache() const override;
 

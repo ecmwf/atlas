@@ -160,6 +160,7 @@ public:
         enum Mass {
             MASS_SRC = 0,       // total source mass
             MASS_TGT,
+            MASS_LIMITER,
             MASS_ENUM_SIZE
         };
         enum Timings {
