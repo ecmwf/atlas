@@ -182,20 +182,20 @@ double ConservativeSphericalPolygonInterpolationLimiter::limit(const Field& src_
             if (! limiter_override_tgt) {
                 if (interpolation_.matrix_free_) {
                     for (idx_t tcell = 0 ; tcell < tgt_vals.size(); ++tcell) {
-                        mass_change += tgt_lim_vals(tcell);
+                        mass_change += tgt_lim_vals(tcell)  * tgt_areas[tcell];
                         tgt_vals(tcell) += tgt_lim_vals(tcell);
                     }
                 }
                 else {
                     for (idx_t tcell = 0 ; tcell < tgt_vals.size(); ++tcell) {
-                        mass_change += tgt_lim_vals(tcell);
+                        mass_change += tgt_lim_vals(tcell) * tgt_areas[tcell];
                         tgt_vals(tcell) -= tgt_lim_vals(tcell);
                     }
                 }
             }
             else {
                 for (idx_t tcell = 0; tcell < tgt_vals.size(); ++tcell) {
-                    mass_change += tgt_lim_vals(tcell) - tgt_vals(tcell);
+                    mass_change += (tgt_lim_vals(tcell) - tgt_vals(tcell)) * tgt_areas[tcell];
                     tgt_vals(tcell) = tgt_lim_vals(tcell);
                 }
             }

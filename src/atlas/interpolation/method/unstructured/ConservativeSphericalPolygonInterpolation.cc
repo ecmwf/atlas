@@ -2201,9 +2201,9 @@ void ConservativeSphericalPolygonInterpolation::do_execute(const Field& src_fiel
         ATLAS_TRACE_MPI(ALLREDUCE) { mpi::comm().allReduceInPlace(&err_remap_relcons, 1, eckit::mpi::sum()); }
         remap_stat_.errors[Statistics::ERR_REMAP_CONS] = err_remap_cons;
         remap_stat_.errors[Statistics::ERR_REMAP_RELCONS] = err_remap_relcons;
-        remap_stat_.errors[Statistics::MASS_SRC] = src_mass;
-        remap_stat_.errors[Statistics::MASS_LIMITER] = limiter_mass_change;
-        remap_stat_.errors[Statistics::MASS_TGT] = tgt_mass;
+        remap_stat_.mass[Statistics::MASS_SRC] = src_mass;
+        remap_stat_.mass[Statistics::MASS_LIMITER] = limiter_mass_change;
+        remap_stat_.mass[Statistics::MASS_TGT] = tgt_mass;
     }
 
     if (remap_stat_.intersection) {
@@ -2496,14 +2496,14 @@ void ConservativeSphericalPolygonInterpolation::Statistics::fillMetadata(Metadat
     if (intersection) {
         metadata.set("errors.intersections_covering_tgt_cells_sum", errors[ERR_TGT_INTERSECTPLG_L1]);
         metadata.set("errors.intersections_covering_tgt_cells_max", errors[ERR_TGT_INTERSECTPLG_LINF]);
-        metadata.set("errors.sum_src_.areasminus_sum_tgt_areas", errors[ERR_SRCTGT_INTERSECTPLG_DIFF]);
+        metadata.set("errors.sum_src_areas_minus_sum_tgt_areas", errors[ERR_SRCTGT_INTERSECTPLG_DIFF]);
     }
     if (conservation) {
         metadata.set("errors.conservation", errors[ERR_REMAP_CONS]);
         metadata.set("errors.conservation_as_percent_of_source", errors[ERR_REMAP_RELCONS]);
-        metadata.set("mass.src", errors[MASS_SRC]);
-        metadata.set("mass.mass_limiter", errors[MASS_LIMITER]);
-        metadata.set("mass.tgt_after_limiter", errors[MASS_TGT]);
+        metadata.set("mass.src", mass[MASS_SRC]);
+        metadata.set("mass.mass_limiter", mass[MASS_LIMITER]);
+        metadata.set("mass.tgt_after_limiter", mass[MASS_TGT]);
     }
     if (accuracy) {
         metadata.set("errors.to_exact_solution_sum", errors[ERR_REMAP_L2]);
@@ -2532,7 +2532,7 @@ ConservativeSphericalPolygonInterpolation::Statistics::Statistics(const Metadata
     }
     metadata.get("errors.intersections_covering_tgt_cells_sum", errors[ERR_TGT_INTERSECTPLG_L1]);
     metadata.get("errors.intersections_covering_tgt_cells_max", errors[ERR_TGT_INTERSECTPLG_LINF]);
-    metadata.get("errors.sum_src_.areasminus_sum_tgt_areas", errors[ERR_SRCTGT_INTERSECTPLG_DIFF]);
+    metadata.get("errors.sum_src_areas_minus_sum_tgt_areas", errors[ERR_SRCTGT_INTERSECTPLG_DIFF]);
     metadata.get("polygons.number_of_src_polygons", counts[NUM_SRC_PLG]);
     metadata.get("polygons.number_of_tgt_polygons", counts[NUM_TGT_PLG]);
 }

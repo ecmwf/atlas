@@ -162,7 +162,7 @@ void do_remapping_test(Grid src_grid, Grid tgt_grid, std::function<double(const 
 }
 
 void check(const Metadata remap_stat_1, Metadata remap_stat_2, std::array<double, 6> tol) {
-    double err;
+    double err = -1.;
     // check polygon intersections
     remap_stat_1.get("errors.sum_src_areas_minus_sum_tgt_areas", err);
     Log::info() << "Polygon area computation (new < ref) =  (" << err << " < " << tol[0] << ")" << std::endl;
