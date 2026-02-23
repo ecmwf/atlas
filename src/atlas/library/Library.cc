@@ -554,11 +554,11 @@ void Library::Information::print(std::ostream& out) const {
 
     out << "    \n  Dependencies: \n";
     out << "    ecbuild version (" << ECBUILD_VERSION << ")" << '\n';
-    if (Library::exists("eckit")) {
-        out << "    " << str(Library::lookup("eckit")) << '\n';
+    if (eckit::system::LibraryManager::exists("eckit")) {
+        out << "    " << str(eckit::system::LibraryManager::lookup("eckit")) << '\n';
     }
-    if (Library::exists("fckit")) {
-        out << "    " << str(Library::lookup("fckit")) << '\n';
+    if (eckit::system::LibraryManager::exists("fckit")) {
+        out << "    " << str(eckit::system::LibraryManager::lookup("fckit")) << '\n';
     }
 
 #if ATLAS_HAVE_TRANS

@@ -19,6 +19,7 @@ PREFIX=$(pwd)/install
 metis_version=5.2.1
 metis_version=master
 gklib_version=master
+build_from_source=false
 
 while [ $# != 0 ]; do
     case "$1" in
@@ -27,6 +28,9 @@ while [ $# != 0 ]; do
         ;;
     "--version")
         metis_version="$2"; shift
+        ;;
+    "--build-from-source")
+        build_from_source=true
         ;;
     *)
         echo "Unrecognized argument '$1'"
@@ -45,16 +49,17 @@ if [[ -f "${metis_installed}" ]]; then
   exit
 fi
 
-os=$(uname)
-case "$os" in
-    Darwin)
-      brew install metis
-      exit
-    ;;
-    *)
-    ;;
-esac
-
+if ! $build_from_source; then
+  os=$(uname)
+  case "$os" in
+      Darwin)
+        brew install metis
+        exit
+      ;;
+      *)
+      ;;
+  esac
+fi
 
 if [ -z "${TMPDIR+x}" ]; then
   TMPDIR=${HOME}/tmp
@@ -64,7 +69,7 @@ mkdir -p ${TMPDIR}/downloads
 gklib_tag=${gklib_version}
 gklib_tarball_url=https://github.com/KarypisLab/GKlib/archive/refs/heads/master.tar.gz
 gklib_tarball=$TMPDIR/downloads/gklib-${gklib_tag}.tar.gz
-gklib_dir=$TMPDIR/downloads/gklib-${gklib_version}
+gklib_dir=$TMPDIR/downloads/GKlib-${gklib_version}
 
 if [ ! -d "${gklib_dir}" ]; then
   echo "+ curl -L ${gklib_tarball_url} > ${gklib_tarball}"
@@ -91,7 +96,7 @@ if [[ "${metis_version}" == "master" ]]; then
 fi
 
 metis_tarball=$TMPDIR/downloads/metis-${metis_tag}.tar.gz
-metis_dir=$TMPDIR/downloads/metis-${metis_version}
+metis_dir=$TMPDIR/downloads/METIS-${metis_version}
 
 if [ ! -d "${metis_dir}" ]; then
   echo "+ curl -L ${metis_tarball_url} > ${metis_tarball}"
@@ -102,7 +107,8 @@ fi
 echo "+ cd ${metis_dir}"
 cd ${metis_dir}
 echo "Applying patch to link metis to GKlib"
-sed -i -e 's/add_library(metis ${METIS_LIBRARY_TYPE} ${metis_sources})/add_library(metis ${METIS_LIBRARY_TYPE} ${metis_sources})\ntarget_link_libraries(metis PUBLIC GKlib)/g' libmetis/CMakeLists.txt
+sed -i -e 's/link_directories(${GKLIB_PATH}\/lib)/link_directories(${GKLIB_PATH}\/lib)\nlink_directories(${GKLIB_PATH}\/lib64)/g' CMakeLists.txt
+sed -i -e 's/add_library(metis ${METIS_LIBRARY_TYPE} ${metis_sources})/add_library(metis ${METIS_LIBRARY_TYPE} ${metis_sources})\ntarget_link_libraries(metis PUBLIC GKlib)\nset_target_properties(metis PROPERTIES BUILD_WITH_INSTALL_RPATH TRUE INSTALL_RPATH "${GKLIB_PATH}\/lib;${GKLIB_PATH}\/lib64")/g' libmetis/CMakeLists.txt
 make config shared=1 prefix=${PREFIX} gklib_path=${PREFIX}
 echo "+ make -j8"
 make -j8

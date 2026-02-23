@@ -86,8 +86,8 @@ while [ $# != 0 ]; do
     "--enable-fftw")
         with_fftw=true;
         ;;
-    "--enable-trans")
-        with_trans=true;
+    "--enable-ectrans")
+        with_ectrans=true;
         ;;
     "--enable-gridtools")
         with_gridtools=true;
