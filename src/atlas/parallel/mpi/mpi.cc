@@ -28,7 +28,7 @@ void CommStack::push(std::string_view name) {
         stack_.resize(2 * size_);
     }
     stack_[size_++] = name;
-    //eckit::mpi::setCommDefault(name.data());
+    eckit::mpi::setCommDefault(name.data());
 }
 
 void CommStack::pop(std::string_view _name) {
@@ -38,7 +38,7 @@ void CommStack::pop(std::string_view _name) {
 
 void CommStack::pop() {
     --size_;
-    //eckit::mpi::setCommDefault(name().c_str());
+    eckit::mpi::setCommDefault(name().c_str());
 }
 
 const std::string& CommStack::name() const {

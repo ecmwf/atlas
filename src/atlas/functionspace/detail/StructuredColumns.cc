@@ -12,7 +12,6 @@
 
 #include <fstream>
 #include <iomanip>
-#include <iostream>
 #include <mutex>
 #include <sstream>
 #include <string>
@@ -478,12 +477,9 @@ StructuredColumns::StructuredColumns(const Grid& grid, const Vertical& vertical,
         mpi_comm_ = config.getString("partitioner.mpi_comm");
     }
     else if (partitioner) {
-        std::cout << ">>> StructuredColumns partitioner comm => " << partitioner.mpi_comm() << std::endl
-                  << std::flush;
         mpi_comm_ = partitioner.mpi_comm();
     }
     else {
-        std::cout << ">>> StructuredColumns partitioner SETTING DEFAULT" << std::endl << std::flush;
         mpi_comm_ = mpi::comm().name();
     }
 
@@ -508,13 +504,10 @@ StructuredColumns::StructuredColumns(const Grid& grid, const Vertical& vertical,
 
     grid::Distribution distribution;
 
-    /*{
-        // NOTE(JC): Causes issues where comm is reset to world unintentionally.
-       
+    {
         mpi::Scope mpi_scope(mpi_comm_);
         ATLAS_TRACE_SCOPE("Partitioning grid") { distribution = grid::Distribution(grid, partitioner); }
-    }*/
-    distribution = grid::Distribution(grid, partitioner);
+    }
 
     setup(distribution, config);
 }
