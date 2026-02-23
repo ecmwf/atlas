@@ -16,18 +16,15 @@ export PATH=$SCRIPTDIR:$PATH
 
 # Some defaults for the arguments
 PREFIX=$(pwd)/install
-metis_version=5.2.1
-metis_version=master
-gklib_version=master
+metis_version=dfded64f24664caa8809cacf416d378112e8867f # 23.02.2026
+gklib_version=e2856c2f595b153ca1ce9258c5301dbabc4f39f5 # 23.02.2026
+
 build_from_source=false
 
 while [ $# != 0 ]; do
     case "$1" in
     "--prefix")
         PREFIX="$2"; shift
-        ;;
-    "--version")
-        metis_version="$2"; shift
         ;;
     "--build-from-source")
         build_from_source=true
@@ -66,9 +63,8 @@ if [ -z "${TMPDIR+x}" ]; then
 fi
 mkdir -p ${TMPDIR}/downloads
 
-gklib_tag=${gklib_version}
-gklib_tarball_url=https://github.com/KarypisLab/GKlib/archive/refs/heads/master.tar.gz
-gklib_tarball=$TMPDIR/downloads/gklib-${gklib_tag}.tar.gz
+gklib_tarball_url=https://github.com/KarypisLab/GKlib/archive/${gklib_version}.tar.gz
+gklib_tarball=$TMPDIR/downloads/gklib-${gklib_version}.tar.gz
 gklib_dir=$TMPDIR/downloads/GKlib-${gklib_version}
 
 if [ ! -d "${gklib_dir}" ]; then
@@ -80,22 +76,15 @@ fi
 echo "+ cd ${gklib_dir}"
 cd ${gklib_dir}
 echo "Applying patch to remove so-versioning from GKlib"
-sed -i -e 's/^set_target_properties(${PROJECT_NAME} PROPERTIES/\# set_target_properties(${PROJECT_NAME} PROPERTIES/g' CMakeLists.txt
+sed -i -e 's/POSITION_INDEPENDENT_CODE ON/POSITION_INDEPENDENT_CODE ON\)/g' CMakeLists.txt
 sed -i -e 's/^  SOVERSION ${PROJECT_VERSION_MAJOR}/\#   SOVERSION ${PROJECT_VERSION_MAJOR}/g' CMakeLists.txt
 sed -i -e 's/^  VERSION   ${PROJECT_VERSION})/\#   VERSION   ${PROJECT_VERSION})/g' CMakeLists.txt
 make config shared=1 prefix=${PREFIX}
 make -j8
 make install
 
-metis_tag=v${metis_version}
-metis_tarball_url=https://github.com/KarypisLab/METIS/archive/refs/tags/v${metis_version}.tar.gz
-
-if [[ "${metis_version}" == "master" ]]; then
-  metis_tag=${metis_version}
-  metis_tarball_url=https://github.com/KarypisLab/METIS/archive/refs/heads/master.tar.gz
-fi
-
-metis_tarball=$TMPDIR/downloads/metis-${metis_tag}.tar.gz
+metis_tarball_url=https://github.com/KarypisLab/METIS/archive/${metis_version}.tar.gz
+metis_tarball=$TMPDIR/downloads/metis-${metis_version}.tar.gz
 metis_dir=$TMPDIR/downloads/METIS-${metis_version}
 
 if [ ! -d "${metis_dir}" ]; then
@@ -106,9 +95,9 @@ if [ ! -d "${metis_dir}" ]; then
 fi
 echo "+ cd ${metis_dir}"
 cd ${metis_dir}
-echo "Applying patch to link metis to GKlib"
+echo "Applying patch"
 sed -i -e 's/link_directories(${GKLIB_PATH}\/lib)/link_directories(${GKLIB_PATH}\/lib)\nlink_directories(${GKLIB_PATH}\/lib64)/g' CMakeLists.txt
-sed -i -e 's/add_library(metis ${METIS_LIBRARY_TYPE} ${metis_sources})/add_library(metis ${METIS_LIBRARY_TYPE} ${metis_sources})\ntarget_link_libraries(metis PUBLIC GKlib)\nset_target_properties(metis PROPERTIES BUILD_WITH_INSTALL_RPATH TRUE INSTALL_RPATH "${GKLIB_PATH}\/lib;${GKLIB_PATH}\/lib64")/g' libmetis/CMakeLists.txt
+sed -i -e 's/add_library(metis ${METIS_LIBRARY_TYPE} ${metis_sources})/add_library(metis ${METIS_LIBRARY_TYPE} ${metis_sources})\nset_target_properties(metis PROPERTIES BUILD_WITH_INSTALL_RPATH TRUE INSTALL_RPATH "${GKLIB_PATH}\/lib;${GKLIB_PATH}\/lib64")/g' libmetis/CMakeLists.txt
 make config shared=1 prefix=${PREFIX} gklib_path=${PREFIX}
 echo "+ make -j8"
 make -j8
