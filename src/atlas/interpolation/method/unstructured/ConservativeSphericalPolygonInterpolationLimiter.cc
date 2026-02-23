@@ -205,9 +205,6 @@ double ConservativeSphericalPolygonInterpolationLimiter::limit(const Field& src_
             ATLAS_NOTIMPLEMENTED;
         }
     }
-    else {
-        Log::info() << "Nothing done. ./bu  This limiter is only supported for the 2nd order ConservativeSphericalPolygon." << std::endl;
-    }
     return mass_change;
 }
 
