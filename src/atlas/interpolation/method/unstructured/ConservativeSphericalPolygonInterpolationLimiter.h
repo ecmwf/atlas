@@ -44,8 +44,8 @@ public:
     // interpolation::Cache createCache() const override;
 
 private:
-    // void compute_src_grad(const array::ArrayView<double,1>& src_vals);
-    // void limit_contrib_from_source(idx_t scell, const Field& src_field, array::ArrayView<double,1>& tgt_lim_vals);
+    void compute_src_grad(const array::ArrayView<double,1>& src_vals);
+    void limit_contrib_from_source(idx_t scell, const Field& src_field, array::ArrayView<double,1>& tgt_lim_vals);
 
 private:
     const ConservativeSphericalPolygonInterpolation& interpolation_;

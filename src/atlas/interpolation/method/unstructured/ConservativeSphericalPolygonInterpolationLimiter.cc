@@ -87,13 +87,8 @@ double ConservativeSphericalPolygonInterpolationLimiter::limit(const Field& src_
         }
 
         if (tgt_cell_data_ && src_cell_data_) {
-            ATLAS_TRACE_SCOPE("Compute source gradients") {
-                src_grads_.resize(src_vals.size());
-                for (idx_t scell = 0; scell < src_vals.size(); ++scell) {
-                    src_grads_[scell] = interpolation_.src_gradient_celldata(scell, src_vals);
-                }
-            }
             // auto& mpi_comm = mpi::comm();
+            compute_src_grad(src_vals);
             std::set<Indices> send_marked_scells_set;
             ConservativeSphericalPolygonInterpolation::Workspace_get_cell_neighbours w_cell;
 
@@ -118,42 +113,12 @@ double ConservativeSphericalPolygonInterpolationLimiter::limit(const Field& src_
                 if (undershoot || overshoot) {
                     if (limiter_ == "zeroslope") {
                         send_marked_scells_set.insert(iparam.csp_ids);
-
                         if (limiter_override_tgt_ == 2) {
                             tgt_lim_vals(tcell) = 1.;
                         }
                         for (idx_t i_scsp = 0; i_scsp < iparam.csp_ids.size(); ++i_scsp) {
                             idx_t scsp_id = iparam.csp_ids[i_scsp];
-                            idx_t scell   = interpolation_.csp_to_cell(scsp_id, data_->src_);
-                            const PointXYZ& src_barycentre = src_points_[scell];
-                            PointXYZ scell_grad  = src_grads_[scell];
-                            scell_grad           = scell_grad - PointXYZ::mul(src_barycentre, PointXYZ::dot(scell_grad, src_barycentre));
-                            auto& siparam = src_iparam_[scsp_id];
-                            for (idx_t i_tcsp_collateral = 0; i_tcsp_collateral < siparam.csp_ids.size(); ++i_tcsp_collateral) {
-                                auto tcsp_collateral = siparam.csp_ids[i_tcsp_collateral];
-                                const auto& iparam_collateral = tgt_iparam_[tcsp_collateral];
-                                auto tcell_collateral = interpolation_.csp_to_cell(tcsp_collateral, data_->tgt_);
-                                // find the index of scell entry in iparam_collateral.csp_ids
-                                auto scell_it = std::find(iparam_collateral.csp_ids.begin(), iparam_collateral.csp_ids.end(), scell);
-                                idx_t scell_idx = scell_it - iparam_collateral.csp_ids.begin();
-                                ATLAS_ASSERT(iparam_collateral.csp_ids[scell_idx] == scell);
-                                double tgt_lim_val = iparam_collateral.weights[scell_idx] * PointXYZ::dot(scell_grad, iparam_collateral.centroids[scell_idx] - src_barycentre);
-                                if (tgt_areas_[tcell_collateral] > 0.) {
-                                    tgt_lim_val /= tgt_areas_[tcell_collateral];
-                                }
-                                SrcActed& it = src_acted_tgt_[scell];
-                                if (std::find(it.tcells_done.begin(), it.tcells_done.end(), tcell_collateral) == it.tcells_done.end()) {
-                                    it.tcells_done.push_back(tcell_collateral);
-                                    if (limiter_override_tgt_ == 2) {
-                                        if (tgt_lim_vals(tcell_collateral) < 0.5) {
-                                            tgt_lim_vals(tcell_collateral) = -1.;
-                                        }
-                                    }
-                                    else {
-                                        tgt_lim_vals(tcell_collateral) -= tgt_lim_val;
-                                    }
-                                }
-                            }
+                            limit_contrib_from_source(scsp_id, src_field, tgt_lim_vals);
                         }
                     }
                     else if (limiter_ == "clip") {
@@ -192,6 +157,52 @@ double ConservativeSphericalPolygonInterpolationLimiter::limit(const Field& src_
     }
     return mass_change;
 }
+
+
+void ConservativeSphericalPolygonInterpolationLimiter::
+compute_src_grad(const array::ArrayView<double,1>& src_vals) {
+    ATLAS_TRACE("Compute source gradients");
+    src_grads_.resize(src_vals.size());
+    for (idx_t scell = 0; scell < src_vals.size(); ++scell) {
+        src_grads_[scell] = interpolation_.src_gradient_celldata(scell, src_vals);
+    }
+}
+
+
+void ConservativeSphericalPolygonInterpolationLimiter::
+limit_contrib_from_source(idx_t scsp_id, const Field& src_field, array::ArrayView<double,1>& tgt_lim_vals) {
+    idx_t scell   = interpolation_.csp_to_cell(scsp_id, data_->src_);
+    const PointXYZ& src_barycentre = src_points_[scell];
+    PointXYZ scell_grad  = src_grads_[scell];
+    scell_grad           = scell_grad - PointXYZ::mul(src_barycentre, PointXYZ::dot(scell_grad, src_barycentre));
+    auto& siparam = src_iparam_[scsp_id];
+    for (idx_t i_tcsp_collateral = 0; i_tcsp_collateral < siparam.csp_ids.size(); ++i_tcsp_collateral) {
+        auto tcsp_collateral = siparam.csp_ids[i_tcsp_collateral];
+        const auto& iparam_collateral = tgt_iparam_[tcsp_collateral];
+        auto tcell_collateral = interpolation_.csp_to_cell(tcsp_collateral, data_->tgt_);
+        // find the index of scell entry in iparam_collateral.csp_ids
+        auto scell_it = std::find(iparam_collateral.csp_ids.begin(), iparam_collateral.csp_ids.end(), scell);
+        idx_t scell_idx = scell_it - iparam_collateral.csp_ids.begin();
+        ATLAS_ASSERT(iparam_collateral.csp_ids[scell_idx] == scell);
+        double tgt_lim_val = iparam_collateral.weights[scell_idx] * PointXYZ::dot(scell_grad, iparam_collateral.centroids[scell_idx] - src_barycentre);
+        if (tgt_areas_[tcell_collateral] > 0.) {
+            tgt_lim_val /= tgt_areas_[tcell_collateral];
+        }
+        SrcActed& it = src_acted_tgt_[scell];
+        if (std::find(it.tcells_done.begin(), it.tcells_done.end(), tcell_collateral) == it.tcells_done.end()) {
+            it.tcells_done.push_back(tcell_collateral);
+            if (limiter_override_tgt_ == 2) {
+                if (tgt_lim_vals(tcell_collateral) < 0.5) {
+                    tgt_lim_vals(tcell_collateral) = -1.;
+                }
+            }
+            else {
+                tgt_lim_vals(tcell_collateral) -= tgt_lim_val;
+            }
+        }
+    }
+}
+
 
 }  // namespace method
 }  // namespace interpolation
