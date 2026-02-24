@@ -14,6 +14,7 @@
 #include "atlas/functionspace.h"
 #include "atlas/interpolation/method/Method.h"
 #include "atlas/interpolation/method/unstructured/ConservativeSphericalPolygonInterpolation.h"
+#include "atlas/runtime/Trace.h"
 #include "atlas/util/ConvexSphericalPolygon.h"
 
 
@@ -29,8 +30,12 @@ class ConservativeSphericalPolygonInterpolationLimiter {
 public:
     using Data = ConservativeSphericalPolygonInterpolation::Data;
     using InterpolationParameters = ConservativeSphericalPolygonInterpolation::InterpolationParameters;
+    using Polygon = util::ConvexSphericalPolygon;
+    using PolygonArray = std::vector<util::ConvexSphericalPolygon>;
+    struct SrcActed {
+        Indices tcells_done;
+    };
 
-public:
     ConservativeSphericalPolygonInterpolationLimiter(const ConservativeSphericalPolygonInterpolation& interpolation);
 
     const ConservativeSphericalPolygonInterpolation& interpolation() const { return interpolation_; }
@@ -39,22 +44,28 @@ public:
     // interpolation::Cache createCache() const override;
 
 private:
-
-    using Polygon = util::ConvexSphericalPolygon;
-    using PolygonArray = std::vector<util::ConvexSphericalPolygon>;
+    // void compute_src_grad(const array::ArrayView<double,1>& src_vals);
+    // void limit_contrib_from_source(idx_t scell, const Field& src_field, array::ArrayView<double,1>& tgt_lim_vals);
 
 private:
     const ConservativeSphericalPolygonInterpolation& interpolation_;
     bool src_cell_data_;
     bool tgt_cell_data_;
+    std::vector<PointXYZ> src_grads_;
+    std::vector<SrcActed> src_acted_tgt_;
     std::string limiter_;
     int order_;
     const FunctionSpace src_fs_;
     const FunctionSpace tgt_fs_;
+    unsigned int limiter_override_tgt_ = 0;
 
     // Cache cache_;                          // Storage of cache if any was passed to constructor
     // std::shared_ptr<Data> sharable_data_;  // Storage of new data_, only allocated if cache is empty
     const ConservativeSphericalPolygonInterpolation::Data* data_;  // Read-only access to data, pointing either to cache_ or sharable_data_
+    const std::vector<PointXYZ>& src_points_;
+    const std::vector<InterpolationParameters>& src_iparam_;
+    const std::vector<InterpolationParameters>& tgt_iparam_;
+    const std::vector<double>& tgt_areas_;
 };
 
 
