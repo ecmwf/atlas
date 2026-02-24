@@ -90,27 +90,13 @@ double ConservativeSphericalPolygonInterpolationLimiter::limit(const Field& src_
             // auto& mpi_comm = mpi::comm();
             compute_src_grad(src_vals);
             std::set<Indices> send_marked_scells_set;
-            ConservativeSphericalPolygonInterpolation::Workspace_get_cell_neighbours w_cell;
 
+            double tgt_smin;
+            double tgt_smax;
             for (idx_t tcsp = 0; tcsp < data_->tgt_.csp_size; ++tcsp) {
                 const auto& iparam = tgt_iparam_[tcsp];
-                double smin = std::numeric_limits<double>::max();
-                double smax = -smin;
-                for (idx_t i_scsp = 0; i_scsp < iparam.csp_ids.size(); ++i_scsp) {
-                    idx_t scsp_id = iparam.csp_ids[i_scsp];
-                    idx_t scell   = interpolation_.csp_to_cell(scsp_id, data_->src_);
-                    smax = std::max(smax, src_vals(scell));
-                    smin = std::min(smin, src_vals(scell));
-                    const auto src_neighbours = interpolation_.get_cell_neighbours(interpolation_.src_mesh_, scell, w_cell);
-                    for (auto nb : src_neighbours) {
-                        smax = std::max(smax, src_vals(nb));
-                        smin = std::min(smin, src_vals(nb));
-                    }
-                }
                 idx_t tcell = interpolation_.csp_to_cell(tcsp, data_->tgt_);
-                bool undershoot = (tgt_vals(tcell) < smin);
-                bool overshoot = (tgt_vals(tcell) > smax);
-                if (undershoot || overshoot) {
+                if (detected_tcell(tcell, iparam, src_vals, tgt_vals, tgt_smin, tgt_smax)) {
                     if (limiter_ == "zeroslope") {
                         send_marked_scells_set.insert(iparam.csp_ids);
                         if (limiter_override_tgt_ == 2) {
@@ -122,11 +108,11 @@ double ConservativeSphericalPolygonInterpolationLimiter::limit(const Field& src_
                         }
                     }
                     else if (limiter_ == "clip") {
-                        if (overshoot) {
-                            tgt_lim_vals(tcell) = smax - tgt_vals(tcell);
+                        if (tgt_vals(tcell) > tgt_smax) {
+                            tgt_lim_vals(tcell) = tgt_smax - tgt_vals(tcell);
                         }
-                        else if (undershoot) {
-                            tgt_lim_vals(tcell) = smin - tgt_vals(tcell);
+                        else {
+                            tgt_lim_vals(tcell) = tgt_smin - tgt_vals(tcell);
                         }
                     }
                 }
@@ -156,6 +142,29 @@ double ConservativeSphericalPolygonInterpolationLimiter::limit(const Field& src_
         }
     }
     return mass_change;
+}
+
+
+bool ConservativeSphericalPolygonInterpolationLimiter::
+detected_tcell(idx_t tcell, const InterpolationParameters& tiparam, const array::ArrayView<double,1>& src_vals,
+    const array::ArrayView<double,1>& tgt_vals, double& smin, double& smax) const {
+    smin = std::numeric_limits<double>::max();
+    smax = -smin;
+    ConservativeSphericalPolygonInterpolation::Workspace_get_cell_neighbours w_cell;
+    for (idx_t i_scsp = 0; i_scsp < tiparam.csp_ids.size(); ++i_scsp) {
+        idx_t scsp_id = tiparam.csp_ids[i_scsp];
+        idx_t scell   = interpolation_.csp_to_cell(scsp_id, data_->src_);
+        smax = std::max(smax, src_vals(scell));
+        smin = std::min(smin, src_vals(scell));
+        const auto src_neighbours = interpolation_.get_cell_neighbours(interpolation_.src_mesh_, scell, w_cell);
+        for (auto nb : src_neighbours) {
+            smax = std::max(smax, src_vals(nb));
+            smin = std::min(smin, src_vals(nb));
+        }
+    }
+    bool undershoot = (tgt_vals(tcell) < smin);
+    bool overshoot = (tgt_vals(tcell) > smax);
+    return (undershoot || overshoot);
 }
 
 

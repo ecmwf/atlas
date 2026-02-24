@@ -44,6 +44,8 @@ public:
     // interpolation::Cache createCache() const override;
 
 private:
+    bool detected_tcell(idx_t tcell, const InterpolationParameters& tiparam, const array::ArrayView<double,1>& src_vals,
+        const array::ArrayView<double,1>& tgt_vals, double& smin, double& smax) const;
     void compute_src_grad(const array::ArrayView<double,1>& src_vals);
     void limit_contrib_from_source(idx_t scell, const Field& src_field, array::ArrayView<double,1>& tgt_lim_vals);
 
