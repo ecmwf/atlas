@@ -132,7 +132,7 @@ struct InterpSchemeFixtures {
       static const auto cubedsphereBilinear = option::type("cubedsphere-bilinear") | Config("adjoint", true);
       static const auto sphericalMeanValue  = option::type("spherical-mean-value") | Config("normalisation", false);
       static const auto sphericalMeanValueNormalised =
-          option::type("spherical-mean-value-normalised") | Config("normalisation", true);
+          option::type("spherical-mean-value") | Config("normalisation", true);
       static const auto finiteElement = option::type("finite-element") | Config("adjoint", true);
       static const auto structuredLinear =
           option::type("structured-bilinear") | option::halo(1) | Config("adjoint", true);
