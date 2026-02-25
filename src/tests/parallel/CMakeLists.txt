@@ -72,3 +72,10 @@ ecbuild_add_test( TARGET atlas_test_omp_copy
   ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
 )
 
+ecbuild_add_test( TARGET atlas_test_mpi_scope
+  MPI        1
+  CONDITION  eckit_HAVE_MPI
+  SOURCES    test_mpi_scope.cc
+  LIBS       atlas
+  ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
+)
