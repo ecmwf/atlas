@@ -87,9 +87,8 @@ double ConservativeSphericalPolygonInterpolationLimiter::limit(const Field& src_
         }
 
         if (tgt_cell_data_ && src_cell_data_) {
-            // auto& mpi_comm = mpi::comm();
             compute_src_grad(src_vals);
-            std::set<Indices> send_marked_scells_set;
+            std::set<gidx_t> send_marked_scells_set;
 
             double tgt_smin;
             double tgt_smax;
@@ -98,7 +97,10 @@ double ConservativeSphericalPolygonInterpolationLimiter::limit(const Field& src_
                 idx_t tcell = interpolation_.csp_to_cell(tcsp, data_->tgt_);
                 if (detected_tcell(tcell, iparam, src_vals, tgt_vals, tgt_smin, tgt_smax)) {
                     if (limiter_ == "zeroslope") {
-                        send_marked_scells_set.insert(iparam.csp_ids);
+
+                        for (auto id : iparam.csp_ids) {
+                            send_marked_scells_set.insert(id);
+                        }
                         if (limiter_override_tgt_ == 2) {
                             tgt_lim_vals(tcell) = 1.;
                         }
@@ -118,9 +120,41 @@ double ConservativeSphericalPolygonInterpolationLimiter::limit(const Field& src_
                 }
             }
 
-            // std::vector<Indices> send_marked_scells(send_marked_scells_set.begin(), send_marked_scells_set.end());
-            // eckit::mpi::Buffer<Indices> recv_marked_scells_buf(mpi_comm.size());
-            // mpi_comm.allGatherv(send_marked_scells.begin(), send_marked_scells.end(), recv_marked_scells_buf);
+            auto& mpi_comm = mpi::comm();
+            auto mpi_size = mpi_comm.size();
+            std::vector<gidx_t> send_marked_scells(send_marked_scells_set.size());
+            const auto src_global_index = array::make_view<gidx_t, 1>(src_fs_.global_index());
+            const auto src_part         = array::make_view<int, 1>(src_fs_.partition());
+            const auto src_ridx = array::make_indexview<idx_t, 1>(src_fs_.remote_index());
+            for (auto idx : send_marked_scells_set) {
+                gidx_t gidx = src_global_index(idx);
+                send_marked_scells.emplace_back(gidx);
+            }
+            eckit::mpi::Buffer<gidx_t> recv_marked_scells_buf(mpi_size);
+            mpi_comm.allGatherv(send_marked_scells.begin(), send_marked_scells.end(), recv_marked_scells_buf);
+
+            std::unordered_map<gidx_t, idx_t> recv_loc_scells;
+            for (idx_t ls = 0; ls < src_global_index.size(); ++ls) {
+                auto gs = src_global_index(ls);
+                if (recv_loc_scells.find(gs) != recv_loc_scells.end()) {
+                    continue;
+                }
+                recv_loc_scells[gs] = ls;
+            }
+
+            auto recv_global_idx = [&recv_marked_scells_buf](int part, int ridx) {
+                return recv_marked_scells_buf.buffer[ recv_marked_scells_buf.displs[part] + ridx ];
+            };
+            auto src_gidx = [&](auto idx) {
+                return recv_global_idx(src_part(idx), src_ridx(idx));
+            };
+            auto recv_size = std::accumulate(recv_marked_scells_buf.counts.begin(), recv_marked_scells_buf.counts.end(), 0);
+
+            for (idx_t i_gid = 0; i_gid < recv_size; ++i_gid) {
+                idx_t scell = recv_loc_scells[src_gidx(i_gid)];
+                idx_t scsp_id = scell;  // TODO: convert scell to scsp_id
+                limit_contrib_from_source(scsp_id, src_field, tgt_lim_vals);
+            }
 
             if (! limiter_override_tgt_) {
                 double factor = interpolation_.matrix_free_ ? 1. : -1.;
