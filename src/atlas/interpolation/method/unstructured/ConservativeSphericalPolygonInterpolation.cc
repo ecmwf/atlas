@@ -2195,10 +2195,11 @@ void ConservativeSphericalPolygonInterpolation::do_execute(const Field& src_fiel
         if (src_mass > 0.) {
             inv_src_mass = 1. / src_mass;
         }
+        ATLAS_TRACE_MPI(ALLREDUCE) { mpi::comm().allReduceInPlace(&src_mass, 1, eckit::mpi::sum()); }
+        ATLAS_TRACE_MPI(ALLREDUCE) { mpi::comm().allReduceInPlace(&tgt_mass, 1, eckit::mpi::sum()); }
         double err_remap_cons     = (src_mass - tgt_mass) / unit_sphere_area();
-        double err_remap_relcons     = (src_mass - tgt_mass) * inv_src_mass * 100.;
-        ATLAS_TRACE_MPI(ALLREDUCE) { mpi::comm().allReduceInPlace(&err_remap_cons, 1, eckit::mpi::sum()); }
-        ATLAS_TRACE_MPI(ALLREDUCE) { mpi::comm().allReduceInPlace(&err_remap_relcons, 1, eckit::mpi::sum()); }
+        double err_remap_relcons  = (src_mass - tgt_mass) * inv_src_mass * 100.;
+        ATLAS_TRACE_MPI(ALLREDUCE) { mpi::comm().allReduceInPlace(&limiter_mass_change, 1, eckit::mpi::sum()); }
         remap_stat_.errors[Statistics::ERR_REMAP_CONS] = err_remap_cons;
         remap_stat_.errors[Statistics::ERR_REMAP_RELCONS] = err_remap_relcons;
         remap_stat_.mass[Statistics::MASS_SRC] = src_mass;
