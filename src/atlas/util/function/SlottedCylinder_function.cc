@@ -28,7 +28,7 @@ double SlottedCylinder(double lon, double lat, double scale) {
     double x = lon - M_PI;
     double y = lat;
     double r2 = x * x + y * y;
-    if (r2 <= 1.5 * scale && (std::abs(x) >= 0.25 * scale || y >= scale)) {
+    if (r2 <= 2.25 * scale * scale && (std::abs(x) >= 0.25 * scale || y >= scale)) {
         return 1.;
     }
     return 0.;

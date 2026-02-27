@@ -22,8 +22,8 @@ namespace function {
 /// \detailed The formula is found in
 ///           "Fully Multidimensional Flux-Corrected Transport Algorthim for Fluids"
 ///           by Steven T. Zalesak, JCP 1979
-///           as given in Fig. 11
-///           The longitude (lon) and latitude (lat) are assumed to be in radians.
+///           as given in their Fig. 11
+///           The longitude (lon) and latitude (lat) are assumed to be in degrees.
 ///
 double SlottedCylinder(double lon, double lat, double scale = 1.);
 
