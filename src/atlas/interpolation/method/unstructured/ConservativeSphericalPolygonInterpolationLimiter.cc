@@ -124,8 +124,6 @@ double ConservativeSphericalPolygonInterpolationLimiter::limit(const Field& src_
             auto mpi_size = mpi_comm.size();
             std::vector<gidx_t> send_marked_scells(send_marked_scells_set.size());
             const auto src_global_index = array::make_view<gidx_t, 1>(src_fs_.global_index());
-            const auto src_part         = array::make_view<int, 1>(src_fs_.partition());
-            const auto src_ridx = array::make_indexview<idx_t, 1>(src_fs_.remote_index());
             for (auto idx : send_marked_scells_set) {
                 gidx_t gidx = src_global_index(idx);
                 send_marked_scells.emplace_back(gidx);
@@ -141,17 +139,9 @@ double ConservativeSphericalPolygonInterpolationLimiter::limit(const Field& src_
                 }
                 recv_loc_scells[gs] = ls;
             }
-
-            auto recv_global_idx = [&recv_marked_scells_buf](int part, int ridx) {
-                return recv_marked_scells_buf.buffer[ recv_marked_scells_buf.displs[part] + ridx ];
-            };
-            auto src_gidx = [&](auto idx) {
-                return recv_global_idx(src_part(idx), src_ridx(idx));
-            };
             auto recv_size = std::accumulate(recv_marked_scells_buf.counts.begin(), recv_marked_scells_buf.counts.end(), 0);
-
             for (idx_t i_gid = 0; i_gid < recv_size; ++i_gid) {
-                idx_t scell = recv_loc_scells[src_gidx(i_gid)];
+                idx_t scell = recv_loc_scells[recv_marked_scells_buf.buffer[i_gid]];
                 idx_t scsp_id = scell;  // TODO: convert scell to scsp_id
                 limit_contrib_from_source(scsp_id, src_field, tgt_lim_vals);
             }
