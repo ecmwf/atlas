@@ -2046,7 +2046,7 @@ void ConservativeSphericalPolygonInterpolation::do_execute(const Field& src_fiel
             if (tgt_cell_data_ && src_cell_data_){
                 for (idx_t tcsp_id = 0; tcsp_id < data_->tgt_.csp_size; ++tcsp_id) {
                     idx_t tcell = csp_to_cell(tcsp_id, data_->tgt_);
-                    const auto& iparam = tgt_iparam[tcell];
+                    const auto& iparam = tgt_iparam[tcsp_id];
                     double tgt_val = 0.;
                     for (idx_t i_scsp = 0; i_scsp < iparam.csp_ids.size(); ++i_scsp) {
                         idx_t scsp_id = iparam.csp_ids[i_scsp];
@@ -2066,20 +2066,18 @@ void ConservativeSphericalPolygonInterpolation::do_execute(const Field& src_fiel
             // CASE: CELL TO NODE
             else if (not tgt_cell_data_ && src_cell_data_) {
                 auto& tgt_csp2node = data_->tgt_.csp2node;
-                auto& tgt_node2csp = data_->tgt_.node2csp;
+                // auto& tgt_node2csp = data_->tgt_.node2csp;
                 for (idx_t tcsp_id = 0; tcsp_id < data_->tgt_.csp_size; ++tcsp_id) {
                     idx_t tnode = tgt_csp2node[tcsp_id];
+                    const auto& iparam  = tgt_iparam[tcsp_id];
                     double tgt_val = 0.;
-                    for (const auto& tcsp_id: tgt_node2csp[tnode]) {
-                        const auto& iparam  = tgt_iparam[tcsp_id];
-                        for (idx_t i_scsp = 0; i_scsp < iparam.csp_ids.size(); ++i_scsp) {
-                            idx_t scsp_id = iparam.csp_ids[i_scsp];
-                            idx_t scell   = csp_to_cell(scsp_id, data_->src_);
-                            const PointXYZ& src_barycentre = src_points[scell]; // TODO: this is a bad barycentre numerically
-                            PointXYZ grad  = src_grads[scell];
-                            grad           = grad - PointXYZ::mul(src_barycentre, PointXYZ::dot(grad, src_barycentre));
-                            tgt_val += iparam.weights[i_scsp] * (src_vals(scell) + PointXYZ::dot(grad, iparam.centroids[i_scsp] - src_barycentre));
-                        }
+                    for (idx_t i_scsp = 0; i_scsp < iparam.csp_ids.size(); ++i_scsp) {
+                        idx_t scsp_id = iparam.csp_ids[i_scsp];
+                        idx_t scell   = csp_to_cell(scsp_id, data_->src_);
+                        const PointXYZ& src_barycentre = src_points[scell]; // TODO: this is a bad barycentre numerically
+                        PointXYZ grad  = src_grads[scell];
+                        grad           = grad - PointXYZ::mul(src_barycentre, PointXYZ::dot(grad, src_barycentre));
+                        tgt_val += iparam.weights[i_scsp] * (src_vals(scell) + PointXYZ::dot(grad, iparam.centroids[i_scsp] - src_barycentre));
                     }
                     if (tgt_areas[tnode] > 0.) {
                         tgt_val /= tgt_areas[tnode];
@@ -2093,8 +2091,8 @@ void ConservativeSphericalPolygonInterpolation::do_execute(const Field& src_fiel
                 const auto& src_csp2node = data_->src_.csp2node;
                 for (idx_t tcsp_id = 0; tcsp_id < data_->tgt_.csp_size; ++tcsp_id) {
                     idx_t tcell = csp_to_cell(tcsp_id, data_->tgt_);
-                    double tgt_val = 0.;
                     const auto& iparam  = tgt_iparam[tcsp_id];
+                    double tgt_val = 0.;
                     for (idx_t i_scsp = 0; i_scsp < iparam.csp_ids.size(); ++i_scsp) {
                         idx_t scsp_id = iparam.csp_ids[i_scsp];
                         idx_t snode   = src_csp2node[scsp_id];

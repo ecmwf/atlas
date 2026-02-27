@@ -223,12 +223,12 @@ limit_contrib_from_source(idx_t scsp_id, const Field& src_field, array::ArrayVie
         auto tcsp_collateral = siparam.csp_ids[i_tcsp_collateral];
         const auto& iparam_collateral = tgt_iparam_[tcsp_collateral];
         auto tcell_collateral = interpolation_.csp_to_cell(tcsp_collateral, data_->tgt_);
-        // find the index of scell entry in iparam_collateral.csp_ids
-        auto scell_it = std::find(iparam_collateral.csp_ids.begin(), iparam_collateral.csp_ids.end(), scell);
-        ATLAS_ASSERT(scell_it != iparam_collateral.csp_ids.end());
-        idx_t scell_idx = scell_it - iparam_collateral.csp_ids.begin();
-        ATLAS_ASSERT(iparam_collateral.csp_ids[scell_idx] == scell);
-        double tgt_lim_val = iparam_collateral.weights[scell_idx] * PointXYZ::dot(scell_grad, iparam_collateral.centroids[scell_idx] - src_barycentre);
+        // find the index of the scsp_id entry in iparam_collateral.csp_ids
+        auto scsp_it = std::find(iparam_collateral.csp_ids.begin(), iparam_collateral.csp_ids.end(), scsp_id);
+        ATLAS_ASSERT(scsp_it != iparam_collateral.csp_ids.end());
+        idx_t scsp_idx = scsp_it - iparam_collateral.csp_ids.begin();
+        ATLAS_ASSERT(iparam_collateral.csp_ids[scsp_idx] == scsp_id);
+        double tgt_lim_val = iparam_collateral.weights[scsp_idx] * PointXYZ::dot(scell_grad, iparam_collateral.centroids[scsp_idx] - src_barycentre);
         if (tgt_areas_[tcell_collateral] > 0.) {
             tgt_lim_val /= tgt_areas_[tcell_collateral];
         }
