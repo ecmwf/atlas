@@ -191,14 +191,14 @@ public:
             MEM_IPARAM,      // index, max memory size per task of stored intersection parameters
             MEM_ENUM_SIZE
         };
-        std::array<int, NUM_ENUM_SIZE> counts;
-        std::array<double, ERR_ENUM_SIZE> errors;
-        std::array<double, MASS_ENUM_SIZE> mass;
-        std::array<size_t, MEM_ENUM_SIZE> memory;
-        std::array<double, TIME_ENUM_SIZE> time;
+        std::array<int, NUM_ENUM_SIZE> counts = {-1};
+        std::array<double, ERR_ENUM_SIZE> errors = {-1.};
+        std::array<double, MASS_ENUM_SIZE> mass = {-1.};
+        std::array<size_t, MEM_ENUM_SIZE> memory = {1};
+        std::array<double, TIME_ENUM_SIZE> time = {-1};
 
-        double tgt_area_sum;
-        double src_area_sum;
+        double tgt_area_sum = 0.;
+        double src_area_sum = 0.;
         bool all;
         bool accuracy;
         bool conservation;
