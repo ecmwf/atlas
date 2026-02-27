@@ -172,10 +172,10 @@ void check(const Metadata remap_stat_1, Metadata remap_stat_2, std::array<double
     EXPECT(err < tol[1]);
 
     // check remap accuracy
-    remap_stat_1.get("errors.to_solution_sum", err);
+    remap_stat_1.get("errors.to_exact_solution_sum", err);
     Log::info() << "1st order accuracy (new < ref) =  (" << std::abs(err) << " < " << tol[2] << ")" << std::endl;
     EXPECT(std::abs(err) < tol[2]);
-    remap_stat_2.get("errors.to_solution_sum", err);
+    remap_stat_2.get("errors.to_exact_solution_sum", err);
     Log::info() << "2nd order accuracy (new < ref) =  (" << std::abs(err) << " < " << tol[3] << ")" << std::endl;
     EXPECT(std::abs(err) < tol[3]);
 
