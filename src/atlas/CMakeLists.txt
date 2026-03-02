@@ -735,6 +735,7 @@ linalg/sparse/SparseMatrixMultiply_OpenMP.cc
 linalg/sparse/SparseMatrixStorage.cc
 linalg/sparse/SparseMatrixStorage.h
 linalg/sparse/SparseMatrixToTriplets.h
+linalg/sparse/SparseMatrixTriplet.h
 linalg/sparse/SparseMatrixView.h
 linalg/dense.h
 linalg/dense/Backend.h
