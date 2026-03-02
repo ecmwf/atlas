@@ -58,18 +58,18 @@ ConservativeSphericalPolygonInterpolationLimiter(const ConservativeSphericalPoly
     // cache_         = Cache(sharable_data_);
     // data_          = sharable_data_.get();
 
-    // set this environment variable to replace target_field with values showing
-        const char* ATLAS_INTERPOLATION_LIMITER = ::getenv("ATLAS_INTERPOLATION_LIMITER");
-        if (ATLAS_INTERPOLATION_LIMITER != nullptr) {
-                limiter_override_tgt_ = std::atof(ATLAS_INTERPOLATION_LIMITER);
-        }
-        if (limiter_override_tgt_ > 2) {
-            Log::error() << "ATLAS_INTERPOLATION_LIMITER can be:\n";
-            Log::error() << "\t0 (default, target_field after the limiter)\n";
-            Log::error() << "\t1 (limiter correction field)\n";
-            Log::error() << "\t2 (violation & collateral target cells)" << std::endl;
-            ATLAS_ASSERT(false);
-        }
+    // set this environment variable to replace target_field with values showing limiter cell effects
+    const char* ATLAS_INTERPOLATION_LIMITER = ::getenv("ATLAS_INTERPOLATION_LIMITER");
+    if (ATLAS_INTERPOLATION_LIMITER != nullptr) {
+            limiter_override_tgt_ = std::atof(ATLAS_INTERPOLATION_LIMITER);
+    }
+    if (limiter_override_tgt_ > 2) {
+        Log::error() << "ATLAS_INTERPOLATION_LIMITER can be:\n";
+        Log::error() << "\t0 (default, target_field after the limiter)\n";
+        Log::error() << "\t1 (limiter correction field)\n";
+        Log::error() << "\t2 (violation & collateral target cells)" << std::endl;
+        ATLAS_ASSERT(false);
+    }
 }
 
 
@@ -132,12 +132,14 @@ double ConservativeSphericalPolygonInterpolationLimiter::limit(const Field& src_
             mpi_comm.allGatherv(send_marked_scells.begin(), send_marked_scells.end(), recv_marked_scells_buf);
 
             std::unordered_map<gidx_t, idx_t> recv_loc_scells;
-            for (idx_t ls = 0; ls < src_global_index.size(); ++ls) {
-                auto gs = src_global_index(ls);
-                if (recv_loc_scells.find(gs) != recv_loc_scells.end()) {
-                    continue;
+            ATLAS_TRACE_SCOPE("Build global-to-local map for ConservativeSphericalPolygonInterpolationLimiter") {
+                for (idx_t ls = 0; ls < src_global_index.size(); ++ls) {
+                    auto gs = src_global_index(ls);
+                    if (recv_loc_scells.find(gs) != recv_loc_scells.end()) {
+                        continue;
+                    }
+                    recv_loc_scells[gs] = ls;
                 }
-                recv_loc_scells[gs] = ls;
             }
             auto recv_size = std::accumulate(recv_marked_scells_buf.counts.begin(), recv_marked_scells_buf.counts.end(), 0);
             for (idx_t i_gid = 0; i_gid < recv_size; ++i_gid) {

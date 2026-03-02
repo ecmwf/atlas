@@ -54,6 +54,9 @@ void do_remapping_test(Grid src_grid, Grid tgt_grid, std::function<double(const 
     config.set("statistics.conservation", true);
     config.set("src_cell_data", src_cell_data);
     config.set("tgt_cell_data", tgt_cell_data);
+    if (src_cell_data && tgt_cell_data) {
+        config.set("limiter", "zeroslope");
+    }
 
     auto conservative_interpolation = Interpolation(config, src_grid, tgt_grid);
     Log::info() << conservative_interpolation << std::endl;
@@ -210,7 +213,7 @@ CASE("test_interpolation_conservative") {
         bool src_cell_data = true;
         bool tgt_cell_data = true;
         do_remapping_test(Grid("O16"), Grid("H12"), func, remap_stat_1, remap_stat_2, src_cell_data, tgt_cell_data);
-        check(remap_stat_1, remap_stat_2, {1.0e-13, 1.0e-12, 0.0051927, 0.0025275, 1.0e-15, 1.5e-08});
+        check(remap_stat_1, remap_stat_2, {1.0e-13, 1.0e-12, 0.0051927, 0.0025275, 1.0e-15, 1.4e-08});
 
         src_cell_data = true;
         tgt_cell_data = false;
