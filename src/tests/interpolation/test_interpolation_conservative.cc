@@ -46,7 +46,6 @@ void do_remapping_test(Grid src_grid, Grid tgt_grid, std::function<double(const 
     Log::info() << "+-----------------------\n";
     Log::info().indent();
 
-    // setup conservative remap: compute weights, polygon intersection, etc
     util::Config config("type", "conservative-spherical-polygon");
     config.set("order", 1);
     config.set("validate", true);
@@ -54,26 +53,18 @@ void do_remapping_test(Grid src_grid, Grid tgt_grid, std::function<double(const 
     config.set("statistics.conservation", true);
     config.set("src_cell_data", src_cell_data);
     config.set("tgt_cell_data", tgt_cell_data);
-    if (src_cell_data && tgt_cell_data) {
-        config.set("limiter", "zeroslope");
-    }
-
     auto conservative_interpolation = Interpolation(config, src_grid, tgt_grid);
     Log::info() << conservative_interpolation << std::endl;
     Log::info() << std::endl;
 
-    // create source field from analytic function "func"
     const auto& src_fs = conservative_interpolation.source();
     const auto& tgt_fs = conservative_interpolation.target();
     auto src_field     = src_fs.createField<double>();
     auto tgt_field     = tgt_fs.createField<double>();
-    auto src_vals      = array::make_view<double, 1>(src_field);
 
-    // A bit of a hack here...
     ConservativeMethod& consMethod = dynamic_cast<ConservativeMethod&>(*conservative_interpolation.get());
-    {
-        ATLAS_TRACE("initial condition");
-
+    ATLAS_TRACE_SCOPE("initial condition") {
+        auto src_vals = array::make_view<double, 1>(src_field);
         for (idx_t spt = 0; spt < src_vals.size(); ++spt) {
             auto p = consMethod.src_points(spt);
             PointLonLat pll;
@@ -151,10 +142,11 @@ void do_remapping_test(Grid src_grid, Grid tgt_grid, std::function<double(const 
             Log::info() << std::endl;
         }
     }
-
-    {
-        ATLAS_TRACE("2nd order projection");
+    ATLAS_TRACE_SCOPE("2nd order projection") {
         config.set("order", 2);
+        if (src_cell_data && tgt_cell_data) {
+            config.set("limiter", "zeroslope");
+        }
         conservative_interpolation = Interpolation(config, src_grid, tgt_grid);
         Log::info() << conservative_interpolation << std::endl;
         remap_stat_2 = conservative_interpolation.execute(src_field, tgt_field);
