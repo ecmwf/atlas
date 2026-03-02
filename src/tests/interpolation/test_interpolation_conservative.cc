@@ -51,7 +51,6 @@ void do_remapping_test(Grid src_grid, Grid tgt_grid, std::function<double(const 
     remap_stats.resize(RemapStats::REMAPSTATS_SIZE);
     util::Config config("type", "conservative-spherical-polygon");
     config.set("order", 1);
-    // config.set("validate", true);
     config.set("statistics.intersection", true);
     config.set("statistics.conservation", true);
     config.set("src_cell_data", src_cell_data);
@@ -60,6 +59,7 @@ void do_remapping_test(Grid src_grid, Grid tgt_grid, std::function<double(const 
     if (src_cell_data && tgt_cell_data) {
         config.set("limiter", "zeroslope");
     }
+    config.set("statistics.accuracy", true);
     auto conservative_interpolation = Interpolation(config, src_grid, tgt_grid);
     Log::info() << conservative_interpolation << std::endl;
     Log::info() << std::endl;
@@ -87,6 +87,7 @@ void do_remapping_test(Grid src_grid, Grid tgt_grid, std::function<double(const 
     }
     ATLAS_TRACE_SCOPE("1st order projection matrix-free version") {
         config.set("matrix_free", true);
+        config.set("statistics.accuracy", true);
         auto conservative_interpolation = Interpolation(config, src_grid, tgt_grid);
         remap_stats[RemapStats::CONS_MFREE] = conservative_interpolation.execute(src_field, tgt_field);
         tgt_field.haloExchange();
@@ -95,6 +96,7 @@ void do_remapping_test(Grid src_grid, Grid tgt_grid, std::function<double(const 
     ATLAS_TRACE_SCOPE("2nd order projection matrix-version") {
         config.set("order", 2);
         config.set("matrix_free", false);
+        config.set("statistics.accuracy", true);
         conservative_interpolation = Interpolation(config, src_grid, tgt_grid);
         Log::info() << conservative_interpolation << std::endl;
         remap_stats[RemapStats::CONS2] = conservative_interpolation.execute(src_field, tgt_field);
@@ -105,6 +107,7 @@ void do_remapping_test(Grid src_grid, Grid tgt_grid, std::function<double(const 
     ATLAS_TRACE_SCOPE("2nd order projection matrix-free version") {
         config.set("order", 2);
         config.set("matrix_free", true);
+        config.set("statistics.accuracy", true);
         conservative_interpolation = Interpolation(config, src_grid, tgt_grid);
         Log::info() << conservative_interpolation << std::endl;
         remap_stats[RemapStats::CONS2_MFREE] = conservative_interpolation.execute(src_field, tgt_field);
@@ -118,7 +121,6 @@ void do_remapping_test(Grid src_grid, Grid tgt_grid, std::function<double(const 
         auto cache = interpolation::Cache(conservative_interpolation);
         // cache = ConservativeMethod::Cache + MatrixCache (1st order)
         util::Config cfg(option::type("conservative-spherical-polygon"));
-        config.set("validate", true);
         {
             ATLAS_TRACE("cached -> 1st order using cached matrix");
             cfg.set("matrix_free", false);
