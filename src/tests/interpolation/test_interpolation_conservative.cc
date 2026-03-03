@@ -245,22 +245,22 @@ CASE("test_interpolation_conservative") {
         bool src_cell_data = true;
         bool tgt_cell_data = true;
         do_remapping_test(Grid("O16"), Grid("H12"), func, remap_stats, src_cell_data, tgt_cell_data);
-        check(remap_stats, {1.0e-13, 1.0e-12, 0.0051927, 0.0025275, 1.0e-15, 1.4e-08, 0.00519269, 0.00820838, 1.0e-15, 1.4e-08});
+        check(remap_stats, {1.0e-13, 1.0e-12, 0.0051927, 0.0025275, 1.0e-15, 1.5e-08, 0.0051927, 0.0025275, 1.0e-15, 1.5e-08});
 
         src_cell_data = true;
         tgt_cell_data = false;
         do_remapping_test(Grid("O16"), Grid("H12"), func, remap_stats, src_cell_data, tgt_cell_data);
-        check(remap_stats, {1.0e-13, 1.0e-12, 0.0054418, 0.0028355, 1.0e-15, 5.0e-09, 0.0939215, 0.260770, 1.0e-15, 5.8e-05});
+        check(remap_stats, {1.0e-13, 1.0e-12, 0.0054418, 0.0028356, 1.0e-15, 3.0e-09, 0.0939216, 0.0028356, 1.0e-15, 3.0e-09});
 
         src_cell_data = false;
         tgt_cell_data = true;
         do_remapping_test(Grid("O16"), Grid("H12"), func, remap_stats, src_cell_data, tgt_cell_data);
-        check(remap_stats, {1.0e-13, 1.0e-12, 0.0062715, 0.0029492, 1.0e-15, 2.0e-09, 0.00627004, 0.0029492, 1.0e-15, 2.0e-09});
+        check(remap_stats, {1.0e-13, 1.0e-12, 0.0062701, 0.0029492, 1.0e-15, 2.0e-09, 0.0062701, 0.0029492, 1.0e-15, 2.0e-09});
 
         src_cell_data = false;
         tgt_cell_data = false;
         do_remapping_test(Grid("O16"), Grid("H12"), func, remap_stats, src_cell_data, tgt_cell_data);
-        check(remap_stats, {1.0e-12, 1.0e-12, 0.0064164, 0.0030295, 1.0e-15, 1.0e-12, 0.0939825, 0.0938134, 1.0e-15, 1.0e-12});
+        check(remap_stats, {1.0e-12, 1.0e-12, 0.0064164, 0.0030295, 1.0e-15, 1.0e-12, 0.0939826, 0.0030295, 1.0e-15, 1.0e-12});
     }
 }
 

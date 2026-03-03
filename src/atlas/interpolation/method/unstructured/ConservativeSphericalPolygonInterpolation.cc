@@ -1891,7 +1891,7 @@ PointXYZ ConservativeSphericalPolygonInterpolation::src_gradient_celldata(idx_t 
         double val = 0.5 * (src_vals(sj) + src_vals(nsj)) - src_vals(scell);
         bool left_orientation = Polygon::GreatCircleSegment(Cs, Csj).inLeftHemisphere(Cnsj, -1e-16);
         dual_area_inv += (left_orientation ? Polygon({Cs, Csj, Cnsj}).area() : Polygon({Cs, Cnsj, Csj}).area());
-        grad = grad + PointXYZ::mul(PointXYZ::cross(Csj, Cnsj), val);
+        grad = grad + PointXYZ::mul(PointXYZ::cross(Cnsj, Csj), val);
     }
     dual_area_inv = ((dual_area_inv > 0.) ? 1. / dual_area_inv : 0.);
     return PointXYZ::mul(grad, dual_area_inv);
@@ -1945,88 +1945,102 @@ void ConservativeSphericalPolygonInterpolation::do_execute(const Field& src_fiel
         Method::do_execute(src_field, tgt_field, metadata);
     }
     else {
+        enum class LOCATIONS {
+            CELL_TO_CELL,
+            CELL_TO_NODE,
+            NODE_TO_CELL,
+            NODE_TO_NODE
+        };
+        LOCATIONS locations =
+            (src_cell_data_ && tgt_cell_data_) ? LOCATIONS::CELL_TO_CELL :
+            (src_cell_data_ && not tgt_cell_data_) ? LOCATIONS::CELL_TO_NODE :
+            (not src_cell_data_ && tgt_cell_data_) ? LOCATIONS::NODE_TO_CELL :
+            LOCATIONS::NODE_TO_NODE;
+
         if (order_ == 1) {
             ATLAS_TRACE("matrix_free_order_1");
 
-            // CASE: CELL TO CELL
-            if (tgt_cell_data_ && src_cell_data_) {
-                for (idx_t tcsp_id = 0; tcsp_id < data_->tgt_.csp_size; ++tcsp_id) {
-                    idx_t tcell = csp_to_cell(tcsp_id, data_->tgt_);
-                    double tgt_val = 0.;
-                    const auto& iparam = tgt_iparam[tcsp_id];
-                    for (idx_t i_scsp = 0; i_scsp < iparam.csp_ids.size(); ++i_scsp) {
-                        idx_t scsp_id = iparam.csp_ids[i_scsp];
-                        idx_t scell   = csp_to_cell(scsp_id, data_->src_);
-                        tgt_val += iparam.weights[i_scsp] * src_vals(scell);
-                    }
-                    if (tgt_areas[tcell] > 0.) {
-                        tgt_val /= tgt_areas[tcell];
-                    }
-                    tgt_vals(tcell) = tgt_val;
-                }
-            }
-
-            // CASE: CELL TO NODE
-            else if (not tgt_cell_data_ && src_cell_data_) {
-                auto& tgt_node2csp = data_->tgt_.node2csp;
-                for (idx_t tnode = 0; tnode < n_tpoints_; ++tnode) {
-                    double tgt_val = 0.;
-                    for( const auto& tcsp_id: tgt_node2csp[tnode]) {
-                        const auto& iparam  = tgt_iparam[tcsp_id];
+            switch(locations) {
+                case (LOCATIONS::CELL_TO_CELL): {
+                    for (idx_t tcsp_id = 0; tcsp_id < data_->tgt_.csp_size; ++tcsp_id) {
+                        idx_t tcell = csp_to_cell(tcsp_id, data_->tgt_);
+                        double tgt_val = 0.;
+                        const auto& iparam = tgt_iparam[tcsp_id];
                         for (idx_t i_scsp = 0; i_scsp < iparam.csp_ids.size(); ++i_scsp) {
                             idx_t scsp_id = iparam.csp_ids[i_scsp];
                             idx_t scell   = csp_to_cell(scsp_id, data_->src_);
                             tgt_val += iparam.weights[i_scsp] * src_vals(scell);
                         }
+                        if (tgt_areas[tcell] > 0.) {
+                            tgt_val /= tgt_areas[tcell];
+                        }
+                        tgt_vals(tcell) = tgt_val;
                     }
-                    if (tgt_areas[tnode] > 0.) {
-                        tgt_val /= tgt_areas[tnode];
-                    }
-                    tgt_vals(tnode) = tgt_val;
+                    break;
                 }
-            }
-
-            // CASE: NODE TO CELL
-            else if (tgt_cell_data_ && not src_cell_data_) {
-                const auto& src_csp2node = data_->src_.csp2node;
-                for (idx_t tcsp_id = 0; tcsp_id < data_->tgt_.csp_size; ++tcsp_id) {
-                    idx_t tcell = csp_to_cell(tcsp_id, data_->tgt_);
-                    double tgt_val = 0.;
-                    const auto& iparam  = tgt_iparam[tcsp_id];
-                    for (idx_t i_scsp = 0; i_scsp < iparam.csp_ids.size(); ++i_scsp) {
-                        idx_t scsp_id = iparam.csp_ids[i_scsp];
-                        idx_t snode   = src_csp2node[scsp_id];
-                        tgt_val += iparam.weights[i_scsp] * src_vals(snode);
+                case (LOCATIONS::CELL_TO_NODE): {
+                    auto& tgt_node2csp = data_->tgt_.node2csp;
+                    for (idx_t tnode = 0; tnode < n_tpoints_; ++tnode) {
+                        double tgt_val = 0.;
+                        for( const auto& tcsp_id: tgt_node2csp[tnode]) {
+                            const auto& iparam  = tgt_iparam[tcsp_id];
+                            for (idx_t i_scsp = 0; i_scsp < iparam.csp_ids.size(); ++i_scsp) {
+                                idx_t scsp_id = iparam.csp_ids[i_scsp];
+                                idx_t scell   = csp_to_cell(scsp_id, data_->src_);
+                                tgt_val += iparam.weights[i_scsp] * src_vals(scell);
+                            }
+                        }
+                        if (tgt_areas[tnode] > 0.) {
+                            tgt_val /= tgt_areas[tnode];
+                        }
+                        tgt_vals(tnode) = tgt_val;
                     }
-                    if (tgt_areas[tcell] > 0.) {
-                        tgt_val /= tgt_areas[tcell];
-                    }
-                    tgt_vals(tcell) = tgt_val;
+                    break;
                 }
-            }
-
-            // CASE: NODE TO NODE
-            else if (not tgt_cell_data_ && not src_cell_data_) {
-                const auto& tgt_node2csp = data_->tgt_.node2csp;
-                const auto& src_csp2node = data_->src_.csp2node;
-                for (idx_t tnode = 0; tnode < n_tpoints_; ++tnode) {
-                    double tgt_val = 0.;
-                    for( const auto& tcsp_id: tgt_node2csp[tnode]) {
-                        const auto& iparam = tgt_iparam[tcsp_id];
+                case (LOCATIONS::NODE_TO_CELL): {
+                    const auto& src_csp2node = data_->src_.csp2node;
+                    for (idx_t tcsp_id = 0; tcsp_id < data_->tgt_.csp_size; ++tcsp_id) {
+                        idx_t tcell = csp_to_cell(tcsp_id, data_->tgt_);
+                        double tgt_val = 0.;
+                        const auto& iparam  = tgt_iparam[tcsp_id];
                         for (idx_t i_scsp = 0; i_scsp < iparam.csp_ids.size(); ++i_scsp) {
                             idx_t scsp_id = iparam.csp_ids[i_scsp];
                             idx_t snode   = src_csp2node[scsp_id];
                             tgt_val += iparam.weights[i_scsp] * src_vals(snode);
                         }
+                        if (tgt_areas[tcell] > 0.) {
+                            tgt_val /= tgt_areas[tcell];
+                        }
+                        tgt_vals(tcell) = tgt_val;
                     }
-                    if (tgt_areas[tnode] > 0.) {
-                        tgt_val /= tgt_areas[tnode];
-                    }
-                    tgt_vals(tnode) = tgt_val;
+                    break;
                 }
+                case (LOCATIONS::NODE_TO_NODE): {
+                    const auto& tgt_node2csp = data_->tgt_.node2csp;
+                    const auto& src_csp2node = data_->src_.csp2node;
+                    for (idx_t tnode = 0; tnode < n_tpoints_; ++tnode) {
+                        double tgt_val = 0.;
+                        for( const auto& tcsp_id: tgt_node2csp[tnode]) {
+                            const auto& iparam = tgt_iparam[tcsp_id];
+                            for (idx_t i_scsp = 0; i_scsp < iparam.csp_ids.size(); ++i_scsp) {
+                                idx_t scsp_id = iparam.csp_ids[i_scsp];
+                                idx_t snode   = src_csp2node[scsp_id];
+                                tgt_val += iparam.weights[i_scsp] * src_vals(snode);
+                            }
+                        }
+                        if (tgt_areas[tnode] > 0.) {
+                            tgt_val /= tgt_areas[tnode];
+                        }
+                        tgt_vals(tnode) = tgt_val;
+                    }
+                    break;
+                }
+                default: throw_AssertionFailed("Should not be here");
             }
         }
+
         else if (order_ == 2) {
+            ATLAS_TRACE("matrix_free_order_2");
             ATLAS_TRACE_SCOPE("Compute source gradients") {
                 src_grads.resize(src_vals.size());
                 if (src_cell_data_) {
@@ -2040,84 +2054,69 @@ void ConservativeSphericalPolygonInterpolation::do_execute(const Field& src_fiel
                     }
                 }
             }
-            ATLAS_TRACE("matrix_free_order_2");
 
-            // CASE: CELL TO CELL
-            if (tgt_cell_data_ && src_cell_data_){
-                for (idx_t tcsp_id = 0; tcsp_id < data_->tgt_.csp_size; ++tcsp_id) {
-                    idx_t tcell = csp_to_cell(tcsp_id, data_->tgt_);
-                    const auto& iparam = tgt_iparam[tcsp_id];
-                    double tgt_val = 0.;
-                    for (idx_t i_scsp = 0; i_scsp < iparam.csp_ids.size(); ++i_scsp) {
-                        idx_t scsp_id = iparam.csp_ids[i_scsp];
-                        idx_t scell = csp_to_cell(scsp_id, data_->src_);
-                        const PointXYZ& src_barycentre = src_points[scell]; // TODO: this is a bad barycentre numerically
-                        PointXYZ grad  = src_grads[scell];
-                        grad           = grad - PointXYZ::mul(src_barycentre, PointXYZ::dot(grad, src_barycentre));
-                        tgt_val += iparam.weights[i_scsp] * (src_vals(scell) + PointXYZ::dot(grad, iparam.centroids[i_scsp] - src_barycentre));
-                    }
-                    if (tgt_areas[tcell] > 0.) {
-                        tgt_val /= tgt_areas[tcell];
-                    }
-                    tgt_vals(tcell) = tgt_val;
-                }
-            }
-
-            // CASE: CELL TO NODE
-            else if (not tgt_cell_data_ && src_cell_data_) {
-                auto& tgt_csp2node = data_->tgt_.csp2node;
-                // auto& tgt_node2csp = data_->tgt_.node2csp;
-                for (idx_t tcsp_id = 0; tcsp_id < data_->tgt_.csp_size; ++tcsp_id) {
-                    idx_t tnode = tgt_csp2node[tcsp_id];
-                    const auto& iparam  = tgt_iparam[tcsp_id];
-                    double tgt_val = 0.;
-                    for (idx_t i_scsp = 0; i_scsp < iparam.csp_ids.size(); ++i_scsp) {
-                        idx_t scsp_id = iparam.csp_ids[i_scsp];
-                        idx_t scell   = csp_to_cell(scsp_id, data_->src_);
-                        const PointXYZ& src_barycentre = src_points[scell]; // TODO: this is a bad barycentre numerically
-                        PointXYZ grad  = src_grads[scell];
-                        grad           = grad - PointXYZ::mul(src_barycentre, PointXYZ::dot(grad, src_barycentre));
-                        tgt_val += iparam.weights[i_scsp] * (src_vals(scell) + PointXYZ::dot(grad, iparam.centroids[i_scsp] - src_barycentre));
-                    }
-                    if (tgt_areas[tnode] > 0.) {
-                        tgt_val /= tgt_areas[tnode];
-                    }
-                    tgt_vals(tnode) = tgt_val;
-                }
-            }
-
-            // CASE: NODE TO CELL
-            else if (tgt_cell_data_ && not src_cell_data_) {
-                const auto& src_csp2node = data_->src_.csp2node;
-                for (idx_t tcsp_id = 0; tcsp_id < data_->tgt_.csp_size; ++tcsp_id) {
-                    idx_t tcell = csp_to_cell(tcsp_id, data_->tgt_);
-                    const auto& iparam  = tgt_iparam[tcsp_id];
-                    double tgt_val = 0.;
-                    for (idx_t i_scsp = 0; i_scsp < iparam.csp_ids.size(); ++i_scsp) {
-                        idx_t scsp_id = iparam.csp_ids[i_scsp];
-                        idx_t snode   = src_csp2node[scsp_id];
-                        const PointXYZ& src_barycentre = src_points[snode]; // TODO: this is a bad barycentre numerically
-                        PointXYZ grad  = src_grads[snode];
-                        grad           = grad - PointXYZ::mul(src_barycentre, PointXYZ::dot(grad, src_barycentre));
-                        tgt_val += iparam.weights[i_scsp] * (src_vals(snode) + PointXYZ::dot(grad, iparam.centroids[i_scsp] - src_barycentre));
-                    }
-                    if (tgt_areas[tcell] > 0.) {
-                        tgt_val /= tgt_areas[tcell];
-                    }
-                    tgt_vals(tcell) = tgt_val;
-                }
-            }
-
-            // CASE: NODE TO NODE
-            else if (not tgt_cell_data_ && not src_cell_data_) {
-                const auto& tgt_node2csp = data_->tgt_.node2csp;
-                const auto& tgt_csp2node = data_->tgt_.csp2node;
-                const auto& src_csp2node = data_->src_.csp2node;
-                for (idx_t tcsp_id = 0; tcsp_id < data_->tgt_.csp_size; ++tcsp_id) {
-                    idx_t tnode = tgt_csp2node[tcsp_id];
-                    double tgt_val = 0.;
-                    for (const auto& tcsp_id: tgt_node2csp[tnode]) {
+            switch(locations) {
+                case (LOCATIONS::CELL_TO_CELL): {
+                    const auto tgt_halo = array::make_view<int, 1>(tgt_mesh_.cells().halo());
+                    for (idx_t tcell = 0; tcell < n_tpoints_; ++tcell) {
+                        if (tgt_halo(tcell)) {
+                            continue;
+                        }
+                        auto tcsp_id = tcell; // TODO:
                         const auto& iparam = tgt_iparam[tcsp_id];
+                        double tgt_val = 0.;
+                        for (idx_t i_scsp = 0; i_scsp < iparam.csp_ids.size(); ++i_scsp) {
+                            idx_t scsp_id = iparam.csp_ids[i_scsp];
+                            idx_t scell = csp_to_cell(scsp_id, data_->src_);
+                            const PointXYZ& src_barycentre = src_points[scell]; // TODO: this is a bad barycentre numerically
+                            PointXYZ grad  = src_grads[scell];
+                            grad           = grad - PointXYZ::mul(src_barycentre, PointXYZ::dot(grad, src_barycentre));
+                            tgt_val += iparam.weights[i_scsp] * (src_vals(scell) + PointXYZ::dot(grad, iparam.centroids[i_scsp] - src_barycentre));
+                        }
+                        if (tgt_areas[tcell] > 0.) {
+                            tgt_val /= tgt_areas[tcell];
+                        }
+                        tgt_vals(tcell) = tgt_val;
+                    }
+                    break;
+                }
+                case (LOCATIONS::CELL_TO_NODE): {
+                    const auto tgt_ghost = array::make_view<int, 1>(tgt_mesh_.nodes().ghost());
+                    const auto& tgt_node2csp = data_->tgt_.node2csp;
+                    for (idx_t tnode = 0; tnode < n_tpoints_; ++tnode) {
+                        if (tgt_ghost(tnode)) {
+                            continue;
+                        }
+                        double tgt_val = 0.;
+                        for( const auto& tcsp_id: tgt_node2csp[tnode]) {
+                            const auto& iparam = tgt_iparam[tcsp_id];
+                            for (idx_t i_scsp = 0; i_scsp < iparam.csp_ids.size(); ++i_scsp) {
+                                idx_t scsp_id = iparam.csp_ids[i_scsp];
+                                idx_t scell   = csp_to_cell(scsp_id, data_->src_);
+                                const PointXYZ& src_barycentre = src_points[scell]; // TODO: this is a bad barycentre numerically
+                                PointXYZ grad  = src_grads[scell];
+                                grad           = grad - PointXYZ::mul(src_barycentre, PointXYZ::dot(grad, src_barycentre));
+                                tgt_val += iparam.weights[i_scsp] * (src_vals(scell) + PointXYZ::dot(grad, iparam.centroids[i_scsp] - src_barycentre));
+                            }
+                        }
+                        if (tgt_areas[tnode] > 0.) {
+                            tgt_val /= tgt_areas[tnode];
+                        }
+                        tgt_vals(tnode) = tgt_val;
+                    }
+                    break;
+                }
+
+                case (LOCATIONS::NODE_TO_CELL): {
+                    const auto tgt_halo = array::make_view<int, 1>(tgt_mesh_.cells().halo());
+                    const auto& src_csp2node = data_->src_.csp2node;
+                    for (idx_t tcell = 0; tcell < n_tpoints_; ++tcell) {
+                        if (tgt_halo(tcell)) {
+                            continue;
+                        }
+                        auto tcsp_id = tcell; // TODO:
+                        const auto& iparam = tgt_iparam[tcsp_id];
+                        double tgt_val = 0.;
                         for (idx_t i_scsp = 0; i_scsp < iparam.csp_ids.size(); ++i_scsp) {
                             idx_t scsp_id = iparam.csp_ids[i_scsp];
                             idx_t snode   = src_csp2node[scsp_id];
@@ -2126,12 +2125,41 @@ void ConservativeSphericalPolygonInterpolation::do_execute(const Field& src_fiel
                             grad           = grad - PointXYZ::mul(src_barycentre, PointXYZ::dot(grad, src_barycentre));
                             tgt_val += iparam.weights[i_scsp] * (src_vals(snode) + PointXYZ::dot(grad, iparam.centroids[i_scsp] - src_barycentre));
                         }
+                        if (tgt_areas[tcell] > 0.) {
+                            tgt_val /= tgt_areas[tcell];
+                        }
+                        tgt_vals(tcell) = tgt_val;
                     }
-                    if (tgt_areas[tnode] > 0.) {
-                        tgt_val /= tgt_areas[tnode];
-                    }
-                    tgt_vals(tnode) = tgt_val;
+                    break;
                 }
+                case (LOCATIONS::NODE_TO_NODE): {
+                    const auto tgt_ghost = array::make_view<int, 1>(tgt_mesh_.nodes().ghost());
+                    const auto& tgt_node2csp = data_->tgt_.node2csp;
+                    const auto& src_csp2node = data_->src_.csp2node;
+                    for (idx_t tnode = 0; tnode < n_tpoints_; ++tnode) {
+                        if (tgt_ghost(tnode)) {
+                            continue;
+                        }
+                        double tgt_val = 0.;
+                        for( const auto& tcsp_id: tgt_node2csp[tnode]) {
+                            const auto& iparam = tgt_iparam[tcsp_id];
+                            for (idx_t i_scsp = 0; i_scsp < iparam.csp_ids.size(); ++i_scsp) {
+                                idx_t scsp_id = iparam.csp_ids[i_scsp];
+                                idx_t snode   = src_csp2node[scsp_id];
+                                const PointXYZ& src_barycentre = src_points[snode]; // TODO: this is a bad barycentre numerically
+                                PointXYZ grad  = src_grads[snode];
+                                grad           = grad - PointXYZ::mul(src_barycentre, PointXYZ::dot(grad, src_barycentre));
+                                tgt_val += iparam.weights[i_scsp] * (src_vals(snode) + PointXYZ::dot(grad, iparam.centroids[i_scsp] - src_barycentre));
+                            }
+                        }
+                        if (tgt_areas[tnode] > 0.) {
+                            tgt_val /= tgt_areas[tnode];
+                        }
+                        tgt_vals(tnode) = tgt_val;
+                    }
+                    break;
+                }
+                default: throw_AssertionFailed("Should not be here");
             }
         }
     }
