@@ -186,43 +186,43 @@ void check(const std::vector<Metadata>& remap_stat, std::array<double, 10> tol) 
     double err = -1.;
     // check polygon intersections
     remap_stat[RemapStats::CONS].get("errors.sum_src_areas_minus_sum_tgt_areas", err);
-    Log::info() << "Polygon area computation (new < ref) =  (" << err << " < " << tol[0] << ")" << std::endl;
+    Log::info() << "Polygon area computation (new < ref)           =  (" << err << " < " << tol[0] << ")" << std::endl;
     EXPECT(err < tol[0]);
     remap_stat[RemapStats::CONS].get("errors.intersections_covering_tgt_cells_sum", err);
-    Log::info() << "Polygon intersection (new < ref) =  (" << err << " < " << tol[1] << ")" << std::endl;
+    Log::info() << "Polygon intersection (new < ref)               =  (" << err << " < " << tol[1] << ")" << std::endl;
     EXPECT(err < tol[1]);
 
     // check remap accuracy matrix-version
     remap_stat[RemapStats::CONS].get("errors.to_exact_solution_sum", err);
-    Log::info() << "1st order accuracy (new < ref) =  (" << std::abs(err) << " < " << tol[2] << ")" << std::endl;
+    Log::info() << "1st order accuracy (new < ref)                 =  (" << std::abs(err) << " < " << tol[2] << ")" << std::endl;
     EXPECT(std::abs(err) < tol[2]);
     remap_stat[RemapStats::CONS2].get("errors.to_exact_solution_sum", err);
-    Log::info() << "2nd order accuracy (new < ref) =  (" << std::abs(err) << " < " << tol[3] << ")" << std::endl;
+    Log::info() << "2nd order accuracy (new < ref)                 =  (" << std::abs(err) << " < " << tol[3] << ")" << std::endl;
     EXPECT(std::abs(err) < tol[3]);
 
     // check mass conservation matrix-version
     remap_stat[RemapStats::CONS].get("errors.conservation", err);
-    Log::info() << "1st order conservation (new < ref) =  (" << std::abs(err) << " < " << tol[4] << ")" << std::endl;
+    Log::info() << "1st order conservation (new < ref)             =  (" << std::abs(err) << " < " << tol[4] << ")" << std::endl;
     EXPECT(std::abs(err) < tol[4]);
     remap_stat[RemapStats::CONS2].get("errors.conservation", err);
-    Log::info() << "2nd order conservation (new < ref) =  (" << std::abs(err) << " < " << tol[5] << ")" << std::endl;
+    Log::info() << "2nd order conservation (new < ref)             =  (" << std::abs(err) << " < " << tol[5] << ")" << std::endl;
     EXPECT(std::abs(err) < tol[5]);
 
     // check remap accuracy matrix-free version
     remap_stat[RemapStats::CONS_MFREE].get("errors.to_exact_solution_sum", err);
-    Log::info() << "1st order matrix-free accuracy (new < ref) =  (" << std::abs(err) << " < " << tol[6] << ")" << std::endl;
-    EXPECT(std::abs(err) < tol[6]);
+    Log::info() << "1st order matrix-free accuracy (new < ref)     =  (" << std::abs(err) << " < " << tol[2] << ")" << std::endl;
+    EXPECT(std::abs(err) < tol[2]);
     remap_stat[RemapStats::CONS2_MFREE].get("errors.to_exact_solution_sum", err);
-    Log::info() << "2nd order matrix-free accuracy (new < ref) =  (" << std::abs(err) << " < " << tol[7] << ")" << std::endl;
-    EXPECT(std::abs(err) < tol[7]);
+    Log::info() << "2nd order matrix-free accuracy (new < ref)     =  (" << std::abs(err) << " < " << tol[3] << ")" << std::endl;
+    EXPECT(std::abs(err) < tol[3]);
 
     // check mass conservation matrix-free version
     remap_stat[RemapStats::CONS_MFREE].get("errors.conservation", err);
-    Log::info() << "1st order matrix-free conservation (new < ref) =  (" << std::abs(err) << " < " << tol[8] << ")" << std::endl;
-    EXPECT(std::abs(err) < tol[8]);
+    Log::info() << "1st order matrix-free conservation (new < ref) =  (" << std::abs(err) << " < " << tol[4] << ")" << std::endl;
+    EXPECT(std::abs(err) < tol[4]);
     remap_stat[RemapStats::CONS2_MFREE].get("errors.conservation", err);
-    Log::info() << "2nd order matrix-free conservation (new < ref) =  (" << std::abs(err) << " < " << tol[9] << ")" << std::endl;
-    EXPECT(std::abs(err) < tol[9]);
+    Log::info() << "2nd order matrix-free conservation (new < ref) =  (" << std::abs(err) << " < " << tol[5] << ")" << std::endl;
+    EXPECT(std::abs(err) < tol[5]);
     Log::info().unindent();
 }
 
@@ -245,22 +245,22 @@ CASE("test_interpolation_conservative") {
         bool src_cell_data = true;
         bool tgt_cell_data = true;
         do_remapping_test(Grid("O16"), Grid("H12"), func, remap_stats, src_cell_data, tgt_cell_data);
-        check(remap_stats, {1.0e-13, 1.0e-12, 0.0051927, 0.0025275, 1.0e-15, 1.5e-08, 0.0051927, 0.0025275, 1.0e-15, 1.5e-08});
+        check(remap_stats, {1.0e-14, 1.0e-14, 0.0051927, 0.0025274, 1.0e-15, 1.5e-08});
 
         src_cell_data = true;
         tgt_cell_data = false;
         do_remapping_test(Grid("O16"), Grid("H12"), func, remap_stats, src_cell_data, tgt_cell_data);
-        check(remap_stats, {1.0e-13, 1.0e-12, 0.0054418, 0.0028356, 1.0e-15, 3.0e-09, 0.0939216, 0.0028356, 1.0e-15, 3.0e-09});
+        check(remap_stats, {1.0e-14, 1.0e-14, 0.0054418, 0.0028356, 1.0e-15, 3.0e-09});
 
         src_cell_data = false;
         tgt_cell_data = true;
         do_remapping_test(Grid("O16"), Grid("H12"), func, remap_stats, src_cell_data, tgt_cell_data);
-        check(remap_stats, {1.0e-13, 1.0e-12, 0.0062701, 0.0029492, 1.0e-15, 2.0e-09, 0.0062701, 0.0029492, 1.0e-15, 2.0e-09});
+        check(remap_stats, {1.0e-14, 1.0e-14, 0.0062701, 0.0029492, 5.0e-16, 6.0e-10});
 
         src_cell_data = false;
         tgt_cell_data = false;
         do_remapping_test(Grid("O16"), Grid("H12"), func, remap_stats, src_cell_data, tgt_cell_data);
-        check(remap_stats, {1.0e-12, 1.0e-12, 0.0064164, 0.0030295, 1.0e-15, 1.0e-12, 0.0939826, 0.0030295, 1.0e-15, 1.0e-12});
+        check(remap_stats, {1.0e-14, 1.0e-14, 0.0064164, 0.0030295, 5.0e-16, 4.0e-13});
     }
 }
 

@@ -1962,9 +1962,13 @@ void ConservativeSphericalPolygonInterpolation::do_execute(const Field& src_fiel
 
             switch(locations) {
                 case (LOCATIONS::CELL_TO_CELL): {
-                    for (idx_t tcsp_id = 0; tcsp_id < data_->tgt_.csp_size; ++tcsp_id) {
-                        idx_t tcell = csp_to_cell(tcsp_id, data_->tgt_);
+                    const auto tgt_halo = array::make_view<int, 1>(tgt_mesh_.cells().halo());
+                    for (idx_t tcell = 0; tcell < n_tpoints_; ++tcell) {
+                        if (tgt_halo(tcell)) {
+                            continue;
+                        }
                         double tgt_val = 0.;
+                        const idx_t tcsp_id = tcell; // TODO:
                         const auto& iparam = tgt_iparam[tcsp_id];
                         for (idx_t i_scsp = 0; i_scsp < iparam.csp_ids.size(); ++i_scsp) {
                             idx_t scsp_id = iparam.csp_ids[i_scsp];
@@ -1979,8 +1983,12 @@ void ConservativeSphericalPolygonInterpolation::do_execute(const Field& src_fiel
                     break;
                 }
                 case (LOCATIONS::CELL_TO_NODE): {
+                    const auto tgt_ghost = array::make_view<int, 1>(tgt_mesh_.nodes().ghost());
                     auto& tgt_node2csp = data_->tgt_.node2csp;
                     for (idx_t tnode = 0; tnode < n_tpoints_; ++tnode) {
+                        if (tgt_ghost(tnode)) {
+                            continue;
+                        }
                         double tgt_val = 0.;
                         for( const auto& tcsp_id: tgt_node2csp[tnode]) {
                             const auto& iparam  = tgt_iparam[tcsp_id];
@@ -1998,11 +2006,15 @@ void ConservativeSphericalPolygonInterpolation::do_execute(const Field& src_fiel
                     break;
                 }
                 case (LOCATIONS::NODE_TO_CELL): {
+                    const auto tgt_halo = array::make_view<int, 1>(tgt_mesh_.cells().halo());
                     const auto& src_csp2node = data_->src_.csp2node;
-                    for (idx_t tcsp_id = 0; tcsp_id < data_->tgt_.csp_size; ++tcsp_id) {
-                        idx_t tcell = csp_to_cell(tcsp_id, data_->tgt_);
+                    for (idx_t tcell = 0; tcell < n_tpoints_; ++tcell) {
+                        if (tgt_halo(tcell)) {
+                            continue;
+                        }
                         double tgt_val = 0.;
-                        const auto& iparam  = tgt_iparam[tcsp_id];
+                        const idx_t tcsp_id = tcell; // TODO:
+                        const auto& iparam = tgt_iparam[tcsp_id];
                         for (idx_t i_scsp = 0; i_scsp < iparam.csp_ids.size(); ++i_scsp) {
                             idx_t scsp_id = iparam.csp_ids[i_scsp];
                             idx_t snode   = src_csp2node[scsp_id];
@@ -2016,9 +2028,13 @@ void ConservativeSphericalPolygonInterpolation::do_execute(const Field& src_fiel
                     break;
                 }
                 case (LOCATIONS::NODE_TO_NODE): {
+                    const auto tgt_ghost = array::make_view<int, 1>(tgt_mesh_.nodes().ghost());
                     const auto& tgt_node2csp = data_->tgt_.node2csp;
                     const auto& src_csp2node = data_->src_.csp2node;
                     for (idx_t tnode = 0; tnode < n_tpoints_; ++tnode) {
+                        if (tgt_ghost(tnode)) {
+                            continue;
+                        }
                         double tgt_val = 0.;
                         for( const auto& tcsp_id: tgt_node2csp[tnode]) {
                             const auto& iparam = tgt_iparam[tcsp_id];
