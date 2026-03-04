@@ -61,7 +61,6 @@ struct AtlasTransEnvironment : public AtlasTestEnvironment {
     AtlasTransEnvironment(int argc, char* argv[]): AtlasTestEnvironment(argc, argv) {
 #if ATLAS_HAVE_TRANS
         trans_use_mpi(mpi::comm().size() > 1);
-        trans_init();
 #endif
     }
 
