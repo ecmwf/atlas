@@ -15,8 +15,7 @@
 #include "eckit/mpi/Comm.h"
 #include "atlas/parallel/mpi/Statistics.h"
 
-namespace atlas {
-namespace mpi {
+namespace atlas::mpi {
 
 using Comm = eckit::mpi::Comm;
 
@@ -27,6 +26,13 @@ inline const Comm& comm() {
 inline const Comm& comm(std::string_view name) {
     return eckit::mpi::comm(name.data());
 }
+
+const Comm& comm(int communicator);
+
+bool has_comm(std::string_view name);
+
+const Comm& register_comm(std::string_view name, int communicator);
+void unregister_comm(std::string_view name);
 
 inline idx_t rank() {
     return static_cast<idx_t>(comm().rank());
@@ -39,45 +45,39 @@ inline int size() {
 void finalize();
 void finalise();
 
-class CommStack {
-public:
-    using const_iterator = std::vector<std::string>::const_iterator;
-
-public:
+namespace scope {
+    /// @brief Push a new scope for MPI communicators. The current default communicator is restored when the scope is destructed using pop()
+    void push();
+    /// @brief Push a new scope for MPI communicators. The given communicator is set as the default communicator for the duration of the scope. The previous default communicator is restored when the scope is destructed using pop()
     void push(std::string_view name);
+    /// @brief Push a new scope for MPI communicators. The given communicator is set as the default communicator for the duration of the scope. The previous default communicator is restored when the scope is destructed using pop()
+    void push(const Comm& comm);
+    /// @brief Push a new scope for MPI communicators. The given communicator is set as the default communicator for the duration of the scope. The previous default communicator is restored when the scope is destructed using pop()
+    /// If the given communicator is not already registered, it will be registered with a generated name "int.<communicator>" for the duration of the scope, and unregistered when the scope is destructed.
+    void push(int communicator);
+    /// @brief Pop the current MPI communicator scope, restoring the previous default communicator
     void pop();
-    void pop(std::string_view name); // verifies name matches compared to version above
-    const std::string& name() const;
-    const mpi::Comm& comm() const;
+}
 
-    const_iterator begin() const { return stack_.begin(); }
-    const_iterator end() const { return stack_.begin() + size_; }
-
-    size_t size() const { return size_; }
-
-    static CommStack& instance() {
-        static CommStack instance;
-        return instance;
-    }
-
-private:
-    CommStack();
-private:
-    std::vector<std::string> stack_;
-    size_t size_{0};
-};
-void push(std::string_view name);
-void pop(std::string_view name);
-void pop();
+/// @brief RAII helper class to manage MPI communicator scopes. The constructor pushes a new scope, and the destructor pops the scope, ensuring that the previous default communicator is restored even in case of exceptions.
 struct Scope {
-    Scope(std::string_view name) : name_(name) {
-        push(name_);
-    }
-    ~Scope() {
-        pop(name_);
-    }
-    std::string name_;
+    Scope() { scope::push(); }
+    Scope(std::string_view name) { scope::push(name); }
+    Scope(const Comm& comm) { scope::push(comm); };
+    /// @brief Constructor using integer value. If the given communicator is not already registered, it will be registered with a generated name "int.<communicator>" for the duration of the scope, and unregistered when the scope is destructed.
+    /// @param communicator The integer value of the MPI communicator to use for the scope
+    Scope(int communicator) { scope::push(communicator); }
+
+    Scope(const Scope&) = delete;
+    Scope(Scope&&) = delete;
+    Scope& operator=(const Scope&) = delete;
+    Scope& operator=(Scope&&) = delete;
+    ~Scope() { scope::pop(); }
 };
 
-}  // namespace mpi
-}  // namespace atlas
+[[deprecated("Use atlas::mpi::scope::push instead")]] inline void push() { scope::push(); }
+[[deprecated("Use atlas::mpi::scope::pop instead")]]  inline void pop() { scope::pop(); }
+[[deprecated("Use atlas::mpi::scope::push instead")]] inline void push(std::string_view name) { scope::push(name); }
+[[deprecated("Use atlas::mpi::scope::pop instead")]]  inline void pop(std::string_view /*name*/) { scope::pop(); }
+
+}  // namespace atlas::mpi

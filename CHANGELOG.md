@@ -7,6 +7,17 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
 ## [Unreleased]
 
+## [0.45.1] - 2026-02-23
+
+### Added
+- Polygon implementation for modern (spherical mean value) interpolation. by @lewisn-met in https://github.com/ecmwf/atlas/pull/329
+
+### Fixed
+- Compatibility with eckit 2.0.0
+- Allow more time for cubed_meshgen test by @DJDavies2 in https://github.com/ecmwf/atlas/pull/344
+- Intel version < 19.1 compilation
+- Installation script for METIS
+
 ## [0.45.0] - 2026-01-14
 
 ### Fixed
@@ -717,6 +728,7 @@ Fix StructuredInterpolation2D with retry for failed stencils
 ## 0.13.0 - 2018-02-16
 
 [Unreleased]: https://github.com/ecmwf/atlas/compare/master...develop
+[0.45.1]: https://github.com/ecmwf/atlas/compare/0.45.0...0.45.1
 [0.45.0]: https://github.com/ecmwf/atlas/compare/0.44.1...0.45.0
 [0.44.1]: https://github.com/ecmwf/atlas/compare/0.44.0...0.44.1
 [0.44.0]: https://github.com/ecmwf/atlas/compare/0.43.1...0.44.0

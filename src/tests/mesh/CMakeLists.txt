@@ -126,7 +126,7 @@ ecbuild_add_test( TARGET atlas_test_cubedsphere_meshgen
 )
 
 if( TEST atlas_test_cubedsphere_meshgen )
-    set_tests_properties( atlas_test_cubedsphere_meshgen PROPERTIES TIMEOUT 30 )
+    set_tests_properties( atlas_test_cubedsphere_meshgen PROPERTIES TIMEOUT 60 )
 endif()
 
 ecbuild_add_test( TARGET atlas_test_mesh_builder

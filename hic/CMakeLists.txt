@@ -53,7 +53,7 @@ ecbuild_add_option( FEATURE WARNING_AS_ERROR
                     DESCRIPTION "Treat compile warning as error" )
 
 if(HAVE_WARNING_AS_ERROR)
-  ecbuild_add_cxx_flags("-Werror" NO_FAIL NAME pluto_cxx_warning_as_error QUIET)
+  ecbuild_add_cxx_flags("-Werror" NO_FAIL NAME hic_cxx_warning_as_error QUIET)
 endif()
 
 if( CMAKE_CXX_COMPILER_ID STREQUAL Intel )
@@ -73,6 +73,13 @@ ecbuild_add_resources(
         CHANGELOG.md
         LICENSE
 )
+
+if (ECBUILD_2_COMPAT)
+  # Manually add hic and hicsparse to the list hic_ALL_LIBS to get exported.
+  # Only when ECBUILD_2_COMPAT=ON, INTERFACE libraries like hic,hicsparse
+  # are not added to the list of libraries to be exported within ecbuild_add_library.
+  set( hic_ALL_LIBS hic hicsparse )
+endif()
 
 ecbuild_install_project( NAME hic )
 ecbuild_print_summary()

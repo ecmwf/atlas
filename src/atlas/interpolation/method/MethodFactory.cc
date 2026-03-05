@@ -28,6 +28,7 @@
 #include "unstructured/FiniteElement.h"
 #include "unstructured/ConservativeSphericalPolygonInterpolation.h"
 #include "unstructured/UnstructuredBilinearLonLat.h"
+#include "unstructured/SphericalMeanValue.h"
 
 
 namespace atlas {
@@ -55,6 +56,7 @@ void force_link() {
             MethodBuilder<method::SphericalVector>();
             MethodBuilder<method::Binning>();
             MethodBuilder<method::ConservativeSphericalPolygonInterpolation>();
+            MethodBuilder<method::SphericalMeanValue>();
         }
     } link;
 }

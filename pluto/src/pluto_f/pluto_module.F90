@@ -364,6 +364,7 @@ function pluto_has_registered_resource(name)
     integer(c_int) :: has_resource
     has_resource = &
         & c_pluto_has_registered_resource(c_loc(name), len(name,kind=c_int))
+    pluto_has_registered_resource = (has_resource /= 0)
 end function
 
 function pluto_get_registered_resource(name) result(memory_resource)
