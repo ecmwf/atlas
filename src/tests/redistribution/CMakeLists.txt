@@ -44,4 +44,12 @@ ecbuild_add_test( TARGET atlas_test_redistribution_generic
   ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
 )
 
+ecbuild_add_test( TARGET atlas_test_redistribution_heterogeneous
+  SOURCES   test_redistribution_generic.cc
+  MPI       2
+  LIBS      atlas
+  CONDITION eckit_HAVE_MPI AND MPI_SLOTS GREATER_EQUAL 2
+  ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
+)
+
 endif()
