@@ -26,7 +26,7 @@
 #include "atlas/option.h"
 #include "atlas/util/Config.h"
 #include "atlas/util/function/VortexRollup.h"
-#include "atlas/util/function/SlottedCylinder_function.h"
+#include "atlas/util/function/SlottedCylinder.h"
 
 #include "tests/AtlasTestEnvironment.h"
 
