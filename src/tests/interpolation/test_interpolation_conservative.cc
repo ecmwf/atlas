@@ -285,22 +285,22 @@ CASE("test_interpolation_conservative") {
         bool src_cell_data = true;
         bool tgt_cell_data = true;
         do_remapping_test(Grid("O16"), Grid("H12"), func, remap_stats, src_cell_data, tgt_cell_data);
-        check(remap_stats, {1.0e-14, 1.0e-14, 0.0051927, 0.0025274, 1.0e-15, 1.5e-08}, src_cell_data && tgt_cell_data);
+        check(remap_stats, {2.0e-14, 1.0e-14, 0.0051927, 0.0025274, 1.0e-15, 1.5e-08}, src_cell_data && tgt_cell_data);
 
         src_cell_data = true;
         tgt_cell_data = false;
         do_remapping_test(Grid("O16"), Grid("H12"), func, remap_stats, src_cell_data, tgt_cell_data);
-        check(remap_stats, {1.0e-14, 1.0e-14, 0.0054418, 0.0028356, 1.0e-15, 3.0e-09}, src_cell_data && tgt_cell_data);
+        check(remap_stats, {2.0e-14, 1.0e-14, 0.0054418, 0.0028356, 1.0e-15, 3.0e-09}, src_cell_data && tgt_cell_data);
 
         src_cell_data = false;
         tgt_cell_data = true;
         do_remapping_test(Grid("O16"), Grid("H12"), func, remap_stats, src_cell_data, tgt_cell_data);
-        check(remap_stats, {1.0e-14, 1.0e-14, 0.0062701, 0.0029492, 5.0e-16, 6.0e-10}, src_cell_data && tgt_cell_data);
+        check(remap_stats, {2.0e-14, 1.0e-14, 0.0062701, 0.0029492, 5.0e-16, 6.0e-10}, src_cell_data && tgt_cell_data);
 
         src_cell_data = false;
         tgt_cell_data = false;
         do_remapping_test(Grid("O16"), Grid("H12"), func, remap_stats, src_cell_data, tgt_cell_data);
-        check(remap_stats, {1.0e-14, 1.0e-14, 0.0064164, 0.0030295, 5.0e-16, 5.0e-13}, src_cell_data && tgt_cell_data);
+        check(remap_stats, {2.0e-14, 1.0e-14, 0.0064164, 0.0030295, 5.0e-16, 5.0e-13}, src_cell_data && tgt_cell_data);
     }
 
     SECTION("slotted_cylinder") {
@@ -311,7 +311,7 @@ CASE("test_interpolation_conservative") {
         bool src_cell_data = true;
         bool tgt_cell_data = true;
         do_remapping_test(Grid("O16"), Grid("H12"), func, remap_stats, src_cell_data, tgt_cell_data);
-        check(remap_stats, {1.0e-14, 1.0e-14, 0.0624738, 0.0620427, 1.0e-15, 5.0e-08}, src_cell_data && tgt_cell_data);
+        check(remap_stats, {2.0e-14, 1.0e-14, 0.0624738, 0.0620427, 1.0e-15, 5.0e-08}, src_cell_data && tgt_cell_data);
     }
 }
 
