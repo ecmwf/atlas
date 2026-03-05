@@ -11,6 +11,7 @@
 #include "atlas/functionspace/FunctionSpace.h"
 #include "atlas/redistribution/detail/RedistributeGeneric.h"
 #include "atlas/redistribution/detail/RedistributionImplFactory.h"
+#include "atlas/runtime/Exception.h"
 
 
 namespace atlas {
@@ -26,7 +27,10 @@ Redistribution::Redistribution(const FunctionSpace& sourceFunctionSpace, const F
         config.get("heterogeneous_redistribution", isHeteroRedistString);
         bool isHeteroRedist = (isHeteroRedistString == "true");
 
-        if (!isHeteroRedist) {
+        if (isHeteroRedist) {
+            ATLAS_ASSERT_MSG(sourceFunctionSpace.type() == "NodeColumns", "Source FunctionSpace must be NodeColumns for heterogeneous redistribution.");
+            ATLAS_ASSERT_MSG(targetFunctionSpace.type() == "StructuredColumns", "Target FunctionSpace must be StructuredColumns for heterogeneous redistribution.");
+        } else {
             ATLAS_ASSERT(sourceFunctionSpace.type() == targetFunctionSpace.type());
         };
 

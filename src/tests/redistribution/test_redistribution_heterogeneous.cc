@@ -236,26 +236,29 @@ struct TestRedistributionPoints3 : public TestRedistribution<Value, 3> {
 CASE("Cubesphere to Gauss") {
     // Target function space (Default Gauss)
     const auto gauss_grid = Grid("O32");
-    const auto gauss_functionspace = functionspace::StructuredColumns(gauss_grid, util::Config("halo",2));
+    const auto gauss_functionspace = functionspace::StructuredColumns(gauss_grid);
 
     // Construct source function space (Cubespherey Gauss)
     const auto cubedsphere_grid = Grid("CS-LFR-14");
-    const auto cubedsphere_functionspace = functionspace::NodeColumns(cubedsphere_grid, util::Config("halo",2));
+    const auto cubedsphere_functionspace = functionspace::NodeColumns(cubedsphere_grid);
     atlas::StructuredMeshGenerator mesh_generator;
     const auto cubedsphere_partitioner =
         atlas::grid::MatchingPartitioner(cubedsphere_functionspace.mesh(), atlas::option::type("cubedsphere"));
     
     const auto cubedsphere_to_gauss_distribution = cubedsphere_partitioner.partition(gauss_grid);
     const auto cubedsphere_to_gauss_mesh = mesh_generator.generate(gauss_grid, cubedsphere_to_gauss_distribution);
-    const auto cubedsphere_to_gauss_functionspace = atlas::functionspace::NodeColumns(cubedsphere_to_gauss_mesh, util::Config("halo",2));
+    const auto cubedsphere_to_gauss_functionspace = atlas::functionspace::NodeColumns(cubedsphere_to_gauss_mesh);
 
-    // Fail to create redistribution from source to target
+    // Fail to create redistribution from source as default config used
     EXPECT_THROWS(atlas::Redistribution(cubedsphere_to_gauss_functionspace, gauss_functionspace));
 
+    // Fail to create redistribution as source and target wrong way around
+    const util::Config heterogeneousRedistributionConfig = util::Config("heterogeneous_redistribution", "true");
+    EXPECT_THROWS(atlas::Redistribution(gauss_functionspace, cubedsphere_to_gauss_functionspace, heterogeneousRedistributionConfig));
+
     // Succeed in creating redistribution from source to target
-    const util::Config succeedsRedistributionConfig = util::Config("heterogeneous_redistribution", "true");
     const auto succeedsRedistribution =
-        Redistribution(cubedsphere_to_gauss_functionspace, gauss_functionspace, succeedsRedistributionConfig);
+        Redistribution(cubedsphere_to_gauss_functionspace, gauss_functionspace, heterogeneousRedistributionConfig);
     
     // Test redistribution on doubles (rank 1, 2, 3), floats, ints, longs
     auto test1 = TestRedistributionPoints1<double>(cubedsphere_to_gauss_functionspace, gauss_functionspace, succeedsRedistribution);
