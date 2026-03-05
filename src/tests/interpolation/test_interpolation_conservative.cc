@@ -26,6 +26,7 @@
 #include "atlas/option.h"
 #include "atlas/util/Config.h"
 #include "atlas/util/function/VortexRollup.h"
+#include "atlas/util/function/SlottedCylinder_function.h"
 
 #include "tests/AtlasTestEnvironment.h"
 
@@ -36,7 +37,7 @@ namespace test {
 using ConservativeMethod = interpolation::method::ConservativeSphericalPolygonInterpolation;
 using Statistics         = ConservativeMethod::Statistics;
 using Metadata           = util::Metadata;
-enum RemapStats {CONS = 0, CONS_MFREE, CONS2, CONS2_MFREE, REMAPSTATS_SIZE};
+enum RemapStats {CONS = 0, CONS_MFREE, CONS2, CONS2_MFREE, CONS2_LIM, CONS2_MFREE_LIM, REMAPSTATS_SIZE};
 
 void do_remapping_test(Grid src_grid, Grid tgt_grid, std::function<double(const PointLonLat&)> func,
                        std::vector<Metadata>& remap_stats, bool src_cell_data, bool tgt_cell_data) {
@@ -56,13 +57,10 @@ void do_remapping_test(Grid src_grid, Grid tgt_grid, std::function<double(const 
     config.set("src_cell_data", src_cell_data);
     config.set("tgt_cell_data", tgt_cell_data);
     config.set("matrix_free", false);
-    if (src_cell_data && tgt_cell_data) {
-        config.set("limiter", "zeroslope");
-    }
+
     config.set("statistics.accuracy", true);
     auto conservative_interpolation = Interpolation(config, src_grid, tgt_grid);
-    Log::info() << conservative_interpolation << std::endl;
-    Log::info() << std::endl;
+    Log::info() << conservative_interpolation << std::endl << std::endl;
 
     const auto& src_fs = conservative_interpolation.source();
     const auto& tgt_fs = conservative_interpolation.target();
@@ -97,12 +95,27 @@ void do_remapping_test(Grid src_grid, Grid tgt_grid, std::function<double(const 
         config.set("order", 2);
         config.set("matrix_free", false);
         config.set("statistics.accuracy", true);
+        if (src_cell_data && tgt_cell_data) {
+            config.set("limiter", "none");
+        }
         conservative_interpolation = Interpolation(config, src_grid, tgt_grid);
         Log::info() << conservative_interpolation << std::endl;
         remap_stats[RemapStats::CONS2] = conservative_interpolation.execute(src_field, tgt_field);
         auto& consMethod_2 = dynamic_cast<ConservativeMethod&>(*conservative_interpolation.get());
         tgt_field.haloExchange();
         consMethod_2.statistics().compute_accuracy(conservative_interpolation, tgt_field, func, &remap_stats[RemapStats::CONS2]);
+        if (src_cell_data && tgt_cell_data) {
+            config.set("limiter", "zeroslope");
+            conservative_interpolation = Interpolation(config, src_grid, tgt_grid);
+            Log::info() << conservative_interpolation << std::endl;
+            remap_stats[RemapStats::CONS2_LIM] = conservative_interpolation.execute(src_field, tgt_field);
+            auto& consMethod_2 = dynamic_cast<ConservativeMethod&>(*conservative_interpolation.get());
+            tgt_field.haloExchange();
+            consMethod_2.statistics().compute_accuracy(conservative_interpolation, tgt_field, func, &remap_stats[RemapStats::CONS2_LIM]);
+        }
+        else {
+            // remap_stat[RemapStats::CONS2_LIM].reset
+        }
     }
     ATLAS_TRACE_SCOPE("2nd order projection matrix-free version") {
         config.set("order", 2);
@@ -114,6 +127,19 @@ void do_remapping_test(Grid src_grid, Grid tgt_grid, std::function<double(const 
         auto& consMethod_2 = dynamic_cast<ConservativeMethod&>(*conservative_interpolation.get());
         tgt_field.haloExchange();
         consMethod_2.statistics().compute_accuracy(conservative_interpolation, tgt_field, func, &remap_stats[RemapStats::CONS2_MFREE]);
+        if (src_cell_data && tgt_cell_data) {
+            config.set("limiter", "zeroslope");
+            conservative_interpolation = Interpolation(config, src_grid, tgt_grid);
+            Log::info() << conservative_interpolation << std::endl;
+            remap_stats[RemapStats::CONS2_MFREE_LIM] = conservative_interpolation.execute(src_field, tgt_field);
+            auto& consMethod_2 = dynamic_cast<ConservativeMethod&>(*conservative_interpolation.get());
+            tgt_field.haloExchange();
+            consMethod_2.statistics().compute_accuracy(conservative_interpolation, tgt_field, func, &remap_stats[RemapStats::CONS2_MFREE_LIM]);
+        }
+        else {
+            remap_stats[RemapStats::CONS2_MFREE_LIM].set("errors.to_exact_solution_sum", -1.);
+            remap_stats[RemapStats::CONS2_MFREE_LIM].set("errors.to_exact_solution_max", -1.);
+        }
     }
 
     ATLAS_TRACE_SCOPE("test caching") {
@@ -182,10 +208,12 @@ void do_remapping_test(Grid src_grid, Grid tgt_grid, std::function<double(const 
     }
 }
 
-void check(const std::vector<Metadata>& remap_stat, std::array<double, 6> tol) {
+void check(const std::vector<Metadata>& remap_stat, std::array<double, 6> tol, bool cell_data) {
     double err_mv;
     double err_mf;
-    // check polygon intersections
+    double err_mv_lim;
+    double err_mf_lim;
+
     remap_stat[RemapStats::CONS].get("errors.sum_src_areas_minus_sum_tgt_areas", err_mv);
     Log::info() << "Polygon area computation (new < ref)            =  (" << err_mv << " < " << tol[0] << ")" << std::endl;
     EXPECT(err_mv < tol[0]);
@@ -208,6 +236,14 @@ void check(const std::vector<Metadata>& remap_stat, std::array<double, 6> tol) {
     Log::info() << "2nd order matrix-free accuracy (new < ref)      =  (" << std::abs(err_mf) << " < " << tol[3] << ")" << std::endl;
     Log::info() << "                    |matrix - matrix_free|      =   " << std::abs(err_mv - err_mf) << std::endl;
     EXPECT(std::abs(err_mf) < tol[3]);
+    if (cell_data) {
+        remap_stat[RemapStats::CONS2_LIM].get("errors.to_exact_solution_sum", err_mv_lim);
+        Log::info() << "2nd order lim. matrix-ver. accuracy (new < ref) =  (" << std::abs(err_mv_lim) << " < " << tol[3] << ")" << std::endl;
+        Log::info() << "          |lim. matrix-ver. - matrix_ver.|      =   " << std::abs(err_mv_lim - err_mv) << std::endl;
+        remap_stat[RemapStats::CONS2_MFREE_LIM].get("errors.to_exact_solution_sum", err_mf_lim);
+        Log::info() << "2nd order lim. matrix-free accuracy (new < ref) =  (" << std::abs(err_mf_lim) << " < " << tol[3] << ")" << std::endl;
+        Log::info() << "          |lim. matrix_free - matrix_free|      =   " << std::abs(err_mf - err_mf_lim) << std::endl;
+    }
 
     remap_stat[RemapStats::CONS].get("errors.conservation", err_mv);
     Log::info() << "\n1st order conservation (new < ref)              =  (" << std::abs(err_mv) << " < " << tol[4] << ")" << std::endl;
@@ -232,7 +268,7 @@ CASE("test_interpolation_conservative") {
         bool src_cell_data = true;
         bool tgt_cell_data = true;
         do_remapping_test(Grid("O32"), Grid("H12"), func, remap_stats, src_cell_data, tgt_cell_data);
-        check(remap_stats, {1.0e-13, 1.0e-13, 1.0e-13, 1.0e-13, 1.0e-13, 1.0e-13});
+        check(remap_stats, {1.0e-13, 1.0e-13, 1.0e-13, 1.0e-13, 1.0e-13, 1.0e-13}, src_cell_data && tgt_cell_data);
     }
 
     SECTION("vortex_rollup") {
@@ -243,22 +279,33 @@ CASE("test_interpolation_conservative") {
         bool src_cell_data = true;
         bool tgt_cell_data = true;
         do_remapping_test(Grid("O16"), Grid("H12"), func, remap_stats, src_cell_data, tgt_cell_data);
-        check(remap_stats, {1.0e-14, 1.0e-14, 0.0051927, 0.0025274, 1.0e-15, 1.5e-08});
+        check(remap_stats, {1.0e-14, 1.0e-14, 0.0051927, 0.0025274, 1.0e-15, 1.5e-08}, src_cell_data && tgt_cell_data);
 
         src_cell_data = true;
         tgt_cell_data = false;
         do_remapping_test(Grid("O16"), Grid("H12"), func, remap_stats, src_cell_data, tgt_cell_data);
-        check(remap_stats, {1.0e-14, 1.0e-14, 0.0054418, 0.0028356, 1.0e-15, 3.0e-09});
+        check(remap_stats, {1.0e-14, 1.0e-14, 0.0054418, 0.0028356, 1.0e-15, 3.0e-09}, src_cell_data && tgt_cell_data);
 
         src_cell_data = false;
         tgt_cell_data = true;
         do_remapping_test(Grid("O16"), Grid("H12"), func, remap_stats, src_cell_data, tgt_cell_data);
-        check(remap_stats, {1.0e-14, 1.0e-14, 0.0062701, 0.0029492, 5.0e-16, 6.0e-10});
+        check(remap_stats, {1.0e-14, 1.0e-14, 0.0062701, 0.0029492, 5.0e-16, 6.0e-10}, src_cell_data && tgt_cell_data);
 
         src_cell_data = false;
         tgt_cell_data = false;
         do_remapping_test(Grid("O16"), Grid("H12"), func, remap_stats, src_cell_data, tgt_cell_data);
-        check(remap_stats, {1.0e-14, 1.0e-14, 0.0064164, 0.0030295, 5.0e-16, 5.0e-13});
+        check(remap_stats, {1.0e-14, 1.0e-14, 0.0064164, 0.0030295, 5.0e-16, 5.0e-13}, src_cell_data && tgt_cell_data);
+    }
+
+    SECTION("slotted_cylinder") {
+        auto func = [](const PointLonLat& p) {
+            return util::function::SlottedCylinder(p[0], p[1]);
+        };
+
+        bool src_cell_data = true;
+        bool tgt_cell_data = true;
+        do_remapping_test(Grid("O16"), Grid("H12"), func, remap_stats, src_cell_data, tgt_cell_data);
+        check(remap_stats, {1.0e-14, 1.0e-14, 0.0624738, 0.0620427, 1.0e-15, 5.0e-08}, src_cell_data && tgt_cell_data);
     }
 }
 
