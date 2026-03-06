@@ -64,6 +64,8 @@ extern memory_tracker device;
 extern memory_tracker device_pool;
 extern memory_tracker managed;
 extern memory_tracker managed_pool;
+extern memory_tracker mpi;
+extern memory_tracker mpi_pool;
 
 std::string report();
 std::string report(std::string_view prefix);

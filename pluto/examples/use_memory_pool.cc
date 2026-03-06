@@ -40,7 +40,7 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char* argv[]) {
 
     pluto::host::set_default_resource( pluto::pinned_pool_resource() );
     // This can also be set with environment variable:
-    //     export PLUTO_HOST_DEFAULT_MEMORY_RESOURCE=pluto::host_pool_resource
+    //     export PLUTO_HOST_MEMORY_RESOURCE=pluto::host_pool_resource
 
     auto test = [&](std::size_t size, std::size_t n = 1) {
         auto var_name = [](int k) {

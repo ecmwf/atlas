@@ -19,6 +19,7 @@
 #include "pluto/memory_resource/ManagedMemoryResource.h"
 #include "pluto/memory_resource/MemoryPoolResource.h"
 #include "pluto/memory_resource/MemoryResourceAdaptor.h"
+#include "pluto/memory_resource/MPIMemoryResource.h"
 #include "pluto/memory_resource/PinnedMemoryResource.h"
 #include "pluto/memory_resource/TraceMemoryResource.h"
 

@@ -106,6 +106,8 @@ memory_tracker device("device");
 memory_tracker device_pool("device_pool");
 memory_tracker managed("managed");
 memory_tracker managed_pool("managed_pool");
+memory_tracker mpi("mpi");
+memory_tracker mpi_pool("mpi_pool");
 
 
 std::string report(std::string_view prefix) {
@@ -128,6 +130,8 @@ std::string report(std::string_view prefix) {
         &device_pool,
         &managed,
         &managed_pool,
+        &mpi,
+        &mpi_pool,
     };
 
     int first_colwidth = 25;
@@ -178,6 +182,9 @@ std::string report(std::string_view prefix) {
         }
         else if (mem->name().find("managed_pool") != std::string::npos) {
             out << std::setw(colwidth) << format_bytes(pluto::managed_pool_resource()->capacity());
+        }
+        else if (mem->name().find("mpi_pool") != std::string::npos) {
+            out << std::setw(colwidth) << format_bytes(pluto::mpi_pool_resource()->capacity());
         }
         else {
             out << std::setw(colwidth) << "-";

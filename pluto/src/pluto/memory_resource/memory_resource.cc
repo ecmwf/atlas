@@ -18,6 +18,7 @@
 #include <cstdlib>
 #include "DeviceMemoryResource.h"
 #include "ManagedMemoryResource.h"
+#include "MPIMemoryResource.h"
 #include "PinnedMemoryResource.h"
 #include "HostMemoryResource.h"
 #include "pluto/device/MemoryResource.h"
@@ -45,6 +46,8 @@ private:
         register_resource("device", device_resource()); // alias
         register_resource("pluto::managed_resource", managed_resource());
         register_resource("managed", managed_resource()); // alias
+        register_resource("pluto::mpi_resource", mpi_resource());
+        register_resource("mpi", mpi_resource());
         register_resource("pluto::host_pool_resource", host_pool_resource());
         register_resource("host_pool", host_pool_resource()); // alias
         register_resource("pluto::pinned_pool_resource", pinned_pool_resource());
@@ -53,6 +56,8 @@ private:
         register_resource("device_pool", device_pool_resource()); // alias
         register_resource("pluto::managed_pool_resource", managed_pool_resource());
         register_resource("managed_pool", managed_pool_resource()); // alias
+        register_resource("pluto::mpi_pool_resource", mpi_pool_resource());
+        register_resource("mpi_pool", mpi_pool_resource());
     }
 
 public:

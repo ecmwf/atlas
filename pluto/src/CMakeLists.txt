@@ -66,6 +66,8 @@ ecbuild_add_library( TARGET pluto
     pluto/memory_resource/MemoryPoolResource.cc
     pluto/memory_resource/MemoryPoolResource.h
     pluto/memory_resource/MemoryResourceAdaptor.h
+    pluto/memory_resource/MPIMemoryResource.cc
+    pluto/memory_resource/MPIMemoryResource.h
     pluto/memory_resource/PinnedMemoryResource.cc
     pluto/memory_resource/PinnedMemoryResource.h
     pluto/memory_resource/TraceMemoryResource.cc
@@ -109,6 +111,10 @@ ecbuild_add_library( TARGET pluto
   PUBLIC_INCLUDES
       $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
       $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>
+  PRIVATE_LIBS
+      $<${HAVE_MPI}:MPI::MPI_C>
+  PRIVATE_DEFINITIONS
+      PLUTO_HAVE_MPI=${HAVE_MPI}
 )
 
 target_compile_features( pluto INTERFACE cxx_std_17 )
