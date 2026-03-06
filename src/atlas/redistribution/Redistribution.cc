@@ -21,19 +21,6 @@ Redistribution::Redistribution(): Handle(){};
 Redistribution::Redistribution(const FunctionSpace& sourceFunctionSpace, const FunctionSpace& targetFunctionSpace,
                                const util::Config& config):
     Handle([&]() -> redistribution::detail::RedistributionImpl* {
-        // If no heterogeneous_redistribution config is set, or if it is not set to "true", assert that
-        // the source and target function spaces are the same type (default)
-        std::string isHeteroRedistString = "false";
-        config.get("heterogeneous_redistribution", isHeteroRedistString);
-        bool isHeteroRedist = (isHeteroRedistString == "true");
-
-        if (isHeteroRedist) {
-            ATLAS_ASSERT_MSG(sourceFunctionSpace.type() == "NodeColumns", "Source FunctionSpace must be NodeColumns for heterogeneous redistribution.");
-            ATLAS_ASSERT_MSG(targetFunctionSpace.type() == "StructuredColumns", "Target FunctionSpace must be StructuredColumns for heterogeneous redistribution.");
-        } else {
-            ATLAS_ASSERT(sourceFunctionSpace.type() == targetFunctionSpace.type());
-        };
-
         std::string type = redistribution::detail::RedistributeGeneric::static_type();
         config.get("type", type);
 
