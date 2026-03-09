@@ -149,15 +149,15 @@ void SphericalVector::do_execute(const Field& sourceField, Field& targetField,
                                  Metadata&) const {
   ATLAS_TRACE("atlas::interpolation::method::SphericalVector::do_execute()");
 
-  if (targetField.size() == 0) {
-    return;
-  }
-
   const auto fieldType = sourceField.metadata().getString("type", "");
   if (fieldType != "vector") {
     auto metadata = Metadata();
     Method::do_execute(sourceField, targetField, metadata);
+    return;
+  }
 
+  if (targetField.size() == 0) {
+    haloExchange(sourceField);
     return;
   }
 
@@ -193,15 +193,15 @@ void SphericalVector::do_execute_adjoint(Field& sourceField,
   ATLAS_TRACE(
       "atlas::interpolation::method::SphericalVector::do_execute_adjoint()");
 
-  if (targetField.size() == 0) {
-    return;
-  }
-
   const auto fieldType = sourceField.metadata().getString("type", "");
   if (fieldType != "vector") {
     auto metadata = Metadata();
     Method::do_execute_adjoint(sourceField, targetField, metadata);
+    return;
+  }
 
+  if (targetField.size() == 0) {
+    adjointHaloExchange(sourceField);
     return;
   }
 
