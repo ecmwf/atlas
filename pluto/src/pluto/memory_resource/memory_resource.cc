@@ -32,16 +32,27 @@ private:
         std::cout << "Registering pluto resources" << std::endl;
 #endif
         auto register_resource = [](std::string_view name, memory_resource* mr) { Registry<memory_resource>::instance().enregister(name, *mr); };
+
         register_resource("pluto::null_memory_resource", null_memory_resource());
+        register_resource("null", null_memory_resource()); // alias
         register_resource("pluto::new_delete_resource", new_delete_resource());
+        register_resource("new_delete", new_delete_resource()); // alias
         register_resource("pluto::host_resource", host_resource());
+        register_resource("host", host_resource()); // alias
         register_resource("pluto::pinned_resource", pinned_resource());
+        register_resource("pinned", pinned_resource()); // alias
         register_resource("pluto::device_resource", device_resource());
+        register_resource("device", device_resource()); // alias
         register_resource("pluto::managed_resource", managed_resource());
+        register_resource("managed", managed_resource()); // alias
         register_resource("pluto::host_pool_resource", host_pool_resource());
+        register_resource("host_pool", host_pool_resource()); // alias
         register_resource("pluto::pinned_pool_resource", pinned_pool_resource());
+        register_resource("pinned_pool", pinned_pool_resource()); // alias
         register_resource("pluto::device_pool_resource", device_pool_resource());
+        register_resource("device_pool", device_pool_resource()); // alias
         register_resource("pluto::managed_pool_resource", managed_pool_resource());
+        register_resource("managed_pool", managed_pool_resource()); // alias
     }
 
 public:

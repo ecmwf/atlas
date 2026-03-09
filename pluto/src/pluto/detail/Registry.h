@@ -59,7 +59,7 @@ public:
             ordered_keys_.erase(std::find(ordered_keys_.begin(), ordered_keys_.end(), key));
         }
         if (trace::enabled()) {
-            trace::out << "PLUTO_TRACE unregistered " << name << std::endl;
+            trace::out << "PLUTO_TRACE pluto::Registry<pluto::memory_resource> unregistered \"" << name << "\"" << std::endl;
         }
     }
 
@@ -94,7 +94,7 @@ private:
         for (auto it = ordered_keys_.rbegin(); it != ordered_keys_.rend(); ++it) {
             auto& key = *it;
             if (trace::enabled()) {
-                trace::out << "PLUTO_TRACE ~Registry() : Deleting owned " << key << std::endl;
+                trace::out << "PLUTO_TRACE pluto::Registry<pluto::memory_resource>() : Deleting owned \"" << key << "\"" << std::endl;
             }
             owned_.erase(key);
         }
@@ -105,7 +105,8 @@ private:
     }
 
     value_type& do_register(std::string_view name, value_type& mr) {
-        if (do_has(mr)) {
+        bool alias = do_has(mr);
+        if (alias) {
             original_name_[std::string(name)] = std::string(do_name(&mr));
         }
         else {
@@ -116,7 +117,12 @@ private:
             throw std::runtime_error("Could not register " + std::string(name));
         }
         if (trace::enabled()) {
-            trace::out << "PLUTO_TRACE registered " << name << std::endl;
+            if (alias) {
+                trace::out << "PLUTO_TRACE pluto::Registry<pluto::memory_resource> registered alias \"" << name << "\" -> \"" << original_name_[std::string(name)] << "\"" << std::endl;
+            }
+            else {
+                trace::out << "PLUTO_TRACE pluto::Registry<pluto::memory_resource> registered \"" << name << "\"" << std::endl;
+            }
         }
         return mr;
     }

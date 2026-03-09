@@ -11,6 +11,7 @@
 #include "MemoryResource.h"
 
 #include <cstdlib>
+#include <iostream>
 
 #include "pluto/memory_resource.h"
 #include "pluto/memory_resource/HostMemoryResource.h"
@@ -30,7 +31,14 @@ memory_resource* get_default_resource() {
     if (default_ == nullptr) {
         default_ = host_resource();
         if (const auto* env = std::getenv("PLUTO_HOST_MEMORY_RESOURCE")) {
-            default_ = get_registered_resource(env);
+            try {
+                default_ = get_registered_resource(env);
+            }
+            catch (const std::exception& e) {
+                std::cerr << "Error: PLUTO_HOST_MEMORY_RESOURCE environment variable is set to '" << env
+                          << "' but no such resource is registered. Exception: " << e.what() << std::endl;
+                throw;
+            }
         }
     }
     return default_;
