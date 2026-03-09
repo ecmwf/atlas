@@ -1,0 +1,148 @@
+! (C) Copyright 2016- ECMWF.
+!
+! This software is licensed under the terms of the Apache Licence Version 2.0
+! which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
+! In applying this licence, ECMWF does not waive the privileges and immunities
+! granted to it by virtue of its status as an intergovernmental organisation nor
+! does it submit to any jurisdiction.
+
+module pluto_module_allocate_deallocate
+! This is a separate module which is used by pluto_module to implement the allocation and deallocation procedures
+! which use the C memory resource interface.
+
+use, intrinsic :: iso_c_binding, only : c_loc, c_ptr, c_int, c_size_t, c_null_ptr, c_double, c_float, &
+                                      & c_int32_t, c_int64_t, c_f_pointer, c_associated, c_f_pointer
+use pluto_module_memory_resource, only : pluto_memory_resource, pluto_get_label, pluto_set_label
+implicit none
+private
+
+#:set ranks  = [1,2,3,4,5]
+#:set dim    = ['',':',':,:',':,:,:',':,:,:,:',':,:,:,:,:']
+#:set ftypes = ['integer(c_int32_t)','integer(c_int64_t)','real(c_float)','real(c_double)']
+#:set dtypes = ['int32','int64','real32','real64']
+#:set sizeof_dtypes = ['4','8','4','8']
+
+public :: pluto_allocate, pluto_deallocate
+
+interface pluto_allocate
+#:for rank in ranks
+#:for dtype in dtypes
+    module procedure pluto_allocate_${dtype}$_r${rank}$_bounds
+    module procedure pluto_allocate_${dtype}$_r${rank}$_shape
+    module procedure pluto_allocate_label_${dtype}$_r${rank}$_bounds
+    module procedure pluto_allocate_label_${dtype}$_r${rank}$_shape
+#:endfor
+#:endfor
+end interface
+
+interface pluto_deallocate
+#:for rank in ranks
+#:for dtype in dtypes
+    module procedure pluto_deallocate_${dtype}$_r${rank}$
+    module procedure pluto_deallocate_label_${dtype}$_r${rank}$
+#:endfor
+#:endfor
+end interface
+
+contains
+
+function array_size(lbounds, ubounds) result(num)
+    implicit none
+    integer(c_int), intent(in) :: lbounds(:)
+    integer(c_int), intent(in) :: ubounds(:)
+    integer(c_int) :: num
+    integer(c_int) :: shape(size(lbounds))
+    shape = ubounds - lbounds + 1
+    num = product(shape)
+end function
+
+#:for rank in ranks
+#:for dtype,ftype,sizeof_dtype in zip(dtypes, ftypes, sizeof_dtypes)
+
+subroutine pluto_allocate_${dtype}$_r${rank}$_bounds(array, lbounds, ubounds, resource)
+    implicit none
+    ${ftype}$, pointer, intent(inout) :: array(${dim[rank]}$)
+    integer(c_int), intent(in) :: lbounds(${rank}$)
+    integer(c_int), intent(in) :: ubounds(${rank}$)
+    type(pluto_memory_resource), intent(in) :: resource
+    type(c_ptr) :: mem
+    integer(c_size_t) :: bytes
+    integer(c_int) :: shape(${rank}$)
+    ${ftype}$, pointer :: array_standard_bounds(${dim[rank]}$)
+    shape = ubounds - lbounds + 1
+    bytes = array_size(lbounds, ubounds) * ${sizeof_dtype}$
+    if (bytes > 0) then
+        call resource%allocate(mem, bytes)
+        call c_f_pointer(mem, array_standard_bounds, shape)
+        array(${ ', '.join (map (lambda i: 'lbounds(' + str(i) + '):', range (1, rank+1))) }$) => array_standard_bounds(${dim[rank]}$)
+    else
+        nullify(array)
+    endif
+end subroutine
+
+subroutine pluto_allocate_${dtype}$_r${rank}$_shape(array, shape, resource)
+    ${ftype}$, pointer, intent(inout) :: array(${dim[rank]}$)
+    integer(c_int), intent(in) :: shape(${rank}$)
+    type(pluto_memory_resource), intent(in) :: resource
+    integer(c_int) :: standard_lbounds(${rank}$)
+    standard_lbounds = 1
+    call pluto_allocate_${dtype}$_r${rank}$_bounds(array, standard_lbounds, shape, resource)
+end subroutine
+
+subroutine pluto_allocate_label_${dtype}$_r${rank}$_bounds(label, array, lbounds, ubounds, resource)
+    implicit none
+    character(len=*), intent(in) :: label
+    ${ftype}$, pointer, intent(inout) :: array(${dim[rank]}$)
+    integer(c_int), intent(in) :: lbounds(${rank}$)
+    integer(c_int), intent(in) :: ubounds(${rank}$)
+    type(pluto_memory_resource), intent(in) :: resource
+    character(len=:), allocatable :: previous_label
+    previous_label = pluto_get_label()
+    call pluto_set_label(label)
+    call pluto_allocate_${dtype}$_r${rank}$_bounds(array, lbounds, ubounds, resource)
+    call pluto_set_label(previous_label)
+end subroutine
+
+subroutine pluto_allocate_label_${dtype}$_r${rank}$_shape(label, array, shape, resource)
+    implicit none
+    character(len=*), intent(in) :: label
+    ${ftype}$, pointer, intent(inout) :: array(${dim[rank]}$)
+    integer(c_int), intent(in) :: shape(${rank}$)
+    type(pluto_memory_resource), intent(in) :: resource
+    character(len=:), allocatable :: previous_label
+    previous_label = pluto_get_label()
+    call pluto_set_label(label)
+    call pluto_allocate_${dtype}$_r${rank}$_shape(array, shape, resource)
+    call pluto_set_label(previous_label)
+end subroutine
+
+subroutine pluto_deallocate_${dtype}$_r${rank}$(array, resource)
+    implicit none
+    ${ftype}$, pointer, intent(inout) :: array(${dim[rank]}$)
+    type(pluto_memory_resource), intent(in) :: resource
+    type(c_ptr) :: mem
+    integer(c_size_t) :: bytes
+    bytes = size(array) * ${sizeof_dtype}$
+    if (bytes > 0) then
+        mem = c_loc(array(${ ', '.join (map (lambda i: 'lbound(array,' + str(i) + ')', range (1, rank+1))) }$))
+        call resource%deallocate(mem, bytes)
+    endif
+    nullify(array)
+end subroutine
+
+subroutine pluto_deallocate_label_${dtype}$_r${rank}$(label, array, resource)
+    implicit none
+    character(len=*), intent(in) :: label
+    ${ftype}$, pointer, intent(inout) :: array(${dim[rank]}$)
+    type(pluto_memory_resource), intent(in) :: resource
+    character(len=:), allocatable :: previous_label
+    previous_label = pluto_get_label()
+    call pluto_set_label(label)
+    call pluto_deallocate_${dtype}$_r${rank}$(array, resource)
+    call pluto_set_label(previous_label)
+end subroutine
+
+#:endfor
+#:endfor
+
+end module

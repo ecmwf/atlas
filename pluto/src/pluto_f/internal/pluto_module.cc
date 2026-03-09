@@ -1,7 +1,22 @@
+/*
+ * (C) Copyright 2026- ECMWF.
+ *
+ * This software is licensed under the terms of the Apache Licence Version 2.0
+ * which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
+ * In applying this licence, ECMWF does not waive the privileges and immunities
+ * granted to it by virtue of its status as an intergovernmental organisation
+ * nor does it submit to any jurisdiction.
+ */
+
 #include <cstddef>
 #include <string_view>
 
 #include "pluto/pluto.h"
+
+namespace pluto {
+    void mpi_init();
+    void mpi_finalize();
+}
 
 extern "C" {
 void c_pluto_host_set_default_resource_name(const char* name, int name_size) {
@@ -27,6 +42,20 @@ void c_pluto_trace_enable(int enable) {
 }
 int c_pluto_trace_enabled() {
     return pluto::trace::enabled();
+}
+
+void c_pluto_set_label(const char* label, int label_size) {
+    pluto::set_label(std::string_view{label, static_cast<std::size_t>(label_size)});
+}
+
+void c_pluto_unset_label() {
+    pluto::unset_label();
+}
+
+void c_pluto_get_label(const char* &label, int& label_size) {
+    std::string_view _label = pluto::get_label();
+    label = _label.data();
+    label_size = _label.size();
 }
 
 pluto::memory_resource* c_pluto_host_get_default_resource() {
@@ -106,6 +135,9 @@ pluto::memory_resource* c_pluto_device_resource() {
 pluto::memory_resource* c_pluto_managed_resource() {
     return pluto::managed_resource();
 }
+pluto::memory_resource* c_pluto_mpi_resource() {
+    return pluto::mpi_resource();
+}
 pluto::memory_pool_resource* c_pluto_host_pool_resource() {
     return pluto::host_pool_resource();
 }
@@ -118,8 +150,24 @@ pluto::memory_pool_resource* c_pluto_device_pool_resource() {
 pluto::memory_pool_resource* c_pluto_managed_pool_resource() {
     return pluto::managed_pool_resource();
 }
+pluto::memory_pool_resource* c_pluto_mpi_pool_resource() {
+    return pluto::mpi_pool_resource();
+}
 int c_pluto_devices() {
     return pluto::devices();
+}
+void c_pluto_mpi_init() {
+    pluto::mpi_init();
+}
+void c_pluto_mpi_finalize() {
+    pluto::mpi_finalize();
+}
+
+void c_pluto_register_memory_resource_adaptor(const char* name, int name_size, void* allocate_fn, void* deallocate_fn) {
+    auto allocate = reinterpret_cast<void* (*)(std::size_t, std::size_t)>(allocate_fn);
+    auto deallocate = reinterpret_cast<void (*)(void*, std::size_t, std::size_t)>(deallocate_fn);
+    pluto::register_resource(std::string_view{name, static_cast<std::size_t>(name_size)},
+        std::make_unique<pluto::MemoryResourceAdaptor>(allocate, deallocate));
 }
 
 }

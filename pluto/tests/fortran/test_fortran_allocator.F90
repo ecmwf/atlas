@@ -21,6 +21,7 @@ subroutine run_allocate(allocator)
     integer, parameter :: wp = c_float
     real(wp), pointer :: array1d(:), array2d(:,:), array3d(:,:,:), array4d(:,:,:,:)
 
+    ! with shape
     call allocator%allocate(array1d, [20])
     call allocator%deallocate(array1d)
 
@@ -32,6 +33,20 @@ subroutine run_allocate(allocator)
 
     call allocator%allocate(array4d, [5,2,3,6])
     call allocator%deallocate(array4d)
+
+    ! with lbounds and ubounds
+    call allocator%allocate(array1d, lbounds=[0], ubounds=[19])
+    call allocator%deallocate(array1d)
+
+    call allocator%allocate(array2d, lbounds=[0,2], ubounds=[4,5])
+    call allocator%deallocate(array2d)
+
+    call allocator%allocate(array3d, lbounds=[1,0,2], ubounds=[4,2,5])
+    call allocator%deallocate(array3d)
+
+    call allocator%allocate(array4d, lbounds=[1,0,0,2], ubounds=[4,1,2,5])
+    call allocator%deallocate(array4d)
+
 end subroutine
 
 end program

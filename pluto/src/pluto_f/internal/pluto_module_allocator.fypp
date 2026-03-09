@@ -1,0 +1,139 @@
+! (C) Copyright 2016- ECMWF.
+!
+! This software is licensed under the terms of the Apache Licence Version 2.0
+! which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
+! In applying this licence, ECMWF does not waive the privileges and immunities
+! granted to it by virtue of its status as an intergovernmental organisation nor
+! does it submit to any jurisdiction.
+
+module pluto_module_allocator
+
+use, intrinsic :: iso_c_binding, only : c_loc, c_ptr, c_int, c_size_t, c_null_ptr, c_double, c_float, &
+                                      & c_int32_t, c_int64_t, c_f_pointer, c_associated
+use pluto_module_abort, only : &
+    pluto_abort
+use pluto_module_memory_resource, only : &
+    pluto_memory_resource, &
+    pluto_get_registered_resource
+use pluto_module_allocate_deallocate, only : &
+    pluto_allocate, &
+    pluto_deallocate
+
+implicit none
+private
+
+#:set ranks  = [1,2,3,4,5]
+#:set dim    = ['',':',':,:',':,:,:',':,:,:,:',':,:,:,:,:']
+#:set ftypes = ['integer(c_int32_t)','integer(c_int64_t)','real(c_float)','real(c_double)']
+#:set dtypes = ['int32','int64','real32','real64']
+
+public :: pluto_allocator
+public :: pluto_make_allocator
+
+type pluto_allocator
+    type(pluto_memory_resource) :: memory_resource
+contains
+
+#:for rank in ranks
+#:for dtype in dtypes
+    procedure, private :: pluto_allocator_allocate_${dtype}$_r${rank}$_shape
+    procedure, private :: pluto_allocator_allocate_${dtype}$_r${rank}$_bounds
+    procedure, private :: pluto_allocator_allocate_label_${dtype}$_r${rank}$_shape
+    procedure, private :: pluto_allocator_allocate_label_${dtype}$_r${rank}$_bounds
+
+    generic, public :: allocate => &
+        & pluto_allocator_allocate_${dtype}$_r${rank}$_shape, &
+        & pluto_allocator_allocate_${dtype}$_r${rank}$_bounds, &
+        & pluto_allocator_allocate_label_${dtype}$_r${rank}$_shape, &
+        & pluto_allocator_allocate_label_${dtype}$_r${rank}$_bounds
+
+    procedure, private :: pluto_allocator_deallocate_${dtype}$_r${rank}$
+    procedure, private :: pluto_allocator_deallocate_label_${dtype}$_r${rank}$
+
+    generic, public :: deallocate => &
+        & pluto_allocator_deallocate_${dtype}$_r${rank}$, &
+        & pluto_allocator_deallocate_label_${dtype}$_r${rank}$
+#:endfor
+#:endfor
+end type
+
+interface pluto_make_allocator
+    module procedure pluto_make_allocator_type
+    module procedure pluto_make_allocator_name
+end interface
+
+contains
+
+subroutine assert_allocator_is_setup(allocator)
+    type(pluto_allocator) :: allocator
+    if (.not. c_associated(allocator%memory_resource%c_memory_resource)) then
+        call pluto_abort("pluto_allocator has not been assigned or setup properly.&
+          & Please ensure that the allocator is created by pluto%make_allocator or&
+          & pluto%{host,device}%make_allocator.")
+    endif
+end subroutine
+
+function pluto_make_allocator_type(resource) result(allocator)
+    type(pluto_allocator) :: allocator
+    type(pluto_memory_resource) :: resource
+    allocator%memory_resource%c_memory_resource = resource%c_memory_resource
+end function
+
+function pluto_make_allocator_name(resource) result(allocator)
+    type(pluto_allocator) :: allocator
+    character(len=*), target, intent(in) :: resource
+    allocator%memory_resource = pluto_get_registered_resource(resource)
+end function
+
+
+#:for rank in ranks
+#:for dtype, ftype in zip(dtypes, ftypes)
+subroutine pluto_allocator_allocate_${dtype}$_r${rank}$_bounds(this, array, lbounds, ubounds)
+    class(pluto_allocator) :: this
+    ${ftype}$, pointer, intent(inout) :: array(${dim[rank]}$)
+    integer(c_int), intent(in) :: lbounds(${rank}$)
+    integer(c_int), intent(in) :: ubounds(${rank}$)
+    call assert_allocator_is_setup(this)
+    call pluto_allocate(array, lbounds, ubounds, this%memory_resource)
+end subroutine
+subroutine pluto_allocator_allocate_${dtype}$_r${rank}$_shape(this, array, shape)
+    class(pluto_allocator) :: this
+    ${ftype}$, pointer, intent(inout) :: array(${dim[rank]}$)
+    integer(c_int), intent(in) :: shape(${rank}$)
+    call assert_allocator_is_setup(this)
+    call pluto_allocate(array, shape, this%memory_resource)
+end subroutine
+subroutine pluto_allocator_allocate_label_${dtype}$_r${rank}$_bounds(this, label, array, lbounds, ubounds)
+    class(pluto_allocator) :: this
+    character(len=*), intent(in) :: label
+    ${ftype}$, pointer, intent(inout) :: array(${dim[rank]}$)
+    integer(c_int), intent(in) :: lbounds(${rank}$)
+    integer(c_int), intent(in) :: ubounds(${rank}$)
+    call assert_allocator_is_setup(this)
+    call pluto_allocate(label, array, lbounds, ubounds, this%memory_resource)
+end subroutine
+subroutine pluto_allocator_allocate_label_${dtype}$_r${rank}$_shape(this, label, array, shape)
+    class(pluto_allocator) :: this
+    character(len=*), intent(in) :: label
+    ${ftype}$, pointer, intent(inout) :: array(${dim[rank]}$)
+    integer(c_int), intent(in) :: shape(${rank}$)
+    call assert_allocator_is_setup(this)
+    call pluto_allocate(label, array, shape, this%memory_resource)
+end subroutine
+subroutine pluto_allocator_deallocate_${dtype}$_r${rank}$(this, array)
+    class(pluto_allocator) :: this
+    ${ftype}$, pointer, intent(inout) :: array(${dim[rank]}$)
+    call assert_allocator_is_setup(this)
+    call pluto_deallocate(array, this%memory_resource)
+end subroutine
+subroutine pluto_allocator_deallocate_label_${dtype}$_r${rank}$(this, label, array)
+    class(pluto_allocator) :: this
+    character(len=*), intent(in) :: label
+    ${ftype}$, pointer, intent(inout) :: array(${dim[rank]}$)
+    call assert_allocator_is_setup(this)
+    call pluto_deallocate(label, array, this%memory_resource)
+end subroutine
+#:endfor
+#:endfor
+
+end module
