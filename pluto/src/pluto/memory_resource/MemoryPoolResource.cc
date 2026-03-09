@@ -352,7 +352,7 @@ void MemoryPoolResource::do_release() {
     }
 #endif
     if (name_.size() && trace::enabled()) {
-        trace::out << name_ << "::release()" << std::endl;
+        trace::out << "PLUTO_TRACE " << name_ << "::release()" << std::endl;
     }
     pools_.clear();
 }

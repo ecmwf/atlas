@@ -59,7 +59,7 @@ public:
             ordered_keys_.erase(std::find(ordered_keys_.begin(), ordered_keys_.end(), key));
         }
         if (trace::enabled()) {
-            trace::out << "unregistered " << name << std::endl;
+            trace::out << "PLUTO_TRACE unregistered " << name << std::endl;
         }
     }
 
@@ -94,7 +94,7 @@ private:
         for (auto it = ordered_keys_.rbegin(); it != ordered_keys_.rend(); ++it) {
             auto& key = *it;
             if (trace::enabled()) {
-                trace::out << "~Registry() : Deleting owned " << key << std::endl;
+                trace::out << "PLUTO_TRACE ~Registry() : Deleting owned " << key << std::endl;
             }
             owned_.erase(key);
         }
@@ -116,7 +116,7 @@ private:
             throw std::runtime_error("Could not register " + std::string(name));
         }
         if (trace::enabled()) {
-            trace::out << "registered " << name << std::endl;
+            trace::out << "PLUTO_TRACE registered " << name << std::endl;
         }
         return mr;
     }
