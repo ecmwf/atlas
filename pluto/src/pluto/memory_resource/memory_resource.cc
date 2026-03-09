@@ -23,6 +23,7 @@
 #include "HostMemoryResource.h"
 #include "pluto/device/MemoryResource.h"
 #include "pluto/host/MemoryResource.h"
+#include "pluto/trace.h"
 
 namespace pluto {
 namespace {
@@ -33,7 +34,8 @@ private:
         std::cout << "Registering pluto resources" << std::endl;
 #endif
         auto register_resource = [](std::string_view name, memory_resource* mr) { Registry<memory_resource>::instance().enregister(name, *mr); };
-
+        bool trace_enabled = trace::enabled();
+        trace::enable(false);
         register_resource("pluto::null_memory_resource", null_memory_resource());
         register_resource("null", null_memory_resource()); // alias
         register_resource("pluto::new_delete_resource", new_delete_resource());
@@ -58,6 +60,7 @@ private:
         register_resource("managed_pool", managed_pool_resource()); // alias
         register_resource("pluto::mpi_pool_resource", mpi_pool_resource());
         register_resource("mpi_pool", mpi_pool_resource());
+        trace::enable(trace_enabled);
     }
 
 public:
