@@ -9,6 +9,7 @@
  */
 
 #include <cstddef>
+#include <cstring>
 #include <string_view>
 
 #include "pluto/pluto.h"
@@ -169,5 +170,17 @@ void c_pluto_register_memory_resource_adaptor(const char* name, int name_size, v
     pluto::register_resource(std::string_view{name, static_cast<std::size_t>(name_size)},
         std::make_unique<pluto::MemoryResourceAdaptor>(allocate, deallocate));
 }
+
+void c_pluto_memory_report(char* &string, size_t& string_size) {
+    std::string s = pluto::memory::report();
+    string_size = s.size();
+    string      = new char[string_size];
+    ::strncpy( string, s.data(), s.size() );
+}
+
+void c_pluto_str_delete(char* string, size_t /*string_size*/) {
+    delete[] string;
+}
+
 
 }

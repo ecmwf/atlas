@@ -54,12 +54,18 @@ contains
     procedure, nopass :: finalize => pluto_mpi_finalize
 end type
 
+type pluto_memory_t
+contains
+    procedure, nopass :: report => pluto_memory_report
+end type
+
 type pluto_t
     type(pluto_host_t)   :: host
     type(pluto_device_t) :: device
     type(pluto_scope_t)  :: scope
     type(pluto_trace_t)  :: trace
     type(pluto_mpi_t)    :: mpi
+    type(pluto_memory_t) :: memory
 contains
     procedure, nopass :: devices => pluto_devices
     procedure, nopass :: has_registered_resource => pluto_has_registered_resource
@@ -2530,5 +2536,41 @@ subroutine pluto_mpi_finalize()
     end interface
     call c_pluto_mpi_finalize()
 end subroutine
+
+function c_ptr_to_string(str_c_ptr,str_size) result(string)
+  use, intrinsic :: iso_c_binding, only: c_ptr, c_char, c_size_t, c_f_pointer
+  type(c_ptr), intent(in) :: str_c_ptr
+  integer(c_size_t), intent(in) :: str_size
+  character(kind=c_char,len=:), allocatable :: string
+  character(kind=c_char,len=1), pointer  :: str_f_ptr(:)
+  integer :: c
+  call c_f_pointer( str_c_ptr , str_f_ptr, [str_size] )
+  allocate( character(len=(str_size)) :: string )
+  do c=1,str_size
+    string(c:c) = str_f_ptr(c)
+  enddo
+end function
+
+function pluto_memory_report() result(string)
+    use, intrinsic :: iso_c_binding, only: c_ptr, c_size_t
+    character(len=:), allocatable :: string
+    interface
+        subroutine c_pluto_memory_report(str_c_ptr, str_size) bind(c)
+            use, intrinsic :: iso_c_binding, only: c_ptr, c_size_t
+            type(c_ptr), intent(out) :: str_c_ptr
+            integer(c_size_t), intent(out) :: str_size
+        end subroutine
+        subroutine c_pluto_str_delete(str_c_ptr, str_size) bind(c)
+            use, intrinsic :: iso_c_binding, only: c_ptr, c_size_t
+            type(c_ptr), value, intent(in) :: str_c_ptr
+            integer(c_size_t), value, intent(in) :: str_size
+        end subroutine
+    end interface
+    type(c_ptr) :: str_c_ptr
+    integer(c_size_t) :: str_size
+    call c_pluto_memory_report(str_c_ptr, str_size)
+    string = c_ptr_to_string(str_c_ptr, str_size)
+    call c_pluto_str_delete(str_c_ptr, str_size)
+end function
 
 end module
