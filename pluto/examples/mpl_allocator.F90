@@ -7,27 +7,27 @@
 ! does it submit to any jurisdiction.
 
 ! ------------------------------------------------------------------------------------------------------------------------
-module mpl_allocator_mod
+module my_allocator_mod
 ! ------------------------------------------------------------------------------------------------------------------------
 
 use pluto_module, only : pluto_allocator, pluto_memory_resource
 implicit none
 
-type(pluto_memory_resource), save :: mpl_resource
-    !! mpl_resource is a memory_resource which can be setup to any concrete implementation of a memory resource that is compatible with the pluto memory resource interface.
-    !! It needs to be set up using mpl_allocator_init, which will also register it in pluto with the "MPL" string.
+type(pluto_memory_resource), save :: my_resource
+    !! my_resource is a memory_resource which can be setup to any concrete implementation of a memory resource that is compatible with the pluto memory resource interface.
+    !! It needs to be set up using my_allocator_init, which will also register it in pluto with the "my" string.
     !! In this example, we will set it to a mpi_pool memory pool resource, which is a predefined resource available in pluto that manages a memory pool with underlying
     !! (de)allocation using MPI_Alloc_mem / MPI_Free_mem.
 
-type(pluto_allocator),       save :: mpl_allocator
-    !! mpl_allocator is a pluto_allocator that uses mpl_resource as its memory resource.
-    !! It needs to be set up using mpl_allocator_init.
-    !! This allocator can then be used as a convenient API to allocate and deallocate memory using the mpl_resource, see examples below.
+type(pluto_allocator),       save :: my_allocator
+    !! my_allocator is a pluto_allocator that uses my_resource as its memory resource.
+    !! It needs to be set up using my_allocator_init.
+    !! This allocator can then be used as a convenient API to allocate and deallocate memory using the my_resource, see examples below.
 
 contains
 
-subroutine mpl_allocator_init(bytes)
-    !! Initialize mpl_resource and mpl_allocator module variables
+subroutine my_allocator_init(bytes)
+    !! Initialize my_resource and my_allocator module variables
 
     use pluto_module, only : pluto, pluto_memory_resource
     use iso_fortran_env, only : output_unit
@@ -36,64 +36,64 @@ subroutine mpl_allocator_init(bytes)
 
     real(8), parameter :: GB = 1024**3 ! 1 GB in bytes
 
-    write(0,'(A,I0,A)') "+ mpl_allocator_init(bytes=",bytes,")"
+    write(0,'(A,I0,A)') "+ my_allocator_init(bytes=",bytes,")"
 
     call pluto%trace%enable() ! Just for this example to show the trace output of the resource,
                               ! can also be enabled by setting the environment variable PLUTO_TRACE=1
 
-    ! Set mpl_resource to a memory pool that manages pinned host memory.
+    ! Set my_resource to a memory pool that manages pinned host memory.
     ! This is a predefined resource that is available in pluto, and can be accessed directly as a member of the pluto object
     ! This resource will manage a pool of pinned host memory, which is useful for efficient data transfer between host and device.
     ! The resource will grow the pool as needed when allocations are made, but we can also reserve a certain amount of memory upfront
     ! to ensure that it is available when needed and to potentially improve performance by reducing fragmentation.
-    mpl_resource = pluto%mpi_pool_resource()
+    my_resource = pluto%mpi_pool_resource()
 
     ! This can also be accessed by name, since it is registered with the pluto resource manager under the name "mpi_pool".
-    !     mpl_resource = pluto%get_registered_resource("mpi_pool")
+    !     my_resource = pluto%get_registered_resource("mpi_pool")
 
     ! Alternative could be a pinned memory pool resource:
-    !     mpl_resource = pluto%pinned_pool_resource()
-    !     mpl_resource = pluto%get_registered_resource("pinned_pool")
+    !     my_resource = pluto%pinned_pool_resource()
+    !     my_resource = pluto%get_registered_resource("pinned_pool")
 
     ! NB: another implementation of a resource could easily be conceived, and registered by name, without having to change the rest of the code that uses it.
     ! For example using custom_resource_mod below:
     !    call register_custom_resource()
-    !    mpl_resource = pluto%get_registered_resource("custom_resource") ! This is the resource that we registered with our custom allocate/deallocate functions.
+    !    my_resource = pluto%get_registered_resource("custom_resource") ! This is the resource that we registered with our custom allocate/deallocate functions.
 
-    call mpl_resource%reserve(bytes) ! reserve memory if the resource supports it, otherwise this is a no-op
+    call my_resource%reserve(bytes) ! reserve memory if the resource supports it, otherwise this is a no-op
 
-    ! Register mpl_resource by name in the pluto resource manager so that it can be accessed from other translation units
+    ! Register my_resource by name in the pluto resource manager so that it can be accessed from other translation units
     ! without having to pass it around.
-    call pluto%register_resource("MPL", mpl_resource)
+    call pluto%register_resource("MY", my_resource)
 
-    ! Set mpl_allocator that uses mpl_resource as its memory resource.
-    ! This allocator can then be used as a convenient API to allocate and deallocate memory using the mpl_resource.
-    mpl_allocator = pluto%make_allocator(mpl_resource)
-end subroutine mpl_allocator_init
+    ! Set my_allocator that uses my_resource as its memory resource.
+    ! This allocator can then be used as a convenient API to allocate and deallocate memory using the my_resource.
+    my_allocator = pluto%make_allocator(my_resource)
+end subroutine my_allocator_init
 
-subroutine mpl_allocator_finalize()
+subroutine my_allocator_finalize()
     use pluto_module, only : pluto
-    write(0,'(A)') "+ mpl_allocator_finalize()"
+    write(0,'(A)') "+ my_allocator_finalize()"
 
-    call mpl_resource%release()
-    call pluto%unregister_resource("MPL")
+    call my_resource%release()
+    call pluto%unregister_resource("MY")
 
     ! Show memory report, listing statistics across all pluto-tracked memory resources
-    ! This currently does not include "custom_resource", but would include the "MPL" resource listed as "mpi" and "mpi_pool"
+    ! This currently does not include "custom_resource", but would include the "MY" resource listed as "mpi" and "mpi_pool"
     write(0,'(A)') "Pluto Memory report:"
     write(0,'(A)') pluto%memory%report()
-end subroutine mpl_allocator_finalize
+end subroutine my_allocator_finalize
 
-subroutine mpl_allocator_print()
+subroutine my_allocator_print()
     use iso_fortran_env, only : output_unit
     implicit none
     real(8), parameter :: GB = 1024**3 ! 1 GB in bytes
     write(output_unit, '(A, F6.2, A, A, F6.2, A)') &
-        "mpl_allocator: capacity:", mpl_resource%capacity()/GB, "GB", &
-                  ",   allocated:", mpl_resource%size()/GB, "GB"
-end subroutine mpl_allocator_print
+        "my_allocator: capacity:", my_resource%capacity()/GB, "GB", &
+                  ",   allocated:", my_resource%size()/GB, "GB"
+end subroutine my_allocator_print
 
-end module mpl_allocator_mod
+end module my_allocator_mod
 ! ------------------------------------------------------------------------------------------------------------------------
 
 
@@ -104,125 +104,125 @@ program main
 implicit none
 call init_mpi()
 
-! Initialise the mpl_allocator in a separate block to show that it can be done independently of the rest of the code,
+! Initialise the my_allocator in a separate block to show that it can be done independently of the rest of the code,
 ! and that the resource is registered globally.
 block
-    use mpl_allocator_mod, only : mpl_allocator_init
-    call mpl_allocator_init(1024**3) ! 1 GB
+    use my_allocator_mod, only : my_allocator_init
+    call my_allocator_init(1024**3) ! 1 GB
 end block
 
-! Example using mpl_allocator_mod, encapsulating pluto completely. This would be the recommended approach for the IFS.
+! Example using my_allocator_mod, encapsulating pluto completely. This would be the recommended approach for the IFS.
 block
-    use mpl_allocator_mod, only : mpl_allocator
+    use my_allocator_mod, only : my_allocator
     real(8), pointer :: array(:,:)
 
     ! Allocation using shape, anonymous array
-    call mpl_allocator%allocate(array, shape=[10, 8])
-    call mpl_allocator%deallocate(array)
+    call my_allocator%allocate(array, shape=[10, 8])
+    call my_allocator%deallocate(array)
 
     ! Allocation using bounds, anonymous array
-    call mpl_allocator%allocate(array, lbounds=[0,0], ubounds=[10, 8])
-    call mpl_allocator%deallocate(array)
+    call my_allocator%allocate(array, lbounds=[0,0], ubounds=[10, 8])
+    call my_allocator%deallocate(array)
 
     ! label array for tracing
-    call mpl_allocator%allocate("mpl_array", array, lbounds=[0,0], ubounds=[10, 8])
-    call mpl_allocator%deallocate("mpl_array", array)
+    call my_allocator%allocate("my_array", array, lbounds=[0,0], ubounds=[10, 8])
+    call my_allocator%deallocate("my_array", array)
 end block
 
 
 
 ! ------------------------------------------------------------------------------------------------------------------------
 ! Further examples that also use the pluto_module. This indicates that we will be able to use the same allocators
-! in other contexts independent of MPL, and that the resource is registered globally so that it can be used in other
+! in other contexts independent of MY, and that the resource is registered globally so that it can be used in other
 ! translation units without having to pass it around.
 
-! Example using mpl_resource using pluto%allocate / pluto%deallocate
+! Example using my_resource using pluto%allocate / pluto%deallocate
 block
     use pluto_module, only : pluto
-    use mpl_allocator_mod, only : mpl_resource
+    use my_allocator_mod, only : my_resource
     real(8), pointer :: array(:,:)
 
     ! Allocation using shape, anonymous array
-    call pluto%allocate(array, shape=[10, 8], resource=mpl_resource)
-    call pluto%deallocate(array, resource=mpl_resource) ! IMPORTANT, must match the resource used for allocation
+    call pluto%allocate(array, shape=[10, 8], resource=my_resource)
+    call pluto%deallocate(array, resource=my_resource) ! IMPORTANT, must match the resource used for allocation
 
     ! Allocation using bounds, anonymous array
-    call pluto%allocate(array, lbounds=[0,0], ubounds=[10, 8], resource=mpl_resource)
-    call pluto%deallocate(array, resource=mpl_resource) ! IMPORTANT, must match the resource used for allocation
+    call pluto%allocate(array, lbounds=[0,0], ubounds=[10, 8], resource=my_resource)
+    call pluto%deallocate(array, resource=my_resource) ! IMPORTANT, must match the resource used for allocation
 
     ! label array for tracing
-    call pluto%allocate("mpl_array_1", array, lbounds=[0,0], ubounds=[10, 8], resource=mpl_resource)
-    call pluto%deallocate("mpl_array_1", array, resource=mpl_resource)
+    call pluto%allocate("my_array_1", array, lbounds=[0,0], ubounds=[10, 8], resource=my_resource)
+    call pluto%deallocate("my_array_1", array, resource=my_resource)
 
     ! Using label externally
-    call pluto%set_label("mpl_array_2");
-    call pluto%allocate(array, lbounds=[0,0], ubounds=[10, 8], resource=mpl_resource);
+    call pluto%set_label("my_array_2");
+    call pluto%allocate(array, lbounds=[0,0], ubounds=[10, 8], resource=my_resource);
     call pluto%unset_label()
     !...
-    call pluto%set_label("mpl_array_2");
-    call pluto%deallocate(array, resource=mpl_resource);
+    call pluto%set_label("my_array_2");
+    call pluto%deallocate(array, resource=my_resource);
     call pluto%unset_label()
 end block
 
-! Example independent of mpl_allocator_mod, using the resource name directly.
+! Example independent of my_allocator_mod, using the resource name directly.
 ! This also shows that the resource is registered globally and can be used in other translation units.
 block
     use pluto_module, only : pluto, pluto_allocator
     type(pluto_allocator) :: allocator
     real(8), pointer :: array(:,:)
-    allocator = pluto%make_allocator("MPL") ! This has been registered by name, now equivalent to using mpl_allocator
+    allocator = pluto%make_allocator("MY") ! This has been registered by name, now equivalent to using my_allocator
 
     ! anonymous array
     call allocator%allocate(array, lbounds=[0,0], ubounds=[10, 8])
     call allocator%deallocate(array)
 
     ! label array for tracing
-    call allocator%allocate("mpl_array", array, lbounds=[0,0], ubounds=[10, 8])
-    call allocator%deallocate("mpl_array", array)
+    call allocator%allocate("my_array", array, lbounds=[0,0], ubounds=[10, 8])
+    call allocator%deallocate("my_array", array)
 end block
 
-! Example independent of mpl_allocator_mod, using the resource name directly.
+! Example independent of my_allocator_mod, using the resource name directly.
 block
     use pluto_module, only : pluto
     real(8), pointer :: array(:,:)
 
     ! anonymous array
-    call pluto%allocate(array, lbounds=[0,0], ubounds=[10, 8], resource="MPL")
-    call pluto%deallocate(array, resource="MPL") ! IMPORTANT, must match the resource used for allocation
+    call pluto%allocate(array, lbounds=[0,0], ubounds=[10, 8], resource="MY")
+    call pluto%deallocate(array, resource="MY") ! IMPORTANT, must match the resource used for allocation
 
     ! label array for tracing
-    call pluto%allocate("mpl_array", array, lbounds=[0,0], ubounds=[10, 8], resource="MPL")
-    call pluto%deallocate("mpl_array", array, resource="MPL") ! IMPORTANT, must match the resource used for allocation
+    call pluto%allocate("my_array", array, lbounds=[0,0], ubounds=[10, 8], resource="MY")
+    call pluto%deallocate("my_array", array, resource="MY") ! IMPORTANT, must match the resource used for allocation
 
 end block
 
-! Example independent of mpl_allocator_mod, modifying the default host allocator in a scope.
+! Example independent of my_allocator_mod, modifying the default host allocator in a scope.
 ! This is a convenient way to use the resource without having to pass it explicitly to every allocate/deallocate call.
 block
     use pluto_module, only : pluto
     call pluto%scope%push()
-    call pluto%host%set_default_resource("MPL") ! set the default host resource for this scope to "MPL"
+    call pluto%host%set_default_resource("MY") ! set the default host resource for this scope to "MY"
     block
         real(8), pointer :: array(:,:)
 
         ! anonymous array
-        call pluto%host%allocate(array, lbounds=[0,0], ubounds=[10, 8]) ! will use the default resource for the host, which is now "MPL"
-        call pluto%host%deallocate(array) ! will use the default resource for the host, which is now "MPL"
+        call pluto%host%allocate(array, lbounds=[0,0], ubounds=[10, 8]) ! will use the default resource for the host, which is now "MY"
+        call pluto%host%deallocate(array) ! will use the default resource for the host, which is now "MY"
 
         ! label array for tracing
-        call pluto%host%allocate("mpl_array_1", array, lbounds=[0,0], ubounds=[10, 8]) ! will use the default resource for the host, which is now "MPL"
-        call pluto%host%deallocate("mpl_array_1", array) ! will use the default resource for the host, which is now "MPL"
+        call pluto%host%allocate("my_array_1", array, lbounds=[0,0], ubounds=[10, 8]) ! will use the default resource for the host, which is now "MY"
+        call pluto%host%deallocate("my_array_1", array) ! will use the default resource for the host, which is now "MY"
 
         ! Using shape argument instad of bounds
-        call pluto%host%allocate("mpl_array_2", array, shape=[10, 8]) ! will use the default resource for the host, which is now mpl_resource
-        call pluto%host%deallocate("mpl_array_2", array) ! will use the default resource for the host, which is now mpl_resource
+        call pluto%host%allocate("my_array_2", array, shape=[10, 8]) ! will use the default resource for the host, which is now my_resource
+        call pluto%host%deallocate("my_array_2", array) ! will use the default resource for the host, which is now my_resource
     end block
     call pluto%scope%pop() ! restore the previous default resource for the host
 end block
 
 block
-    use mpl_allocator_mod, only : mpl_allocator_finalize
-    call mpl_allocator_finalize()
+    use my_allocator_mod, only : my_allocator_finalize
+    call my_allocator_finalize()
 end block
 
 call finalize_mpi()
