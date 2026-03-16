@@ -45,13 +45,16 @@ use pluto_module_allocate_deallocate,    only : pluto_allocate, pluto_deallocate
 implicit none
 private
 
-#:set ranks  = [1,2,3,4,5]
-#:set dim    = ['',':',':,:',':,:,:',':,:,:,:',':,:,:,:,:']
-#:set ftypes = ['integer(c_int32_t)','integer(c_int64_t)','real(c_float)','real(c_double)']
-#:set ckinds = ['c_int32_t','c_int64_t','c_float','c_double']
 #:set dtypes = ['int32','int64','real32','real64']
 
-public :: pluto, pluto_memory_resource, pluto_allocator
+public :: pluto_memory_resource
+public :: pluto_allocator
+public :: pluto_allocate
+public :: pluto_deallocate
+public :: pluto_set_label
+public :: pluto_unset_label
+public :: pluto_get_label
+public :: pluto
 
 type pluto_mpi_t
 contains
@@ -98,44 +101,13 @@ contains
     procedure, nopass, private :: make_allocator_type
     procedure, nopass, private :: make_allocator_name
     generic :: make_allocator => make_allocator_type, make_allocator_name
-    
+
 #:for dtype in dtypes
     procedure, private ,nopass :: reserve_${dtype}$ => pluto_memory_pool_resource_reserve_${dtype}$
     generic :: reserve => reserve_${dtype}$
 #:endfor
     
     procedure, nopass :: release => pluto_memory_pool_resource_release
-
-#:for rank in ranks
-#:for dtype in dtypes
-    procedure, nopass, private :: pluto_allocate_${dtype}$_r${rank}$_bounds_type
-    procedure, nopass, private :: pluto_allocate_${dtype}$_r${rank}$_bounds_name
-    procedure, nopass, private :: pluto_allocate_${dtype}$_r${rank}$_shape_type
-    procedure, nopass, private :: pluto_allocate_${dtype}$_r${rank}$_shape_name
-    procedure, nopass, private :: pluto_allocate_label_${dtype}$_r${rank}$_bounds_type
-    procedure, nopass, private :: pluto_allocate_label_${dtype}$_r${rank}$_bounds_name
-    procedure, nopass, private :: pluto_allocate_label_${dtype}$_r${rank}$_shape_type
-    procedure, nopass, private :: pluto_allocate_label_${dtype}$_r${rank}$_shape_name
-    generic :: allocate => &
-        & pluto_allocate_${dtype}$_r${rank}$_bounds_type, &
-        & pluto_allocate_${dtype}$_r${rank}$_bounds_name, &
-        & pluto_allocate_${dtype}$_r${rank}$_shape_type, &
-        & pluto_allocate_${dtype}$_r${rank}$_shape_name, &
-        & pluto_allocate_label_${dtype}$_r${rank}$_bounds_type, &
-        & pluto_allocate_label_${dtype}$_r${rank}$_bounds_name, &
-        & pluto_allocate_label_${dtype}$_r${rank}$_shape_type, &
-        & pluto_allocate_label_${dtype}$_r${rank}$_shape_name
-    procedure, nopass, private :: pluto_deallocate_${dtype}$_r${rank}$_type
-    procedure, nopass, private :: pluto_deallocate_${dtype}$_r${rank}$_name
-    procedure, nopass, private :: pluto_deallocate_label_${dtype}$_r${rank}$_type
-    procedure, nopass, private :: pluto_deallocate_label_${dtype}$_r${rank}$_name
-    generic :: deallocate => &
-        & pluto_deallocate_${dtype}$_r${rank}$_type, &
-        & pluto_deallocate_${dtype}$_r${rank}$_name, &
-        & pluto_deallocate_label_${dtype}$_r${rank}$_type, &
-        & pluto_deallocate_label_${dtype}$_r${rank}$_name
-#:endfor
-#:endfor
 
 end type
 
@@ -170,104 +142,6 @@ function make_allocator_name(resource) result(allocator)
     character(len=*), intent(in) :: resource
     allocator = pluto_make_allocator(resource)
 end function
-
-#:for rank in ranks
-#:for dtype, ftype, ckind in zip(dtypes, ftypes, ckinds)
-subroutine pluto_allocate_${dtype}$_r${rank}$_bounds_type(array, lbounds, ubounds, resource)
-    use pluto_module_allocate_deallocate, only : pluto_allocate
-    ${ftype}$, pointer, intent(inout) :: array(${dim[rank]}$)
-    integer(c_int), intent(in) :: lbounds(${rank}$)
-    integer(c_int), intent(in) :: ubounds(${rank}$)
-    type(pluto_memory_resource), intent(in) :: resource
-    call pluto_allocate(array, lbounds, ubounds, resource)
-end subroutine
-
-subroutine pluto_allocate_${dtype}$_r${rank}$_bounds_name(array, lbounds, ubounds, resource)
-    use pluto_module_allocate_deallocate, only : pluto_allocate
-    ${ftype}$, pointer, intent(inout) :: array(${dim[rank]}$)
-    integer(c_int), intent(in) :: lbounds(${rank}$)
-    integer(c_int), intent(in) :: ubounds(${rank}$)
-    character(len=*), intent(in) :: resource
-    call pluto_allocate(array, lbounds, ubounds, pluto_get_registered_resource(resource))
-end subroutine
-
-subroutine pluto_allocate_${dtype}$_r${rank}$_shape_type(array, shape, resource)
-    use pluto_module_allocate_deallocate, only : pluto_allocate
-    ${ftype}$, pointer, intent(inout) :: array(${dim[rank]}$)
-    integer(c_int), intent(in) :: shape(${rank}$)
-    type(pluto_memory_resource), intent(in) :: resource
-    call pluto_allocate(array, shape, resource)
-end subroutine
-
-subroutine pluto_allocate_${dtype}$_r${rank}$_shape_name(array, shape, resource)
-    use pluto_module_allocate_deallocate, only : pluto_allocate
-    ${ftype}$, pointer, intent(inout) :: array(${dim[rank]}$)
-    integer(c_int), intent(in) :: shape(${rank}$)
-    character(len=*), intent(in) :: resource
-    call pluto_allocate(array, shape, pluto_get_registered_resource(resource))
-end subroutine
-
-subroutine pluto_allocate_label_${dtype}$_r${rank}$_bounds_type(label, array, lbounds, ubounds, resource)
-    character(len=*), intent(in) :: label
-    ${ftype}$, pointer, intent(inout) :: array(${dim[rank]}$)
-    integer(c_int), intent(in) :: lbounds(${rank}$)
-    integer(c_int), intent(in) :: ubounds(${rank}$)
-    type(pluto_memory_resource), intent(in) :: resource
-    call pluto_allocate(label, array, lbounds, ubounds, resource)
-end subroutine
-
-subroutine pluto_allocate_label_${dtype}$_r${rank}$_shape_name(label, array, shape, resource)
-    character(len=*), intent(in) :: label
-    ${ftype}$, pointer, intent(inout) :: array(${dim[rank]}$)
-    integer(c_int), intent(in) :: shape(${rank}$)
-    character(len=*), intent(in) :: resource
-    call pluto_allocate(label, array, shape, pluto_get_registered_resource(resource))
-end subroutine
-
-subroutine pluto_allocate_label_${dtype}$_r${rank}$_shape_type(label, array, shape, resource)
-    character(len=*), intent(in) :: label
-    ${ftype}$, pointer, intent(inout) :: array(${dim[rank]}$)
-    integer(c_int), intent(in) :: shape(${rank}$)
-    type(pluto_memory_resource), intent(in) :: resource
-    call pluto_allocate(label, array, shape, resource)
-end subroutine
-
-subroutine pluto_allocate_label_${dtype}$_r${rank}$_bounds_name(label, array, lbounds, ubounds, resource)
-    character(len=*), intent(in) :: label
-    ${ftype}$, pointer, intent(inout) :: array(${dim[rank]}$)
-    integer(c_int), intent(in) :: lbounds(${rank}$)
-    integer(c_int), intent(in) :: ubounds(${rank}$)
-    character(len=*), intent(in) :: resource
-    call pluto_allocate(label, array, lbounds, ubounds, pluto_get_registered_resource(resource))
-end subroutine
-
-subroutine pluto_deallocate_${dtype}$_r${rank}$_type(array, resource)
-    ${ftype}$, pointer, intent(inout) :: array(${dim[rank]}$)
-    type(pluto_memory_resource), intent(in) :: resource
-    call pluto_deallocate(array, resource)
-end subroutine
-
-subroutine pluto_deallocate_${dtype}$_r${rank}$_name(array, resource)
-    ${ftype}$, pointer, intent(inout) :: array(${dim[rank]}$)
-    character(len=*), intent(in) :: resource
-    call pluto_deallocate(array, pluto_get_registered_resource(resource))
-end subroutine
-
-subroutine pluto_deallocate_label_${dtype}$_r${rank}$_type(label, array, resource)
-    character(len=*), intent(in) :: label
-    ${ftype}$, pointer, intent(inout) :: array(${dim[rank]}$)
-    type(pluto_memory_resource), intent(in) :: resource
-    call pluto_deallocate(label, array, resource)
-end subroutine
-
-subroutine pluto_deallocate_label_${dtype}$_r${rank}$_name(label, array, resource)
-    character(len=*), intent(in) :: label
-    ${ftype}$, pointer, intent(inout) :: array(${dim[rank]}$)
-    character(len=*), intent(in) :: resource
-    call pluto_deallocate(label, array, pluto_get_registered_resource(resource))
-end subroutine
-#:endfor
-#:endfor
 
 subroutine pluto_mpi_init()
     interface

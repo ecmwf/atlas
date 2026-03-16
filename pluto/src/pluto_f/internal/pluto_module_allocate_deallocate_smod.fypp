@@ -1,0 +1,91 @@
+! (C) Copyright 2016- ECMWF.
+!
+! This software is licensed under the terms of the Apache Licence Version 2.0
+! which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
+! In applying this licence, ECMWF does not waive the privileges and immunities
+! granted to it by virtue of its status as an intergovernmental organisation nor
+! does it submit to any jurisdiction.
+
+submodule(pluto_module_allocate_deallocate) pluto_module_allocate_deallocate
+
+use, intrinsic :: iso_c_binding, only : c_loc, c_ptr, c_size_t, c_f_pointer
+implicit none
+
+#:set ranks  = [1,2,3,4,5]
+#:set dtypes = ['int32','int64','real32','real64']
+#:set sizeof = dict(zip(dtypes, ['4', '8', '4', '8']))
+
+contains
+
+#:for rank in ranks
+#:for dtype in dtypes
+#:set array = dtype + '_r' + str(rank)
+
+module procedure pluto_allocate_${array}$_bounds
+    implicit none
+    type(c_ptr) :: mem
+    integer(c_size_t) :: bytes
+    integer(c_size_t) :: shape(${rank}$)
+    shape = ubounds - lbounds + 1
+    bytes = ${sizeof[dtype]}$
+    #:for jdim in range(1, rank+1)
+        bytes = bytes * shape(${jdim}$)
+    #:endfor
+    if (bytes > 0) then
+        call resource%allocate(mem, bytes)
+        call c_f_pointer(mem, array, shape)
+        array(${ ', '.join (map (lambda i: 'lbounds(' + str(i) + '):', range (1, rank+1))) }$) => array
+    else
+        nullify(array)
+    endif
+end procedure
+
+module procedure pluto_allocate_${array}$_shape
+    integer(int32) :: standard_lbounds(${rank}$)
+    standard_lbounds = 1
+    call pluto_allocate_${array}$_bounds(array, standard_lbounds, shape, resource)
+end procedure
+
+module procedure pluto_allocate_label_${array}$_bounds
+    implicit none
+    character(len=:), allocatable :: previous_label
+    previous_label = pluto_get_label()
+    call pluto_set_label(label)
+    call pluto_allocate_${array}$_bounds(array, lbounds, ubounds, resource)
+    call pluto_set_label(previous_label)
+end procedure
+
+module procedure pluto_allocate_label_${array}$_shape
+    implicit none
+    character(len=:), allocatable :: previous_label
+    previous_label = pluto_get_label()
+    call pluto_set_label(label)
+    call pluto_allocate_${array}$_shape(array, shape, resource)
+    call pluto_set_label(previous_label)
+end procedure
+
+module procedure pluto_deallocate_${array}$
+    implicit none
+    type(c_ptr) :: mem
+    integer(c_size_t) :: bytes
+    bytes = size(array) * ${sizeof[dtype]}$
+    if (bytes > 0) then
+        mem = c_loc(array(${ ', '.join (map (lambda i: 'lbound(array,' + str(i) + ')', range (1, rank+1))) }$))
+        call resource%deallocate(mem, bytes)
+    endif
+    nullify(array)
+end procedure
+
+module procedure pluto_deallocate_label_${array}$
+    implicit none
+    character(len=:), allocatable :: previous_label
+    previous_label = pluto_get_label()
+    call pluto_set_label(label)
+    call pluto_deallocate_${array}$(array, resource)
+    call pluto_set_label(previous_label)
+end procedure
+
+#:endfor
+#:endfor
+
+end submodule

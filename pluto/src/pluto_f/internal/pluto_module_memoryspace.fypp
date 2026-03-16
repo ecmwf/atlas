@@ -17,11 +17,6 @@ use pluto_module_memory_resource, only : pluto_memory_resource
 implicit none
 private
 
-#:set ranks  = [1,2,3,4,5]
-#:set dim    = ['',':',':,:',':,:,:',':,:,:,:',':,:,:,:,:']
-#:set ftypes = ['integer(c_int32_t)','integer(c_int64_t)','real(c_float)','real(c_double)']
-#:set dtypes = ['int32','int64','real32','real64']
-
 ! A workaround for NVHPC compiler bug.
 ! If the compiler is NVHPC we need the THIS argument to be passed explicitly.
 ! There are otherwise issues with ambiguous generic interfaces between pluto_host_t and pluto_device_t,
@@ -50,27 +45,6 @@ contains
     procedure NOPASS, private :: pluto_${memoryspace}$_set_default_resource_type
     generic, public :: set_default_resource => pluto_${memoryspace}$_set_default_resource_type, &
                                              & pluto_${memoryspace}$_set_default_resource_name
-
-
-#:for rank in ranks
-#:for dtype in dtypes
-    procedure NOPASS, private :: pluto_${memoryspace}$_allocate_${dtype}$_r${rank}$_bounds
-    procedure NOPASS, private :: pluto_${memoryspace}$_allocate_${dtype}$_r${rank}$_shape
-    procedure NOPASS, private :: pluto_${memoryspace}$_allocate_label_${dtype}$_r${rank}$_bounds
-    procedure NOPASS, private :: pluto_${memoryspace}$_allocate_label_${dtype}$_r${rank}$_shape
-    generic, public :: allocate => &
-        & pluto_${memoryspace}$_allocate_${dtype}$_r${rank}$_bounds, &
-        & pluto_${memoryspace}$_allocate_${dtype}$_r${rank}$_shape, &
-        & pluto_${memoryspace}$_allocate_label_${dtype}$_r${rank}$_bounds, &
-        & pluto_${memoryspace}$_allocate_label_${dtype}$_r${rank}$_shape
-
-    procedure NOPASS, private :: pluto_${memoryspace}$_deallocate_${dtype}$_r${rank}$
-    procedure NOPASS, private :: pluto_${memoryspace}$_deallocate_label_${dtype}$_r${rank}$
-    generic, public :: deallocate => &
-        & pluto_${memoryspace}$_deallocate_${dtype}$_r${rank}$, &
-        & pluto_${memoryspace}$_deallocate_label_${dtype}$_r${rank}$
-#:endfor
-#:endfor
 end type
 
 contains
@@ -117,49 +91,5 @@ function pluto_${memoryspace}$_make_allocator(THIS) result(allocator)
     CLASS_THIS
     allocator%memory_resource = pluto_${memoryspace}$_get_default_resource(THIS)
 end function
-
-#:for rank in ranks
-#:for dtype, ftype in zip(dtypes, ftypes)
-    subroutine pluto_${memoryspace}$_allocate_${dtype}$_r${rank}$_bounds(THIS_COMMA array, lbounds, ubounds)
-        CLASS_THIS
-        ${ftype}$, pointer, intent(inout) :: array(${dim[rank]}$)
-        integer(c_int), intent(in) :: lbounds(${rank}$)
-        integer(c_int), intent(in) :: ubounds(${rank}$)
-        call pluto_allocate(array, lbounds, ubounds, pluto_${memoryspace}$_get_default_resource(THIS))
-    end subroutine
-    subroutine pluto_${memoryspace}$_allocate_${dtype}$_r${rank}$_shape(THIS_COMMA array, shape)
-        CLASS_THIS
-        ${ftype}$, pointer, intent(inout) :: array(${dim[rank]}$)
-        integer(c_int), intent(in) :: shape(${rank}$)
-        call pluto_allocate(array, shape, pluto_${memoryspace}$_get_default_resource(THIS))
-    end subroutine
-    subroutine pluto_${memoryspace}$_allocate_label_${dtype}$_r${rank}$_bounds(THIS_COMMA label, array, lbounds, ubounds)
-        CLASS_THIS
-        character(len=*), intent(in) :: label
-        ${ftype}$, pointer, intent(inout) :: array(${dim[rank]}$)
-        integer(c_int), intent(in) :: lbounds(${rank}$)
-        integer(c_int), intent(in) :: ubounds(${rank}$)
-        call pluto_allocate(label, array, lbounds, ubounds, pluto_${memoryspace}$_get_default_resource(THIS))
-    end subroutine
-    subroutine pluto_${memoryspace}$_allocate_label_${dtype}$_r${rank}$_shape(THIS_COMMA label, array, shape)
-        CLASS_THIS
-        character(len=*), intent(in) :: label
-        ${ftype}$, pointer, intent(inout) :: array(${dim[rank]}$)
-        integer(c_int), intent(in) :: shape(${rank}$)
-        call pluto_allocate(label, array, shape, pluto_${memoryspace}$_get_default_resource(THIS))
-    end subroutine
-    subroutine pluto_${memoryspace}$_deallocate_${dtype}$_r${rank}$(THIS_COMMA array)
-        CLASS_THIS
-        ${ftype}$, pointer, intent(inout) :: array(${dim[rank]}$)
-        call pluto_deallocate(array, pluto_${memoryspace}$_get_default_resource(THIS))
-    end subroutine
-    subroutine pluto_${memoryspace}$_deallocate_label_${dtype}$_r${rank}$(THIS_COMMA label, array)
-        CLASS_THIS
-        character(len=*), intent(in) :: label
-        ${ftype}$, pointer, intent(inout) :: array(${dim[rank]}$)
-        call pluto_deallocate(label, array, pluto_${memoryspace}$_get_default_resource(THIS))
-    end subroutine
-#:endfor
-#:endfor
 
 end module

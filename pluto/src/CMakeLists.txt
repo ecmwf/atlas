@@ -128,7 +128,9 @@ if (HAVE_FORTRAN)
       pluto_f/internal/pluto_module_abort.F90
       pluto_f/internal/pluto_module_memory_resource.F90
       pluto_f/internal/generated/pluto_module_allocate_deallocate.F90
+      pluto_f/internal/generated/pluto_module_allocate_deallocate_smod.F90
       pluto_f/internal/generated/pluto_module_allocator.F90
+      pluto_f/internal/generated/pluto_module_allocator_smod.F90
       pluto_f/internal/pluto_module_scope.F90
       pluto_f/internal/pluto_module_trace.F90
       pluto_f/internal/generated/pluto_module_host.F90
