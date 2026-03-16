@@ -138,30 +138,30 @@ end block
 
 ! Example using my_resource using pluto%allocate / pluto%deallocate
 block
-    use pluto_module, only : pluto
+    use pluto_module, only : pluto_set_label, pluto_unset_label, pluto_allocate, pluto_deallocate
     use my_allocator_mod, only : my_resource
     real(8), pointer :: array(:,:)
 
     ! Allocation using shape, anonymous array
-    call pluto%allocate(array, shape=[10, 8], resource=my_resource)
-    call pluto%deallocate(array, resource=my_resource) ! IMPORTANT, must match the resource used for allocation
+    call pluto_allocate(array, shape=[10, 8], resource=my_resource)
+    call pluto_deallocate(array, resource=my_resource) ! IMPORTANT, must match the resource used for allocation
 
     ! Allocation using bounds, anonymous array
-    call pluto%allocate(array, lbounds=[0,0], ubounds=[10, 8], resource=my_resource)
-    call pluto%deallocate(array, resource=my_resource) ! IMPORTANT, must match the resource used for allocation
+    call pluto_allocate(array, lbounds=[0,0], ubounds=[10, 8], resource=my_resource)
+    call pluto_deallocate(array, resource=my_resource) ! IMPORTANT, must match the resource used for allocation
 
     ! label array for tracing
-    call pluto%allocate("my_array_1", array, lbounds=[0,0], ubounds=[10, 8], resource=my_resource)
-    call pluto%deallocate("my_array_1", array, resource=my_resource)
+    call pluto_allocate("my_array_1", array, lbounds=[0,0], ubounds=[10, 8], resource=my_resource)
+    call pluto_deallocate("my_array_1", array, resource=my_resource)
 
     ! Using label externally
-    call pluto%set_label("my_array_2");
-    call pluto%allocate(array, lbounds=[0,0], ubounds=[10, 8], resource=my_resource);
-    call pluto%unset_label()
+    call pluto_set_label("my_array_2");
+    call pluto_allocate(array, lbounds=[0,0], ubounds=[10, 8], resource=my_resource);
+    call pluto_unset_label()
     !...
-    call pluto%set_label("my_array_2");
-    call pluto%deallocate(array, resource=my_resource);
-    call pluto%unset_label()
+    call pluto_set_label("my_array_2");
+    call pluto_deallocate(array, resource=my_resource);
+    call pluto_unset_label()
 end block
 
 ! Example independent of my_allocator_mod, using the resource name directly.
@@ -181,41 +181,28 @@ block
     call allocator%deallocate("my_array", array)
 end block
 
-! Example independent of my_allocator_mod, using the resource name directly.
-block
-    use pluto_module, only : pluto
-    real(8), pointer :: array(:,:)
-
-    ! anonymous array
-    call pluto%allocate(array, lbounds=[0,0], ubounds=[10, 8], resource="MY")
-    call pluto%deallocate(array, resource="MY") ! IMPORTANT, must match the resource used for allocation
-
-    ! label array for tracing
-    call pluto%allocate("my_array", array, lbounds=[0,0], ubounds=[10, 8], resource="MY")
-    call pluto%deallocate("my_array", array, resource="MY") ! IMPORTANT, must match the resource used for allocation
-
-end block
-
 ! Example independent of my_allocator_mod, modifying the default host allocator in a scope.
 ! This is a convenient way to use the resource without having to pass it explicitly to every allocate/deallocate call.
 block
-    use pluto_module, only : pluto
+    use pluto_module, only : pluto, pluto_allocator
+    type(pluto_allocator) :: host_allocator
     call pluto%scope%push()
     call pluto%host%set_default_resource("MY") ! set the default host resource for this scope to "MY"
+    host_allocator = pluto%host%make_allocator() ! This allocator will now use the default resource for the host, which is "MY"
     block
         real(8), pointer :: array(:,:)
 
         ! anonymous array
-        call pluto%host%allocate(array, lbounds=[0,0], ubounds=[10, 8]) ! will use the default resource for the host, which is now "MY"
-        call pluto%host%deallocate(array) ! will use the default resource for the host, which is now "MY"
+        call host_allocator%allocate(array, lbounds=[0,0], ubounds=[10, 8]) ! will use the default resource for the host, which is now "MY"
+        call host_allocator%deallocate(array) ! will use the default resource for the host, which is now "MY"
 
         ! label array for tracing
-        call pluto%host%allocate("my_array_1", array, lbounds=[0,0], ubounds=[10, 8]) ! will use the default resource for the host, which is now "MY"
-        call pluto%host%deallocate("my_array_1", array) ! will use the default resource for the host, which is now "MY"
+        call host_allocator%allocate("my_array_1", array, lbounds=[0,0], ubounds=[10, 8]) ! will use the default resource for the host, which is now "MY"
+        call host_allocator%deallocate("my_array_1", array) ! will use the default resource for the host, which is now "MY"
 
         ! Using shape argument instad of bounds
-        call pluto%host%allocate("my_array_2", array, shape=[10, 8]) ! will use the default resource for the host, which is now my_resource
-        call pluto%host%deallocate("my_array_2", array) ! will use the default resource for the host, which is now my_resource
+        call host_allocator%allocate("my_array_2", array, shape=[10, 8]) ! will use the default resource for the host, which is now my_resource
+        call host_allocator%deallocate("my_array_2", array) ! will use the default resource for the host, which is now my_resource
     end block
     call pluto%scope%pop() ! restore the previous default resource for the host
 end block
