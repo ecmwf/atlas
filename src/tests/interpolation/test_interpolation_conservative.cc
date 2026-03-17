@@ -158,7 +158,7 @@ void do_remapping_test(Grid src_grid, Grid tgt_grid, std::function<double(const 
         }
         {
             ATLAS_TRACE("cached -> 1st order constructing new matrix");
-            cfg.set("matrix_free", false);
+            cfg.set("matrix_free", true);
             cfg.set("order", 1);
             auto cache_without_matrix =
                 ConservativeMethod::Cache(cache);  // to mimick when cache was created with matrix_free option
