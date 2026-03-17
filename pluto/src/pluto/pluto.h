@@ -49,5 +49,6 @@ inline void release() {
     pluto::pinned_pool_resource()->release();
     pluto::device_pool_resource()->release();
     pluto::managed_pool_resource()->release();
+    pluto::mpi_pool_resource()->release();
 }
 }
