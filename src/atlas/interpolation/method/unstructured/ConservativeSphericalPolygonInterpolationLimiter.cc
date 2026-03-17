@@ -88,7 +88,7 @@ double ConservativeSphericalPolygonInterpolationLimiter::limit(const Field& src_
 
         if (tgt_cell_data_ && src_cell_data_) {
             compute_src_grad(src_vals);
-            std::set<gidx_t> send_marked_scells_set;
+            std::set<idx_t> send_marked_scells_set;
 
             double tgt_smin;
             double tgt_smax;
@@ -97,62 +97,58 @@ double ConservativeSphericalPolygonInterpolationLimiter::limit(const Field& src_
                 idx_t tcell = interpolation_.csp_to_cell(tcsp, data_->tgt_);
                 if (detected_tcell(tcell, iparam, src_vals, tgt_vals, tgt_smin, tgt_smax)) {
                     if (limiter_ == "zeroslope") {
-
-                        for (auto id : iparam.csp_ids) {
-                            send_marked_scells_set.insert(id);
+                        for (auto csp_id : iparam.csp_ids) {
+                            idx_t scell = interpolation_.csp_to_cell(csp_id, data_->src_);
+                            send_marked_scells_set.insert(scell);
                         }
                         if (limiter_override_tgt_ == 2) {
                             tgt_lim_vals(tcell) = 1.;
-                        }
-                        for (idx_t i_scsp = 0; i_scsp < iparam.csp_ids.size(); ++i_scsp) {
-                            idx_t scsp_id = iparam.csp_ids[i_scsp];
-                            limit_contrib_from_source(scsp_id, src_field, tgt_lim_vals);
+                            continue;
                         }
                     }
                     else if (limiter_ == "clip") {
                         if (tgt_vals(tcell) > tgt_smax) {
                             tgt_lim_vals(tcell) = tgt_smax - tgt_vals(tcell);
                         }
-                        else {
+                        else if (tgt_vals(tcell) < tgt_smin) {
                             tgt_lim_vals(tcell) = tgt_smin - tgt_vals(tcell);
                         }
                     }
                 }
             }
-
-            auto& mpi_comm = mpi::comm();
-            auto mpi_size = mpi_comm.size();
-            std::vector<gidx_t> send_marked_scells(send_marked_scells_set.size());
-            const auto src_global_index = array::make_view<gidx_t, 1>(src_fs_.global_index());
-            for (auto idx : send_marked_scells_set) {
-                gidx_t gidx = src_global_index(idx);
-                send_marked_scells.emplace_back(gidx);
-            }
-            eckit::mpi::Buffer<gidx_t> recv_marked_scells_buf(mpi_size);
-            mpi_comm.allGatherv(send_marked_scells.begin(), send_marked_scells.end(), recv_marked_scells_buf);
-
-            std::unordered_map<gidx_t, idx_t> recv_loc_scells;
-            ATLAS_TRACE_SCOPE("Build global-to-local map for ConservativeSphericalPolygonInterpolationLimiter") {
-                for (idx_t ls = 0; ls < src_global_index.size(); ++ls) {
-                    auto gs = src_global_index(ls);
-                    if (recv_loc_scells.find(gs) != recv_loc_scells.end()) {
-                        continue;
+            if (limiter_ == "zeroslope") {
+                auto& mpi_comm = mpi::comm();
+                auto mpi_size = mpi_comm.size();
+                std::vector<gidx_t> send_marked_scells;
+                send_marked_scells.reserve(send_marked_scells_set.size());
+                const auto src_global_index = array::make_view<gidx_t, 1>(src_fs_.global_index());
+                for (auto idx : send_marked_scells_set) {
+                    gidx_t gidx = src_global_index(idx);
+                    send_marked_scells.emplace_back(gidx);
+                }
+                eckit::mpi::Buffer<gidx_t> recv_marked_scells_buf(mpi_size);
+                mpi_comm.allGatherv(send_marked_scells.begin(), send_marked_scells.end(), recv_marked_scells_buf);
+                std::unordered_map<gidx_t, idx_t> recv_loc_scells;
+                ATLAS_TRACE_SCOPE("Build global-to-local map for ConservativeSphericalPolygonInterpolationLimiter") {
+                    for (idx_t ls = 0; ls < src_global_index.size(); ++ls) {
+                        auto gs = src_global_index(ls);
+                        if (recv_loc_scells.find(gs) != recv_loc_scells.end()) {
+                            continue;
+                        }
+                        recv_loc_scells[gs] = ls;
                     }
-                    recv_loc_scells[gs] = ls;
+                }
+                auto recv_size = std::accumulate(recv_marked_scells_buf.counts.begin(), recv_marked_scells_buf.counts.end(), 0);
+                for (idx_t i_gid = 0; i_gid < recv_size; ++i_gid) {
+                    idx_t scell = recv_loc_scells[recv_marked_scells_buf.buffer[i_gid]];
+                    idx_t scsp_id = scell;  // TODO: convert scell to scsp_id
+                    limit_contrib_from_source(scsp_id, src_field, tgt_lim_vals);
                 }
             }
-            auto recv_size = std::accumulate(recv_marked_scells_buf.counts.begin(), recv_marked_scells_buf.counts.end(), 0);
-            for (idx_t i_gid = 0; i_gid < recv_size; ++i_gid) {
-                idx_t scell = recv_loc_scells[recv_marked_scells_buf.buffer[i_gid]];
-                idx_t scsp_id = scell;  // TODO: convert scell to scsp_id
-                limit_contrib_from_source(scsp_id, src_field, tgt_lim_vals);
-            }
-
             if (! limiter_override_tgt_) {
-                double factor = interpolation_.matrix_free_ ? 1. : -1.;
                 for (idx_t tcell = 0 ; tcell < tgt_vals.size(); ++tcell) {
-                    mass_change += factor * tgt_lim_vals(tcell)  * tgt_areas_[tcell];
-                    tgt_vals(tcell) += factor * tgt_lim_vals(tcell);
+                    mass_change += tgt_lim_vals(tcell)  * tgt_areas_[tcell];
+                    tgt_vals(tcell) += tgt_lim_vals(tcell);
                 }
             }
             else {
@@ -188,8 +184,8 @@ detected_tcell(idx_t tcell, const InterpolationParameters& tiparam, const array:
             smin = std::min(smin, src_vals(nb));
         }
     }
-    bool undershoot = (tgt_vals(tcell) < smin);
-    bool overshoot = (tgt_vals(tcell) > smax);
+    bool undershoot = (tgt_vals(tcell) < smin - 2e-16);
+    bool overshoot = (tgt_vals(tcell) > smax + 2e-16);
     return (undershoot || overshoot);
 }
 
