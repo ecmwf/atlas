@@ -8,7 +8,6 @@
 
 module pluto_module
 
-use, intrinsic :: iso_c_binding,         only : c_int, c_int32_t, c_int64_t,c_double, c_float
 use pluto_module_memory_resource,        only : pluto_memory_resource, &
                                               & pluto_has_registered_resource, &
                                               & pluto_get_registered_resource, &
@@ -29,11 +28,6 @@ use pluto_module_memory_resource,        only : pluto_memory_resource, &
                                               & pluto_set_label, &
                                               & pluto_unset_label, &
                                               & pluto_get_label, &
-                                              & pluto_memory_pool_resource_reserve_int32, &
-                                              & pluto_memory_pool_resource_reserve_int64, &
-                                              & pluto_memory_pool_resource_reserve_real32, &
-                                              & pluto_memory_pool_resource_reserve_real64, &
-                                              & pluto_memory_pool_resource_release, &
                                               & pluto_register_memory_resource_adaptor
 use pluto_module_allocator,              only : pluto_allocator
 use pluto_module_host,                   only : pluto_host_t
@@ -44,7 +38,6 @@ use pluto_module_allocate_deallocate,    only : pluto_allocate, pluto_deallocate
 
 implicit none
 private
-
 
 public :: pluto_memory_resource
 public :: pluto_allocator
@@ -75,23 +68,27 @@ type pluto_t
     type(pluto_memory_t) :: memory
 contains
     procedure, nopass :: devices => pluto_devices
+
     procedure, nopass :: has_registered_resource => pluto_has_registered_resource
     procedure, nopass :: get_registered_resource => pluto_get_registered_resource
-    procedure, nopass :: register_resource => pluto_register_resource
+
+    procedure, nopass :: register_resource   => pluto_register_resource
     procedure, nopass :: unregister_resource => pluto_unregister_resource
+
     procedure, nopass :: register_memory_resource_adaptor => pluto_register_memory_resource_adaptor
-    procedure, nopass :: new_delete_resource => pluto_new_delete_resource
-    procedure, nopass :: null_memory_resource => pluto_null_memory_resource
-    procedure, nopass :: host_resource => pluto_host_resource
-    procedure, nopass :: pinned_resource => pluto_pinned_resource
-    procedure, nopass :: device_resource => pluto_device_resource
-    procedure, nopass :: managed_resource => pluto_managed_resource
-    procedure, nopass :: mpi_resource => pluto_mpi_resource
-    procedure, nopass :: host_pool_resource => pluto_host_pool_resource
-    procedure, nopass :: pinned_pool_resource => pluto_pinned_pool_resource
-    procedure, nopass :: device_pool_resource => pluto_device_pool_resource
+
+    procedure, nopass :: new_delete_resource   => pluto_new_delete_resource
+    procedure, nopass :: null_memory_resource  => pluto_null_memory_resource
+    procedure, nopass :: host_resource         => pluto_host_resource
+    procedure, nopass :: pinned_resource       => pluto_pinned_resource
+    procedure, nopass :: device_resource       => pluto_device_resource
+    procedure, nopass :: managed_resource      => pluto_managed_resource
+    procedure, nopass :: mpi_resource          => pluto_mpi_resource
+    procedure, nopass :: host_pool_resource    => pluto_host_pool_resource
+    procedure, nopass :: pinned_pool_resource  => pluto_pinned_pool_resource
+    procedure, nopass :: device_pool_resource  => pluto_device_pool_resource
     procedure, nopass :: managed_pool_resource => pluto_managed_pool_resource
-    procedure, nopass :: mpi_pool_resource => pluto_mpi_pool_resource
+    procedure, nopass :: mpi_pool_resource     => pluto_mpi_pool_resource
 
     procedure, nopass :: set_label   => pluto_set_label
     procedure, nopass :: unset_label => pluto_unset_label
@@ -101,16 +98,11 @@ contains
     procedure, nopass, private :: make_allocator_name
     generic :: make_allocator => make_allocator_type, make_allocator_name
 
-    procedure, private ,nopass :: reserve_int32 => pluto_memory_pool_resource_reserve_int32
-    generic :: reserve => reserve_int32
-    procedure, private ,nopass :: reserve_int64 => pluto_memory_pool_resource_reserve_int64
-    generic :: reserve => reserve_int64
-    procedure, private ,nopass :: reserve_real32 => pluto_memory_pool_resource_reserve_real32
-    generic :: reserve => reserve_real32
-    procedure, private ,nopass :: reserve_real64 => pluto_memory_pool_resource_reserve_real64
-    generic :: reserve => reserve_real64
-    
-    procedure, nopass :: release => pluto_memory_pool_resource_release
+    procedure, nopass :: reserve => pluto_reserve
+
+    procedure, private, nopass :: pluto_release_all
+    procedure, private, nopass :: pluto_release_resource
+    generic :: release => pluto_release_all, pluto_release_resource
 
 end type
 
@@ -119,7 +111,8 @@ type(pluto_t) :: pluto
 contains
 
 function pluto_devices()
-    integer(c_int) :: pluto_devices
+    use, intrinsic :: iso_fortran_env, only: int32
+    integer(int32) :: pluto_devices
     interface
         function c_pluto_devices() result(devices) bind(c)
             use, intrinsic :: iso_c_binding, only: c_int
@@ -160,6 +153,28 @@ subroutine pluto_mpi_finalize()
         end subroutine
     end interface
     call c_pluto_mpi_finalize()
+end subroutine
+
+subroutine pluto_reserve(resource, size)
+    use, intrinsic :: iso_fortran_env, only: int64
+    use, intrinsic :: iso_c_binding, only: c_size_t
+    implicit none
+    type(pluto_memory_resource), intent(in) :: resource
+    integer(int64), intent(in) :: size
+    call resource%reserve(int(size,c_size_t))
+end subroutine
+
+subroutine pluto_release_all()
+    interface
+        subroutine c_pluto_release() bind(c)
+        end subroutine
+    end interface
+    call c_pluto_release()
+end subroutine
+
+subroutine pluto_release_resource(resource)
+    type(pluto_memory_resource), intent(in) :: resource
+    call resource%release()
 end subroutine
 
 function c_ptr_to_string(str_c_ptr,str_size) result(string)

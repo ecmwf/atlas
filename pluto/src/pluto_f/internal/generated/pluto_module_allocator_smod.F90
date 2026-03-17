@@ -6,6 +6,7 @@
 ! granted to it by virtue of its status as an intergovernmental organisation nor
 ! does it submit to any jurisdiction.
 
+
 submodule(pluto_module_allocator) pluto_module_allocator_smod
 
 use, intrinsic :: iso_c_binding      , only : c_associated
@@ -14,7 +15,6 @@ use pluto_module_memory_resource     , only : pluto_get_registered_resource
 use pluto_module_allocate_deallocate , only : pluto_allocate, pluto_deallocate
 
 implicit none
-
 
 contains
 

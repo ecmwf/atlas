@@ -6,6 +6,8 @@
 ! granted to it by virtue of its status as an intergovernmental organisation nor
 ! does it submit to any jurisdiction.
 
+#:include 'pluto_defs.fypp'
+
 module pluto_module_allocate_deallocate
 ! This is a separate module which is used by pluto_module to implement the allocation and deallocation procedures
 ! which use the C memory resource interface.
@@ -15,33 +17,18 @@ use pluto_module_memory_resource, only : pluto_memory_resource, pluto_get_label,
 implicit none
 private
 
-#:set ranks  = [1,2,3,4,5]
-#:set dim    = ['',':',':,:',':,:,:',':,:,:,:',':,:,:,:,:']
-#:set dtypes = ['int32','int64','real32','real64']
-#:set ftype  = dict(zip(dtypes, ['integer(int32)', 'integer(int64)', 'real(real32)', 'real(real64)']))
-
 public :: pluto_allocate, pluto_deallocate
 
 interface pluto_allocate
-#:for rank in ranks
-#:for dtype in dtypes
-#:set array = dtype + '_r' + str(rank)
-    module procedure pluto_allocate_${array}$_bounds
-    module procedure pluto_allocate_${array}$_shape
-    module procedure pluto_allocate_label_${array}$_bounds
-    module procedure pluto_allocate_label_${array}$_shape
-#:endfor
-#:endfor
+    $:module_procedure('pluto_allocate_array_bounds')
+    $:module_procedure('pluto_allocate_array_shape')
+    $:module_procedure('pluto_allocate_label_array_bounds')
+    $:module_procedure('pluto_allocate_label_array_shape')
 end interface
 
 interface pluto_deallocate
-#:for rank in ranks
-#:for dtype in dtypes
-#:set array = dtype + '_r' + str(rank)
-    module procedure pluto_deallocate_${array}$
-    module procedure pluto_deallocate_label_${array}$
-#:endfor
-#:endfor
+    $:module_procedure('pluto_deallocate_array')
+    $:module_procedure('pluto_deallocate_label_array')
 end interface
 
 interface
@@ -86,6 +73,7 @@ interface
         ${ftype[dtype]}$, pointer, intent(inout) :: array(${dim[rank]}$)
         type(pluto_memory_resource), intent(in) :: resource
     end subroutine
+
 #:endfor
 #:endfor
 end interface

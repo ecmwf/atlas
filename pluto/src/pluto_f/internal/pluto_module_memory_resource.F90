@@ -65,7 +65,7 @@ subroutine pluto_memory_resource_allocate(this, memory, bytes, alignment)
     integer(c_size_t), intent(in), optional :: alignment
     interface
         function c_pluto_memory_resource_allocate(memory_resource, bytes, alignment) result(memory) bind(c)
-            use iso_c_binding, only: c_ptr, c_size_t
+            use, intrinsic :: iso_c_binding, only: c_ptr, c_size_t
             type(c_ptr) :: memory
             type(c_ptr), value :: memory_resource
             integer(c_size_t), value :: bytes
@@ -87,7 +87,7 @@ subroutine pluto_memory_resource_deallocate(this, memory, bytes, alignment)
     integer(c_size_t), intent(in), optional :: alignment
     interface
         subroutine c_pluto_memory_resource_deallocate(memory_resource, memory, bytes, alignment) bind(c)
-            use iso_c_binding, only: c_ptr, c_size_t
+            use, intrinsic :: iso_c_binding, only: c_ptr, c_size_t
             type(c_ptr), value :: memory_resource
             type(c_ptr), value :: memory
             integer(c_size_t), value :: bytes
@@ -107,7 +107,7 @@ subroutine pluto_memory_pool_resource_release(this)
     class(pluto_memory_resource), intent(in) :: this
     interface
         subroutine c_pluto_memory_pool_resource_release(memory_resource) bind(c)
-            use iso_c_binding, only: c_ptr
+            use, intrinsic :: iso_c_binding, only: c_ptr
             type(c_ptr), value :: memory_resource
         end subroutine
     end interface
@@ -119,7 +119,7 @@ subroutine pluto_memory_pool_resource_reserve_size(this, bytes)
     integer(c_size_t), intent(in) :: bytes
     interface
         subroutine c_pluto_memory_pool_resource_reserve(memory_resource, bytes) bind(c)
-            use iso_c_binding, only: c_ptr, c_size_t
+            use, intrinsic :: iso_c_binding, only: c_ptr, c_size_t
             type(c_ptr), value :: memory_resource
             integer(c_size_t), value :: bytes
         end subroutine
@@ -157,7 +157,7 @@ function pluto_memory_pool_resource_size(this)
     class(pluto_memory_resource), intent(in) :: this
     interface
         function c_pluto_memory_pool_resource_size(memory_resource) result(size) bind(c)
-            use iso_c_binding, only: c_ptr, c_size_t
+            use, intrinsic :: iso_c_binding, only: c_ptr, c_size_t
             integer(c_size_t) :: size
             type(c_ptr), value :: memory_resource
         end function
@@ -170,7 +170,7 @@ function pluto_memory_pool_resource_capacity(this)
     class(pluto_memory_resource), intent(in) :: this
     interface
         function c_pluto_memory_pool_resource_capacity(memory_resource) result(capacity) bind(c)
-            use iso_c_binding, only: c_ptr, c_size_t
+            use, intrinsic :: iso_c_binding, only: c_ptr, c_size_t
             integer(c_size_t) :: capacity
             type(c_ptr), value :: memory_resource
         end function
@@ -184,7 +184,7 @@ function pluto_has_registered_resource(name)
     integer(c_int) :: has_resource
     interface
         function c_pluto_has_registered_resource(name, name_size) result(has_resource) bind(c)
-            use iso_c_binding, only: c_ptr, c_int
+            use, intrinsic :: iso_c_binding, only: c_ptr, c_int
             integer(c_int) :: has_resource
             type(c_ptr), value, intent(in) :: name
             integer(c_int), value, intent(in) :: name_size
@@ -198,7 +198,7 @@ function pluto_get_registered_resource(name) result(memory_resource)
     character(len=*), target, intent(in) :: name
     interface
         function c_pluto_get_registered_resource(name, name_size) result(memory_resource) bind(c)
-            use iso_c_binding, only: c_ptr, c_int
+            use, intrinsic :: iso_c_binding, only: c_ptr, c_int
             type(c_ptr) :: memory_resource
             type(c_ptr), value, intent(in) :: name
             integer(c_int), value, intent(in) :: name_size
@@ -212,7 +212,7 @@ subroutine pluto_register_resource(name, memory_resource)
     type(pluto_memory_resource), intent(in) :: memory_resource
     interface
         subroutine c_pluto_register_resource(name, name_size, memory_resource) bind(c)
-            use iso_c_binding, only: c_ptr, c_int
+            use, intrinsic :: iso_c_binding, only: c_ptr, c_int
             type(c_ptr), value, intent(in) :: name
             integer(c_int), value, intent(in) :: name_size
             type(c_ptr), value, intent(in) :: memory_resource
@@ -225,7 +225,7 @@ subroutine pluto_unregister_resource(name)
     character(len=*), target, intent(in) :: name
     interface
         subroutine c_pluto_unregister_resource(name, name_size) bind(c)
-            use iso_c_binding, only: c_ptr, c_int
+            use, intrinsic :: iso_c_binding, only: c_ptr, c_int
             type(c_ptr), value, intent(in) :: name
             integer(c_int), value, intent(in) :: name_size
         end subroutine
@@ -237,7 +237,7 @@ function pluto_new_delete_resource() result(memory_resource)
     type(pluto_memory_resource) :: memory_resource
     interface
         function c_pluto_new_delete_resource() result(memory_resource) bind(c)
-            use iso_c_binding, only: c_ptr
+            use, intrinsic :: iso_c_binding, only: c_ptr
             type(c_ptr) :: memory_resource
         end function
     end interface
@@ -248,7 +248,7 @@ function pluto_null_memory_resource() result(memory_resource)
     type(pluto_memory_resource) :: memory_resource
     interface
         function c_pluto_null_memory_resource() result(memory_resource) bind(c)
-            use iso_c_binding, only: c_ptr
+            use, intrinsic :: iso_c_binding, only: c_ptr
             type(c_ptr) :: memory_resource
         end function
     end interface
@@ -259,7 +259,7 @@ function pluto_host_resource() result(memory_resource)
     type(pluto_memory_resource) :: memory_resource
     interface
         function c_pluto_host_resource() result(memory_resource) bind(c)
-            use iso_c_binding, only: c_ptr
+            use, intrinsic :: iso_c_binding, only: c_ptr
             type(c_ptr) :: memory_resource
         end function
     end interface
@@ -270,7 +270,7 @@ function pluto_pinned_resource() result(memory_resource)
     type(pluto_memory_resource) :: memory_resource
     interface
         function c_pluto_pinned_resource() result(memory_resource) bind(c)
-            use iso_c_binding, only: c_ptr
+            use, intrinsic :: iso_c_binding, only: c_ptr
             type(c_ptr) :: memory_resource
         end function
     end interface
@@ -281,7 +281,7 @@ function pluto_device_resource() result(memory_resource)
     type(pluto_memory_resource) :: memory_resource
     interface
         function c_pluto_device_resource() result(memory_resource) bind(c)
-            use iso_c_binding, only: c_ptr
+            use, intrinsic :: iso_c_binding, only: c_ptr
             type(c_ptr) :: memory_resource
         end function
     end interface
@@ -292,7 +292,7 @@ function pluto_managed_resource() result(memory_resource)
     type(pluto_memory_resource) :: memory_resource
     interface
         function c_pluto_managed_resource() result(memory_resource) bind(c)
-            use iso_c_binding, only: c_ptr
+            use, intrinsic :: iso_c_binding, only: c_ptr
             type(c_ptr) :: memory_resource
         end function
     end interface
@@ -303,7 +303,7 @@ function pluto_mpi_resource() result(memory_resource)
     type(pluto_memory_resource) :: memory_resource
     interface
         function c_pluto_mpi_resource() result(memory_resource) bind(c)
-            use iso_c_binding, only: c_ptr
+            use, intrinsic :: iso_c_binding, only: c_ptr
             type(c_ptr) :: memory_resource
         end function
     end interface
@@ -314,7 +314,7 @@ function pluto_pinned_pool_resource() result(memory_resource)
     type(pluto_memory_resource) :: memory_resource
     interface
         function c_pluto_pinned_pool_resource() result(memory_resource) bind(c)
-            use iso_c_binding, only: c_ptr
+            use, intrinsic :: iso_c_binding, only: c_ptr
             type(c_ptr) :: memory_resource
         end function
     end interface
@@ -325,7 +325,7 @@ function pluto_host_pool_resource() result(memory_resource)
     type(pluto_memory_resource) :: memory_resource
     interface
         function c_pluto_host_pool_resource() result(memory_resource) bind(c)
-            use iso_c_binding, only: c_ptr
+            use, intrinsic :: iso_c_binding, only: c_ptr
             type(c_ptr) :: memory_resource
         end function
     end interface
@@ -336,7 +336,7 @@ function pluto_device_pool_resource() result(memory_resource)
     type(pluto_memory_resource) :: memory_resource
     interface
         function c_pluto_device_pool_resource() result(memory_resource) bind(c)
-            use iso_c_binding, only: c_ptr
+            use, intrinsic :: iso_c_binding, only: c_ptr
             type(c_ptr) :: memory_resource
         end function
     end interface
@@ -347,7 +347,7 @@ function pluto_managed_pool_resource() result(memory_resource)
     type(pluto_memory_resource) :: memory_resource
     interface
         function c_pluto_managed_pool_resource() result(memory_resource) bind(c)
-            use iso_c_binding, only: c_ptr
+            use, intrinsic :: iso_c_binding, only: c_ptr
             type(c_ptr) :: memory_resource
         end function
     end interface
@@ -358,7 +358,7 @@ function pluto_mpi_pool_resource() result(memory_resource)
     type(pluto_memory_resource) :: memory_resource
     interface
         function c_pluto_mpi_pool_resource() result(memory_resource) bind(c)
-            use iso_c_binding, only: c_ptr
+            use, intrinsic :: iso_c_binding, only: c_ptr
             type(c_ptr) :: memory_resource
         end function
     end interface
@@ -372,7 +372,7 @@ subroutine pluto_set_label(label)
     character(len=*), target, intent(in) :: label
     interface
         subroutine c_pluto_set_label(label, label_size) bind(C)
-            use iso_c_binding, only: c_ptr, c_int
+            use, intrinsic :: iso_c_binding, only: c_ptr, c_int
             type(c_ptr), value, intent(in) :: label
             integer(c_int), value, intent(in) :: label_size
         end subroutine
@@ -396,7 +396,7 @@ function pluto_get_label() result(label)
     integer(c_int) :: label_size
     interface
         subroutine c_pluto_get_label(label, label_size) bind(C)
-            use iso_c_binding, only: c_ptr, c_int
+            use, intrinsic :: iso_c_binding, only: c_ptr, c_int
             type(c_ptr) :: label
             integer(c_int), intent(out) :: label_size
         end subroutine
@@ -414,22 +414,22 @@ function pluto_get_label() result(label)
 end function
 
 subroutine pluto_register_memory_resource_adaptor(name, allocate_fn, deallocate_fn)
-    use iso_c_binding, only: c_ptr, c_int, c_funptr, c_ptr, c_loc, c_funloc
+    use, intrinsic :: iso_c_binding, only: c_ptr, c_int, c_funptr, c_ptr, c_loc, c_funloc
     interface
         function allocate_signature(size, alignment) result(ptr) bind(C)
-            use iso_c_binding, only: c_ptr, c_size_t
+            use, intrinsic :: iso_c_binding, only: c_ptr, c_size_t
             type(c_ptr) :: ptr
             integer(c_size_t), value, intent(in) :: size
             integer(c_size_t), value, intent(in) :: alignment
         end function
         subroutine deallocate_signature(ptr, size, alignment) bind(C)
-            use iso_c_binding, only: c_ptr, c_size_t
+            use, intrinsic :: iso_c_binding, only: c_ptr, c_size_t
             type(c_ptr), value, intent(in) :: ptr
             integer(c_size_t), value, intent(in) :: size
             integer(c_size_t), value, intent(in) :: alignment
         end subroutine
         subroutine c_pluto_register_memory_resource_adaptor(name, name_size, allocate_fn, deallocate_fn) bind(C)
-            use iso_c_binding, only: c_ptr, c_int, c_funptr
+            use, intrinsic :: iso_c_binding, only: c_ptr, c_int, c_funptr
             type(c_ptr) :: memory_resource
             type(c_ptr), value, intent(in) :: name
             integer(c_int), value, intent(in) :: name_size

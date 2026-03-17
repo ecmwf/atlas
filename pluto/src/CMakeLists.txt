@@ -135,7 +135,7 @@ if (HAVE_FORTRAN)
       pluto_f/internal/pluto_module_trace.F90
       pluto_f/internal/generated/pluto_module_host.F90
       pluto_f/internal/generated/pluto_module_device.F90
-      pluto_f/internal/generated/pluto_module.F90
+      pluto_f/pluto_module.F90
     PRIVATE_LIBS pluto
     PUBLIC_INCLUDES $<BUILD_INTERFACE:${CMAKE_Fortran_MODULE_DIRECTORY}>
                     $<INSTALL_INTERFACE:module/pluto>

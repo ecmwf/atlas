@@ -164,6 +164,10 @@ void c_pluto_mpi_finalize() {
     pluto::mpi_finalize();
 }
 
+void c_pluto_release() {
+    pluto::release();
+}
+
 void c_pluto_register_memory_resource_adaptor(const char* name, int name_size, void* allocate_fn, void* deallocate_fn) {
     auto allocate = reinterpret_cast<void* (*)(std::size_t, std::size_t)>(allocate_fn);
     auto deallocate = reinterpret_cast<void (*)(void*, std::size_t, std::size_t)>(deallocate_fn);

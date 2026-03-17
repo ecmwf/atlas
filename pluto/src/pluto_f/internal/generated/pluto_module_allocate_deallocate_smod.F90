@@ -6,11 +6,11 @@
 ! granted to it by virtue of its status as an intergovernmental organisation nor
 ! does it submit to any jurisdiction.
 
+
 submodule(pluto_module_allocate_deallocate) pluto_module_allocate_deallocate
 
 use, intrinsic :: iso_c_binding, only : c_loc, c_ptr, c_size_t, c_f_pointer
 implicit none
-
 
 contains
 
@@ -77,7 +77,6 @@ module procedure pluto_deallocate_label_int32_r1
     call pluto_set_label(previous_label)
 end procedure
 
-
 module procedure pluto_allocate_int64_r1_bounds
     implicit none
     type(c_ptr) :: mem
@@ -139,7 +138,6 @@ module procedure pluto_deallocate_label_int64_r1
     call pluto_deallocate_int64_r1(array, resource)
     call pluto_set_label(previous_label)
 end procedure
-
 
 module procedure pluto_allocate_real32_r1_bounds
     implicit none
@@ -203,7 +201,6 @@ module procedure pluto_deallocate_label_real32_r1
     call pluto_set_label(previous_label)
 end procedure
 
-
 module procedure pluto_allocate_real64_r1_bounds
     implicit none
     type(c_ptr) :: mem
@@ -265,7 +262,6 @@ module procedure pluto_deallocate_label_real64_r1
     call pluto_deallocate_real64_r1(array, resource)
     call pluto_set_label(previous_label)
 end procedure
-
 
 module procedure pluto_allocate_int32_r2_bounds
     implicit none
@@ -330,7 +326,6 @@ module procedure pluto_deallocate_label_int32_r2
     call pluto_set_label(previous_label)
 end procedure
 
-
 module procedure pluto_allocate_int64_r2_bounds
     implicit none
     type(c_ptr) :: mem
@@ -393,7 +388,6 @@ module procedure pluto_deallocate_label_int64_r2
     call pluto_deallocate_int64_r2(array, resource)
     call pluto_set_label(previous_label)
 end procedure
-
 
 module procedure pluto_allocate_real32_r2_bounds
     implicit none
@@ -458,7 +452,6 @@ module procedure pluto_deallocate_label_real32_r2
     call pluto_set_label(previous_label)
 end procedure
 
-
 module procedure pluto_allocate_real64_r2_bounds
     implicit none
     type(c_ptr) :: mem
@@ -521,7 +514,6 @@ module procedure pluto_deallocate_label_real64_r2
     call pluto_deallocate_real64_r2(array, resource)
     call pluto_set_label(previous_label)
 end procedure
-
 
 module procedure pluto_allocate_int32_r3_bounds
     implicit none
@@ -587,7 +579,6 @@ module procedure pluto_deallocate_label_int32_r3
     call pluto_set_label(previous_label)
 end procedure
 
-
 module procedure pluto_allocate_int64_r3_bounds
     implicit none
     type(c_ptr) :: mem
@@ -651,7 +642,6 @@ module procedure pluto_deallocate_label_int64_r3
     call pluto_deallocate_int64_r3(array, resource)
     call pluto_set_label(previous_label)
 end procedure
-
 
 module procedure pluto_allocate_real32_r3_bounds
     implicit none
@@ -717,7 +707,6 @@ module procedure pluto_deallocate_label_real32_r3
     call pluto_set_label(previous_label)
 end procedure
 
-
 module procedure pluto_allocate_real64_r3_bounds
     implicit none
     type(c_ptr) :: mem
@@ -781,7 +770,6 @@ module procedure pluto_deallocate_label_real64_r3
     call pluto_deallocate_real64_r3(array, resource)
     call pluto_set_label(previous_label)
 end procedure
-
 
 module procedure pluto_allocate_int32_r4_bounds
     implicit none
@@ -848,7 +836,6 @@ module procedure pluto_deallocate_label_int32_r4
     call pluto_set_label(previous_label)
 end procedure
 
-
 module procedure pluto_allocate_int64_r4_bounds
     implicit none
     type(c_ptr) :: mem
@@ -913,7 +900,6 @@ module procedure pluto_deallocate_label_int64_r4
     call pluto_deallocate_int64_r4(array, resource)
     call pluto_set_label(previous_label)
 end procedure
-
 
 module procedure pluto_allocate_real32_r4_bounds
     implicit none
@@ -980,7 +966,6 @@ module procedure pluto_deallocate_label_real32_r4
     call pluto_set_label(previous_label)
 end procedure
 
-
 module procedure pluto_allocate_real64_r4_bounds
     implicit none
     type(c_ptr) :: mem
@@ -1045,7 +1030,6 @@ module procedure pluto_deallocate_label_real64_r4
     call pluto_deallocate_real64_r4(array, resource)
     call pluto_set_label(previous_label)
 end procedure
-
 
 module procedure pluto_allocate_int32_r5_bounds
     implicit none
@@ -1113,7 +1097,6 @@ module procedure pluto_deallocate_label_int32_r5
     call pluto_set_label(previous_label)
 end procedure
 
-
 module procedure pluto_allocate_int64_r5_bounds
     implicit none
     type(c_ptr) :: mem
@@ -1179,7 +1162,6 @@ module procedure pluto_deallocate_label_int64_r5
     call pluto_deallocate_int64_r5(array, resource)
     call pluto_set_label(previous_label)
 end procedure
-
 
 module procedure pluto_allocate_real32_r5_bounds
     implicit none
@@ -1247,7 +1229,6 @@ module procedure pluto_deallocate_label_real32_r5
     call pluto_set_label(previous_label)
 end procedure
 
-
 module procedure pluto_allocate_real64_r5_bounds
     implicit none
     type(c_ptr) :: mem
@@ -1313,6 +1294,5 @@ module procedure pluto_deallocate_label_real64_r5
     call pluto_deallocate_real64_r5(array, resource)
     call pluto_set_label(previous_label)
 end procedure
-
 
 end submodule

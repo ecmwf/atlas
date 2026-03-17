@@ -6,6 +6,8 @@
 ! granted to it by virtue of its status as an intergovernmental organisation nor
 ! does it submit to any jurisdiction.
 
+#:include "pluto_defs.fypp"
+
 module pluto_module_allocator
 
 use, intrinsic :: iso_fortran_env, only : int32, int64, real32, real64
@@ -14,11 +16,6 @@ use pluto_module_memory_resource, only : pluto_memory_resource
 implicit none
 private
 
-#:set ranks  = [1,2,3,4,5]
-#:set dim    = ['',':',':,:',':,:,:',':,:,:,:',':,:,:,:,:']
-#:set dtypes = ['int32','int64','real32','real64']
-#:set ftype  = dict(zip(dtypes, ['integer(int32)', 'integer(int64)', 'real(real32)', 'real(real64)']))
-
 public :: pluto_allocator
 public :: pluto_make_allocator
 
@@ -26,41 +23,16 @@ type pluto_allocator
     type(pluto_memory_resource) :: memory_resource
 contains
 
-#:for rank in ranks
-#:for dtype in dtypes
-#:set array = dtype + '_r' + str(rank)
-    procedure, private :: pluto_allocator_allocate_${array}$_shape
-    procedure, private :: pluto_allocator_allocate_${array}$_bounds
-    procedure, private :: pluto_allocator_allocate_label_${array}$_shape
-    procedure, private :: pluto_allocator_allocate_label_${array}$_bounds
-#:endfor
-#:endfor
+    $:generic_procedure('allocate', [ &
+        'pluto_allocator_allocate_array_shape', &
+        'pluto_allocator_allocate_array_bounds', &
+        'pluto_allocator_allocate_label_array_shape', &
+        'pluto_allocator_allocate_label_array_bounds'])
 
-#:for rank in ranks
-#:for dtype in dtypes
-#:set array = dtype + '_r' + str(rank)
-    generic, public :: allocate => pluto_allocator_allocate_${array}$_shape
-    generic, public :: allocate => pluto_allocator_allocate_${array}$_bounds
-    generic, public :: allocate => pluto_allocator_allocate_label_${array}$_shape
-    generic, public :: allocate => pluto_allocator_allocate_label_${array}$_bounds
-#:endfor
-#:endfor
+    $:generic_procedure('deallocate', [ &
+        'pluto_allocator_deallocate_array', &
+        'pluto_allocator_deallocate_label_array'])
 
-#:for rank in ranks
-#:for dtype in dtypes
-#:set array = dtype + '_r' + str(rank)
-    procedure, private :: pluto_allocator_deallocate_${array}$
-    procedure, private :: pluto_allocator_deallocate_label_${array}$
-#:endfor
-#:endfor
-
-#:for rank in ranks
-#:for dtype in dtypes
-#:set array = dtype + '_r' + str(rank)
-    generic, public :: deallocate => pluto_allocator_deallocate_${array}$
-    generic, public :: deallocate => pluto_allocator_deallocate_label_${array}$
-#:endfor
-#:endfor
 end type
 
 interface pluto_make_allocator

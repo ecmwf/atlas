@@ -6,6 +6,7 @@
 ! granted to it by virtue of its status as an intergovernmental organisation nor
 ! does it submit to any jurisdiction.
 
+
 module pluto_module_allocate_deallocate
 ! This is a separate module which is used by pluto_module to implement the allocation and deallocation procedures
 ! which use the C memory resource interface.
@@ -15,132 +16,131 @@ use pluto_module_memory_resource, only : pluto_memory_resource, pluto_get_label,
 implicit none
 private
 
-
 public :: pluto_allocate, pluto_deallocate
 
 interface pluto_allocate
     module procedure pluto_allocate_int32_r1_bounds
-    module procedure pluto_allocate_int32_r1_shape
-    module procedure pluto_allocate_label_int32_r1_bounds
-    module procedure pluto_allocate_label_int32_r1_shape
     module procedure pluto_allocate_int64_r1_bounds
-    module procedure pluto_allocate_int64_r1_shape
-    module procedure pluto_allocate_label_int64_r1_bounds
-    module procedure pluto_allocate_label_int64_r1_shape
     module procedure pluto_allocate_real32_r1_bounds
-    module procedure pluto_allocate_real32_r1_shape
-    module procedure pluto_allocate_label_real32_r1_bounds
-    module procedure pluto_allocate_label_real32_r1_shape
     module procedure pluto_allocate_real64_r1_bounds
-    module procedure pluto_allocate_real64_r1_shape
-    module procedure pluto_allocate_label_real64_r1_bounds
-    module procedure pluto_allocate_label_real64_r1_shape
     module procedure pluto_allocate_int32_r2_bounds
-    module procedure pluto_allocate_int32_r2_shape
-    module procedure pluto_allocate_label_int32_r2_bounds
-    module procedure pluto_allocate_label_int32_r2_shape
     module procedure pluto_allocate_int64_r2_bounds
-    module procedure pluto_allocate_int64_r2_shape
-    module procedure pluto_allocate_label_int64_r2_bounds
-    module procedure pluto_allocate_label_int64_r2_shape
     module procedure pluto_allocate_real32_r2_bounds
-    module procedure pluto_allocate_real32_r2_shape
-    module procedure pluto_allocate_label_real32_r2_bounds
-    module procedure pluto_allocate_label_real32_r2_shape
     module procedure pluto_allocate_real64_r2_bounds
-    module procedure pluto_allocate_real64_r2_shape
-    module procedure pluto_allocate_label_real64_r2_bounds
-    module procedure pluto_allocate_label_real64_r2_shape
     module procedure pluto_allocate_int32_r3_bounds
-    module procedure pluto_allocate_int32_r3_shape
-    module procedure pluto_allocate_label_int32_r3_bounds
-    module procedure pluto_allocate_label_int32_r3_shape
     module procedure pluto_allocate_int64_r3_bounds
-    module procedure pluto_allocate_int64_r3_shape
-    module procedure pluto_allocate_label_int64_r3_bounds
-    module procedure pluto_allocate_label_int64_r3_shape
     module procedure pluto_allocate_real32_r3_bounds
-    module procedure pluto_allocate_real32_r3_shape
-    module procedure pluto_allocate_label_real32_r3_bounds
-    module procedure pluto_allocate_label_real32_r3_shape
     module procedure pluto_allocate_real64_r3_bounds
-    module procedure pluto_allocate_real64_r3_shape
-    module procedure pluto_allocate_label_real64_r3_bounds
-    module procedure pluto_allocate_label_real64_r3_shape
     module procedure pluto_allocate_int32_r4_bounds
-    module procedure pluto_allocate_int32_r4_shape
-    module procedure pluto_allocate_label_int32_r4_bounds
-    module procedure pluto_allocate_label_int32_r4_shape
     module procedure pluto_allocate_int64_r4_bounds
-    module procedure pluto_allocate_int64_r4_shape
-    module procedure pluto_allocate_label_int64_r4_bounds
-    module procedure pluto_allocate_label_int64_r4_shape
     module procedure pluto_allocate_real32_r4_bounds
-    module procedure pluto_allocate_real32_r4_shape
-    module procedure pluto_allocate_label_real32_r4_bounds
-    module procedure pluto_allocate_label_real32_r4_shape
     module procedure pluto_allocate_real64_r4_bounds
-    module procedure pluto_allocate_real64_r4_shape
-    module procedure pluto_allocate_label_real64_r4_bounds
-    module procedure pluto_allocate_label_real64_r4_shape
     module procedure pluto_allocate_int32_r5_bounds
-    module procedure pluto_allocate_int32_r5_shape
-    module procedure pluto_allocate_label_int32_r5_bounds
-    module procedure pluto_allocate_label_int32_r5_shape
     module procedure pluto_allocate_int64_r5_bounds
-    module procedure pluto_allocate_int64_r5_shape
-    module procedure pluto_allocate_label_int64_r5_bounds
-    module procedure pluto_allocate_label_int64_r5_shape
     module procedure pluto_allocate_real32_r5_bounds
-    module procedure pluto_allocate_real32_r5_shape
-    module procedure pluto_allocate_label_real32_r5_bounds
-    module procedure pluto_allocate_label_real32_r5_shape
     module procedure pluto_allocate_real64_r5_bounds
+    module procedure pluto_allocate_int32_r1_shape
+    module procedure pluto_allocate_int64_r1_shape
+    module procedure pluto_allocate_real32_r1_shape
+    module procedure pluto_allocate_real64_r1_shape
+    module procedure pluto_allocate_int32_r2_shape
+    module procedure pluto_allocate_int64_r2_shape
+    module procedure pluto_allocate_real32_r2_shape
+    module procedure pluto_allocate_real64_r2_shape
+    module procedure pluto_allocate_int32_r3_shape
+    module procedure pluto_allocate_int64_r3_shape
+    module procedure pluto_allocate_real32_r3_shape
+    module procedure pluto_allocate_real64_r3_shape
+    module procedure pluto_allocate_int32_r4_shape
+    module procedure pluto_allocate_int64_r4_shape
+    module procedure pluto_allocate_real32_r4_shape
+    module procedure pluto_allocate_real64_r4_shape
+    module procedure pluto_allocate_int32_r5_shape
+    module procedure pluto_allocate_int64_r5_shape
+    module procedure pluto_allocate_real32_r5_shape
     module procedure pluto_allocate_real64_r5_shape
+    module procedure pluto_allocate_label_int32_r1_bounds
+    module procedure pluto_allocate_label_int64_r1_bounds
+    module procedure pluto_allocate_label_real32_r1_bounds
+    module procedure pluto_allocate_label_real64_r1_bounds
+    module procedure pluto_allocate_label_int32_r2_bounds
+    module procedure pluto_allocate_label_int64_r2_bounds
+    module procedure pluto_allocate_label_real32_r2_bounds
+    module procedure pluto_allocate_label_real64_r2_bounds
+    module procedure pluto_allocate_label_int32_r3_bounds
+    module procedure pluto_allocate_label_int64_r3_bounds
+    module procedure pluto_allocate_label_real32_r3_bounds
+    module procedure pluto_allocate_label_real64_r3_bounds
+    module procedure pluto_allocate_label_int32_r4_bounds
+    module procedure pluto_allocate_label_int64_r4_bounds
+    module procedure pluto_allocate_label_real32_r4_bounds
+    module procedure pluto_allocate_label_real64_r4_bounds
+    module procedure pluto_allocate_label_int32_r5_bounds
+    module procedure pluto_allocate_label_int64_r5_bounds
+    module procedure pluto_allocate_label_real32_r5_bounds
     module procedure pluto_allocate_label_real64_r5_bounds
+    module procedure pluto_allocate_label_int32_r1_shape
+    module procedure pluto_allocate_label_int64_r1_shape
+    module procedure pluto_allocate_label_real32_r1_shape
+    module procedure pluto_allocate_label_real64_r1_shape
+    module procedure pluto_allocate_label_int32_r2_shape
+    module procedure pluto_allocate_label_int64_r2_shape
+    module procedure pluto_allocate_label_real32_r2_shape
+    module procedure pluto_allocate_label_real64_r2_shape
+    module procedure pluto_allocate_label_int32_r3_shape
+    module procedure pluto_allocate_label_int64_r3_shape
+    module procedure pluto_allocate_label_real32_r3_shape
+    module procedure pluto_allocate_label_real64_r3_shape
+    module procedure pluto_allocate_label_int32_r4_shape
+    module procedure pluto_allocate_label_int64_r4_shape
+    module procedure pluto_allocate_label_real32_r4_shape
+    module procedure pluto_allocate_label_real64_r4_shape
+    module procedure pluto_allocate_label_int32_r5_shape
+    module procedure pluto_allocate_label_int64_r5_shape
+    module procedure pluto_allocate_label_real32_r5_shape
     module procedure pluto_allocate_label_real64_r5_shape
 end interface
 
 interface pluto_deallocate
     module procedure pluto_deallocate_int32_r1
-    module procedure pluto_deallocate_label_int32_r1
     module procedure pluto_deallocate_int64_r1
-    module procedure pluto_deallocate_label_int64_r1
     module procedure pluto_deallocate_real32_r1
-    module procedure pluto_deallocate_label_real32_r1
     module procedure pluto_deallocate_real64_r1
-    module procedure pluto_deallocate_label_real64_r1
     module procedure pluto_deallocate_int32_r2
-    module procedure pluto_deallocate_label_int32_r2
     module procedure pluto_deallocate_int64_r2
-    module procedure pluto_deallocate_label_int64_r2
     module procedure pluto_deallocate_real32_r2
-    module procedure pluto_deallocate_label_real32_r2
     module procedure pluto_deallocate_real64_r2
-    module procedure pluto_deallocate_label_real64_r2
     module procedure pluto_deallocate_int32_r3
-    module procedure pluto_deallocate_label_int32_r3
     module procedure pluto_deallocate_int64_r3
-    module procedure pluto_deallocate_label_int64_r3
     module procedure pluto_deallocate_real32_r3
-    module procedure pluto_deallocate_label_real32_r3
     module procedure pluto_deallocate_real64_r3
-    module procedure pluto_deallocate_label_real64_r3
     module procedure pluto_deallocate_int32_r4
-    module procedure pluto_deallocate_label_int32_r4
     module procedure pluto_deallocate_int64_r4
-    module procedure pluto_deallocate_label_int64_r4
     module procedure pluto_deallocate_real32_r4
-    module procedure pluto_deallocate_label_real32_r4
     module procedure pluto_deallocate_real64_r4
-    module procedure pluto_deallocate_label_real64_r4
     module procedure pluto_deallocate_int32_r5
-    module procedure pluto_deallocate_label_int32_r5
     module procedure pluto_deallocate_int64_r5
-    module procedure pluto_deallocate_label_int64_r5
     module procedure pluto_deallocate_real32_r5
-    module procedure pluto_deallocate_label_real32_r5
     module procedure pluto_deallocate_real64_r5
+    module procedure pluto_deallocate_label_int32_r1
+    module procedure pluto_deallocate_label_int64_r1
+    module procedure pluto_deallocate_label_real32_r1
+    module procedure pluto_deallocate_label_real64_r1
+    module procedure pluto_deallocate_label_int32_r2
+    module procedure pluto_deallocate_label_int64_r2
+    module procedure pluto_deallocate_label_real32_r2
+    module procedure pluto_deallocate_label_real64_r2
+    module procedure pluto_deallocate_label_int32_r3
+    module procedure pluto_deallocate_label_int64_r3
+    module procedure pluto_deallocate_label_real32_r3
+    module procedure pluto_deallocate_label_real64_r3
+    module procedure pluto_deallocate_label_int32_r4
+    module procedure pluto_deallocate_label_int64_r4
+    module procedure pluto_deallocate_label_real32_r4
+    module procedure pluto_deallocate_label_real64_r4
+    module procedure pluto_deallocate_label_int32_r5
+    module procedure pluto_deallocate_label_int64_r5
+    module procedure pluto_deallocate_label_real32_r5
     module procedure pluto_deallocate_label_real64_r5
 end interface
 
@@ -183,6 +183,7 @@ interface
         integer(int32), pointer, intent(inout) :: array(:)
         type(pluto_memory_resource), intent(in) :: resource
     end subroutine
+
     module subroutine pluto_allocate_int64_r1_bounds(array, lbounds, ubounds, resource)
         integer(int64), pointer, intent(inout) :: array(:)
         integer(int32), intent(in) :: lbounds(1)
@@ -221,6 +222,7 @@ interface
         integer(int64), pointer, intent(inout) :: array(:)
         type(pluto_memory_resource), intent(in) :: resource
     end subroutine
+
     module subroutine pluto_allocate_real32_r1_bounds(array, lbounds, ubounds, resource)
         real(real32), pointer, intent(inout) :: array(:)
         integer(int32), intent(in) :: lbounds(1)
@@ -259,6 +261,7 @@ interface
         real(real32), pointer, intent(inout) :: array(:)
         type(pluto_memory_resource), intent(in) :: resource
     end subroutine
+
     module subroutine pluto_allocate_real64_r1_bounds(array, lbounds, ubounds, resource)
         real(real64), pointer, intent(inout) :: array(:)
         integer(int32), intent(in) :: lbounds(1)
@@ -297,6 +300,7 @@ interface
         real(real64), pointer, intent(inout) :: array(:)
         type(pluto_memory_resource), intent(in) :: resource
     end subroutine
+
     module subroutine pluto_allocate_int32_r2_bounds(array, lbounds, ubounds, resource)
         integer(int32), pointer, intent(inout) :: array(:,:)
         integer(int32), intent(in) :: lbounds(2)
@@ -335,6 +339,7 @@ interface
         integer(int32), pointer, intent(inout) :: array(:,:)
         type(pluto_memory_resource), intent(in) :: resource
     end subroutine
+
     module subroutine pluto_allocate_int64_r2_bounds(array, lbounds, ubounds, resource)
         integer(int64), pointer, intent(inout) :: array(:,:)
         integer(int32), intent(in) :: lbounds(2)
@@ -373,6 +378,7 @@ interface
         integer(int64), pointer, intent(inout) :: array(:,:)
         type(pluto_memory_resource), intent(in) :: resource
     end subroutine
+
     module subroutine pluto_allocate_real32_r2_bounds(array, lbounds, ubounds, resource)
         real(real32), pointer, intent(inout) :: array(:,:)
         integer(int32), intent(in) :: lbounds(2)
@@ -411,6 +417,7 @@ interface
         real(real32), pointer, intent(inout) :: array(:,:)
         type(pluto_memory_resource), intent(in) :: resource
     end subroutine
+
     module subroutine pluto_allocate_real64_r2_bounds(array, lbounds, ubounds, resource)
         real(real64), pointer, intent(inout) :: array(:,:)
         integer(int32), intent(in) :: lbounds(2)
@@ -449,6 +456,7 @@ interface
         real(real64), pointer, intent(inout) :: array(:,:)
         type(pluto_memory_resource), intent(in) :: resource
     end subroutine
+
     module subroutine pluto_allocate_int32_r3_bounds(array, lbounds, ubounds, resource)
         integer(int32), pointer, intent(inout) :: array(:,:,:)
         integer(int32), intent(in) :: lbounds(3)
@@ -487,6 +495,7 @@ interface
         integer(int32), pointer, intent(inout) :: array(:,:,:)
         type(pluto_memory_resource), intent(in) :: resource
     end subroutine
+
     module subroutine pluto_allocate_int64_r3_bounds(array, lbounds, ubounds, resource)
         integer(int64), pointer, intent(inout) :: array(:,:,:)
         integer(int32), intent(in) :: lbounds(3)
@@ -525,6 +534,7 @@ interface
         integer(int64), pointer, intent(inout) :: array(:,:,:)
         type(pluto_memory_resource), intent(in) :: resource
     end subroutine
+
     module subroutine pluto_allocate_real32_r3_bounds(array, lbounds, ubounds, resource)
         real(real32), pointer, intent(inout) :: array(:,:,:)
         integer(int32), intent(in) :: lbounds(3)
@@ -563,6 +573,7 @@ interface
         real(real32), pointer, intent(inout) :: array(:,:,:)
         type(pluto_memory_resource), intent(in) :: resource
     end subroutine
+
     module subroutine pluto_allocate_real64_r3_bounds(array, lbounds, ubounds, resource)
         real(real64), pointer, intent(inout) :: array(:,:,:)
         integer(int32), intent(in) :: lbounds(3)
@@ -601,6 +612,7 @@ interface
         real(real64), pointer, intent(inout) :: array(:,:,:)
         type(pluto_memory_resource), intent(in) :: resource
     end subroutine
+
     module subroutine pluto_allocate_int32_r4_bounds(array, lbounds, ubounds, resource)
         integer(int32), pointer, intent(inout) :: array(:,:,:,:)
         integer(int32), intent(in) :: lbounds(4)
@@ -639,6 +651,7 @@ interface
         integer(int32), pointer, intent(inout) :: array(:,:,:,:)
         type(pluto_memory_resource), intent(in) :: resource
     end subroutine
+
     module subroutine pluto_allocate_int64_r4_bounds(array, lbounds, ubounds, resource)
         integer(int64), pointer, intent(inout) :: array(:,:,:,:)
         integer(int32), intent(in) :: lbounds(4)
@@ -677,6 +690,7 @@ interface
         integer(int64), pointer, intent(inout) :: array(:,:,:,:)
         type(pluto_memory_resource), intent(in) :: resource
     end subroutine
+
     module subroutine pluto_allocate_real32_r4_bounds(array, lbounds, ubounds, resource)
         real(real32), pointer, intent(inout) :: array(:,:,:,:)
         integer(int32), intent(in) :: lbounds(4)
@@ -715,6 +729,7 @@ interface
         real(real32), pointer, intent(inout) :: array(:,:,:,:)
         type(pluto_memory_resource), intent(in) :: resource
     end subroutine
+
     module subroutine pluto_allocate_real64_r4_bounds(array, lbounds, ubounds, resource)
         real(real64), pointer, intent(inout) :: array(:,:,:,:)
         integer(int32), intent(in) :: lbounds(4)
@@ -753,6 +768,7 @@ interface
         real(real64), pointer, intent(inout) :: array(:,:,:,:)
         type(pluto_memory_resource), intent(in) :: resource
     end subroutine
+
     module subroutine pluto_allocate_int32_r5_bounds(array, lbounds, ubounds, resource)
         integer(int32), pointer, intent(inout) :: array(:,:,:,:,:)
         integer(int32), intent(in) :: lbounds(5)
@@ -791,6 +807,7 @@ interface
         integer(int32), pointer, intent(inout) :: array(:,:,:,:,:)
         type(pluto_memory_resource), intent(in) :: resource
     end subroutine
+
     module subroutine pluto_allocate_int64_r5_bounds(array, lbounds, ubounds, resource)
         integer(int64), pointer, intent(inout) :: array(:,:,:,:,:)
         integer(int32), intent(in) :: lbounds(5)
@@ -829,6 +846,7 @@ interface
         integer(int64), pointer, intent(inout) :: array(:,:,:,:,:)
         type(pluto_memory_resource), intent(in) :: resource
     end subroutine
+
     module subroutine pluto_allocate_real32_r5_bounds(array, lbounds, ubounds, resource)
         real(real32), pointer, intent(inout) :: array(:,:,:,:,:)
         integer(int32), intent(in) :: lbounds(5)
@@ -867,6 +885,7 @@ interface
         real(real32), pointer, intent(inout) :: array(:,:,:,:,:)
         type(pluto_memory_resource), intent(in) :: resource
     end subroutine
+
     module subroutine pluto_allocate_real64_r5_bounds(array, lbounds, ubounds, resource)
         real(real64), pointer, intent(inout) :: array(:,:,:,:,:)
         integer(int32), intent(in) :: lbounds(5)
@@ -905,6 +924,7 @@ interface
         real(real64), pointer, intent(inout) :: array(:,:,:,:,:)
         type(pluto_memory_resource), intent(in) :: resource
     end subroutine
+
 end interface
 
 end module

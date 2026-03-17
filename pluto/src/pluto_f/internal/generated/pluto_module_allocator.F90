@@ -6,6 +6,7 @@
 ! granted to it by virtue of its status as an intergovernmental organisation nor
 ! does it submit to any jurisdiction.
 
+
 module pluto_module_allocator
 
 use, intrinsic :: iso_fortran_env, only : int32, int64, real32, real64
@@ -13,7 +14,6 @@ use pluto_module_memory_resource, only : pluto_memory_resource
 
 implicit none
 private
-
 
 public :: pluto_allocator
 public :: pluto_make_allocator
@@ -102,87 +102,87 @@ contains
     procedure, private :: pluto_allocator_allocate_real64_r5_bounds
     procedure, private :: pluto_allocator_allocate_label_real64_r5_shape
     procedure, private :: pluto_allocator_allocate_label_real64_r5_bounds
-
-    generic, public :: allocate => pluto_allocator_allocate_int32_r1_shape
-    generic, public :: allocate => pluto_allocator_allocate_int32_r1_bounds
-    generic, public :: allocate => pluto_allocator_allocate_label_int32_r1_shape
-    generic, public :: allocate => pluto_allocator_allocate_label_int32_r1_bounds
-    generic, public :: allocate => pluto_allocator_allocate_int64_r1_shape
-    generic, public :: allocate => pluto_allocator_allocate_int64_r1_bounds
-    generic, public :: allocate => pluto_allocator_allocate_label_int64_r1_shape
-    generic, public :: allocate => pluto_allocator_allocate_label_int64_r1_bounds
-    generic, public :: allocate => pluto_allocator_allocate_real32_r1_shape
-    generic, public :: allocate => pluto_allocator_allocate_real32_r1_bounds
-    generic, public :: allocate => pluto_allocator_allocate_label_real32_r1_shape
-    generic, public :: allocate => pluto_allocator_allocate_label_real32_r1_bounds
-    generic, public :: allocate => pluto_allocator_allocate_real64_r1_shape
-    generic, public :: allocate => pluto_allocator_allocate_real64_r1_bounds
-    generic, public :: allocate => pluto_allocator_allocate_label_real64_r1_shape
-    generic, public :: allocate => pluto_allocator_allocate_label_real64_r1_bounds
-    generic, public :: allocate => pluto_allocator_allocate_int32_r2_shape
-    generic, public :: allocate => pluto_allocator_allocate_int32_r2_bounds
-    generic, public :: allocate => pluto_allocator_allocate_label_int32_r2_shape
-    generic, public :: allocate => pluto_allocator_allocate_label_int32_r2_bounds
-    generic, public :: allocate => pluto_allocator_allocate_int64_r2_shape
-    generic, public :: allocate => pluto_allocator_allocate_int64_r2_bounds
-    generic, public :: allocate => pluto_allocator_allocate_label_int64_r2_shape
-    generic, public :: allocate => pluto_allocator_allocate_label_int64_r2_bounds
-    generic, public :: allocate => pluto_allocator_allocate_real32_r2_shape
-    generic, public :: allocate => pluto_allocator_allocate_real32_r2_bounds
-    generic, public :: allocate => pluto_allocator_allocate_label_real32_r2_shape
-    generic, public :: allocate => pluto_allocator_allocate_label_real32_r2_bounds
-    generic, public :: allocate => pluto_allocator_allocate_real64_r2_shape
-    generic, public :: allocate => pluto_allocator_allocate_real64_r2_bounds
-    generic, public :: allocate => pluto_allocator_allocate_label_real64_r2_shape
-    generic, public :: allocate => pluto_allocator_allocate_label_real64_r2_bounds
-    generic, public :: allocate => pluto_allocator_allocate_int32_r3_shape
-    generic, public :: allocate => pluto_allocator_allocate_int32_r3_bounds
-    generic, public :: allocate => pluto_allocator_allocate_label_int32_r3_shape
-    generic, public :: allocate => pluto_allocator_allocate_label_int32_r3_bounds
-    generic, public :: allocate => pluto_allocator_allocate_int64_r3_shape
-    generic, public :: allocate => pluto_allocator_allocate_int64_r3_bounds
-    generic, public :: allocate => pluto_allocator_allocate_label_int64_r3_shape
-    generic, public :: allocate => pluto_allocator_allocate_label_int64_r3_bounds
-    generic, public :: allocate => pluto_allocator_allocate_real32_r3_shape
-    generic, public :: allocate => pluto_allocator_allocate_real32_r3_bounds
-    generic, public :: allocate => pluto_allocator_allocate_label_real32_r3_shape
-    generic, public :: allocate => pluto_allocator_allocate_label_real32_r3_bounds
-    generic, public :: allocate => pluto_allocator_allocate_real64_r3_shape
-    generic, public :: allocate => pluto_allocator_allocate_real64_r3_bounds
-    generic, public :: allocate => pluto_allocator_allocate_label_real64_r3_shape
-    generic, public :: allocate => pluto_allocator_allocate_label_real64_r3_bounds
-    generic, public :: allocate => pluto_allocator_allocate_int32_r4_shape
-    generic, public :: allocate => pluto_allocator_allocate_int32_r4_bounds
-    generic, public :: allocate => pluto_allocator_allocate_label_int32_r4_shape
-    generic, public :: allocate => pluto_allocator_allocate_label_int32_r4_bounds
-    generic, public :: allocate => pluto_allocator_allocate_int64_r4_shape
-    generic, public :: allocate => pluto_allocator_allocate_int64_r4_bounds
-    generic, public :: allocate => pluto_allocator_allocate_label_int64_r4_shape
-    generic, public :: allocate => pluto_allocator_allocate_label_int64_r4_bounds
-    generic, public :: allocate => pluto_allocator_allocate_real32_r4_shape
-    generic, public :: allocate => pluto_allocator_allocate_real32_r4_bounds
-    generic, public :: allocate => pluto_allocator_allocate_label_real32_r4_shape
-    generic, public :: allocate => pluto_allocator_allocate_label_real32_r4_bounds
-    generic, public :: allocate => pluto_allocator_allocate_real64_r4_shape
-    generic, public :: allocate => pluto_allocator_allocate_real64_r4_bounds
-    generic, public :: allocate => pluto_allocator_allocate_label_real64_r4_shape
-    generic, public :: allocate => pluto_allocator_allocate_label_real64_r4_bounds
-    generic, public :: allocate => pluto_allocator_allocate_int32_r5_shape
-    generic, public :: allocate => pluto_allocator_allocate_int32_r5_bounds
-    generic, public :: allocate => pluto_allocator_allocate_label_int32_r5_shape
-    generic, public :: allocate => pluto_allocator_allocate_label_int32_r5_bounds
-    generic, public :: allocate => pluto_allocator_allocate_int64_r5_shape
-    generic, public :: allocate => pluto_allocator_allocate_int64_r5_bounds
-    generic, public :: allocate => pluto_allocator_allocate_label_int64_r5_shape
-    generic, public :: allocate => pluto_allocator_allocate_label_int64_r5_bounds
-    generic, public :: allocate => pluto_allocator_allocate_real32_r5_shape
-    generic, public :: allocate => pluto_allocator_allocate_real32_r5_bounds
-    generic, public :: allocate => pluto_allocator_allocate_label_real32_r5_shape
-    generic, public :: allocate => pluto_allocator_allocate_label_real32_r5_bounds
-    generic, public :: allocate => pluto_allocator_allocate_real64_r5_shape
-    generic, public :: allocate => pluto_allocator_allocate_real64_r5_bounds
-    generic, public :: allocate => pluto_allocator_allocate_label_real64_r5_shape
-    generic, public :: allocate => pluto_allocator_allocate_label_real64_r5_bounds
+    generic, public :: allocate => &
+        & pluto_allocator_allocate_int32_r1_shape, &
+        & pluto_allocator_allocate_int32_r1_bounds, &
+        & pluto_allocator_allocate_label_int32_r1_shape, &
+        & pluto_allocator_allocate_label_int32_r1_bounds, &
+        & pluto_allocator_allocate_int64_r1_shape, &
+        & pluto_allocator_allocate_int64_r1_bounds, &
+        & pluto_allocator_allocate_label_int64_r1_shape, &
+        & pluto_allocator_allocate_label_int64_r1_bounds, &
+        & pluto_allocator_allocate_real32_r1_shape, &
+        & pluto_allocator_allocate_real32_r1_bounds, &
+        & pluto_allocator_allocate_label_real32_r1_shape, &
+        & pluto_allocator_allocate_label_real32_r1_bounds, &
+        & pluto_allocator_allocate_real64_r1_shape, &
+        & pluto_allocator_allocate_real64_r1_bounds, &
+        & pluto_allocator_allocate_label_real64_r1_shape, &
+        & pluto_allocator_allocate_label_real64_r1_bounds, &
+        & pluto_allocator_allocate_int32_r2_shape, &
+        & pluto_allocator_allocate_int32_r2_bounds, &
+        & pluto_allocator_allocate_label_int32_r2_shape, &
+        & pluto_allocator_allocate_label_int32_r2_bounds, &
+        & pluto_allocator_allocate_int64_r2_shape, &
+        & pluto_allocator_allocate_int64_r2_bounds, &
+        & pluto_allocator_allocate_label_int64_r2_shape, &
+        & pluto_allocator_allocate_label_int64_r2_bounds, &
+        & pluto_allocator_allocate_real32_r2_shape, &
+        & pluto_allocator_allocate_real32_r2_bounds, &
+        & pluto_allocator_allocate_label_real32_r2_shape, &
+        & pluto_allocator_allocate_label_real32_r2_bounds, &
+        & pluto_allocator_allocate_real64_r2_shape, &
+        & pluto_allocator_allocate_real64_r2_bounds, &
+        & pluto_allocator_allocate_label_real64_r2_shape, &
+        & pluto_allocator_allocate_label_real64_r2_bounds, &
+        & pluto_allocator_allocate_int32_r3_shape, &
+        & pluto_allocator_allocate_int32_r3_bounds, &
+        & pluto_allocator_allocate_label_int32_r3_shape, &
+        & pluto_allocator_allocate_label_int32_r3_bounds, &
+        & pluto_allocator_allocate_int64_r3_shape, &
+        & pluto_allocator_allocate_int64_r3_bounds, &
+        & pluto_allocator_allocate_label_int64_r3_shape, &
+        & pluto_allocator_allocate_label_int64_r3_bounds, &
+        & pluto_allocator_allocate_real32_r3_shape, &
+        & pluto_allocator_allocate_real32_r3_bounds, &
+        & pluto_allocator_allocate_label_real32_r3_shape, &
+        & pluto_allocator_allocate_label_real32_r3_bounds, &
+        & pluto_allocator_allocate_real64_r3_shape, &
+        & pluto_allocator_allocate_real64_r3_bounds, &
+        & pluto_allocator_allocate_label_real64_r3_shape, &
+        & pluto_allocator_allocate_label_real64_r3_bounds, &
+        & pluto_allocator_allocate_int32_r4_shape, &
+        & pluto_allocator_allocate_int32_r4_bounds, &
+        & pluto_allocator_allocate_label_int32_r4_shape, &
+        & pluto_allocator_allocate_label_int32_r4_bounds, &
+        & pluto_allocator_allocate_int64_r4_shape, &
+        & pluto_allocator_allocate_int64_r4_bounds, &
+        & pluto_allocator_allocate_label_int64_r4_shape, &
+        & pluto_allocator_allocate_label_int64_r4_bounds, &
+        & pluto_allocator_allocate_real32_r4_shape, &
+        & pluto_allocator_allocate_real32_r4_bounds, &
+        & pluto_allocator_allocate_label_real32_r4_shape, &
+        & pluto_allocator_allocate_label_real32_r4_bounds, &
+        & pluto_allocator_allocate_real64_r4_shape, &
+        & pluto_allocator_allocate_real64_r4_bounds, &
+        & pluto_allocator_allocate_label_real64_r4_shape, &
+        & pluto_allocator_allocate_label_real64_r4_bounds, &
+        & pluto_allocator_allocate_int32_r5_shape, &
+        & pluto_allocator_allocate_int32_r5_bounds, &
+        & pluto_allocator_allocate_label_int32_r5_shape, &
+        & pluto_allocator_allocate_label_int32_r5_bounds, &
+        & pluto_allocator_allocate_int64_r5_shape, &
+        & pluto_allocator_allocate_int64_r5_bounds, &
+        & pluto_allocator_allocate_label_int64_r5_shape, &
+        & pluto_allocator_allocate_label_int64_r5_bounds, &
+        & pluto_allocator_allocate_real32_r5_shape, &
+        & pluto_allocator_allocate_real32_r5_bounds, &
+        & pluto_allocator_allocate_label_real32_r5_shape, &
+        & pluto_allocator_allocate_label_real32_r5_bounds, &
+        & pluto_allocator_allocate_real64_r5_shape, &
+        & pluto_allocator_allocate_real64_r5_bounds, &
+        & pluto_allocator_allocate_label_real64_r5_shape, &
+        & pluto_allocator_allocate_label_real64_r5_bounds
 
     procedure, private :: pluto_allocator_deallocate_int32_r1
     procedure, private :: pluto_allocator_deallocate_label_int32_r1
@@ -224,47 +224,48 @@ contains
     procedure, private :: pluto_allocator_deallocate_label_real32_r5
     procedure, private :: pluto_allocator_deallocate_real64_r5
     procedure, private :: pluto_allocator_deallocate_label_real64_r5
+    generic, public :: deallocate => &
+        & pluto_allocator_deallocate_int32_r1, &
+        & pluto_allocator_deallocate_label_int32_r1, &
+        & pluto_allocator_deallocate_int64_r1, &
+        & pluto_allocator_deallocate_label_int64_r1, &
+        & pluto_allocator_deallocate_real32_r1, &
+        & pluto_allocator_deallocate_label_real32_r1, &
+        & pluto_allocator_deallocate_real64_r1, &
+        & pluto_allocator_deallocate_label_real64_r1, &
+        & pluto_allocator_deallocate_int32_r2, &
+        & pluto_allocator_deallocate_label_int32_r2, &
+        & pluto_allocator_deallocate_int64_r2, &
+        & pluto_allocator_deallocate_label_int64_r2, &
+        & pluto_allocator_deallocate_real32_r2, &
+        & pluto_allocator_deallocate_label_real32_r2, &
+        & pluto_allocator_deallocate_real64_r2, &
+        & pluto_allocator_deallocate_label_real64_r2, &
+        & pluto_allocator_deallocate_int32_r3, &
+        & pluto_allocator_deallocate_label_int32_r3, &
+        & pluto_allocator_deallocate_int64_r3, &
+        & pluto_allocator_deallocate_label_int64_r3, &
+        & pluto_allocator_deallocate_real32_r3, &
+        & pluto_allocator_deallocate_label_real32_r3, &
+        & pluto_allocator_deallocate_real64_r3, &
+        & pluto_allocator_deallocate_label_real64_r3, &
+        & pluto_allocator_deallocate_int32_r4, &
+        & pluto_allocator_deallocate_label_int32_r4, &
+        & pluto_allocator_deallocate_int64_r4, &
+        & pluto_allocator_deallocate_label_int64_r4, &
+        & pluto_allocator_deallocate_real32_r4, &
+        & pluto_allocator_deallocate_label_real32_r4, &
+        & pluto_allocator_deallocate_real64_r4, &
+        & pluto_allocator_deallocate_label_real64_r4, &
+        & pluto_allocator_deallocate_int32_r5, &
+        & pluto_allocator_deallocate_label_int32_r5, &
+        & pluto_allocator_deallocate_int64_r5, &
+        & pluto_allocator_deallocate_label_int64_r5, &
+        & pluto_allocator_deallocate_real32_r5, &
+        & pluto_allocator_deallocate_label_real32_r5, &
+        & pluto_allocator_deallocate_real64_r5, &
+        & pluto_allocator_deallocate_label_real64_r5
 
-    generic, public :: deallocate => pluto_allocator_deallocate_int32_r1
-    generic, public :: deallocate => pluto_allocator_deallocate_label_int32_r1
-    generic, public :: deallocate => pluto_allocator_deallocate_int64_r1
-    generic, public :: deallocate => pluto_allocator_deallocate_label_int64_r1
-    generic, public :: deallocate => pluto_allocator_deallocate_real32_r1
-    generic, public :: deallocate => pluto_allocator_deallocate_label_real32_r1
-    generic, public :: deallocate => pluto_allocator_deallocate_real64_r1
-    generic, public :: deallocate => pluto_allocator_deallocate_label_real64_r1
-    generic, public :: deallocate => pluto_allocator_deallocate_int32_r2
-    generic, public :: deallocate => pluto_allocator_deallocate_label_int32_r2
-    generic, public :: deallocate => pluto_allocator_deallocate_int64_r2
-    generic, public :: deallocate => pluto_allocator_deallocate_label_int64_r2
-    generic, public :: deallocate => pluto_allocator_deallocate_real32_r2
-    generic, public :: deallocate => pluto_allocator_deallocate_label_real32_r2
-    generic, public :: deallocate => pluto_allocator_deallocate_real64_r2
-    generic, public :: deallocate => pluto_allocator_deallocate_label_real64_r2
-    generic, public :: deallocate => pluto_allocator_deallocate_int32_r3
-    generic, public :: deallocate => pluto_allocator_deallocate_label_int32_r3
-    generic, public :: deallocate => pluto_allocator_deallocate_int64_r3
-    generic, public :: deallocate => pluto_allocator_deallocate_label_int64_r3
-    generic, public :: deallocate => pluto_allocator_deallocate_real32_r3
-    generic, public :: deallocate => pluto_allocator_deallocate_label_real32_r3
-    generic, public :: deallocate => pluto_allocator_deallocate_real64_r3
-    generic, public :: deallocate => pluto_allocator_deallocate_label_real64_r3
-    generic, public :: deallocate => pluto_allocator_deallocate_int32_r4
-    generic, public :: deallocate => pluto_allocator_deallocate_label_int32_r4
-    generic, public :: deallocate => pluto_allocator_deallocate_int64_r4
-    generic, public :: deallocate => pluto_allocator_deallocate_label_int64_r4
-    generic, public :: deallocate => pluto_allocator_deallocate_real32_r4
-    generic, public :: deallocate => pluto_allocator_deallocate_label_real32_r4
-    generic, public :: deallocate => pluto_allocator_deallocate_real64_r4
-    generic, public :: deallocate => pluto_allocator_deallocate_label_real64_r4
-    generic, public :: deallocate => pluto_allocator_deallocate_int32_r5
-    generic, public :: deallocate => pluto_allocator_deallocate_label_int32_r5
-    generic, public :: deallocate => pluto_allocator_deallocate_int64_r5
-    generic, public :: deallocate => pluto_allocator_deallocate_label_int64_r5
-    generic, public :: deallocate => pluto_allocator_deallocate_real32_r5
-    generic, public :: deallocate => pluto_allocator_deallocate_label_real32_r5
-    generic, public :: deallocate => pluto_allocator_deallocate_real64_r5
-    generic, public :: deallocate => pluto_allocator_deallocate_label_real64_r5
 end type
 
 interface pluto_make_allocator

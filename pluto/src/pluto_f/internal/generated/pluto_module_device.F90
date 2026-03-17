@@ -6,10 +6,9 @@
 ! granted to it by virtue of its status as an intergovernmental organisation nor
 ! does it submit to any jurisdiction.
 
+
 module pluto_module_device
 
-use, intrinsic :: iso_c_binding, only : c_int, c_double, c_float, c_int32_t, c_int64_t, c_loc
-use pluto_module_allocate_deallocate, only : pluto_allocate, pluto_deallocate
 use pluto_module_allocator, only : pluto_allocator
 use pluto_module_memory_resource, only : pluto_memory_resource
 
@@ -53,18 +52,19 @@ function pluto_device_get_default_resource(THIS) result(memory_resource)
     CLASS_THIS
     interface
         function c_pluto_device_get_default_resource() result(mr) bind(c)
-            use iso_c_binding, only: c_ptr
+            use, intrinsic :: iso_c_binding, only: c_ptr
             type(c_ptr) :: mr 
         end function
     end interface
     memory_resource%c_memory_resource = c_pluto_device_get_default_resource()
 end function
 subroutine pluto_device_set_default_resource_name(THIS_COMMA name)
+    use, intrinsic :: iso_c_binding, only: c_loc, c_int
     CLASS_THIS
     character(len=*), target, intent(in) :: name
     interface
         subroutine c_pluto_device_set_default_resource_name(name, name_size) bind(c)
-            use iso_c_binding, only: c_ptr, c_int
+            use, intrinsic :: iso_c_binding, only: c_ptr, c_int
             type(c_ptr), value, intent(in) :: name
             integer(c_int), value, intent(in) :: name_size
         end subroutine
@@ -77,7 +77,7 @@ subroutine pluto_device_set_default_resource_type(THIS_COMMA memory_resource)
     type(pluto_memory_resource), intent(in) :: memory_resource
     interface
         subroutine c_pluto_device_set_default_resource_ptr(mr) bind(c)
-            use iso_c_binding, only: c_ptr
+            use, intrinsic :: iso_c_binding, only: c_ptr
             type(c_ptr), value, intent(in) :: mr
         end subroutine
     end interface

@@ -6,14 +6,12 @@
 ! granted to it by virtue of its status as an intergovernmental organisation nor
 ! does it submit to any jurisdiction.
 
+#:include 'pluto_defs.fypp'
+
 submodule(pluto_module_allocate_deallocate) pluto_module_allocate_deallocate
 
 use, intrinsic :: iso_c_binding, only : c_loc, c_ptr, c_size_t, c_f_pointer
 implicit none
-
-#:set ranks  = [1,2,3,4,5]
-#:set dtypes = ['int32','int64','real32','real64']
-#:set sizeof = dict(zip(dtypes, ['4', '8', '4', '8']))
 
 contains
 
@@ -84,7 +82,6 @@ module procedure pluto_deallocate_label_${array}$
     call pluto_deallocate_${array}$(array, resource)
     call pluto_set_label(previous_label)
 end procedure
-
 #:endfor
 #:endfor
 
