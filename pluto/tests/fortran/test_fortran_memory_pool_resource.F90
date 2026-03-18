@@ -50,7 +50,7 @@ subroutine run_allocate()
     integer, parameter :: wp = c_float
     real(wp), pointer :: array2d(:,:)
     type(pluto_allocator) :: allocator
-    allocator = pluto%make_allocator(pluto%managed_pool_resource())
+    call allocator%init(pluto%managed_pool_resource())
     do j=1,100
         call allocator%allocate(array2d, shape=[1000*j, 1000])
         call allocator%deallocate(array2d)

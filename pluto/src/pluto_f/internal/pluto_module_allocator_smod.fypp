@@ -28,6 +28,14 @@ subroutine assert_allocator_is_setup(allocator)
     endif
 end subroutine
 
+module procedure pluto_allocator_init_type
+    this%memory_resource%c_memory_resource = resource%c_memory_resource
+end procedure
+
+module procedure pluto_allocator_init_name
+    this%memory_resource = pluto_get_registered_resource(resource)
+end procedure
+
 module procedure pluto_make_allocator_type
     allocator%memory_resource%c_memory_resource = resource%c_memory_resource
 end procedure

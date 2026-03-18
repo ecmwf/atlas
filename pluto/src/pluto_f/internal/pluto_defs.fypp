@@ -1,0 +1,40 @@
+#:mute
+
+#:set ranks  = [1,2,3,4,5]
+#:set dim    = ['',':',':,:',':,:,:',':,:,:,:',':,:,:,:,:']
+#:set dtypes = ['int32','int64','real32','real64']
+#:set ftype  = dict(zip(dtypes, ['integer(int32)', 'integer(int64)', 'real(real32)', 'real(real64)']))
+#:set sizeof = dict(zip(dtypes, ['4', '8', '4', '8']))
+
+#:def module_procedure( procedure_name )
+#:for rank in ranks
+#:for dtype in dtypes
+    module procedure ${procedure_name.replace("array", dtype + '_r' + str(rank))}$
+#:endfor
+#:endfor
+#:enddef module_procedure
+
+#:def generic_procedure( generic_name, procedure_names )
+#:set counter = 0
+#:for rank in ranks
+#:for dtype in dtypes
+#:for procedure_name in procedure_names
+    procedure, private :: ${procedure_name.replace("array", dtype + '_r' + str(rank))}$
+    #:set counter = counter + 1
+#:endfor
+#:endfor
+#:endfor
+#:set last = counter
+#:set counter = 1
+    generic, public :: ${generic_name}$ => &
+#:for rank in ranks
+#:for dtype in dtypes
+#:for procedure_name in procedure_names
+        & ${procedure_name.replace("array", dtype + '_r' + str(rank))}$#{if counter < last}#, &#{endif}#
+        #:set counter = counter + 1
+#:endfor
+#:endfor
+#:endfor
+#:enddef generic_procedure
+
+#:endmute

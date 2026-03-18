@@ -266,6 +266,10 @@ contains
         & pluto_allocator_deallocate_real64_r5, &
         & pluto_allocator_deallocate_label_real64_r5
 
+    procedure, private :: pluto_allocator_init_type
+    procedure, private :: pluto_allocator_init_name
+    generic, public :: init => pluto_allocator_init_type, pluto_allocator_init_name
+
 end type
 
 interface pluto_make_allocator
@@ -274,6 +278,17 @@ interface pluto_make_allocator
 end interface
 
 interface
+
+module subroutine pluto_allocator_init_type(this, resource)
+    class(pluto_allocator) :: this
+    type(pluto_memory_resource), intent(in) :: resource
+end subroutine
+
+module subroutine pluto_allocator_init_name(this, resource)
+    class(pluto_allocator) :: this
+    character(len=*), target, intent(in) :: resource
+end subroutine
+
 module function pluto_make_allocator_type(resource) result(allocator)
     type(pluto_allocator) :: allocator
     type(pluto_memory_resource) :: resource

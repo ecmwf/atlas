@@ -15,11 +15,8 @@ implicit none
 private
 
 public :: pluto_memory_resource
-public :: pluto_memory_pool_resource_reserve_int32
-public :: pluto_memory_pool_resource_reserve_int64
-public :: pluto_memory_pool_resource_reserve_real32
-public :: pluto_memory_pool_resource_reserve_real64
-public :: pluto_memory_pool_resource_release
+public :: pluto_reserve
+!public :: pluto_memory_pool_resource_release
 public :: pluto_new_delete_resource
 public :: pluto_null_memory_resource
 public :: pluto_host_resource
@@ -46,11 +43,7 @@ type :: pluto_memory_resource
 contains
     procedure :: allocate   => pluto_memory_resource_allocate
     procedure :: deallocate => pluto_memory_resource_deallocate
-    procedure, private :: reserve_int32 => pluto_memory_pool_resource_reserve_int32
-    procedure, private :: reserve_int64 => pluto_memory_pool_resource_reserve_int64
-    procedure, private :: reserve_real32 => pluto_memory_pool_resource_reserve_real32
-    procedure, private :: reserve_real64 => pluto_memory_pool_resource_reserve_real64
-    generic, public :: reserve    => reserve_int32, reserve_int64, reserve_real32, reserve_real64
+    procedure :: reserve    => pluto_memory_pool_resource_reserve
     procedure :: release    => pluto_memory_pool_resource_release
     procedure :: capacity   => pluto_memory_pool_resource_capacity
     procedure :: size       => pluto_memory_pool_resource_size
@@ -61,8 +54,10 @@ contains
 subroutine pluto_memory_resource_allocate(this, memory, bytes, alignment)
     class(pluto_memory_resource) :: this
     type(c_ptr), intent(out) :: memory
-    integer(c_size_t), intent(in) :: bytes
-    integer(c_size_t), intent(in), optional :: alignment
+    class(*), intent(in) :: bytes
+    class(*), intent(in), optional :: alignment
+    integer(c_size_t) :: bytes_c
+    integer(c_size_t) :: alignment_c
     interface
         function c_pluto_memory_resource_allocate(memory_resource, bytes, alignment) result(memory) bind(c)
             use, intrinsic :: iso_c_binding, only: c_ptr, c_size_t
@@ -72,19 +67,35 @@ subroutine pluto_memory_resource_allocate(this, memory, bytes, alignment)
             integer(c_size_t), value :: alignment
         end function
     end interface
-
+    select type(bytes)
+        type is (integer)
+            bytes_c = int(bytes,c_size_t)
+        type is (real)
+            bytes_c = int(bytes,c_size_t)
+        class default
+            write(0,*) "Unknown or unsupported type for byte"
+    end select
+    alignment_c = 0_c_size_t
     if (present(alignment)) then
-        memory = c_pluto_memory_resource_allocate(this%c_memory_resource, bytes, alignment)
-    else
-        memory = c_pluto_memory_resource_allocate(this%c_memory_resource, bytes, int(0,c_size_t))
+        select type(alignment)
+            type is (integer)
+                alignment_c = int(alignment,c_size_t)
+            type is (real)
+                alignment_c = int(alignment,c_size_t)
+            class default
+                write(0,*) "Unknown or unsupported type for alignment"
+        end select
     endif
+    memory = c_pluto_memory_resource_allocate(this%c_memory_resource, bytes_c, alignment_c)
 end subroutine
 
 subroutine pluto_memory_resource_deallocate(this, memory, bytes, alignment)
     class(pluto_memory_resource) :: this
     type(c_ptr), intent(inout) :: memory
-    integer(c_size_t), intent(in) :: bytes
-    integer(c_size_t), intent(in), optional :: alignment
+    class(*), intent(in) :: bytes
+    class(*), intent(in), optional :: alignment
+    integer(c_size_t) :: bytes_c
+    integer(c_size_t) :: alignment_c
     interface
         subroutine c_pluto_memory_resource_deallocate(memory_resource, memory, bytes, alignment) bind(c)
             use, intrinsic :: iso_c_binding, only: c_ptr, c_size_t
@@ -94,11 +105,26 @@ subroutine pluto_memory_resource_deallocate(this, memory, bytes, alignment)
             integer(c_size_t), value :: alignment
         end subroutine
     end interface
+    select type(bytes)
+        type is (integer)
+            bytes_c = int(bytes,c_size_t)
+        type is (real)
+            bytes_c = int(bytes,c_size_t)
+        class default
+            write(0,*) "Unknown or unsupported type for byte"
+    end select
+    alignment_c = 0_c_size_t
     if (present(alignment)) then
-        call c_pluto_memory_resource_deallocate(this%c_memory_resource, memory, bytes, alignment)
-    else
-        call c_pluto_memory_resource_deallocate(this%c_memory_resource, memory, bytes, int(0,c_size_t))
+        select type(alignment)
+            type is (integer)
+                alignment_c = int(alignment,c_size_t)
+            type is (real)
+                alignment_c = int(alignment,c_size_t)
+            class default
+                write(0,*) "Unknown or unsupported type for alignment"
+        end select
     endif
+    call c_pluto_memory_resource_deallocate(this%c_memory_resource, memory, bytes_c, alignment_c)
     memory = c_null_ptr
 end subroutine
 
@@ -114,9 +140,10 @@ subroutine pluto_memory_pool_resource_release(this)
     call c_pluto_memory_pool_resource_release(this%c_memory_resource)
 end subroutine
 
-subroutine pluto_memory_pool_resource_reserve_size(this, bytes)
-    class(pluto_memory_resource) :: this
-    integer(c_size_t), intent(in) :: bytes
+subroutine pluto_reserve(this, bytes)
+    type(pluto_memory_resource) :: this
+    class(*), intent(in) :: bytes
+    integer(c_size_t) :: bytes_c
     interface
         subroutine c_pluto_memory_pool_resource_reserve(memory_resource, bytes) bind(c)
             use, intrinsic :: iso_c_binding, only: c_ptr, c_size_t
@@ -124,33 +151,22 @@ subroutine pluto_memory_pool_resource_reserve_size(this, bytes)
             integer(c_size_t), value :: bytes
         end subroutine
     end interface
-    call c_pluto_memory_pool_resource_reserve(this%c_memory_resource, bytes)
+    select type(bytes)
+        type is (integer)
+            bytes_c = int(bytes,c_size_t)
+        type is (real)
+            bytes_c = int(bytes,c_size_t)
+        class default
+            write(0,*) "Unknown or unsupported type for bytes"
+    end select
+    call c_pluto_memory_pool_resource_reserve(this%c_memory_resource, bytes_c)
 end subroutine
 
-subroutine pluto_memory_pool_resource_reserve_int32(this, bytes)
+subroutine pluto_memory_pool_resource_reserve(this, bytes)
     class(pluto_memory_resource) :: this
-    integer(c_int32_t), intent(in) :: bytes
-    call pluto_memory_pool_resource_reserve_size(this, int(bytes,c_size_t))
+    class(*), intent(in) :: bytes
+    call pluto_reserve(this, bytes)
 end subroutine
-
-subroutine pluto_memory_pool_resource_reserve_int64(this, bytes)
-    class(pluto_memory_resource) :: this
-    integer(c_int64_t), intent(in) :: bytes
-    call pluto_memory_pool_resource_reserve_size(this, int(bytes,c_size_t))
-end subroutine
-
-subroutine pluto_memory_pool_resource_reserve_real32(this, bytes)
-    class(pluto_memory_resource) :: this
-    real(c_float), intent(in) :: bytes
-    call pluto_memory_pool_resource_reserve_size(this, int(bytes,c_size_t))
-end subroutine
-
-subroutine pluto_memory_pool_resource_reserve_real64(this, bytes)
-    class(pluto_memory_resource) :: this
-    real(c_double), intent(in) :: bytes
-    call pluto_memory_pool_resource_reserve_size(this, int(bytes,c_size_t))
-end subroutine
-
 
 function pluto_memory_pool_resource_size(this)
     integer(c_size_t) :: pluto_memory_pool_resource_size
