@@ -52,6 +52,7 @@ end type
 contains
 
 subroutine pluto_memory_resource_allocate(this, memory, bytes, alignment)
+    use, intrinsic :: iso_fortran_env, only: int32, int64, real32, real64
     class(pluto_memory_resource) :: this
     type(c_ptr), intent(out) :: memory
     class(*), intent(in) :: bytes
@@ -68,9 +69,13 @@ subroutine pluto_memory_resource_allocate(this, memory, bytes, alignment)
         end function
     end interface
     select type(bytes)
-        type is (integer)
+        type is (integer(int32))
             bytes_c = int(bytes,c_size_t)
-        type is (real)
+        type is (integer(int64))
+            bytes_c = int(bytes,c_size_t)
+        type is (real(real32))
+            bytes_c = int(bytes,c_size_t)
+        type is (real(real64))
             bytes_c = int(bytes,c_size_t)
         class default
             write(0,*) "Unknown or unsupported type for byte"
@@ -78,10 +83,14 @@ subroutine pluto_memory_resource_allocate(this, memory, bytes, alignment)
     alignment_c = 0_c_size_t
     if (present(alignment)) then
         select type(alignment)
-            type is (integer)
-                alignment_c = int(alignment,c_size_t)
-            type is (real)
-                alignment_c = int(alignment,c_size_t)
+        type is (integer(int32))
+            alignment_c = int(alignment,c_size_t)
+        type is (integer(int64))
+            alignment_c = int(alignment,c_size_t)
+        type is (real(real32))
+            alignment_c = int(alignment,c_size_t)
+        type is (real(real64))
+            alignment_c = int(alignment,c_size_t)
             class default
                 write(0,*) "Unknown or unsupported type for alignment"
         end select
@@ -90,6 +99,7 @@ subroutine pluto_memory_resource_allocate(this, memory, bytes, alignment)
 end subroutine
 
 subroutine pluto_memory_resource_deallocate(this, memory, bytes, alignment)
+    use, intrinsic :: iso_fortran_env, only: int32, int64, real32, real64
     class(pluto_memory_resource) :: this
     type(c_ptr), intent(inout) :: memory
     class(*), intent(in) :: bytes
@@ -106,9 +116,13 @@ subroutine pluto_memory_resource_deallocate(this, memory, bytes, alignment)
         end subroutine
     end interface
     select type(bytes)
-        type is (integer)
+        type is (integer(int32))
             bytes_c = int(bytes,c_size_t)
-        type is (real)
+        type is (integer(int64))
+            bytes_c = int(bytes,c_size_t)
+        type is (real(real32))
+            bytes_c = int(bytes,c_size_t)
+        type is (real(real64))
             bytes_c = int(bytes,c_size_t)
         class default
             write(0,*) "Unknown or unsupported type for byte"
@@ -116,9 +130,13 @@ subroutine pluto_memory_resource_deallocate(this, memory, bytes, alignment)
     alignment_c = 0_c_size_t
     if (present(alignment)) then
         select type(alignment)
-            type is (integer)
+            type is (integer(int32))
                 alignment_c = int(alignment,c_size_t)
-            type is (real)
+            type is (integer(int64))
+                alignment_c = int(alignment,c_size_t)
+            type is (real(real32))
+                alignment_c = int(alignment,c_size_t)
+            type is (real(real64))
                 alignment_c = int(alignment,c_size_t)
             class default
                 write(0,*) "Unknown or unsupported type for alignment"
@@ -141,6 +159,7 @@ subroutine pluto_memory_pool_resource_release(this)
 end subroutine
 
 subroutine pluto_reserve(this, bytes)
+    use, intrinsic :: iso_fortran_env, only: int32, int64, real32, real64
     type(pluto_memory_resource) :: this
     class(*), intent(in) :: bytes
     integer(c_size_t) :: bytes_c
@@ -152,9 +171,13 @@ subroutine pluto_reserve(this, bytes)
         end subroutine
     end interface
     select type(bytes)
-        type is (integer)
+        type is (integer(int32))
             bytes_c = int(bytes,c_size_t)
-        type is (real)
+        type is (integer(int64))
+            bytes_c = int(bytes,c_size_t)
+        type is (real(real32))
+            bytes_c = int(bytes,c_size_t)
+        type is (real(real64))
             bytes_c = int(bytes,c_size_t)
         class default
             write(0,*) "Unknown or unsupported type for bytes"
