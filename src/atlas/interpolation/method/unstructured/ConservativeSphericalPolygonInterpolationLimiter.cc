@@ -78,42 +78,60 @@ double ConservativeSphericalPolygonInterpolationLimiter::limit(const Field& src_
     src_acted_tgt_.resize(src_vals.size());
     Field tgt_lim_field = tgt_fs_.createField<double>();
     auto tgt_lim_vals   = array::make_view<double, 1>(tgt_lim_field);
-    for (idx_t tcell = 0; tcell < tgt_lim_vals.size(); ++tcell) {
-        tgt_lim_vals(tcell) = 0.;
+    for (idx_t tpt = 0; tpt < tgt_lim_vals.size(); ++tpt) {
+        tgt_lim_vals(tpt) = 0.;
     }
     compute_src_grad(src_vals);
-    if (! tgt_cell_data_ || ! src_cell_data_) {
-        Log::info() << "Limiter supports only CellColumns data." << std::endl;
-        ATLAS_NOTIMPLEMENTED;
-    }
     std::set<idx_t> send_marked_scells_set;
     double tgt_smin;
     double tgt_smax;
     if (limiter_ == "clip") {
         for (idx_t tcsp = 0; tcsp < data_->tgt_.csp_size; ++tcsp) {
+            idx_t tpt;
+            if (tgt_cell_data_) {
+                tpt = interpolation_.csp_to_cell(tcsp, data_->tgt_);
+            }
+            else {
+                tpt = data_->tgt_.csp2node[tcsp];
+            }
             const auto& iparam = tgt_iparam_[tcsp];
-            idx_t tcell = interpolation_.csp_to_cell(tcsp, data_->tgt_);
-            if (violation_detected(tcell, iparam, src_vals, tgt_vals, tgt_smin, tgt_smax)) {
-                if (tgt_vals(tcell) > tgt_smax) {
-                    tgt_lim_vals(tcell) = tgt_smax - tgt_vals(tcell);
+            if (violation_detected(tpt, iparam, src_vals, tgt_vals, tgt_smin, tgt_smax)) {
+                if (limiter_override_tgt_ == 2) {
+                    tgt_lim_vals(tpt) = 1.;
+                    continue;
                 }
-                else if (tgt_vals(tcell) < tgt_smin) {
-                    tgt_lim_vals(tcell) = tgt_smin - tgt_vals(tcell);
+                if (tgt_vals(tpt) > tgt_smax) {
+                    tgt_lim_vals(tpt) = tgt_smax - tgt_vals(tpt);
+                }
+                else if (tgt_vals(tpt) < tgt_smin) {
+                    tgt_lim_vals(tpt) = tgt_smin - tgt_vals(tpt);
                 }
             }
         }
     }
     if (limiter_ == "zeroslope") {
         for (idx_t tcsp = 0; tcsp < data_->tgt_.csp_size; ++tcsp) {
+            idx_t tpt;
+            if (tgt_cell_data_) {
+                tpt = interpolation_.csp_to_cell(tcsp, data_->tgt_);
+            }
+            else {
+                tpt = data_->tgt_.csp2node[tcsp];
+            }
             const auto& iparam = tgt_iparam_[tcsp];
-            idx_t tcell = interpolation_.csp_to_cell(tcsp, data_->tgt_);
-            if (violation_detected(tcell, iparam, src_vals, tgt_vals, tgt_smin, tgt_smax)) {
-                for (auto csp_id : iparam.csp_ids) {
-                    idx_t scell = interpolation_.csp_to_cell(csp_id, data_->src_);
-                    send_marked_scells_set.insert(scell);
+            if (violation_detected(tpt, iparam, src_vals, tgt_vals, tgt_smin, tgt_smax)) {
+                for (auto scsp_id : iparam.csp_ids) {
+                    idx_t spt;
+                    if (src_cell_data_) {
+                        spt  = interpolation_.csp_to_cell(scsp_id, data_->src_);
+                    }
+                    else {
+                        spt  = data_->src_.csp2node[scsp_id];
+                    }
+                    send_marked_scells_set.insert(spt);
                 }
                 if (limiter_override_tgt_ == 2) {
-                    tgt_lim_vals(tcell) = 1.;
+                    tgt_lim_vals(tpt) = 1.;
                 }
             }
         }
@@ -146,17 +164,18 @@ double ConservativeSphericalPolygonInterpolationLimiter::limit(const Field& src_
         }
     }
     if (! limiter_override_tgt_) {
-        for (idx_t tcell = 0 ; tcell < tgt_vals.size(); ++tcell) {
-            mass_change += tgt_lim_vals(tcell)  * tgt_areas_[tcell];
-            tgt_vals(tcell) += tgt_lim_vals(tcell);
+        for (idx_t tpt = 0 ; tpt < tgt_vals.size(); ++tpt) {
+            mass_change += tgt_lim_vals(tpt)  * tgt_areas_[tpt];
+            tgt_vals(tpt) += tgt_lim_vals(tpt);
         }
     }
     else {
-        for (idx_t tcell = 0; tcell < tgt_vals.size(); ++tcell) {
-            mass_change += (tgt_lim_vals(tcell) - tgt_vals(tcell)) * tgt_areas_[tcell];
-            tgt_vals(tcell) = tgt_lim_vals(tcell);
+        for (idx_t tpt = 0; tpt < tgt_vals.size(); ++tpt) {
+            mass_change += (tgt_lim_vals(tpt) - tgt_vals(tpt)) * tgt_areas_[tpt];
+            tgt_vals(tpt) = tgt_lim_vals(tpt);
         }
     }
+    Log::info() << "mass : " << mass_change << std::endl;
     return mass_change;
 }
 
@@ -212,34 +231,46 @@ compute_src_grad(const array::ArrayView<double,1>& src_vals) {
 
 void ConservativeSphericalPolygonInterpolationLimiter::
 limit_contrib_from_source(idx_t scsp_id, const Field& src_field, array::ArrayView<double,1>& tgt_lim_vals) {
-    idx_t scell   = interpolation_.csp_to_cell(scsp_id, data_->src_);
-    const PointXYZ& src_barycentre = src_points_[scell];
-    PointXYZ scell_grad  = src_grads_[scell];
-    scell_grad           = scell_grad - PointXYZ::mul(src_barycentre, PointXYZ::dot(scell_grad, src_barycentre));
+    idx_t spt;
+    if (src_cell_data_) {
+        spt = interpolation_.csp_to_cell(scsp_id, data_->src_);
+    }
+    else {
+        spt = data_->src_.csp2node[scsp_id];
+    }
+    const PointXYZ& src_barycentre = src_points_[spt];
+    PointXYZ spt_grad  = src_grads_[spt];
+    spt_grad           = spt_grad - PointXYZ::mul(src_barycentre, PointXYZ::dot(spt_grad, src_barycentre));
     auto& siparam = src_iparam_[scsp_id];
     for (idx_t i_tcsp_collateral = 0; i_tcsp_collateral < siparam.csp_ids.size(); ++i_tcsp_collateral) {
         auto tcsp_collateral = siparam.csp_ids[i_tcsp_collateral];
         const auto& iparam_collateral = tgt_iparam_[tcsp_collateral];
-        auto tcell_collateral = interpolation_.csp_to_cell(tcsp_collateral, data_->tgt_);
+        idx_t tpt_collateral;
+        if (tgt_cell_data_) {
+            tpt_collateral = interpolation_.csp_to_cell(tcsp_collateral, data_->tgt_);
+        }
+        else {
+            tpt_collateral = data_->tgt_.csp2node[tcsp_collateral];
+        }
         // find the index of the scsp_id entry in iparam_collateral.csp_ids
         auto scsp_it = std::find(iparam_collateral.csp_ids.begin(), iparam_collateral.csp_ids.end(), scsp_id);
         ATLAS_ASSERT(scsp_it != iparam_collateral.csp_ids.end());
         idx_t scsp_idx = scsp_it - iparam_collateral.csp_ids.begin();
         ATLAS_ASSERT(iparam_collateral.csp_ids[scsp_idx] == scsp_id);
-        double tgt_lim_val = iparam_collateral.weights[scsp_idx] * PointXYZ::dot(scell_grad, iparam_collateral.centroids[scsp_idx] - src_barycentre);
-        if (tgt_areas_[tcell_collateral] > 0.) {
-            tgt_lim_val /= tgt_areas_[tcell_collateral];
+        double tgt_lim_val = iparam_collateral.weights[scsp_idx] * PointXYZ::dot(spt_grad, iparam_collateral.centroids[scsp_idx] - src_barycentre);
+        if (tgt_areas_[tpt_collateral] > 0.) {
+            tgt_lim_val /= tgt_areas_[tpt_collateral];
         }
-        SrcActed& it = src_acted_tgt_[scell];
-        if (std::find(it.tcells_done.begin(), it.tcells_done.end(), tcell_collateral) == it.tcells_done.end()) {
-            it.tcells_done.push_back(tcell_collateral);
+        SrcActed& it = src_acted_tgt_[spt];
+        if (std::find(it.tcells_done.begin(), it.tcells_done.end(), tpt_collateral) == it.tcells_done.end()) {
+            it.tcells_done.push_back(tpt_collateral);
             if (limiter_override_tgt_ == 2) {
-                if (tgt_lim_vals(tcell_collateral) < 0.5) {
-                    tgt_lim_vals(tcell_collateral) = -1.;
+                if (tgt_lim_vals(tpt_collateral) < 0.5) {
+                    tgt_lim_vals(tpt_collateral) = -1.;
                 }
             }
             else {
-                tgt_lim_vals(tcell_collateral) -= tgt_lim_val;
+                tgt_lim_vals(tpt_collateral) -= tgt_lim_val;
             }
         }
     }
