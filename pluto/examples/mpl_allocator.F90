@@ -19,7 +19,7 @@ type(pluto_memory_resource), save :: my_resource
     !! In this example, we will set it to a mpi_pool memory pool resource, which is a predefined resource available in pluto that manages a memory pool with underlying
     !! (de)allocation using MPI_Alloc_mem / MPI_Free_mem.
 
-type(pluto_allocator),       save :: my_allocator
+type(pluto_allocator), save :: my_allocator
     !! my_allocator is a pluto_allocator that uses my_resource as its memory resource.
     !! It needs to be set up using my_allocator_init.
     !! This allocator can then be used as a convenient API to allocate and deallocate memory using the my_resource, see examples below.
@@ -96,23 +96,11 @@ end subroutine my_allocator_print
 end module my_allocator_mod
 ! ------------------------------------------------------------------------------------------------------------------------
 
+module my_allocator_use_mod
+public
+contains
 
-! ------------------------------------------------------------------------------------------------------------------------
-program main
-! ------------------------------------------------------------------------------------------------------------------------
-
-implicit none
-call init_mpi()
-
-! Initialise the my_allocator in a separate block to show that it can be done independently of the rest of the code,
-! and that the resource is registered globally.
-block
-    use my_allocator_mod, only : my_allocator_init
-    call my_allocator_init(1024**3) ! 1 GB
-end block
-
-! Example using my_allocator_mod, encapsulating pluto completely. This would be the recommended approach for the IFS.
-block
+subroutine example_my_allocator()
     use my_allocator_mod, only : my_allocator
     real(8), pointer :: array(:,:)
 
@@ -127,19 +115,12 @@ block
     ! label array for tracing
     call my_allocator%allocate("my_array", array, lbounds=[0,0], ubounds=[10, 8])
     call my_allocator%deallocate("my_array", array)
-end block
+end subroutine
 
-
-
-! ------------------------------------------------------------------------------------------------------------------------
-! Further examples that also use the pluto_module. This indicates that we will be able to use the same allocators
-! in other contexts independent of MY, and that the resource is registered globally so that it can be used in other
-! translation units without having to pass it around.
-
-! Example using my_resource using pluto%allocate / pluto%deallocate
-block
-    use pluto_module, only : pluto_set_label, pluto_unset_label, pluto_allocate, pluto_deallocate
-    use my_allocator_mod, only : my_resource
+subroutine example_pluto_allocate_with_my_resource(my_resource)
+! Example independent of my_allocator_mod, using my_resource with pluto%allocate / pluto%deallocate
+    use pluto_module, only : pluto_set_label, pluto_unset_label, pluto_allocate, pluto_deallocate, pluto_memory_resource
+    type(pluto_memory_resource), intent(in) :: my_resource
     real(8), pointer :: array(:,:)
 
     ! Allocation using shape, anonymous array
@@ -162,11 +143,11 @@ block
     call pluto_set_label("my_array_2");
     call pluto_deallocate(array, resource=my_resource);
     call pluto_unset_label()
-end block
+end subroutine
 
+subroutine example_pluto_allocator_with_resource_name()
 ! Example independent of my_allocator_mod, using the resource name directly.
 ! This also shows that the resource is registered globally and can be used in other translation units.
-block
     use pluto_module, only : pluto, pluto_allocator
     type(pluto_allocator) :: allocator
     real(8), pointer :: array(:,:)
@@ -179,11 +160,11 @@ block
     ! label array for tracing
     call allocator%allocate("my_array", array, lbounds=[0,0], ubounds=[10, 8])
     call allocator%deallocate("my_array", array)
-end block
+end subroutine
 
-! Example independent of my_allocator_mod, modifying the default host allocator in a scope.
-! This is a convenient way to use the resource without having to pass it explicitly to every allocate/deallocate call.
-block
+subroutine example_host_allocator()
+! Example independent of my_allocator_mod, using the resource name directly.
+! This also shows that the resource is registered globally and can be used in other translation units.
     use pluto_module, only : pluto, pluto_allocator
     type(pluto_allocator) :: host_allocator
     call pluto%scope%push()
@@ -205,12 +186,38 @@ block
         call host_allocator%deallocate("my_array_2", array) ! will use the default resource for the host, which is now my_resource
     end block
     call pluto%scope%pop() ! restore the previous default resource for the host
-end block
+endsubroutine
 
-block
-    use my_allocator_mod, only : my_allocator_finalize
-    call my_allocator_finalize()
-end block
+end module
+
+! ------------------------------------------------------------------------------------------------------------------------
+program main
+! ------------------------------------------------------------------------------------------------------------------------
+use my_allocator_mod, only : my_allocator_init, my_allocator_finalize, my_resource
+use my_allocator_use_mod
+
+implicit none
+
+
+call init_mpi()
+
+! Initialise the my_allocator in a separate block to show that it can be done independently of the rest of the code,
+! and that the resource is registered globally.
+call my_allocator_init(1024**3) ! 1 GB
+
+call example_my_allocator()
+
+! ------------------------------------------------------------------------------------------------------------------------
+! Further examples that also use the pluto_module. This indicates that we will be able to use the same allocators
+! in other contexts independent of MY, and that the resource is registered globally so that it can be used in other
+! translation units without having to pass it around.
+call example_pluto_allocate_with_my_resource(my_resource)
+
+call example_pluto_allocator_with_resource_name()
+
+call example_host_allocator()
+
+call my_allocator_finalize()
 
 call finalize_mpi()
 
@@ -226,11 +233,7 @@ subroutine finalize_mpi()
     call pluto%mpi%finalize() ! calls MPI_Finalize, but only if mpirun is detected through typical environment variables
 end subroutine
 
-
 end program
-
-
-
 
 !-----------------------------------------------------------------------------------------------------------------------------------------------
 ! Just to show how to register a custom memory resource using your own allocate and deallocate functions

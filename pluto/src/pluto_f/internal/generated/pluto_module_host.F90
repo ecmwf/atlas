@@ -15,21 +15,29 @@ use pluto_module_memory_resource, only : pluto_memory_resource
 implicit none
 private
 
-! A workaround for NVHPC compiler bug.
-! If the compiler is NVHPC we need the THIS argument to be passed explicitly.
-! There are otherwise issues with ambiguous generic interfaces between pluto_host_t and pluto_device_t,
-! which are resolved by passing the THIS argument explicitly.
+! A workaround for NVHPC compiler bug in version 25.3 and earlier that causes ambiguous generic interfaces
+! for the set_default_resource procedure.
+! Compilation error:
+!    NVFORTRAN-S-0155-Ambiguous interfaces for generic procedure set_default_resource
+!
+! This is resolved by passing the THIS argument explicitly, which allows the compiler to disambiguate the interfaces.
 
-#if !defined(__NVCOMPILER)
 #define NOPASS , nopass
 #define THIS
 #define THIS_COMMA
 #define CLASS_THIS
-#else
+
+#if defined(__NVCOMPILER)
+#if (__NVCOMPILER_MAJOR__ * 100 + __NVCOMPILER_MINOR__ <= 2503)
+#undef NOPASS
+#undef THIS
+#undef THIS_COMMA
+#undef CLASS_THIS
 #define NOPASS
 #define THIS this
 #define THIS_COMMA this,
 #define CLASS_THIS class(pluto_host_t), intent(in) :: this
+#endif
 #endif
 
 public :: pluto_host_t
@@ -88,7 +96,7 @@ end subroutine
 function pluto_host_make_allocator(THIS) result(allocator)
     type(pluto_allocator) :: allocator
     CLASS_THIS
-    allocator%memory_resource = pluto_host_get_default_resource(THIS)
+    call allocator%init(pluto_host_get_default_resource(THIS))
 end function
 
 end module
