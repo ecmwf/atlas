@@ -248,6 +248,12 @@ struct Workspace_get_cell_neighbours {
     PointLonLat p1_ll;
 };
 
+struct Workspace_get_node_neighbours {
+    std::vector<idx_t> nbr_nodes_od;
+    std::vector< std::array<idx_t,2> > cnodes;
+};
+
+
 private:
 
     using Polygon = util::ConvexSphericalPolygon;
@@ -264,8 +270,6 @@ private:
                            const Indices& plg_2_idx_array) const;
 
     std::vector<idx_t> get_cell_neighbours(Mesh&, idx_t jcell, Workspace_get_cell_neighbours&) const;
-
-    struct Workspace_get_node_neighbours;
     std::vector<idx_t> get_node_neighbours(Mesh&, idx_t jcell, Workspace_get_node_neighbours&) const;
 
     void init_polygons_data(FunctionSpace fs, Data::PolygonsData& md);

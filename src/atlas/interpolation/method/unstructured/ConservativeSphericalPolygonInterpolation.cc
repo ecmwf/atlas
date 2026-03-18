@@ -330,12 +330,6 @@ std::vector<idx_t> ConservativeSphericalPolygonInterpolation::get_cell_neighbour
 }
 
 
-struct ConservativeSphericalPolygonInterpolation::Workspace_get_node_neighbours {
-    std::vector<idx_t> nbr_nodes_od;
-    std::vector< std::array<idx_t,2> > cnodes;
-};
-
-
 // get cyclically sorted node neighbours without using edge connectivity
 std::vector<idx_t> ConservativeSphericalPolygonInterpolation::get_node_neighbours(Mesh& mesh, idx_t node_id, Workspace_get_node_neighbours& w) const {
     const auto& cell2node = mesh.cells().node_connectivity();
