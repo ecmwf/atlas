@@ -557,6 +557,38 @@ CASE("Cubed sphere dual grid") {
     }
 }
 
+CASE("Gauss Grid NodeColumns to StructuredColumns") {
+    // Target function space (Default Gauss)
+    const auto gauss_grid          = Grid("O32");
+    const auto gauss_functionspace = functionspace::StructuredColumns(gauss_grid);
+
+    // Construct source function space (Cubespherey Gauss)
+    const auto cubedsphere_grid          = Grid("CS-LFR-14");
+    const auto cubedsphere_functionspace = functionspace::NodeColumns(cubedsphere_grid);
+    atlas::StructuredMeshGenerator mesh_generator;
+    const auto cubedsphere_partitioner =
+        atlas::grid::MatchingPartitioner(cubedsphere_functionspace.mesh(), atlas::option::type("cubedsphere"));
+
+    const auto cubedsphere_to_gauss_distribution = cubedsphere_partitioner.partition(gauss_grid);
+    const auto cubedsphere_to_gauss_mesh = mesh_generator.generate(gauss_grid, cubedsphere_to_gauss_distribution);
+    const auto cubedsphere_to_gauss_functionspace = atlas::functionspace::NodeColumns(cubedsphere_to_gauss_mesh);
+
+    // Test redistribution on doubles (rank 1, 2, 3), floats, ints, longs
+    auto test1 = TestRedistributionPoints1<double>(cubedsphere_to_gauss_functionspace, gauss_functionspace);
+    auto test2 = TestRedistributionPoints2<double>(cubedsphere_to_gauss_functionspace, gauss_functionspace);
+    auto test3 = TestRedistributionPoints3<double>(cubedsphere_to_gauss_functionspace, gauss_functionspace);
+    auto test4 = TestRedistributionPoints1<float>(cubedsphere_to_gauss_functionspace, gauss_functionspace);
+    auto test5 = TestRedistributionPoints1<int>(cubedsphere_to_gauss_functionspace, gauss_functionspace);
+    auto test6 = TestRedistributionPoints1<long>(cubedsphere_to_gauss_functionspace, gauss_functionspace);
+
+    test1.execute();
+    test2.execute();
+    test3.execute();
+    test4.execute();
+    test5.execute();
+    test6.execute();
+}
+
 CASE("Structured grid with split comms") {
     Fixture fixture;
 
