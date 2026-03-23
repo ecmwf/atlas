@@ -214,11 +214,11 @@ violation_detected(idx_t tpt, const InterpolationParameters& tiparam, const arra
         }
     }
     if (smin == std::numeric_limits<double>::max()) {
-        // do not trigger limiting on points not associated with any polygon
+        // do not trigger limiting for ghost and halo target points which are not associated with any source polygon
         return false;
     }
-    bool undershoot = (tgt_vals(tpt) < smin - 2e-16);
-    bool overshoot = (tgt_vals(tpt) > smax + 2e-16);
+    bool undershoot = (tgt_vals(tpt) < smin);
+    bool overshoot = (tgt_vals(tpt) > smax);
     return (undershoot || overshoot);
 }
 
