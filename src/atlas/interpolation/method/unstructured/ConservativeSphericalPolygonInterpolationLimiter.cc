@@ -206,6 +206,9 @@ violation_detected(idx_t tpt, const InterpolationParameters& tiparam, const arra
             smin = std::min(smin, src_vals(nb));
         }
     }
+    if (smin == std::numeric_limits<double>::max()) {
+        return false;
+    }
     bool undershoot = (tgt_vals(tpt) < smin - 2e-16);
     bool overshoot = (tgt_vals(tpt) > smax + 2e-16);
     return (undershoot || overshoot);
