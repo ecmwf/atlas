@@ -74,15 +74,11 @@ double ConservativeSphericalPolygonInterpolationLimiter::limit(const Field& src_
     }
     const auto src_vals = array::make_view<double, 1>(src_field);
     auto tgt_vals       = array::make_view<double, 1>(tgt_field);
-    src_acted_tgt_.clear();
-    src_acted_tgt_.resize(src_vals.size());
     Field tgt_lim_field = tgt_fs_.createField<double>();
     auto tgt_lim_vals   = array::make_view<double, 1>(tgt_lim_field);
     for (idx_t tpt = 0; tpt < tgt_lim_vals.size(); ++tpt) {
         tgt_lim_vals(tpt) = 0.;
     }
-    compute_src_grad(src_vals);
-    std::set<idx_t> send_marked_scells_set;
     double tgt_smin;
     double tgt_smax;
     if (limiter_ == "clip") {
@@ -110,6 +106,10 @@ double ConservativeSphericalPolygonInterpolationLimiter::limit(const Field& src_
         }
     }
     if (limiter_ == "zeroslope") {
+        src_acted_tgt_.clear();
+        src_acted_tgt_.resize(src_vals.size());
+        compute_src_grad(src_vals);
+        std::set<idx_t> send_marked_spt_set;
         for (idx_t tcsp = 0; tcsp < data_->tgt_.csp_size; ++tcsp) {
             idx_t tpt;
             if (tgt_cell_data_) {
@@ -128,7 +128,7 @@ double ConservativeSphericalPolygonInterpolationLimiter::limit(const Field& src_
                     else {
                         spt  = data_->src_.csp2node[scsp_id];
                     }
-                    send_marked_scells_set.insert(spt);
+                    send_marked_spt_set.insert(spt);
                 }
                 if (limiter_override_tgt_ == 2) {
                     tgt_lim_vals(tpt) = 1.;
@@ -137,30 +137,37 @@ double ConservativeSphericalPolygonInterpolationLimiter::limit(const Field& src_
         }
         auto& mpi_comm = mpi::comm();
         auto mpi_size = mpi_comm.size();
-        std::vector<gidx_t> send_marked_scells;
-        send_marked_scells.reserve(send_marked_scells_set.size());
+        std::vector<gidx_t> send_marked_spt;
+        send_marked_spt.reserve(send_marked_spt_set.size());
         const auto src_global_index = array::make_view<gidx_t, 1>(src_fs_.global_index());
-        for (auto idx : send_marked_scells_set) {
+        for (auto idx : send_marked_spt_set) {
             gidx_t gidx = src_global_index(idx);
-            send_marked_scells.emplace_back(gidx);
+            send_marked_spt.emplace_back(gidx);
         }
         eckit::mpi::Buffer<gidx_t> recv_marked_scells_buf(mpi_size);
-        mpi_comm.allGatherv(send_marked_scells.begin(), send_marked_scells.end(), recv_marked_scells_buf);
+        mpi_comm.allGatherv(send_marked_spt.begin(), send_marked_spt.end(), recv_marked_scells_buf);
         std::unordered_map<gidx_t, idx_t> recv_loc_scells;
         ATLAS_TRACE_SCOPE("Build global-to-local map for ConservativeSphericalPolygonInterpolationLimiter") {
-            for (idx_t ls = 0; ls < src_global_index.size(); ++ls) {
-                auto gs = src_global_index(ls);
-                if (recv_loc_scells.find(gs) != recv_loc_scells.end()) {
+            for (idx_t spt_loc = 0; spt_loc < src_global_index.size(); ++spt_loc) {
+                auto spt_glo = src_global_index(spt_loc);
+                if (recv_loc_scells.find(spt_glo) != recv_loc_scells.end()) {
                     continue;
                 }
-                recv_loc_scells[gs] = ls;
+                recv_loc_scells[spt_glo] = spt_loc;
             }
         }
         auto recv_size = std::accumulate(recv_marked_scells_buf.counts.begin(), recv_marked_scells_buf.counts.end(), 0);
         for (idx_t i_gid = 0; i_gid < recv_size; ++i_gid) {
-            idx_t scell = recv_loc_scells[recv_marked_scells_buf.buffer[i_gid]];
-            idx_t scsp_id = scell;  // TODO: convert scell to scsp_id
-            limit_contrib_from_source(scsp_id, src_field, tgt_lim_vals);
+            idx_t spt = recv_loc_scells[recv_marked_scells_buf.buffer[i_gid]];
+            if (src_cell_data_) {
+                idx_t scsp_id = spt;  // TODO: convert scell to scsp_id
+                limit_contrib_from_source(scsp_id, src_field, tgt_lim_vals);
+            }
+            else {
+                for (auto scsp_id : data_->src_.node2csp[spt]) {
+                    limit_contrib_from_source(scsp_id, src_field, tgt_lim_vals);
+                }
+            }
         }
     }
     if (! limiter_override_tgt_) {
@@ -175,7 +182,6 @@ double ConservativeSphericalPolygonInterpolationLimiter::limit(const Field& src_
             tgt_vals(tpt) = tgt_lim_vals(tpt);
         }
     }
-    Log::info() << "mass : " << mass_change << std::endl;
     return mass_change;
 }
 
