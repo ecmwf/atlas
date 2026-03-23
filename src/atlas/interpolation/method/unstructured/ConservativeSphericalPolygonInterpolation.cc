@@ -948,6 +948,7 @@ void ConservativeSphericalPolygonInterpolation::do_setup(const FunctionSpace& sr
                 }
             }
         }
+
         auto& tgt_points = tgt.points;
         auto& tgt_areas  = tgt.areas;
         tgt_points.resize(n_tpoints_);
@@ -1252,6 +1253,7 @@ void ConservativeSphericalPolygonInterpolation::intersect_polygons(const Polygon
             if (skip_target(tcsp_id)) {
                 continue;
             }
+            tcsp_size_++;       // for the zeroslope limiter only
             intersection_scsp_ids.resize(0);
             intersection_weights.resize(0);
             intersection_src_centroids.resize(0);

@@ -33,7 +33,7 @@ public:
     using Polygon = util::ConvexSphericalPolygon;
     using PolygonArray = std::vector<util::ConvexSphericalPolygon>;
     struct SrcActed {
-        Indices tcells_done;
+        Indices tcsp_done;
     };
 
     ConservativeSphericalPolygonInterpolationLimiter(const ConservativeSphericalPolygonInterpolation& interpolation);
@@ -54,7 +54,7 @@ private:
     bool src_cell_data_;
     bool tgt_cell_data_;
     std::vector<PointXYZ> src_grads_;
-    std::vector<SrcActed> src_acted_tgt_;
+    std::vector<SrcActed> spt_acted_on_tcsp_;
     std::string limiter_;
     int order_;
     const FunctionSpace src_fs_;

@@ -337,6 +337,8 @@ private:
     int order_;
     bool matrix_free_;
 
+    mutable idx_t tcsp_size_;              // for the zeroslope limiter only
+
     mutable Statistics remap_stat_;
 
     Cache cache_;                          // Storage of cache if any was passed to constructor

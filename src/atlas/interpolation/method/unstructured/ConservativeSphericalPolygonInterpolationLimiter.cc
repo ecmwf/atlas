@@ -106,8 +106,9 @@ double ConservativeSphericalPolygonInterpolationLimiter::limit(const Field& src_
         }
     }
     if (limiter_ == "zeroslope") {
-        src_acted_tgt_.clear();
-        src_acted_tgt_.resize(src_vals.size());
+        spt_acted_on_tcsp_.clear();
+        spt_acted_on_tcsp_.resize(src_vals.size());
+        spt_acted_on_tcsp_.resize(interpolation_.tcsp_size_);
         compute_src_grad(src_vals);
         std::set<idx_t> send_marked_spt_set;
         for (idx_t tcsp = 0; tcsp < data_->tgt_.csp_size; ++tcsp) {
@@ -213,6 +214,7 @@ violation_detected(idx_t tpt, const InterpolationParameters& tiparam, const arra
         }
     }
     if (smin == std::numeric_limits<double>::max()) {
+        // do not trigger limiting on points not associated with any polygon
         return false;
     }
     bool undershoot = (tgt_vals(tpt) < smin - 2e-16);
@@ -270,9 +272,9 @@ limit_contrib_from_source(idx_t scsp_id, const Field& src_field, array::ArrayVie
         if (tgt_areas_[tpt_collateral] > 0.) {
             tgt_lim_val /= tgt_areas_[tpt_collateral];
         }
-        SrcActed& it = src_acted_tgt_[spt];
-        if (std::find(it.tcells_done.begin(), it.tcells_done.end(), tpt_collateral) == it.tcells_done.end()) {
-            it.tcells_done.push_back(tpt_collateral);
+        SrcActed& it = spt_acted_on_tcsp_[spt];
+        if (std::find(it.tcsp_done.begin(), it.tcsp_done.end(), tcsp_collateral) == it.tcsp_done.end()) {
+            it.tcsp_done.push_back(tcsp_collateral);
             if (limiter_override_tgt_ == 2) {
                 if (tgt_lim_vals(tpt_collateral) < 0.5) {
                     tgt_lim_vals(tpt_collateral) = -1.;
