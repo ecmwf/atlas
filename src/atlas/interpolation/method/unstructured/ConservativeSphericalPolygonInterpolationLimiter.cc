@@ -90,8 +90,28 @@ double ConservativeSphericalPolygonInterpolationLimiter::limit(const Field& src_
             else {
                 tpt = data_->tgt_.csp2node[tcsp];
             }
+            tgt_smin = std::numeric_limits<double>::max();
+            tgt_smax = -tgt_smin;
             const auto& iparam = tgt_iparam_[tcsp];
-            if (violation_detected(tpt, iparam, src_vals, tgt_vals, tgt_smin, tgt_smax)) {
+            for (idx_t i_scsp = 0; i_scsp < iparam.csp_ids.size(); ++i_scsp) {
+                idx_t scsp_id = iparam.csp_ids[i_scsp];
+                idx_t spt;
+                if (src_cell_data_) {
+                    spt  = interpolation_.csp_to_cell(scsp_id, data_->src_);
+                }
+                else {
+                    spt  = data_->src_.csp2node[scsp_id];
+                }
+                tgt_smax = std::max(tgt_smax, src_vals(spt));
+                tgt_smin = std::min(tgt_smin, src_vals(spt));
+            }
+            if (tgt_smin == std::numeric_limits<double>::max()) {
+                // do not trigger limiting for ghost and halo target points which are not associated with any source polygon
+                continue;
+            }
+            bool undershoot = (tgt_vals(tpt) < tgt_smin);
+            bool overshoot = (tgt_vals(tpt) > tgt_smax);
+            if (undershoot || overshoot) {
                 if (limiter_override_tgt_ == 2) {
                     tgt_lim_vals(tpt) = 1.;
                     continue;
@@ -147,8 +167,9 @@ double ConservativeSphericalPolygonInterpolationLimiter::limit(const Field& src_
         }
         eckit::mpi::Buffer<gidx_t> recv_marked_scells_buf(mpi_size);
         mpi_comm.allGatherv(send_marked_spt.begin(), send_marked_spt.end(), recv_marked_scells_buf);
+
         std::unordered_map<gidx_t, idx_t> recv_loc_scells;
-        ATLAS_TRACE_SCOPE("Build global-to-local map for ConservativeSphericalPolygonInterpolationLimiter") {
+        ATLAS_TRACE_SCOPE("Build global-to-local map for source mesh in ConservativeSphericalPolygonInterpolationLimiter") {
             for (idx_t spt_loc = 0; spt_loc < src_global_index.size(); ++spt_loc) {
                 auto spt_glo = src_global_index(spt_loc);
                 if (recv_loc_scells.find(spt_glo) != recv_loc_scells.end()) {
@@ -157,6 +178,7 @@ double ConservativeSphericalPolygonInterpolationLimiter::limit(const Field& src_
                 recv_loc_scells[spt_glo] = spt_loc;
             }
         }
+
         auto recv_size = std::accumulate(recv_marked_scells_buf.counts.begin(), recv_marked_scells_buf.counts.end(), 0);
         for (idx_t i_gid = 0; i_gid < recv_size; ++i_gid) {
             idx_t spt = recv_loc_scells[recv_marked_scells_buf.buffer[i_gid]];
@@ -179,7 +201,6 @@ double ConservativeSphericalPolygonInterpolationLimiter::limit(const Field& src_
     }
     else {
         for (idx_t tpt = 0; tpt < tgt_vals.size(); ++tpt) {
-            mass_change += (tgt_lim_vals(tpt) - tgt_vals(tpt)) * tgt_areas_[tpt];
             tgt_vals(tpt) = tgt_lim_vals(tpt);
         }
     }
