@@ -126,9 +126,9 @@ double ConservativeSphericalPolygonInterpolationLimiter::limit(const Field& src_
         }
     }
     if (limiter_ == "zeroslope") {
-        spt_acted_on_tcsp_.clear();
-        spt_acted_on_tcsp_.resize(src_vals.size());
-        spt_acted_on_tcsp_.resize(interpolation_.tcsp_size_);
+        scsp_acted_on_tcsp_.clear();
+        scsp_acted_on_tcsp_.resize(src_vals.size());
+        scsp_acted_on_tcsp_.resize(interpolation_.tcsp_size_);
         compute_src_grad(src_vals);
         std::set<idx_t> send_marked_spt_set;
         for (idx_t tcsp = 0; tcsp < data_->tgt_.csp_size; ++tcsp) {
@@ -293,7 +293,7 @@ limit_contrib_from_source(idx_t scsp_id, const Field& src_field, array::ArrayVie
         if (tgt_areas_[tpt_collateral] > 0.) {
             tgt_lim_val /= tgt_areas_[tpt_collateral];
         }
-        SrcActed& it = spt_acted_on_tcsp_[spt];
+        SrcActed& it = scsp_acted_on_tcsp_[scsp_id];
         if (std::find(it.tcsp_done.begin(), it.tcsp_done.end(), tcsp_collateral) == it.tcsp_done.end()) {
             it.tcsp_done.push_back(tcsp_collateral);
             if (limiter_override_tgt_ == 2) {

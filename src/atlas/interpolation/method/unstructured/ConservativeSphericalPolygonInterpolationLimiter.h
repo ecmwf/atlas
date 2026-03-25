@@ -54,7 +54,7 @@ private:
     bool src_cell_data_;
     bool tgt_cell_data_;
     std::vector<PointXYZ> src_grads_;
-    std::vector<SrcActed> spt_acted_on_tcsp_;
+    std::vector<SrcActed> scsp_acted_on_tcsp_;
     std::string limiter_;
     int order_;
     const FunctionSpace src_fs_;

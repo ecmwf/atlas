@@ -251,7 +251,7 @@ ConservativeSphericalPolygonInterpolation::ConservativeSphericalPolygonInterpola
         validate_ = true;
     }
     if (limiter_ != "none" && limiter_ != "zeroslope" && limiter_ != "clip") {
-        Log::error() << "configure option -limiter- can only be: none, zeroslope, clip. Exiting." << std::endl;
+        Log::error() << "\nthe configure option -limiter- can only be: none, zeroslope, clip. Exiting." << std::endl;
         ATLAS_ASSERT(false);
     }
 
