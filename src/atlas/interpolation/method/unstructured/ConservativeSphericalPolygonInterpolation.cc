@@ -1964,7 +1964,7 @@ void ConservativeSphericalPolygonInterpolation::do_execute(const Field& src_fiel
                             continue;
                         }
                         double tgt_val = 0.;
-                        const idx_t tcsp_id = tcell; // TODO:
+                        const idx_t tcsp_id = tcell; // TODO: not good for all meshes
                         const auto& iparam = tgt_iparam[tcsp_id];
                         for (idx_t i_scsp = 0; i_scsp < iparam.csp_ids.size(); ++i_scsp) {
                             idx_t scsp_id = iparam.csp_ids[i_scsp];
@@ -2009,7 +2009,7 @@ void ConservativeSphericalPolygonInterpolation::do_execute(const Field& src_fiel
                             continue;
                         }
                         double tgt_val = 0.;
-                        const idx_t tcsp_id = tcell; // TODO:
+                        const idx_t tcsp_id = tcell;    // TODO: not good for all meshes
                         const auto& iparam = tgt_iparam[tcsp_id];
                         for (idx_t i_scsp = 0; i_scsp < iparam.csp_ids.size(); ++i_scsp) {
                             idx_t scsp_id = iparam.csp_ids[i_scsp];
@@ -2074,7 +2074,7 @@ void ConservativeSphericalPolygonInterpolation::do_execute(const Field& src_fiel
                         if (tgt_halo(tcell)) {
                             continue;
                         }
-                        auto tcsp_id = tcell; // TODO:
+                        auto tcsp_id = tcell; // TODO: not good for all meshes
                         const auto& iparam = tgt_iparam[tcsp_id];
                         double tgt_val = 0.;
                         for (idx_t i_scsp = 0; i_scsp < iparam.csp_ids.size(); ++i_scsp) {
@@ -2126,7 +2126,7 @@ void ConservativeSphericalPolygonInterpolation::do_execute(const Field& src_fiel
                         if (tgt_halo(tcell)) {
                             continue;
                         }
-                        auto tcsp_id = tcell; // TODO:
+                        auto tcsp_id = tcell;   // TODO: not good for all meshes
                         const auto& iparam = tgt_iparam[tcsp_id];
                         double tgt_val = 0.;
                         for (idx_t i_scsp = 0; i_scsp < iparam.csp_ids.size(); ++i_scsp) {
