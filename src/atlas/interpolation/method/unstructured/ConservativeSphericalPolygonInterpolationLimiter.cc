@@ -57,6 +57,10 @@ ConservativeSphericalPolygonInterpolationLimiter(const ConservativeSphericalPoly
     if (ATLAS_INTERPOLATION_LIMITER != nullptr) {
         limiter_override_tgt_ = std::atof(ATLAS_INTERPOLATION_LIMITER);
     }
+    const char* ATLAS_INTERPOLATION_DETECTOR = ::getenv("ATLAS_INTERPOLATION_DETECTOR");
+    if (ATLAS_INTERPOLATION_DETECTOR != nullptr) {
+        limiter_detector_ = std::atof(ATLAS_INTERPOLATION_DETECTOR);
+    }
     if (limiter_override_tgt_ > 2) {
         Log::error() << "ATLAS_INTERPOLATION_LIMITER can be:\n";
         Log::error() << "\t0 (default, target_field after the limiter)\n";
@@ -64,6 +68,8 @@ ConservativeSphericalPolygonInterpolationLimiter(const ConservativeSphericalPoly
         Log::error() << "\t2 (violation & collateral target cells)" << std::endl;
         ATLAS_ASSERT(false);
     }
+    ATLAS_DEBUG_VAR(limiter_);
+    ATLAS_DEBUG_VAR(limiter_detector_);
 }
 
 
@@ -83,35 +89,11 @@ double ConservativeSphericalPolygonInterpolationLimiter::limit(const Field& src_
     double tgt_smax;
     if (limiter_ == "clip") {
         for (idx_t tcsp = 0; tcsp < data_->tgt_.csp_size; ++tcsp) {
-            idx_t tpt;
-            if (tgt_cell_data_) {
-                tpt = interpolation_.csp_to_cell(tcsp, data_->tgt_);
-            }
-            else {
-                tpt = data_->tgt_.csp2node[tcsp];
-            }
+            idx_t tpt = tgt_cell_data_ ? interpolation_.csp_to_cell(tcsp, data_->tgt_) : data_->tgt_.csp2node[tcsp];
             tgt_smin = std::numeric_limits<double>::max();
             tgt_smax = -tgt_smin;
             const auto& iparam = tgt_iparam_[tcsp];
-            for (idx_t i_scsp = 0; i_scsp < iparam.csp_ids.size(); ++i_scsp) {
-                idx_t scsp_id = iparam.csp_ids[i_scsp];
-                idx_t spt;
-                if (src_cell_data_) {
-                    spt  = interpolation_.csp_to_cell(scsp_id, data_->src_);
-                }
-                else {
-                    spt  = data_->src_.csp2node[scsp_id];
-                }
-                tgt_smax = std::max(tgt_smax, src_vals(spt));
-                tgt_smin = std::min(tgt_smin, src_vals(spt));
-            }
-            if (tgt_smin == std::numeric_limits<double>::max()) {
-                // do not trigger limiting for ghost and halo target points which are not associated with any source polygon
-                continue;
-            }
-            bool undershoot = (tgt_vals(tpt) < tgt_smin);
-            bool overshoot = (tgt_vals(tpt) > tgt_smax);
-            if (undershoot || overshoot) {
+            if (violation_detected(tpt, iparam, src_vals, tgt_vals, tgt_smin, tgt_smax)) {
                 if (limiter_override_tgt_ == 2) {
                     tgt_lim_vals(tpt) = 1.;
                     continue;
@@ -215,23 +197,21 @@ violation_detected(idx_t tpt, const InterpolationParameters& tiparam, const arra
     smax = -smin;
     ConservativeSphericalPolygonInterpolation::Workspace_get_cell_neighbours w_cell; // TODO: move even higher up in scope ??
     ConservativeSphericalPolygonInterpolation::Workspace_get_node_neighbours w_node;
+    bool do_neighbours = (tiparam.csp_ids.size() <= limiter_detector_);
     for (idx_t i_scsp = 0; i_scsp < tiparam.csp_ids.size(); ++i_scsp) {
         idx_t scsp_id = tiparam.csp_ids[i_scsp];
         idx_t spt;
         std::vector<idx_t> src_neighbours;
-        if (src_cell_data_) {
-            spt  = interpolation_.csp_to_cell(scsp_id, data_->src_);
-            src_neighbours = interpolation_.get_cell_neighbours(interpolation_.src_mesh_, spt, w_cell);
-        }
-        else {
-            spt  = data_->src_.csp2node[scsp_id];
-            src_neighbours = interpolation_.get_node_neighbours(interpolation_.src_mesh_, spt, w_node);
-        }
+        spt  = src_cell_data_ ? interpolation_.csp_to_cell(scsp_id, data_->src_) : data_->src_.csp2node[scsp_id];
         smax = std::max(smax, src_vals(spt));
         smin = std::min(smin, src_vals(spt));
-        for (auto nb : src_neighbours) {
-            smax = std::max(smax, src_vals(nb));
-            smin = std::min(smin, src_vals(nb));
+        if (do_neighbours) {
+            src_neighbours = src_cell_data_ ? interpolation_.get_cell_neighbours(interpolation_.src_mesh_, spt, w_cell) :
+                interpolation_.get_node_neighbours(interpolation_.src_mesh_, spt, w_node);
+            for (auto nb : src_neighbours) {
+                smax = std::max(smax, src_vals(nb));
+                smin = std::min(smin, src_vals(nb));
+            }
         }
     }
     if (smin == std::numeric_limits<double>::max()) {

@@ -59,7 +59,8 @@ private:
     int order_;
     const FunctionSpace src_fs_;
     const FunctionSpace tgt_fs_;
-    unsigned int limiter_override_tgt_ = 0;
+    unsigned int limiter_override_tgt_      = 0;
+    int limiter_detector_                   = 0;
 
     // Cache cache_;                          // Storage of cache if any was passed to constructor
     // std::shared_ptr<Data> sharable_data_;  // Storage of new data_, only allocated if cache is empty
