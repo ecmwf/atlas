@@ -334,6 +334,8 @@ private:
     mutable Mesh tgt_mesh_;
     bool normalise_;
     std::string limiter_;
+    std::string limiter_output_;
+    int limiter_detector_size_;
     int order_;
     bool matrix_free_;
 

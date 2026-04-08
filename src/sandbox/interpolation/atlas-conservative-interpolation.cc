@@ -78,8 +78,13 @@ public:
         add_option(new SimpleOption<long>("order", "Interpolation order [1, 2] (default=1)"));
         add_option(new SimpleOption<bool>("normalise_intersections",
                                           "Normalize polygon intersections so that interpolation weights sum to 1."));
+
         add_option(new SimpleOption<std::string>("limiter",
-                                          "Use monotone limiter to prevent under-/overshoots of the 2nd order interpolation [none, zeroslope, clip]"));
+                                          "Use conservative limiter to prevent under-/overshoots of the 2nd order interpolation [none, zeroslope, clip]"));
+        add_option(new SimpleOption<std::string>("limiter-output",
+                                          "Write mode in the target field [target, points, contribution]"));
+        add_option(new SimpleOption<std::string>("limiter-detector-size",
+                                          "Control the size of the detector stencil before including neighbours source values [default 1 -> at least two source cells]"));
         add_option(new SimpleOption<bool>("validate",
                                           "Enable extra validations at cost of performance. For debugging purpose."));
         add_option(new SimpleOption<bool>("matrix_free", "Do not store matrix for consecutive interpolations"));
@@ -192,7 +197,7 @@ std::function<double(const PointLonLat&)> get_init(const eckit::LocalConfigurati
     ATLAS_THROW_EXCEPTION("Should not be here");
 }
 
-int AtlasParallelInterpolation::execute(const AtlasTool::Args& args) {\
+int AtlasParallelInterpolation::execute(const AtlasTool::Args& args) {
     eckit::LocalConfiguration config(args);
 
     auto get_grid = [](std::string grid_name) {
@@ -317,6 +322,8 @@ int AtlasParallelInterpolation::execute(const AtlasTool::Args& args) {\
         output.set("setup.interpolation.order", config.getInt("order", 1));
         output.set("setup.interpolation.normalise_intersections", config.getBool("normalise_intersections", false));
         output.set("setup.interpolation.limiter", config.getString("limiter", "none"));
+        output.set("setup.interpolation.limiter.output", config.getString("limiter-output", "target"));
+        output.set("setup.interpolation.limiter.detector_size", config.getString("limiter-detector-size", "target"));
         output.set("setup.interpolation.validate", config.getBool("validate", false));
         output.set("setup.interpolation.matrix_free", config.getBool("matrix-free", false));
         output.set("setup.init", config.getString("init", "vortex_rollup"));

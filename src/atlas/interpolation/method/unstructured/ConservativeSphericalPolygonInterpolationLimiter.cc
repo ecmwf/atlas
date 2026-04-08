@@ -52,24 +52,8 @@ ConservativeSphericalPolygonInterpolationLimiter(const ConservativeSphericalPoly
     src_fs_(interpolation.source()), tgt_fs_(interpolation.target()), data_(interpolation.data_),
     src_points_(data_->src_.points), src_iparam_(data_->src_iparam_), tgt_iparam_(data_->tgt_iparam_),
     tgt_areas_(data_->tgt_.areas) {
-    // set this environment variable to replace target_field with values showing limiter cell effects
-    const char* ATLAS_INTERPOLATION_LIMITER = ::getenv("ATLAS_INTERPOLATION_LIMITER");
-    if (ATLAS_INTERPOLATION_LIMITER != nullptr) {
-        limiter_override_tgt_ = std::atof(ATLAS_INTERPOLATION_LIMITER);
-    }
-    const char* ATLAS_INTERPOLATION_DETECTOR = ::getenv("ATLAS_INTERPOLATION_DETECTOR");
-    if (ATLAS_INTERPOLATION_DETECTOR != nullptr) {
-        limiter_detector_ = std::atof(ATLAS_INTERPOLATION_DETECTOR);
-    }
-    if (limiter_override_tgt_ > 2) {
-        Log::error() << "ATLAS_INTERPOLATION_LIMITER can be:\n";
-        Log::error() << "\t0 (default, target_field after the limiter)\n";
-        Log::error() << "\t1 (limiter correction field)\n";
-        Log::error() << "\t2 (violation & collateral target cells)" << std::endl;
-        ATLAS_ASSERT(false);
-    }
-    ATLAS_DEBUG_VAR(limiter_);
-    ATLAS_DEBUG_VAR(limiter_detector_);
+    limiter_output_ = interpolation_.limiter_output_;
+    limiter_detector_size_ = interpolation_.limiter_detector_size_;
 }
 
 
@@ -94,7 +78,7 @@ double ConservativeSphericalPolygonInterpolationLimiter::limit(const Field& src_
             tgt_smax = -tgt_smin;
             const auto& iparam = tgt_iparam_[tcsp];
             if (violation_detected(tpt, iparam, src_vals, tgt_vals, tgt_smin, tgt_smax)) {
-                if (limiter_override_tgt_ == 2) {
+                if (limiter_output_ == "points") {
                     tgt_lim_vals(tpt) = 1.;
                     continue;
                 }
@@ -133,7 +117,7 @@ double ConservativeSphericalPolygonInterpolationLimiter::limit(const Field& src_
                     }
                     send_marked_spt_set.insert(spt);
                 }
-                if (limiter_override_tgt_ == 2) {
+                if (limiter_output_ == "points") {
                     tgt_lim_vals(tpt) = 1.;
                 }
             }
@@ -175,7 +159,7 @@ double ConservativeSphericalPolygonInterpolationLimiter::limit(const Field& src_
             }
         }
     }
-    if (! limiter_override_tgt_) {
+    if (limiter_output_ == "target") {
         for (idx_t tpt = 0 ; tpt < tgt_vals.size(); ++tpt) {
             mass_change += tgt_lim_vals(tpt)  * tgt_areas_[tpt];
             tgt_vals(tpt) += tgt_lim_vals(tpt);
@@ -197,7 +181,7 @@ violation_detected(idx_t tpt, const InterpolationParameters& tiparam, const arra
     smax = -smin;
     ConservativeSphericalPolygonInterpolation::Workspace_get_cell_neighbours w_cell; // TODO: move even higher up in scope ??
     ConservativeSphericalPolygonInterpolation::Workspace_get_node_neighbours w_node;
-    bool do_neighbours = (tiparam.csp_ids.size() <= limiter_detector_);
+    bool do_neighbours = (tiparam.csp_ids.size() <= limiter_detector_size_);
     for (idx_t i_scsp = 0; i_scsp < tiparam.csp_ids.size(); ++i_scsp) {
         idx_t scsp_id = tiparam.csp_ids[i_scsp];
         idx_t spt;
@@ -273,10 +257,10 @@ limit_contrib_from_source(idx_t scsp_id, const Field& src_field, array::ArrayVie
         if (tgt_areas_[tpt_collateral] > 0.) {
             tgt_lim_val /= tgt_areas_[tpt_collateral];
         }
-        SrcActed& it = scsp_acted_on_tcsp_[scsp_id];
+        auto& it = scsp_acted_on_tcsp_[scsp_id];
         if (std::find(it.tcsp_done.begin(), it.tcsp_done.end(), tcsp_collateral) == it.tcsp_done.end()) {
             it.tcsp_done.push_back(tcsp_collateral);
-            if (limiter_override_tgt_ == 2) {
+            if (limiter_output_ == "points") {
                 if (tgt_lim_vals(tpt_collateral) < 0.5) {
                     tgt_lim_vals(tpt_collateral) = -1.;
                 }

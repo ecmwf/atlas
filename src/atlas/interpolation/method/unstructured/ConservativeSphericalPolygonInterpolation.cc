@@ -225,11 +225,11 @@ inline bool valid_point(idx_t node_idx, const array::ArrayView<int, 1>& node_fla
 
 ConservativeSphericalPolygonInterpolation::ConservativeSphericalPolygonInterpolation(const Config& config):
     Method(config), validate_(false), src_cell_data_(true), tgt_cell_data_(true), normalise_(false), limiter_("none"),
-    order_(1), matrix_free_(false), n_spoints_(0), n_tpoints_(0) {
+    limiter_output_("target"), limiter_detector_size_(1), order_(1), matrix_free_(false),
+    n_spoints_(0), n_tpoints_(0) {
     config.get("validate", validate_ = false);
     config.get("order", order_ = 1);
     config.get("normalise", normalise_ = false);
-    config.get("limiter", limiter_ = "none");
     config.get("matrix_free", matrix_free_ = false);
     config.get("src_cell_data", src_cell_data_ = true);
     config.get("tgt_cell_data", tgt_cell_data_ = true);
@@ -238,6 +238,20 @@ ConservativeSphericalPolygonInterpolation::ConservativeSphericalPolygonInterpola
     config.get("statistics.conservation", remap_stat_.conservation = false);
     config.get("statistics.intersection", remap_stat_.intersection = false);
     config.get("statistics.timings", remap_stat_.timings = false);
+
+    const std::set<std::string> limiter_allowed = {"none", "clip", "zeroslope"};
+    config.get("limiter", limiter_);
+    if (limiter_allowed.find(limiter_) == limiter_allowed.end()) {
+        Log::error() << "\nthe configure option -limiter- can only be: none, zeroslope, clip." << std::endl;
+        ATLAS_ASSERT(false);
+    }
+    const std::set<std::string> limiter_output_allowed = {"target", "points", "contribution"};
+    config.get("limiter-output", limiter_output_);
+    if (limiter_output_allowed.find(limiter_output_) == limiter_output_allowed.end()) {
+        Log::error() << "\nthe configure option -limiter_output- can only be: target, points, contribution." << std::endl;
+        ATLAS_ASSERT(false);
+    }
+    config.get("limiter-detector-size", limiter_detector_size_);
     if (remap_stat_.all) {
         Log::warning() << "statistics.all required. Enabling validate, statistics.timings, statistics.intersection, statistics.conservation, and statistics.accuracy." << std::endl;
         validate_ = true;
@@ -249,10 +263,6 @@ ConservativeSphericalPolygonInterpolation::ConservativeSphericalPolygonInterpola
     if (remap_stat_.intersection) {
         Log::warning() << "statistics.intersection required. Enabling validate." << std::endl;
         validate_ = true;
-    }
-    if (limiter_ != "none" && limiter_ != "zeroslope" && limiter_ != "clip") {
-        Log::error() << "\nthe configure option -limiter- can only be: none, zeroslope, clip. Exiting." << std::endl;
-        ATLAS_ASSERT(false);
     }
 
     sharable_data_ = std::make_shared<Data>();

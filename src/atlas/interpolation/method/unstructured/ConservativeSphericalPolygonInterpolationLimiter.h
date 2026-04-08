@@ -32,7 +32,8 @@ public:
     using InterpolationParameters = ConservativeSphericalPolygonInterpolation::InterpolationParameters;
     using Polygon = util::ConvexSphericalPolygon;
     using PolygonArray = std::vector<util::ConvexSphericalPolygon>;
-    struct SrcActed {
+    struct SCSP_ActedOn_TCSP {
+        // a list of target polygons on which a given source polygon has already acted on
         Indices tcsp_done;
     };
 
@@ -40,8 +41,6 @@ public:
 
     const ConservativeSphericalPolygonInterpolation& interpolation() const { return interpolation_; }
     double limit(const Field& src_field, Field& tgt_field);
-
-    // interpolation::Cache createCache() const override;
 
 private:
     bool violation_detected(idx_t tcell, const InterpolationParameters& tiparam, const array::ArrayView<double,1>& src_vals,
@@ -54,17 +53,15 @@ private:
     bool src_cell_data_;
     bool tgt_cell_data_;
     std::vector<PointXYZ> src_grads_;
-    std::vector<SrcActed> scsp_acted_on_tcsp_;
+    std::vector<SCSP_ActedOn_TCSP> scsp_acted_on_tcsp_;
     std::string limiter_;
+    std::string limiter_output_;
+    int limiter_detector_size_;
     int order_;
     const FunctionSpace src_fs_;
     const FunctionSpace tgt_fs_;
-    unsigned int limiter_override_tgt_      = 0;
-    int limiter_detector_                   = 0;
 
-    // Cache cache_;                          // Storage of cache if any was passed to constructor
-    // std::shared_ptr<Data> sharable_data_;  // Storage of new data_, only allocated if cache is empty
-    const ConservativeSphericalPolygonInterpolation::Data* data_;  // Read-only access to data, pointing either to cache_ or sharable_data_
+    const ConservativeSphericalPolygonInterpolation::Data* data_;
     const std::vector<PointXYZ>& src_points_;
     const std::vector<InterpolationParameters>& src_iparam_;
     const std::vector<InterpolationParameters>& tgt_iparam_;
