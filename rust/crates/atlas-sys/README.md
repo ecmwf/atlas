@@ -13,6 +13,10 @@ This crate has **no Rust API**. It builds (or locates) the atlas C++ library and
 
 `vendored` is enabled by default.
 
+### Optional
+
+- `omp` - Enable OpenMP support. Requires `libomp` (e.g. `libomp-dev` on Ubuntu). Off by default.
+
 ## License
 
 Apache-2.0

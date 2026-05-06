@@ -19,6 +19,9 @@ default = ["vendored"]
 vendored = ["eckit-sys/vendored"]
 system = ["eckit-sys/system"]
 
+# OpenMP support
+omp = []
+
 [dependencies]
 eckit-sys = { workspace = true, default-features = false }
 

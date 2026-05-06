@@ -75,9 +75,13 @@ fn build_vendored() {
         .arg("-DENABLE_TESTS=OFF")
         .arg("-DBUILD_TESTING=OFF")
         .arg("-DENABLE_DOCS=OFF")
-        .arg("-DENABLE_ATLAS_TOOLS=OFF")
         .arg("-DENABLE_FORTRAN=OFF")
-        .arg("-DENABLE_SANDBOX=OFF");
+        .arg("-DENABLE_SANDBOX=OFF")
+        .arg("-DENABLE_CLANG_TIDY=OFF")
+        .arg(format!(
+            "-DENABLE_OMP={}",
+            bindman_utils::on_off(cfg!(feature = "omp"))
+        ));
 
     #[cfg(target_os = "macos")]
     cmd.arg("-DCMAKE_INSTALL_NAME_DIR=@rpath");
