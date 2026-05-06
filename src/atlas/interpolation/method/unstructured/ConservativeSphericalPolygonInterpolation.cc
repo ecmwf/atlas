@@ -1289,7 +1289,7 @@ void ConservativeSphericalPolygonInterpolation::intersect_polygons(const Polygon
                 if (csp_i_area > 0.) {
                     intersection_scsp_ids.emplace_back(scsp_id);
                     intersection_weights.emplace_back(csp_i_area);
-                    if (order_ == 2 or not matrix_free_ or not matrixAllocated()) {
+                    if (order_ == 2 or not matrixAllocated()) {
                         intersection_src_centroids.emplace_back(csp_i.centroid());
                     }
                     tgt_cover_area += csp_i_area;
@@ -1337,7 +1337,7 @@ void ConservativeSphericalPolygonInterpolation::intersect_polygons(const Polygon
             // }
             tgt_iparam_[tcsp_id].csp_ids = intersection_scsp_ids;
             tgt_iparam_[tcsp_id].weights = intersection_weights;
-            if (order_ == 2 or not matrix_free_ or not matrixAllocated()) {
+            if (order_ == 2 or not matrixAllocated()) {
                 tgt_iparam_[tcsp_id].centroids = intersection_src_centroids;
             }
             if (remap_stat_.intersection) {
@@ -1970,7 +1970,7 @@ void ConservativeSphericalPolygonInterpolation::do_execute(const Field& src_fiel
                 case (LOCATIONS::CELL_TO_CELL): {
                     const auto tgt_halo = array::make_view<int, 1>(tgt_mesh_.cells().halo());
                     for (idx_t tcell = 0; tcell < n_tpoints_; ++tcell) {
-                        if (tgt_halo(tcell)) {
+                        if (tgt_halo(tcell) or tcell >= data_->tgt_.csp_size) { // TODO: this is a temporary fix for meshes with invalid cells
                             continue;
                         }
                         double tgt_val = 0.;
@@ -2015,7 +2015,7 @@ void ConservativeSphericalPolygonInterpolation::do_execute(const Field& src_fiel
                     const auto tgt_halo = array::make_view<int, 1>(tgt_mesh_.cells().halo());
                     const auto& src_csp2node = data_->src_.csp2node;
                     for (idx_t tcell = 0; tcell < n_tpoints_; ++tcell) {
-                        if (tgt_halo(tcell)) {
+                        if (tgt_halo(tcell) or tcell >= data_->tgt_.csp_size) { // TODO: this is a temporary fix for meshes with invalid cells
                             continue;
                         }
                         double tgt_val = 0.;

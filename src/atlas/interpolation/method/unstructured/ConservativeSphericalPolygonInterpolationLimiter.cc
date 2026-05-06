@@ -54,6 +54,8 @@ ConservativeSphericalPolygonInterpolationLimiter(const ConservativeSphericalPoly
     tgt_areas_(data_->tgt_.areas) {
     limiter_output_ = interpolation_.limiter_output_;
     limiter_detector_size_ = interpolation_.limiter_detector_size_;
+    Log::info() << "limiter output : " << limiter_output_ << std::endl;
+    Log::info() << "limiter detector size : " << limiter_detector_size_ << std::endl;
 }
 
 
