@@ -643,6 +643,7 @@ CASE("test_SpectralFunctionSpace_norm") {
         }
     }
 }
+#endif
 
 template <typename T>
 mdspan<T,dims<1>> make_mdspan(std::vector<T>& v) {
@@ -654,6 +655,11 @@ mdspan<T,extents<size_t,dynamic_extent,N>> make_mdspan(std::vector<std::array<T,
 }
 
 CASE("test_functionspace_grid") {
+    if (not ATLAS_HAVE_TESSELATION) {
+        Log::info() << "Skipping test_functionspace_grid since tessellation is not available" << std::endl;
+        return;
+    }
+
     // Create list of points and construct Grid from them
     std::vector<PointXY> points = {
         {0.0, 5.0}, {0.0, 0.0}, {10.0, 0.0}, {15.0, 0.0}, {5.0, 5.0}, {15.0, 5.0}
@@ -725,8 +731,6 @@ CASE("test_functionspace_grid") {
     functionspace::Spectral spectral(159);
     EXPECT_THROWS(spectral.grid());
 }
-
-#endif
 
 //-----------------------------------------------------------------------------
 

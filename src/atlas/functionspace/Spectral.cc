@@ -58,6 +58,9 @@ public:
             TRANS_CHECK(::trans_delete(p));
             delete p;
         });
+#if ATLAS_ECTRANS_VERSION_AT_LEAST(1, 8, 0)
+        TRANS_CHECK(::trans_set_mpi_comm(mpi::comm().communicator()));
+#endif
         TRANS_CHECK(::trans_new(trans_.get()));
         TRANS_CHECK(::trans_set_trunc(trans_.get(), truncation));
         TRANS_CHECK(::trans_use_mpi(mpi::size() > 1));

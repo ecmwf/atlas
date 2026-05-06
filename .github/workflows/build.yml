@@ -38,7 +38,7 @@ jobs:
           - linux clang-18
           - linux intel
           - linux intel-classic
-          - linux nvhpc-25.1
+          - linux nvhpc-26.1
           - macos
 
         include:
@@ -106,9 +106,9 @@ jobs:
             caching: true
             coverage: false
 
-          - name: linux nvhpc-25.1
+          - name: linux nvhpc-26.1
             os: ubuntu-24.04
-            compiler: nvhpc-25.1
+            compiler: nvhpc-26.1
             compiler_cc: nvc
             compiler_cxx: nvc++
             compiler_fc: nvfortran
@@ -193,7 +193,7 @@ jobs:
       if: contains( matrix.compiler, 'nvhpc' )
       shell: bash -eux {0}
       run: |
-        ${ATLAS_TOOLS}/install-nvhpc.sh --prefix ${DEPS_DIR}/nvhpc --version 25.1
+        ${ATLAS_TOOLS}/install-nvhpc.sh --prefix ${DEPS_DIR}/nvhpc --version 26.1
         source ${DEPS_DIR}/nvhpc/env.sh
         echo "${NVHPC_DIR}/compilers/bin"                   >> $GITHUB_PATH
         [ -z ${MPI_HOME+x} ] || echo "MPI_HOME=${MPI_HOME}" >> $GITHUB_ENV

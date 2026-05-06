@@ -45,6 +45,17 @@ ecbuild_add_test( TARGET atlas_test_trans
   ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
 )
 
+ecbuild_add_test( TARGET atlas_test_trans_split_comm
+  SOURCES      test_trans_split_comm.cc
+  LIBS         atlas transi
+  ENVIRONMENT  ${ATLAS_TEST_ENVIRONMENT} ATLAS_FPE=FE_OVERFLOW,FE_DIVBYZERO
+  CONDITION    atlas_HAVE_ECTRANS AND eckit_HAVE_MPI AND
+               ectrans_HAVE_MPI AND
+               ectrans_VERSION GREATER_EQUAL 1.8 AND
+               MPI_SLOTS GREATER_EQUAL 4
+  MPI          4
+)
+
 ecbuild_add_test( TARGET atlas_test_trans_serial
   SOURCES   test_trans.cc
   CONDITION atlas_HAVE_ECTRANS

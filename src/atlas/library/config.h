@@ -70,4 +70,6 @@ typedef gidx_t uidx_t;
 #define ATLAS_ECKIT_HAVE_ECKIT_585 0
 #endif
 
+#define ATLAS_ECTRANS_VERSION_AT_LEAST(x, y, z) (ATLAS_ECTRANS_VERSION_INT >= x * 10000 + y * 100 + z)
+
 }  // namespace atlas
