@@ -93,8 +93,7 @@ double ConservativeSphericalPolygonInterpolationLimiter::limit(const Field& src_
     }
     if (limiter_ == "zeroslope") {
         scsp_acted_on_tcsp_.clear();
-        scsp_acted_on_tcsp_.resize(src_vals.size());
-        scsp_acted_on_tcsp_.resize(interpolation_.tcsp_size_);
+        scsp_acted_on_tcsp_.resize(data_->src_.csp_size);
         compute_src_grad(src_vals);
         std::set<idx_t> send_marked_spt_set;
         for (idx_t tcsp = 0; tcsp < data_->tgt_.csp_size; ++tcsp) {
