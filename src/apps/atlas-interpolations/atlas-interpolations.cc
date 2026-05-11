@@ -269,7 +269,7 @@ public:
         add_option(new eckit::option::Separator("Output options"));
         add_option(new SimpleOption<bool>("output-matrix", "Write interpolation matrix"));
         add_option(new SimpleOption<std::string>("matrix.name", "Name of the remapping matrix. If not provided a default unique name will be chosen"));
-        add_option(new SimpleOption<std::string>("matrix.format", "Format of the remapping matrix: eckit, SCRIP"));
+        add_option(new SimpleOption<std::string>("matrix.format", "Format of the remapping matrix: eckit, scrip"));
 
         add_option(new SimpleOption<bool>("output-gmsh", "Set to enable gmsh output for tests"));
         add_option(new SimpleOption<std::string>("gmsh.coordinates", "Choose the coordinates in gmsh output: {lonlat, xyz}"));
@@ -1199,7 +1199,7 @@ void AtlasInterpolations::write_matrix(const Matrix& matrix, std::string matrix_
         ScripIO::write_matrix(matrix, matrix_name+".nc");
     }
     else {
-        ATLAS_NOTIMPLEMENTED;
+        ATLAS_THROW_EXCEPTION("Matrix format " << format << " is not recognised. Recognized are {eckit,scrip}");
     }
 }
 
