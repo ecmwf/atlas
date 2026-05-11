@@ -2,6 +2,52 @@
 
 This file lists Atlas environment variables found in code under atlas/src (and test-only ones under atlas/src/tests).
 
+## Table of Contents
+
+- [Notes](#notes)
+- [Core Logging and Runtime](#core-logging-and-runtime)
+  - [ATLAS_INFO](#atlas_info)
+  - [ATLAS_WARNING](#atlas_warning)
+  - [ATLAS_TRACE](#atlas_trace)
+  - [ATLAS_TRACE_MEMORY](#atlas_trace_memory)
+  - [ATLAS_TRACE_BARRIERS](#atlas_trace_barriers)
+  - [ATLAS_TRACE_REPORT](#atlas_trace_report)
+  - [ATLAS_LOG_RANK](#atlas_log_rank)
+  - [ATLAS_LOG_FILE](#atlas_log_file)
+  - [ATLAS_WORKDIR](#atlas_workdir)
+  - [ATLAS_FINALISES_MPI](#atlas_finalises_mpi)
+  - [ATLAS_PLUGIN_PATH](#atlas_plugin_path)
+  - [ATLAS_DATA_PATH](#atlas_data_path)
+  - [ATLAS_CACHE_PATH](#atlas_cache_path)
+- [Floating Point and Signals](#floating-point-and-signals)
+  - [ATLAS_FPE](#atlas_fpe)
+  - [ATLAS_SIGNAL_HANDLER](#atlas_signal_handler)
+- [Deprecation Controls](#deprecation-controls)
+  - [ATLAS_DEPRECATION_WARNINGS](#atlas_deprecation_warnings)
+  - [ATLAS_DEPRECATION_ERRORS](#atlas_deprecation_errors)
+- [Interpolation and Geometry](#interpolation-and-geometry)
+  - [ATLAS_FAST_BUILD_KDTREES](#atlas_fast_build_kdtrees)
+  - [ATLAS_BUILD_KDTREE_CENTROID](#atlas_build_kdtree_centroid)
+  - [ATLAS_COMPAREPOINTXYZ_EPS_FACTOR](#atlas_comparepointxyz_eps_factor)
+  - [ATLAS_DELAUNAY_BACKEND](#atlas_delaunay_backend)
+  - [ATLAS_GMSH_FILTER_EDGE_RATIO](#atlas_gmsh_filter_edge_ratio)
+- [Linear Algebra Backend Selection](#linear-algebra-backend-selection)
+  - [ATLAS_LINALG_FFT_BACKEND](#atlas_linalg_fft_backend)
+  - [ATLAS_LINALG_SPARSE_BACKEND](#atlas_linalg_sparse_backend)
+  - [ATLAS_LINALG_DENSE_BACKEND](#atlas_linalg_dense_backend)
+- [Debug Selection Variables](#debug-selection-variables)
+  - [ATLAS_DEBUG_GLOBAL_INDEX](#atlas_debug_global_index)
+  - [ATLAS_DEBUG_NODE_GLOBAL_INDEX](#atlas_debug_node_global_index)
+  - [ATLAS_DEBUG_EDGE_GLOBAL_INDEX](#atlas_debug_edge_global_index)
+  - [ATLAS_DEBUG_CELL_GLOBAL_INDEX](#atlas_debug_cell_global_index)
+  - [ATLAS_DEBUG_NODE_UID](#atlas_debug_node_uid)
+  - [ATLAS_DEBUG_CELL_UID](#atlas_debug_cell_uid)
+  - [ATLAS_DEBUG_MPI_RANK](#atlas_debug_mpi_rank)
+  - [ATLAS_GLOBAL_INDEX](#atlas_global_index)
+- [Test-only Variables (atlas/src/tests)](#test-only-variables-atlassrctests)
+  - [ATLAS_MAX_FAILED_EXPECTS](#atlas_max_failed_expects)
+  - [ATLAS_MPI_BARRIER_TIMEOUT](#atlas_mpi_barrier_timeout)
+
 ## Notes
 
 - Boolean values are parsed by eckit translators. In practice use one of: `0`/`1`, `false`/`true`, `off`/`on`, `no`/`yes`.
