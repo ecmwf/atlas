@@ -4,58 +4,78 @@ This file lists Atlas environment variables found in code under atlas/src (and t
 
 ## Table of Contents
 
-- [Notes](#notes)
-- [Core Logging and Runtime](#core-logging-and-runtime)
-  - [ATLAS_INFO](#atlas_info)
-  - [ATLAS_WARNING](#atlas_warning)
-  - [ATLAS_TRACE](#atlas_trace)
-  - [ATLAS_TRACE_MEMORY](#atlas_trace_memory)
-  - [ATLAS_TRACE_BARRIERS](#atlas_trace_barriers)
-  - [ATLAS_TRACE_REPORT](#atlas_trace_report)
-  - [ATLAS_LOG_RANK](#atlas_log_rank)
-  - [ATLAS_LOG_FILE](#atlas_log_file)
-  - [ATLAS_WORKDIR](#atlas_workdir)
-  - [ATLAS_FINALISES_MPI](#atlas_finalises_mpi)
-  - [ATLAS_PLUGIN_PATH](#atlas_plugin_path)
-  - [ATLAS_DATA_PATH](#atlas_data_path)
-  - [ATLAS_CACHE_PATH](#atlas_cache_path)
-- [Floating Point and Signals](#floating-point-and-signals)
-  - [ATLAS_FPE](#atlas_fpe)
-  - [ATLAS_SIGNAL_HANDLER](#atlas_signal_handler)
-- [Deprecation Controls](#deprecation-controls)
-  - [ATLAS_DEPRECATION_WARNINGS](#atlas_deprecation_warnings)
-  - [ATLAS_DEPRECATION_ERRORS](#atlas_deprecation_errors)
-- [Interpolation and Geometry](#interpolation-and-geometry)
-  - [ATLAS_FAST_BUILD_KDTREES](#atlas_fast_build_kdtrees)
-  - [ATLAS_BUILD_KDTREE_CENTROID](#atlas_build_kdtree_centroid)
-  - [ATLAS_COMPAREPOINTXYZ_EPS_FACTOR](#atlas_comparepointxyz_eps_factor)
-  - [ATLAS_DELAUNAY_BACKEND](#atlas_delaunay_backend)
-  - [ATLAS_GMSH_FILTER_EDGE_RATIO](#atlas_gmsh_filter_edge_ratio)
-- [Linear Algebra Backend Selection](#linear-algebra-backend-selection)
-  - [ATLAS_LINALG_FFT_BACKEND](#atlas_linalg_fft_backend)
-  - [ATLAS_LINALG_SPARSE_BACKEND](#atlas_linalg_sparse_backend)
-  - [ATLAS_LINALG_DENSE_BACKEND](#atlas_linalg_dense_backend)
-- [Debug Selection Variables](#debug-selection-variables)
-  - [ATLAS_DEBUG_GLOBAL_INDEX](#atlas_debug_global_index)
-  - [ATLAS_DEBUG_NODE_GLOBAL_INDEX](#atlas_debug_node_global_index)
-  - [ATLAS_DEBUG_EDGE_GLOBAL_INDEX](#atlas_debug_edge_global_index)
-  - [ATLAS_DEBUG_CELL_GLOBAL_INDEX](#atlas_debug_cell_global_index)
-  - [ATLAS_DEBUG_NODE_UID](#atlas_debug_node_uid)
-  - [ATLAS_DEBUG_CELL_UID](#atlas_debug_cell_uid)
-  - [ATLAS_DEBUG_MPI_RANK](#atlas_debug_mpi_rank)
-  - [ATLAS_GLOBAL_INDEX](#atlas_global_index)
-- [Test-only Variables (atlas/src/tests)](#test-only-variables-atlassrctests)
-  - [ATLAS_MAX_FAILED_EXPECTS](#atlas_max_failed_expects)
-  - [ATLAS_MPI_BARRIER_TIMEOUT](#atlas_mpi_barrier_timeout)
+<ul>
+  <li><a href="#notes">Notes</a></li><br>
+  <li>
+    <a href="#core-logging-and-runtime">Core Logging and Runtime</a><br/>
+    <a href="#atlas_info">ATLAS_INFO</a>,
+    <a href="#atlas_warning">ATLAS_WARNING</a>,
+    <a href="#atlas_trace">ATLAS_TRACE</a>,
+    <a href="#atlas_trace_memory">ATLAS_TRACE_MEMORY</a>,
+    <a href="#atlas_trace_barriers">ATLAS_TRACE_BARRIERS</a>,
+    <a href="#atlas_trace_report">ATLAS_TRACE_REPORT</a>,
+    <a href="#atlas_log_rank">ATLAS_LOG_RANK</a>,
+    <a href="#atlas_log_file">ATLAS_LOG_FILE</a>,
+    <a href="#atlas_workdir">ATLAS_WORKDIR</a>,
+    <a href="#atlas_finalises_mpi">ATLAS_FINALISES_MPI</a>,
+    <a href="#atlas_plugin_path">ATLAS_PLUGIN_PATH</a>,
+    <a href="#atlas_data_path">ATLAS_DATA_PATH</a>,
+    <a href="#atlas_cache_path">ATLAS_CACHE_PATH</a>
+  </li>
 
-## Notes
+  <li>
+    <a href="#floating-point-and-signals">Floating Point and Signals</a><br/>
+    <a href="#atlas_fpe">ATLAS_FPE</a>,
+    <a href="#atlas_signal_handler">ATLAS_SIGNAL_HANDLER</a>
+  </li>
+
+  <li>
+    <a href="#deprecation-controls">Deprecation Controls</a><br/>
+    <a href="#atlas_deprecation_warnings">ATLAS_DEPRECATION_WARNINGS</a>,
+    <a href="#atlas_deprecation_errors">ATLAS_DEPRECATION_ERRORS</a>
+  </li>
+
+  <li>
+    <a href="#interpolation-and-geometry">Interpolation and Geometry</a><br/>
+    <a href="#atlas_fast_build_kdtrees">ATLAS_FAST_BUILD_KDTREES</a>,
+    <a href="#atlas_delaunay_backend">ATLAS_DELAUNAY_BACKEND</a>,
+    <a href="#atlas_gmsh_filter_edge_ratio">ATLAS_GMSH_FILTER_EDGE_RATIO</a>
+  </li>
+
+  <li>
+    <a href="#linear-algebra-backend-selection">Linear Algebra Backend Selection</a><br/>
+    <a href="#atlas_linalg_fft_backend">ATLAS_LINALG_FFT_BACKEND</a>,
+    <a href="#atlas_linalg_sparse_backend">ATLAS_LINALG_SPARSE_BACKEND</a>,
+    <a href="#atlas_linalg_dense_backend">ATLAS_LINALG_DENSE_BACKEND</a>
+  </li>
+
+  <li>
+    <a href="#debug-selection-variables">Debug Selection Variables</a><br/>
+    <a href="#atlas_debug_global_index">ATLAS_DEBUG_GLOBAL_INDEX</a>,
+    <a href="#atlas_debug_node_global_index">ATLAS_DEBUG_NODE_GLOBAL_INDEX</a>,
+    <a href="#atlas_debug_edge_global_index">ATLAS_DEBUG_EDGE_GLOBAL_INDEX</a>,
+    <a href="#atlas_debug_cell_global_index">ATLAS_DEBUG_CELL_GLOBAL_INDEX</a>,
+    <a href="#atlas_debug_node_uid">ATLAS_DEBUG_NODE_UID</a>,
+    <a href="#atlas_debug_cell_uid">ATLAS_DEBUG_CELL_UID</a>,
+    <a href="#atlas_debug_mpi_rank">ATLAS_DEBUG_MPI_RANK</a>,
+    <a href="#atlas_global_index">ATLAS_GLOBAL_INDEX</a>
+  </li>
+
+  <li>
+    <a href="#test-only-variables-atlassrctests">Test-only Variables (atlas/src/tests)</a><br/>
+    <a href="#atlas_max_failed_expects">ATLAS_MAX_FAILED_EXPECTS</a>,
+    <a href="#atlas_mpi_barrier_timeout">ATLAS_MPI_BARRIER_TIMEOUT</a>
+  </li>
+</ul>
+
+## Notes {#notes}
 
 - Boolean values are parsed by eckit translators. In practice use one of: `0`/`1`, `false`/`true`, `off`/`on`, `no`/`yes`.
 - List values use eckit vector parsing (typically comma-separated), for example: `10,20,30`.
 
-## Core Logging and Runtime
+## Core Logging and Runtime {#core-logging-and-runtime}
 
-### ATLAS_INFO
+### ATLAS_INFO {#atlas_info}
 
 - Type: `bool`
 - Default: `true`
@@ -65,7 +85,7 @@ This file lists Atlas environment variables found in code under atlas/src (and t
   - `false`/`0`/`off`/`no`: info logs disabled.
 - Source Location: `atlas/src/atlas/library/Library.cc`
 
-### ATLAS_WARNING
+### ATLAS_WARNING {#atlas_warning}
 
 - Type: `bool`
 - Default: `true`
@@ -75,7 +95,7 @@ This file lists Atlas environment variables found in code under atlas/src (and t
   - `false`/`0`/`off`/`no`: warning logs disabled.
 - Source Location: `atlas/src/atlas/library/Library.cc`
 
-### ATLAS_TRACE
+### ATLAS_TRACE {#atlas_trace}
 
 - Type: `bool`
 - Default: `false`
@@ -85,7 +105,7 @@ This file lists Atlas environment variables found in code under atlas/src (and t
   - `false`/`0`/`off`/`no`: trace logs disabled.
 - Source Location: `atlas/src/atlas/library/Library.cc`
 
-### ATLAS_TRACE_MEMORY
+### ATLAS_TRACE_MEMORY {#atlas_trace_memory}
 
 - Type: `bool`
 - Default: `false`
@@ -95,7 +115,7 @@ This file lists Atlas environment variables found in code under atlas/src (and t
   - `false`/`0`/`off`/`no`: memory tracing disabled.
 - Source Location: `atlas/src/atlas/library/Library.cc`
 
-### ATLAS_TRACE_BARRIERS
+### ATLAS_TRACE_BARRIERS {#atlas_trace_barriers}
 
 - Type: `bool`
 - Default: `false`
@@ -105,7 +125,7 @@ This file lists Atlas environment variables found in code under atlas/src (and t
   - `false`/`0`/`off`/`no`: barrier tracing disabled.
 - Source Location: `atlas/src/atlas/library/Library.cc`
 
-### ATLAS_TRACE_REPORT
+### ATLAS_TRACE_REPORT {#atlas_trace_report}
 
 - Type: `bool`
 - Default: `false`
@@ -115,7 +135,7 @@ This file lists Atlas environment variables found in code under atlas/src (and t
   - `false`/`0`/`off`/`no`: do not emit report.
 - Source Location: `atlas/src/atlas/library/Library.cc`
 
-### ATLAS_LOG_RANK
+### ATLAS_LOG_RANK {#atlas_log_rank}
 
 - Type: `int`
 - Default: `0`
@@ -124,7 +144,7 @@ This file lists Atlas environment variables found in code under atlas/src (and t
   - Any integer rank.
 - Source Location: `atlas/src/atlas/library/Library.cc`, `atlas/src/atlas/library/FloatingPointExceptions.cc`, `atlas/src/atlas/runtime/AtlasTool.cc`
 
-### ATLAS_LOG_FILE
+### ATLAS_LOG_FILE {#atlas_log_file}
 
 - Type: `bool`
 - Default: `false`
@@ -134,7 +154,7 @@ This file lists Atlas environment variables found in code under atlas/src (and t
   - `false`/`0`/`off`/`no`: keep logging policy without per-rank logfile output.
 - Source Location: `atlas/src/atlas/runtime/AtlasTool.cc`
 
-### ATLAS_WORKDIR
+### ATLAS_WORKDIR {#atlas_workdir}
 
 - Type: `path string`
 - Default: current working directory
@@ -143,7 +163,7 @@ This file lists Atlas environment variables found in code under atlas/src (and t
   - Any filesystem path.
 - Source Location: `atlas/src/atlas/runtime/AtlasTool.cc`
 
-### ATLAS_FINALISES_MPI
+### ATLAS_FINALISES_MPI {#atlas_finalises_mpi}
 
 - Type: `bool`
 - Default: `false`
@@ -153,7 +173,7 @@ This file lists Atlas environment variables found in code under atlas/src (and t
   - `false`/`0`/`off`/`no`: Atlas does not finalise MPI here.
 - Source Location: `atlas/src/atlas/library/Library.cc`
 
-### ATLAS_PLUGIN_PATH
+### ATLAS_PLUGIN_PATH {#atlas_plugin_path}
 
 - Type: `string`
 - Default: `empty`
@@ -163,7 +183,7 @@ This file lists Atlas environment variables found in code under atlas/src (and t
   - Path list (colon-separated on Unix/macOS).
 - Source Location: `atlas/src/atlas/library/Library.cc`
 
-### ATLAS_DATA_PATH
+### ATLAS_DATA_PATH {#atlas_data_path}
 
 - Type: `path list string`
 - Default: `empty` (Atlas also adds built-in fallback path entries)
@@ -172,7 +192,7 @@ This file lists Atlas environment variables found in code under atlas/src (and t
   - Path list (colon-separated on Unix/macOS).
 - Source Location: `atlas/src/atlas/library/Library.cc`
 
-### ATLAS_CACHE_PATH
+### ATLAS_CACHE_PATH {#atlas_cache_path}
 
 - Type: `path string`
 - Default: `/tmp/cache`
@@ -181,9 +201,9 @@ This file lists Atlas environment variables found in code under atlas/src (and t
   - Any filesystem path.
 - Source Location: `atlas/src/atlas/library/Library.cc`
 
-## Floating Point and Signals
+## Floating Point and Signals {#floating-point-and-signals}
 
-### ATLAS_FPE
+### ATLAS_FPE {#atlas_fpe}
 
 - Type: `bool` or list of floating-point exception names
 - Default: `false` (unless set by AtlasTool wrapper)
@@ -194,7 +214,7 @@ This file lists Atlas environment variables found in code under atlas/src (and t
   - Comma-separated list of explicit exception names: `FE_INVALID`, `FE_INEXACT`, `FE_DIVBYZERO`, `FE_OVERFLOW`, `FE_ALL_EXCEPT`.
 - Source Location: `atlas/src/atlas/library/FloatingPointExceptions.cc`, `atlas/src/atlas/runtime/AtlasTool.cc`
 
-### ATLAS_SIGNAL_HANDLER
+### ATLAS_SIGNAL_HANDLER {#atlas_signal_handler}
 
 - Type: `bool`
 - Default: `false` (unless set by AtlasTool wrapper)
@@ -204,9 +224,9 @@ This file lists Atlas environment variables found in code under atlas/src (and t
   - `false`/`0`/`off`/`no`: do not install.
 - Source Location: `atlas/src/atlas/library/FloatingPointExceptions.cc`, `atlas/src/atlas/runtime/AtlasTool.cc`
 
-## Deprecation Controls
+## Deprecation Controls {#deprecation-controls}
 
-### ATLAS_DEPRECATION_WARNINGS
+### ATLAS_DEPRECATION_WARNINGS {#atlas_deprecation_warnings}
 
 - Type: `int` interpreted as `bool` (`atoi`)
 - Default: `0`
@@ -216,7 +236,7 @@ This file lists Atlas environment variables found in code under atlas/src (and t
   - Non-zero integer: enabled.
 - Source Location: `atlas/src/atlas/util/Factory.cc`
 
-### ATLAS_DEPRECATION_ERRORS
+### ATLAS_DEPRECATION_ERRORS {#atlas_deprecation_errors}
 
 - Type: `int` interpreted as `bool` (`atoi`)
 - Default: `0`
@@ -226,9 +246,9 @@ This file lists Atlas environment variables found in code under atlas/src (and t
   - Non-zero integer: enabled.
 - Source Location: `atlas/src/atlas/util/Factory.cc`
 
-## Interpolation and Geometry
+## Interpolation and Geometry {#interpolation-and-geometry}
 
-### ATLAS_FAST_BUILD_KDTREES
+### ATLAS_FAST_BUILD_KDTREES {#atlas_fast_build_kdtrees}
 
 - Type: `bool`
 - Default: `true`
@@ -238,26 +258,7 @@ This file lists Atlas environment variables found in code under atlas/src (and t
   - `false`/`0`/`off`/`no`: do not pre-reserve.
 - Source Location: `atlas/src/atlas/interpolation/method/knn/KNearestNeighboursBase.cc`, `atlas/src/atlas/interpolation/method/PointIndex2.cc`, `atlas/src/atlas/interpolation/method/PointIndex3.cc`, `atlas/src/atlas/interpolation/method/PointSet.cc`, `atlas/src/atlas/interpolation/method/PointSet.h`
 
-### ATLAS_BUILD_KDTREE_CENTROID
-
-- Type: `numeric flag`
-- Default: `0`
-- Effect: In conservative spherical polygon interpolation, selects obsolete centroid-based KD-tree build path.
-- Values:
-  - `0`: use standard KD-tree build path.
-  - Non-zero: use centroid-based path (marked obsolete in code).
-- Source Location: `atlas/src/atlas/interpolation/method/unstructured/ConservativeSphericalPolygonInterpolation.cc`
-
-### ATLAS_COMPAREPOINTXYZ_EPS_FACTOR
-
-- Type: `double`
-- Default: `1e8` (multiplied by machine epsilon)
-- Effect: Tolerance factor for `PointXYZ` comparisons in centroid KD-tree path.
-- Values:
-  - Any positive floating-point number.
-- Source Location: `atlas/src/atlas/interpolation/method/unstructured/ConservativeSphericalPolygonInterpolation.cc`
-
-### ATLAS_DELAUNAY_BACKEND
+### ATLAS_DELAUNAY_BACKEND {#atlas_delaunay_backend}
 
 - Type: `string`
 - Default: `cgal` if compiled with CGAL support, otherwise `qhull`
@@ -267,7 +268,7 @@ This file lists Atlas environment variables found in code under atlas/src (and t
   - `cgal`: use CGAL backend.
 - Source Location: `atlas/src/atlas/mesh/actions/BuildConvexHull3D.cc`
 
-### ATLAS_GMSH_FILTER_EDGE_RATIO
+### ATLAS_GMSH_FILTER_EDGE_RATIO {#atlas_gmsh_filter_edge_ratio}
 
 - Type: `double`
 - Default: `0.0`
@@ -277,9 +278,9 @@ This file lists Atlas environment variables found in code under atlas/src (and t
   - `> 0.0`: enable filtering with chosen threshold.
 - Source Location: `atlas/src/atlas/output/detail/GmshIO.cc`
 
-## Linear Algebra Backend Selection
+## Linear Algebra Backend Selection {#linear-algebra-backend-selection}
 
-### ATLAS_LINALG_FFT_BACKEND
+### ATLAS_LINALG_FFT_BACKEND {#atlas_linalg_fft_backend}
 
 - Type: `string`
 - Default: `empty`
@@ -289,7 +290,7 @@ This file lists Atlas environment variables found in code under atlas/src (and t
   - Backend name string (must match a backend available in your build/runtime setup).
 - Source Location: `atlas/src/atlas/library/Library.cc`
 
-### ATLAS_LINALG_SPARSE_BACKEND
+### ATLAS_LINALG_SPARSE_BACKEND {#atlas_linalg_sparse_backend}
 
 - Type: `string`
 - Default: `empty`
@@ -299,7 +300,7 @@ This file lists Atlas environment variables found in code under atlas/src (and t
   - Backend name string.
 - Source Location: `atlas/src/atlas/library/Library.cc`
 
-### ATLAS_LINALG_DENSE_BACKEND
+### ATLAS_LINALG_DENSE_BACKEND {#atlas_linalg_dense_backend}
 
 - Type: `string`
 - Default: `empty`
@@ -309,9 +310,9 @@ This file lists Atlas environment variables found in code under atlas/src (and t
   - Backend name string.
 - Source Location: `atlas/src/atlas/library/Library.cc`
 
-## Debug Selection Variables
+## Debug Selection Variables {#debug-selection-variables}
 
-### ATLAS_DEBUG_GLOBAL_INDEX
+### ATLAS_DEBUG_GLOBAL_INDEX {#atlas_debug_global_index}
 
 - Type: `list of gidx_t`
 - Default: `{-1}` for accessor, `empty` for membership checks
@@ -320,7 +321,7 @@ This file lists Atlas environment variables found in code under atlas/src (and t
   - List of integer global indices (typically comma-separated).
 - Source Location: `atlas/src/atlas/library/detail/Debug.h`
 
-### ATLAS_DEBUG_NODE_GLOBAL_INDEX
+### ATLAS_DEBUG_NODE_GLOBAL_INDEX {#atlas_debug_node_global_index}
 
 - Type: `list of gidx_t`
 - Default: `{-1}` for accessor, `empty` for membership checks
@@ -329,7 +330,7 @@ This file lists Atlas environment variables found in code under atlas/src (and t
   - List of integer node global indices.
 - Source Location: `atlas/src/atlas/library/detail/Debug.h`
 
-### ATLAS_DEBUG_EDGE_GLOBAL_INDEX
+### ATLAS_DEBUG_EDGE_GLOBAL_INDEX {#atlas_debug_edge_global_index}
 
 - Type: `list of gidx_t`
 - Default: `{-1}` for accessor, `empty` for membership checks
@@ -338,7 +339,7 @@ This file lists Atlas environment variables found in code under atlas/src (and t
   - List of integer edge global indices.
 - Source Location: `atlas/src/atlas/library/detail/Debug.h`
 
-### ATLAS_DEBUG_CELL_GLOBAL_INDEX
+### ATLAS_DEBUG_CELL_GLOBAL_INDEX {#atlas_debug_cell_global_index}
 
 - Type: `list of gidx_t`
 - Default: `{-1}` for accessor, `empty` for membership checks
@@ -347,7 +348,7 @@ This file lists Atlas environment variables found in code under atlas/src (and t
   - List of integer cell global indices.
 - Source Location: `atlas/src/atlas/library/detail/Debug.h`
 
-### ATLAS_DEBUG_NODE_UID
+### ATLAS_DEBUG_NODE_UID {#atlas_debug_node_uid}
 
 - Type: `list of gidx_t`
 - Default: `{-1}` for accessor, `empty` for membership checks
@@ -356,7 +357,7 @@ This file lists Atlas environment variables found in code under atlas/src (and t
   - List of integer node UIDs.
 - Source Location: `atlas/src/atlas/library/detail/Debug.h`
 
-### ATLAS_DEBUG_CELL_UID
+### ATLAS_DEBUG_CELL_UID {#atlas_debug_cell_uid}
 
 - Type: `list of gidx_t`
 - Default: `empty`
@@ -365,7 +366,7 @@ This file lists Atlas environment variables found in code under atlas/src (and t
   - List of integer cell UIDs.
 - Source Location: `atlas/src/atlas/library/detail/Debug.h`
 
-### ATLAS_DEBUG_MPI_RANK
+### ATLAS_DEBUG_MPI_RANK {#atlas_debug_mpi_rank}
 
 - Type: `list of long`
 - Default: `{-1}` for accessor, `empty` for membership checks
@@ -374,7 +375,7 @@ This file lists Atlas environment variables found in code under atlas/src (and t
   - List of integer MPI ranks.
 - Source Location: `atlas/src/atlas/library/detail/Debug.h`
 
-### ATLAS_GLOBAL_INDEX
+### ATLAS_GLOBAL_INDEX {#atlas_global_index}
 
 - Type: `list of gidx_t`
 - Default: `empty`
@@ -383,9 +384,9 @@ This file lists Atlas environment variables found in code under atlas/src (and t
   - List of integer global indices.
 - Source Location: `atlas/src/atlas/library/detail/Debug.h`
 
-## Test-only Variables (atlas/src/tests)
+## Test-only Variables (atlas/src/tests) {#test-only-variables-atlassrctests}
 
-### ATLAS_MAX_FAILED_EXPECTS
+### ATLAS_MAX_FAILED_EXPECTS {#atlas_max_failed_expects}
 
 - Type: `long`
 - Default: `100`
@@ -394,7 +395,7 @@ This file lists Atlas environment variables found in code under atlas/src (and t
   - Any non-negative integer.
 - Source Location: `atlas/src/tests/AtlasTestEnvironment.h`
 
-### ATLAS_MPI_BARRIER_TIMEOUT
+### ATLAS_MPI_BARRIER_TIMEOUT {#atlas_mpi_barrier_timeout}
 
 - Type: `double` (seconds)
 - Default: `3.0`
