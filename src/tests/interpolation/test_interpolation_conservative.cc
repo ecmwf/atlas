@@ -245,8 +245,16 @@ CASE("test_interpolation_conservative") {
         auto interpolation = Interpolation(config, Grid("H32"), Grid("H64"));
         auto src_field     = interpolation.source().createField<double>();
         auto tgt_field     = interpolation.target().createField<double>();
+        auto tgt_fs = interpolation.target();
+        Mesh tgt_mesh;
+        if (functionspace::CellColumns(tgt_fs)) {
+            tgt_mesh = functionspace::CellColumns(tgt_fs).mesh();
+        }
+        else if (functionspace::NodeColumns(tgt_fs)) {
+            tgt_mesh = functionspace::NodeColumns(tgt_fs).mesh();
+        }
         auto src_vals      = array::make_view<double, 1>(src_field);
-        auto tgt_halo      = array::make_view<int, 1>(functionspace::CellColumns(interpolation.target()).halo());
+        auto tgt_halo      = array::make_view<int, 1>(tgt_mesh.cells().halo());
 
         for (double constant_value : std::array<double, 3>{0., -2.5, 1.}) {
             for (idx_t spt = 0; spt < src_vals.size(); ++spt) {
