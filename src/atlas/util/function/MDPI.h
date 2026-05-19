@@ -21,7 +21,7 @@ namespace function {
 ///
 /// \detailed The formula is found in
 ///           "Benchmarking Regridding Libraries Used in Earth System Modelling"
-///           by Sophie Valcke, Andreas Piacentini, Gabriel Jonville, MDPI 2022
+///           by Sophie Valcke, Andrea Piacentini, Gabriel Jonville, MDPI 2022
 ///           as the sinusoid analytical function in Sec 2.1.2.
 ///           The longitude (lon) and latitude (lat) are assumed to be in degrees,
 ///

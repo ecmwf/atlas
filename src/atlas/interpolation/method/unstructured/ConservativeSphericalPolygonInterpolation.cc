@@ -239,10 +239,10 @@ ConservativeSphericalPolygonInterpolation::ConservativeSphericalPolygonInterpola
     config.get("statistics.intersection", remap_stat_.intersection = false);
     config.get("statistics.timings", remap_stat_.timings = false);
 
-    const std::set<std::string> limiter_allowed = {"none", "clip", "zeroslope"};
+    const std::set<std::string> limiter_allowed = {"none", "clip", "zeroslope", "ilmc"};
     config.get("limiter", limiter_);
     if (limiter_allowed.find(limiter_) == limiter_allowed.end()) {
-        Log::error() << "\nthe configure option -limiter- can only be: none, zeroslope, clip." << std::endl;
+        Log::error() << "\nthe configure option -limiter- can only be: none, zeroslope, clip, ilmc." << std::endl;
         ATLAS_ASSERT(false);
     }
     const std::set<std::string> limiter_output_allowed = {"target", "points", "contribution"};
