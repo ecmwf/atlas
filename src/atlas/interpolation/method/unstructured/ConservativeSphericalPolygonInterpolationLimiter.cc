@@ -99,7 +99,6 @@ double ConservativeSphericalPolygonInterpolationLimiter::limit(const Field& src_
         std::vector<double> bounds_min(tgt_vals.size(), inf);
         std::vector<double> bounds_max(tgt_vals.size(), -inf);
         std::vector<bool> has_bounds(tgt_vals.size(), false);
-        std::vector<char> touched_points(tgt_vals.size(), 0);
 
         for (idx_t tpt = 0; tpt < tgt_vals.size(); ++tpt) {
             tgt_work_vals[tpt] = tgt_vals(tpt);
@@ -110,9 +109,7 @@ double ConservativeSphericalPolygonInterpolationLimiter::limit(const Field& src_
             const auto& iparam = tgt_iparam_[tcsp];
             double smin_loc;
             double smax_loc;
-            bool violation = violation_detected(tpt, iparam, src_vals, tgt_vals, smin_loc, smax_loc);
-
-            if (smin_loc != inf) {
+            if (violation_detected(tpt, iparam, src_vals, tgt_vals, smin_loc, smax_loc)) {
                 if (has_bounds[tpt]) {
                     bounds_min[tpt] = std::min(bounds_min[tpt], smin_loc);
                     bounds_max[tpt] = std::max(bounds_max[tpt], smax_loc);
@@ -123,15 +120,12 @@ double ConservativeSphericalPolygonInterpolationLimiter::limit(const Field& src_
                     bounds_max[tpt] = smax_loc;
                 }
             }
-            if (violation) {
-                touched_points[tpt] = 1;
-            }
         }
 
-        const double eps = std::numeric_limits<double>::epsilon();
+        constexpr double eps = std::numeric_limits<double>::epsilon();
         constexpr std::size_t ilmc_max_shells = 3;
         for (idx_t tpt = 0; tpt < tgt_vals.size(); ++tpt) {
-            if (!has_bounds[tpt] || tgt_areas_[tpt] <= 0.) {
+            if (! has_bounds[tpt]) {
                 continue;
             }
             const double bounded_value = std::min(std::max(tgt_work_vals[tpt], bounds_min[tpt]), bounds_max[tpt]);
@@ -141,17 +135,18 @@ double ConservativeSphericalPolygonInterpolationLimiter::limit(const Field& src_
             }
 
             tgt_work_vals[tpt] = bounded_value;
-            touched_points[tpt] = 1;
             double residual_mass = redistribute_local_mass(tpt, delta_mass, bounds_min, bounds_max, has_bounds, tgt_work_vals,
-                                                           touched_points, ilmc_max_shells);
+                                                           ilmc_max_shells);
             if (std::abs(residual_mass) > eps) {
+                Log::info() << "Residual mass after ILMC redistribution at target point " << tpt << " is " << residual_mass
+                          << std::endl;
                 tgt_work_vals[tpt] += residual_mass / tgt_areas_[tpt];
             }
         }
 
         for (idx_t tpt = 0; tpt < tgt_vals.size(); ++tpt) {
             if (limiter_output_ == "points") {
-                tgt_lim_vals(tpt) = touched_points[tpt] ? 1. : 0.;
+                tgt_lim_vals(tpt) = has_bounds[tpt] ? 1. : 0.;
             }
             else {
                 tgt_lim_vals(tpt) = tgt_work_vals[tpt] - tgt_vals(tpt);
@@ -250,47 +245,44 @@ std::vector<idx_t> ConservativeSphericalPolygonInterpolationLimiter::target_neig
 
 double ConservativeSphericalPolygonInterpolationLimiter::redistribute_local_mass(
     idx_t tpt, double delta_mass, const std::vector<double>& smin, const std::vector<double>& smax,
-    const std::vector<bool>& has_bounds, std::vector<double>& tgt_work_vals, std::vector<char>& touched_points,
-    std::size_t max_shells) const {
+    const std::vector<bool>& has_bounds, std::vector<double>& tgt_work_vals, int max_shells) const {
     const bool distribute_excess = (delta_mass > 0.);
     double remaining = std::abs(delta_mass);
-    const double eps = std::numeric_limits<double>::epsilon();
+    constexpr double eps = std::numeric_limits<double>::epsilon();
     if (remaining <= eps) {
         return 0.;
     }
 
-    std::vector<char> visited(tgt_work_vals.size(), 0);
-    visited[tpt] = 1;
+    std::vector<bool> visited(tgt_work_vals.size(), false);
+    visited[tpt] = true;
     std::vector<idx_t> frontier(1, tpt);
     std::vector<idx_t> next_frontier;
 
     ConservativeSphericalPolygonInterpolation::Workspace_get_cell_neighbours w_cell;
     ConservativeSphericalPolygonInterpolation::Workspace_get_node_neighbours w_node;
 
-    for (std::size_t shell = 0; shell < max_shells && remaining > eps; ++shell) {
+    for (int shell = 0; shell < max_shells && remaining > eps; ++shell) {
         next_frontier.clear();
         for (auto center : frontier) {
             auto neighbours = target_neighbours(center, w_cell, w_node);
             for (auto nb : neighbours) {
-                if (nb < 0 || nb >= static_cast<idx_t>(tgt_work_vals.size())) {
-                    continue;
-                }
-                if (!visited[nb]) {
-                    visited[nb] = 1;
+                // if (nb < 0 || nb >= static_cast<idx_t>(tgt_work_vals.size())) {
+                //     continue;
+                // }
+                if (! visited[nb]) {
+                    visited[nb] = true;
                     next_frontier.push_back(nb);
                 }
             }
         }
-
         if (next_frontier.empty()) {
             break;
         }
-
         std::vector<std::pair<idx_t, double>> capacities;
         capacities.reserve(next_frontier.size());
         double total_capacity = 0.;
         for (auto nb : next_frontier) {
-            if (!has_bounds[nb] || tgt_areas_[nb] <= 0.) {
+            if (! has_bounds[nb]) {
                 continue;
             }
             double capacity = 0.;
@@ -305,7 +297,6 @@ double ConservativeSphericalPolygonInterpolationLimiter::redistribute_local_mass
                 total_capacity += capacity;
             }
         }
-
         if (total_capacity > 0.) {
             const double transferred_mass = std::min(remaining, total_capacity);
             for (const auto& cap : capacities) {
@@ -317,11 +308,9 @@ double ConservativeSphericalPolygonInterpolationLimiter::redistribute_local_mass
                 else {
                     tgt_work_vals[nb] -= dm / tgt_areas_[nb];
                 }
-                touched_points[nb] = 1;
             }
             remaining -= transferred_mass;
         }
-
         frontier.swap(next_frontier);
     }
 
@@ -357,7 +346,6 @@ double ConservativeSphericalPolygonInterpolationLimiter::redistribute_local_mass
                 else {
                     tgt_work_vals[idx] -= dm / tgt_areas_[idx];
                 }
-                touched_points[idx] = 1;
             }
             remaining -= transferred_mass;
         }
