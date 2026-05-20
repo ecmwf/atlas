@@ -49,7 +49,7 @@ private:
         ConservativeSphericalPolygonInterpolation::Workspace_get_cell_neighbours& w_cell,
         ConservativeSphericalPolygonInterpolation::Workspace_get_node_neighbours& w_node) const;
     double redistribute_local_mass(idx_t tpt, double delta_mass, const std::vector<double>& smin, const std::vector<double>& smax,
-        const std::vector<bool>& has_bounds, std::vector<double>& tgt_work_vals) const;
+        const std::vector<bool>& has_bounds, array::ArrayView<double,1>& tgt_lim_vals) const;
     void compute_src_grad(const array::ArrayView<double,1>& src_vals);
     void limit_contrib_from_source(idx_t scsp_id, const Field& src_field, array::ArrayView<double,1>& tgt_lim_vals);
 

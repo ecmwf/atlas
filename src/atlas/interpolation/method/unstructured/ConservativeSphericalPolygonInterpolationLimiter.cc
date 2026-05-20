@@ -95,13 +95,13 @@ double ConservativeSphericalPolygonInterpolationLimiter::limit(const Field& src_
     }
     if (limiter_ == "ilmc") {
         const double inf = std::numeric_limits<double>::max();
-        std::vector<double> tgt_work_vals(tgt_vals.size());
+        // std::vector<double> tgt_work_vals(tgt_vals.size());
         std::vector<double> bounds_min(tgt_vals.size(), inf);
         std::vector<double> bounds_max(tgt_vals.size(), -inf);
         std::vector<bool> has_bounds(tgt_vals.size(), false);
 
         for (idx_t tpt = 0; tpt < tgt_vals.size(); ++tpt) {
-            tgt_work_vals[tpt] = tgt_vals(tpt);
+            tgt_lim_vals(tpt) = tgt_vals(tpt);
         }
 
         for (idx_t tcsp = 0; tcsp < data_->tgt_.csp_size; ++tcsp) {
@@ -128,21 +128,22 @@ double ConservativeSphericalPolygonInterpolationLimiter::limit(const Field& src_
             if (! has_bounds[tpt]) {
                 continue;
             }
-            const double bounded_value = std::min(std::max(tgt_work_vals[tpt], bounds_min[tpt]), bounds_max[tpt]);
-            double delta_mass = (tgt_work_vals[tpt] - bounded_value) * tgt_areas_[tpt];
+            const double bounded_value = std::min(std::max(tgt_lim_vals(tpt), bounds_min[tpt]), bounds_max[tpt]);
+            double delta_mass = (tgt_lim_vals(tpt) - bounded_value) * tgt_areas_[tpt];
             if (std::abs(delta_mass) <= eps) {
                 continue;
             }
 
-            tgt_work_vals[tpt] = bounded_value;
+            tgt_lim_vals(tpt) = bounded_value;
             double residual_mass;
             for (int shell = 0; shell < ilmc_max_shells && std::abs(residual_mass) > eps; ++shell) {
-                residual_mass = redistribute_local_mass(tpt, delta_mass, bounds_min, bounds_max, has_bounds, tgt_work_vals);
+                residual_mass = redistribute_local_mass(tpt, delta_mass, bounds_min, bounds_max, has_bounds, tgt_lim_vals);
+                tgt_lim_field.haloExchange();
             }
             if (std::abs(residual_mass) > eps) {
                 Log::info() << "Residual mass after ILMC redistribution at target point " << tpt << " is " << residual_mass
                           << std::endl;
-                tgt_work_vals[tpt] += residual_mass / tgt_areas_[tpt];
+                tgt_lim_vals(tpt) += residual_mass / tgt_areas_[tpt];
             }
         }
 
@@ -151,7 +152,7 @@ double ConservativeSphericalPolygonInterpolationLimiter::limit(const Field& src_
                 tgt_lim_vals(tpt) = has_bounds[tpt] ? 1. : 0.;
             }
             else {
-                tgt_lim_vals(tpt) = tgt_work_vals[tpt] - tgt_vals(tpt);
+                tgt_lim_vals(tpt) = tgt_lim_vals(tpt) - tgt_vals(tpt);
             }
         }
     }
@@ -247,7 +248,7 @@ std::vector<idx_t> ConservativeSphericalPolygonInterpolationLimiter::target_neig
 
 double ConservativeSphericalPolygonInterpolationLimiter::redistribute_local_mass(
     idx_t tpt, double delta_mass, const std::vector<double>& smin, const std::vector<double>& smax,
-    const std::vector<bool>& has_bounds, std::vector<double>& tgt_work_vals) const {
+    const std::vector<bool>& has_bounds, array::ArrayView<double, 1>& tgt_lim_vals) const {
     const bool distribute_excess = (delta_mass > 0.);
     double remaining = std::abs(delta_mass);
     constexpr double eps = std::numeric_limits<double>::epsilon();
@@ -255,7 +256,7 @@ double ConservativeSphericalPolygonInterpolationLimiter::redistribute_local_mass
         return 0.;
     }
 
-    std::vector<bool> visited(tgt_work_vals.size(), false);
+    std::vector<bool> visited(tgt_lim_vals.size(), false);
     visited[tpt] = true;
     std::vector<idx_t> frontier(1, tpt);
     std::vector<idx_t> next_frontier;
@@ -267,7 +268,7 @@ double ConservativeSphericalPolygonInterpolationLimiter::redistribute_local_mass
     for (auto center : frontier) {
         auto neighbours = target_neighbours(center, w_cell, w_node);
         for (auto nb : neighbours) {
-            // if (nb < 0 || nb >= static_cast<idx_t>(tgt_work_vals.size())) {
+            // if (nb < 0 || nb >= static_cast<idx_t>(tgt_lim_vals.size())) {
             //     continue;
             // }
             if (! visited[nb]) {
@@ -288,10 +289,10 @@ double ConservativeSphericalPolygonInterpolationLimiter::redistribute_local_mass
         }
         double capacity = 0.;
         if (distribute_excess) {
-            capacity = std::max((smax[nb] - tgt_work_vals[nb]) * tgt_areas_[nb], 0.);
+            capacity = std::max((smax[nb] - tgt_lim_vals(nb)) * tgt_areas_[nb], 0.);
         }
         else {
-            capacity = std::max((tgt_work_vals[nb] - smin[nb]) * tgt_areas_[nb], 0.);
+            capacity = std::max((tgt_lim_vals(nb) - smin[nb]) * tgt_areas_[nb], 0.);
         }
         if (capacity > 0.) {
             capacities.emplace_back(nb, capacity);
@@ -304,10 +305,10 @@ double ConservativeSphericalPolygonInterpolationLimiter::redistribute_local_mass
             idx_t nb = cap.first;
             const double dm = transferred_mass * cap.second / total_capacity;
             if (distribute_excess) {
-                tgt_work_vals[nb] += dm / tgt_areas_[nb];
+                tgt_lim_vals(cap.first) += dm / tgt_areas_[cap.first];
             }
             else {
-                tgt_work_vals[nb] -= dm / tgt_areas_[nb];
+                tgt_lim_vals(cap.first) -= dm / tgt_areas_[cap.first];
             }
         }
         remaining -= transferred_mass;
@@ -316,18 +317,18 @@ double ConservativeSphericalPolygonInterpolationLimiter::redistribute_local_mass
 
     if (remaining > eps) {
         std::vector<std::pair<idx_t, double>> capacities;
-        capacities.reserve(tgt_work_vals.size());
+        capacities.reserve(tgt_lim_vals.size());
         double total_capacity = 0.;
-        for (idx_t idx = 0; idx < static_cast<idx_t>(tgt_work_vals.size()); ++idx) {
+        for (idx_t idx = 0; idx < static_cast<idx_t>(tgt_lim_vals.size()); ++idx) {
             if (idx == tpt || !has_bounds[idx] || tgt_areas_[idx] <= 0.) {
                 continue;
             }
             double capacity = 0.;
             if (distribute_excess) {
-                capacity = std::max((smax[idx] - tgt_work_vals[idx]) * tgt_areas_[idx], 0.);
+                capacity = std::max((smax[idx] - tgt_lim_vals(idx)) * tgt_areas_[idx], 0.);
             }
             else {
-                capacity = std::max((tgt_work_vals[idx] - smin[idx]) * tgt_areas_[idx], 0.);
+                capacity = std::max((tgt_lim_vals(idx) - smin[idx]) * tgt_areas_[idx], 0.);
             }
             if (capacity > 0.) {
                 capacities.emplace_back(idx, capacity);
@@ -341,10 +342,10 @@ double ConservativeSphericalPolygonInterpolationLimiter::redistribute_local_mass
                 idx_t idx = cap.first;
                 const double dm = transferred_mass * cap.second / total_capacity;
                 if (distribute_excess) {
-                    tgt_work_vals[idx] += dm / tgt_areas_[idx];
+                    tgt_lim_vals(cap.first) += dm / tgt_areas_[cap.first];
                 }
                 else {
-                    tgt_work_vals[idx] -= dm / tgt_areas_[idx];
+                    tgt_lim_vals(cap.first) -= dm / tgt_areas_[cap.first];
                 }
             }
             remaining -= transferred_mass;
