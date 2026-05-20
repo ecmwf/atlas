@@ -83,9 +83,9 @@ public:
                                           "Use conservative limiter to prevent under-/overshoots of the 2nd order interpolation [none, zeroslope, clip]"));
         add_option(new SimpleOption<std::string>("limiter-output",
                                           "Write mode in the target field [target, points, contribution]"));
-        add_option(new SimpleOption<std::string>("limiter-detector-size",
+        add_option(new SimpleOption<long>("limiter-detector-size",
                                           "Control the size of the detector stencil before including neighbours source values [default 1 -> at least two source cells]"));
-        add_option(new SimpleOption<std::string>("limiter-iterations",
+        add_option(new SimpleOption<long>("limiter-iterations",
                                           "Control the number of iterations for the ILMC limiter [default: 3]"));
         add_option(new SimpleOption<bool>("validate",
                                           "Enable extra validations at cost of performance. For debugging purpose."));
