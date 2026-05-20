@@ -54,6 +54,7 @@ ConservativeSphericalPolygonInterpolationLimiter(const ConservativeSphericalPoly
     tgt_areas_(data_->tgt_.areas) {
     limiter_output_ = interpolation_.limiter_output_;
     limiter_detector_size_ = interpolation_.limiter_detector_size_;
+    limiter_iterations_ = interpolation_.limiter_iterations_;
     Log::info() << "limiter output : " << limiter_output_ << std::endl;
     Log::info() << "limiter detector size : " << limiter_detector_size_ << std::endl;
     const auto tgt_fs_halo = tgt_cell_data_ ? functionspace::CellColumns(tgt_fs_).halo().size()
@@ -100,7 +101,6 @@ double ConservativeSphericalPolygonInterpolationLimiter::limit(const Field& src_
     }
     if (limiter_ == "ilmc") {
         const double inf = std::numeric_limits<double>::max();
-        // std::vector<double> tgt_work_vals(tgt_vals.size());
         std::vector<double> bounds_min(tgt_vals.size(), inf);
         std::vector<double> bounds_max(tgt_vals.size(), -inf);
         std::vector<bool> has_bounds(tgt_vals.size(), false);
@@ -128,7 +128,6 @@ double ConservativeSphericalPolygonInterpolationLimiter::limit(const Field& src_
         }
 
         constexpr double eps = std::numeric_limits<double>::epsilon();
-        constexpr std::size_t ilmc_max_shells = 3;
         for (idx_t tpt = 0; tpt < tgt_vals.size(); ++tpt) {
             if (! has_bounds[tpt]) {
                 continue;
@@ -141,7 +140,7 @@ double ConservativeSphericalPolygonInterpolationLimiter::limit(const Field& src_
 
             tgt_lim_vals(tpt) = bounded_value;
             double residual_mass;
-            for (int shell = 0; shell < ilmc_max_shells && std::abs(residual_mass) > eps; ++shell) {
+            for (int shell = 0; shell < limiter_iterations_ && std::abs(residual_mass) > eps; ++shell) {
                 residual_mass = redistribute_local_mass(tpt, delta_mass, bounds_min, bounds_max, has_bounds, tgt_lim_vals);
                 tgt_lim_field.haloExchange();
             }

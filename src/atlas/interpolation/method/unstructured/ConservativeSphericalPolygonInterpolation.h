@@ -336,6 +336,7 @@ private:
     std::string limiter_;
     std::string limiter_output_;
     int limiter_detector_size_;
+    int limiter_iterations_;
     int order_;
     bool matrix_free_;
 

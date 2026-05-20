@@ -62,6 +62,7 @@ private:
     std::string limiter_;
     std::string limiter_output_;
     int limiter_detector_size_;
+    int limiter_iterations_;
     int order_;
     const FunctionSpace src_fs_;
     const FunctionSpace tgt_fs_;

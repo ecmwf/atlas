@@ -85,6 +85,8 @@ public:
                                           "Write mode in the target field [target, points, contribution]"));
         add_option(new SimpleOption<std::string>("limiter-detector-size",
                                           "Control the size of the detector stencil before including neighbours source values [default 1 -> at least two source cells]"));
+        add_option(new SimpleOption<std::string>("limiter-iterations",
+                                          "Control the number of iterations for the ILMC limiter [default: 3]"));
         add_option(new SimpleOption<bool>("validate",
                                           "Enable extra validations at cost of performance. For debugging purpose."));
         add_option(new SimpleOption<bool>("matrix_free", "Do not store matrix for consecutive interpolations"));
@@ -324,6 +326,7 @@ int AtlasParallelInterpolation::execute(const AtlasTool::Args& args) {
         output.set("setup.interpolation.limiter", config.getString("limiter", "none"));
         output.set("setup.interpolation.limiter.output", config.getString("limiter-output", "target"));
         output.set("setup.interpolation.limiter.detector_size", config.getString("limiter-detector-size", "target"));
+        output.set("setup.interpolation.limiter.iterations", config.getString("limiter-iterations", "3"));
         output.set("setup.interpolation.validate", config.getBool("validate", false));
         output.set("setup.interpolation.matrix_free", config.getBool("matrix-free", false));
         output.set("setup.init", config.getString("init", "vortex_rollup"));

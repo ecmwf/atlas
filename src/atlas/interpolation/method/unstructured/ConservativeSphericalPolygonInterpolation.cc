@@ -225,7 +225,7 @@ inline bool valid_point(idx_t node_idx, const array::ArrayView<int, 1>& node_fla
 
 ConservativeSphericalPolygonInterpolation::ConservativeSphericalPolygonInterpolation(const Config& config):
     Method(config), validate_(false), src_cell_data_(true), tgt_cell_data_(true), normalise_(false), limiter_("none"),
-    limiter_output_("target"), limiter_detector_size_(1), order_(1), matrix_free_(false),
+    limiter_output_("target"), limiter_detector_size_(1), limiter_iterations_(3), order_(1), matrix_free_(false),
     n_spoints_(0), n_tpoints_(0) {
     config.get("validate", validate_ = false);
     config.get("order", order_ = 1);
@@ -252,6 +252,7 @@ ConservativeSphericalPolygonInterpolation::ConservativeSphericalPolygonInterpola
         ATLAS_ASSERT(false);
     }
     config.get("limiter-detector-size", limiter_detector_size_);
+    config.get("limiter-iterations", limiter_iterations_);
     if (remap_stat_.all) {
         Log::warning() << "statistics.all required. Enabling validate, statistics.timings, statistics.intersection, statistics.conservation, and statistics.accuracy." << std::endl;
         validate_ = true;
