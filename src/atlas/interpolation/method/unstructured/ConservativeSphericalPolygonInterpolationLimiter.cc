@@ -135,8 +135,10 @@ double ConservativeSphericalPolygonInterpolationLimiter::limit(const Field& src_
             }
 
             tgt_work_vals[tpt] = bounded_value;
-            double residual_mass = redistribute_local_mass(tpt, delta_mass, bounds_min, bounds_max, has_bounds, tgt_work_vals,
-                                                           ilmc_max_shells);
+            double residual_mass;
+            for (int shell = 0; shell < ilmc_max_shells && std::abs(residual_mass) > eps; ++shell) {
+                residual_mass = redistribute_local_mass(tpt, delta_mass, bounds_min, bounds_max, has_bounds, tgt_work_vals);
+            }
             if (std::abs(residual_mass) > eps) {
                 Log::info() << "Residual mass after ILMC redistribution at target point " << tpt << " is " << residual_mass
                           << std::endl;
@@ -245,7 +247,7 @@ std::vector<idx_t> ConservativeSphericalPolygonInterpolationLimiter::target_neig
 
 double ConservativeSphericalPolygonInterpolationLimiter::redistribute_local_mass(
     idx_t tpt, double delta_mass, const std::vector<double>& smin, const std::vector<double>& smax,
-    const std::vector<bool>& has_bounds, std::vector<double>& tgt_work_vals, int max_shells) const {
+    const std::vector<bool>& has_bounds, std::vector<double>& tgt_work_vals) const {
     const bool distribute_excess = (delta_mass > 0.);
     double remaining = std::abs(delta_mass);
     constexpr double eps = std::numeric_limits<double>::epsilon();
@@ -261,58 +263,56 @@ double ConservativeSphericalPolygonInterpolationLimiter::redistribute_local_mass
     ConservativeSphericalPolygonInterpolation::Workspace_get_cell_neighbours w_cell;
     ConservativeSphericalPolygonInterpolation::Workspace_get_node_neighbours w_node;
 
-    for (int shell = 0; shell < max_shells && remaining > eps; ++shell) {
-        next_frontier.clear();
-        for (auto center : frontier) {
-            auto neighbours = target_neighbours(center, w_cell, w_node);
-            for (auto nb : neighbours) {
-                // if (nb < 0 || nb >= static_cast<idx_t>(tgt_work_vals.size())) {
-                //     continue;
-                // }
-                if (! visited[nb]) {
-                    visited[nb] = true;
-                    next_frontier.push_back(nb);
-                }
+    next_frontier.clear();
+    for (auto center : frontier) {
+        auto neighbours = target_neighbours(center, w_cell, w_node);
+        for (auto nb : neighbours) {
+            // if (nb < 0 || nb >= static_cast<idx_t>(tgt_work_vals.size())) {
+            //     continue;
+            // }
+            if (! visited[nb]) {
+                visited[nb] = true;
+                next_frontier.push_back(nb);
             }
         }
-        if (next_frontier.empty()) {
-            break;
+    }
+    // if (next_frontier.empty()) {
+    //     break;
+    // }
+    std::vector<std::pair<idx_t, double>> capacities;
+    capacities.reserve(next_frontier.size());
+    double total_capacity = 0.;
+    for (auto nb : next_frontier) {
+        if (! has_bounds[nb]) {
+            continue;
         }
-        std::vector<std::pair<idx_t, double>> capacities;
-        capacities.reserve(next_frontier.size());
-        double total_capacity = 0.;
-        for (auto nb : next_frontier) {
-            if (! has_bounds[nb]) {
-                continue;
-            }
-            double capacity = 0.;
+        double capacity = 0.;
+        if (distribute_excess) {
+            capacity = std::max((smax[nb] - tgt_work_vals[nb]) * tgt_areas_[nb], 0.);
+        }
+        else {
+            capacity = std::max((tgt_work_vals[nb] - smin[nb]) * tgt_areas_[nb], 0.);
+        }
+        if (capacity > 0.) {
+            capacities.emplace_back(nb, capacity);
+            total_capacity += capacity;
+        }
+    }
+    if (total_capacity > 0.) {
+        const double transferred_mass = std::min(remaining, total_capacity);
+        for (const auto& cap : capacities) {
+            idx_t nb = cap.first;
+            const double dm = transferred_mass * cap.second / total_capacity;
             if (distribute_excess) {
-                capacity = std::max((smax[nb] - tgt_work_vals[nb]) * tgt_areas_[nb], 0.);
+                tgt_work_vals[nb] += dm / tgt_areas_[nb];
             }
             else {
-                capacity = std::max((tgt_work_vals[nb] - smin[nb]) * tgt_areas_[nb], 0.);
-            }
-            if (capacity > 0.) {
-                capacities.emplace_back(nb, capacity);
-                total_capacity += capacity;
+                tgt_work_vals[nb] -= dm / tgt_areas_[nb];
             }
         }
-        if (total_capacity > 0.) {
-            const double transferred_mass = std::min(remaining, total_capacity);
-            for (const auto& cap : capacities) {
-                idx_t nb = cap.first;
-                const double dm = transferred_mass * cap.second / total_capacity;
-                if (distribute_excess) {
-                    tgt_work_vals[nb] += dm / tgt_areas_[nb];
-                }
-                else {
-                    tgt_work_vals[nb] -= dm / tgt_areas_[nb];
-                }
-            }
-            remaining -= transferred_mass;
-        }
-        frontier.swap(next_frontier);
+        remaining -= transferred_mass;
     }
+    frontier.swap(next_frontier);
 
     if (remaining > eps) {
         std::vector<std::pair<idx_t, double>> capacities;
