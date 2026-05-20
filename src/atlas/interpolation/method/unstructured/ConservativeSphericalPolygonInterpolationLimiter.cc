@@ -56,6 +56,11 @@ ConservativeSphericalPolygonInterpolationLimiter(const ConservativeSphericalPoly
     limiter_detector_size_ = interpolation_.limiter_detector_size_;
     Log::info() << "limiter output : " << limiter_output_ << std::endl;
     Log::info() << "limiter detector size : " << limiter_detector_size_ << std::endl;
+    const auto tgt_fs_halo = tgt_cell_data_ ? functionspace::CellColumns(tgt_fs_).halo().size()
+                                            : functionspace::NodeColumns(tgt_fs_).halo().size();
+    if (tgt_fs_halo < 1 and limiter_ == "ilmc" and mpi::comm().size() > 1) {
+        ATLAS_THROW_EXCEPTION("Insufficient halo size for ILMC limiter in MPI-parallel runs - at least 1 halo layer is required on the target mesh");
+    }
 }
 
 
@@ -302,7 +307,6 @@ double ConservativeSphericalPolygonInterpolationLimiter::redistribute_local_mass
     if (total_capacity > 0.) {
         const double transferred_mass = std::min(remaining, total_capacity);
         for (const auto& cap : capacities) {
-            idx_t nb = cap.first;
             const double dm = transferred_mass * cap.second / total_capacity;
             if (distribute_excess) {
                 tgt_lim_vals(cap.first) += dm / tgt_areas_[cap.first];
@@ -339,7 +343,6 @@ double ConservativeSphericalPolygonInterpolationLimiter::redistribute_local_mass
         if (total_capacity > 0.) {
             const double transferred_mass = std::min(remaining, total_capacity);
             for (const auto& cap : capacities) {
-                idx_t idx = cap.first;
                 const double dm = transferred_mass * cap.second / total_capacity;
                 if (distribute_excess) {
                     tgt_lim_vals(cap.first) += dm / tgt_areas_[cap.first];
