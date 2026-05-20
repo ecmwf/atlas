@@ -139,9 +139,9 @@ double ConservativeSphericalPolygonInterpolationLimiter::limit(const Field& src_
             }
 
             tgt_lim_vals(tpt) = bounded_value;
-            double residual_mass;
+            double residual_mass = delta_mass;
             for (int shell = 0; shell < limiter_iterations_ && std::abs(residual_mass) > eps; ++shell) {
-                residual_mass = redistribute_local_mass(tpt, delta_mass, bounds_min, bounds_max, has_bounds, tgt_lim_vals);
+                residual_mass = redistribute_local_mass(tpt, residual_mass, bounds_min, bounds_max, has_bounds, tgt_lim_vals);
                 tgt_lim_field.haloExchange();
             }
             if (std::abs(residual_mass) > eps) {
