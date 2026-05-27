@@ -99,6 +99,7 @@ public:
 
     const Vertical& vertical() const { return structuredcolumns_->vertical(); }
     const StructuredGrid& grid() const override { return structuredcolumns_->grid(); }
+    const Projection& projection() const override { return grid().projection(); }
 
     idx_t levels() const { return structuredcolumns_->levels(); }
     Field lonlat() const override { return structuredcolumns_->lonlat(); }

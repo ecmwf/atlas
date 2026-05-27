@@ -81,15 +81,15 @@ Field FunctionSpaceImpl::global_index() const {
 }
 
 const util::PartitionPolygon& FunctionSpaceImpl::polygon(idx_t /*halo */) const {
-    throw_Exception("polygon() not implemented in derived class", Here());
+    throw_Exception("polygon() not implemented in derived class ["+type()+"]", Here());
 }
 
 const util::PartitionPolygons& FunctionSpaceImpl::polygons() const {
-    throw_Exception("polygons() not implemented in derived class", Here());
+    throw_Exception("polygons() not implemented in derived class ["+type()+"]", Here());
 }
 
 const Projection& FunctionSpaceImpl::projection() const {
-    throw_Exception("projection() not implemented in derived class", Here());
+    throw_Exception("projection() not implemented in derived class ["+type()+"]", Here());
 }
 
 template <typename DATATYPE>
