@@ -527,7 +527,7 @@ void Method::do_execute(const Field& src, Field& tgt, Metadata&) const {
     ATLAS_TRACE("atlas::interpolation::method::Method::do_execute()");
 
      if (src.hostNeedsUpdate() && src.deviceNeedsUpdate()) {
-            throw_AssertionFailed("Inconsistent memory state flags - we will not be able to "
+            throw_AssertionFailed("Inconsistent memory state flags for field "+src.name()+"  (hostNeedsUpdate && deviceNeedsUpdate) - we will not be able to "
                                   "determine which memory space to perform the halo exchange on",
                                   Here());
     }
