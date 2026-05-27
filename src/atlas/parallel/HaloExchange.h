@@ -218,7 +218,8 @@ void HaloExchange::execute(array::Array& field, bool on_device) const {
     deallocate_buffer<DATA_TYPE>(inner_buffer, inner_size, on_device);
     deallocate_buffer<DATA_TYPE>(halo_buffer, halo_size, on_device);
 
-    on_device ? field.setHostNeedsUpdate(true) : field.setDeviceNeedsUpdate(true);
+    field.setDeviceNeedsUpdate(!on_device);
+    field.setHostNeedsUpdate(on_device);
     if (update_device_at_end) {
         field.syncDevice();
     }
@@ -283,7 +284,8 @@ void HaloExchange::execute_adjoint(array::Array& field, bool on_device) const {
     deallocate_buffer<DATA_TYPE>(halo_buffer, halo_size, on_device);
     deallocate_buffer<DATA_TYPE>(inner_buffer, inner_size, on_device);
 
-    on_device ? field.setHostNeedsUpdate(true) : field.setDeviceNeedsUpdate(true);
+    field.setDeviceNeedsUpdate(!on_device);
+    field.setHostNeedsUpdate(on_device);
     if (update_device_at_end) {
         field.syncDevice();
     }
