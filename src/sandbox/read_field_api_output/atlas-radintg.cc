@@ -210,7 +210,7 @@ public:
                 ATLAS_TRACE("create_interpolation");
                 interpolation_from_IFS.emplace(interpolation_method, create_interpolation(interpolation_method, on_device, IFS_blocked_fs, rad_blocked_fs));
             }
-            ATLAS_TRACE("interpolate");
+            ATLAS_TRACE("interpolate from IFS");
             interpolate(interpolation_from_IFS[interpolation_method], on_device, ifs_fields, rad_fields);
         }
     }
@@ -227,7 +227,7 @@ public:
                 ATLAS_TRACE("create_interpolation");
                 interpolation_to_IFS.emplace(interpolation_method, create_interpolation(interpolation_method, on_device, rad_blocked_fs, IFS_blocked_fs));
             }
-            ATLAS_TRACE("interpolate");
+            ATLAS_TRACE("interpolate to IFS");
             interpolate(interpolation_to_IFS[interpolation_method], on_device, rad_fields, ifs_fields);
         }
     }

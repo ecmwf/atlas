@@ -213,8 +213,13 @@ namespace atlas {
 
 #define EXPLICIT_TEMPLATE_INSTANTIATION_TYPE_RANK(TYPE, BLOCKED_RANK) \
     template void device_copy_blocked_to_nonblocked_mdspan<array::ArrayView<const TYPE,BLOCKED_RANK>,array::ArrayView<TYPE,BLOCKED_RANK-1>>(array::ArrayView<const TYPE,BLOCKED_RANK>, array::ArrayView<TYPE,BLOCKED_RANK-1>); \
+    template void device_copy_blocked_to_nonblocked_mdspan<mdspan<const TYPE,dims<BLOCKED_RANK>,layout_stride>,mdspan<TYPE,dims<BLOCKED_RANK-1>,layout_stride>>(mdspan<const TYPE,dims<BLOCKED_RANK>,layout_stride>, mdspan<TYPE,dims<BLOCKED_RANK-1>,layout_stride>); \
+\
     template void device_copy_nonblocked_to_blocked_mdspan<array::ArrayView<const TYPE,BLOCKED_RANK-1>,array::ArrayView<TYPE,BLOCKED_RANK>>(array::ArrayView<const TYPE,BLOCKED_RANK-1>, array::ArrayView<TYPE,BLOCKED_RANK>); \
-    template void device_copy_blocked_to_blocked_mdspan<array::ArrayView<const TYPE,BLOCKED_RANK>,array::ArrayView<TYPE,BLOCKED_RANK>>(array::ArrayView<const TYPE,BLOCKED_RANK>, array::ArrayView<TYPE,BLOCKED_RANK>);
+    template void device_copy_nonblocked_to_blocked_mdspan<mdspan<const TYPE,dims<BLOCKED_RANK-1>,layout_stride>,mdspan<TYPE,dims<BLOCKED_RANK>,layout_stride>>(mdspan<const TYPE,dims<BLOCKED_RANK-1>,layout_stride>, mdspan<TYPE,dims<BLOCKED_RANK>,layout_stride>); \
+\
+    template void device_copy_blocked_to_blocked_mdspan<array::ArrayView<const TYPE,BLOCKED_RANK>,array::ArrayView<TYPE,BLOCKED_RANK>>(array::ArrayView<const TYPE,BLOCKED_RANK>, array::ArrayView<TYPE,BLOCKED_RANK>); \
+    template void device_copy_blocked_to_blocked_mdspan<mdspan<const TYPE,dims<BLOCKED_RANK>,layout_stride>,mdspan<TYPE,dims<BLOCKED_RANK>,layout_stride>>(mdspan<const TYPE,dims<BLOCKED_RANK>,layout_stride>, mdspan<TYPE,dims<BLOCKED_RANK>,layout_stride>);
 
 #define EXPLICIT_TEMPLATE_INSTATIATION(RANK)                \
     EXPLICIT_TEMPLATE_INSTANTIATION_TYPE_RANK(double, RANK) \

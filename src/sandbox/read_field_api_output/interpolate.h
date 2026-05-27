@@ -116,6 +116,10 @@ void interpolate(const std::string interpolation_method, bool on_device, const F
             IFS_nonblocked_fields.add(IFS_nonblocked_fs.createField(IFS_blocked_fields[i]));
             rad_nonblocked_fields.add(rad_nonblocked_fs.createField(IFS_blocked_fields[i]));
         }
+        if (on_device) {
+            IFS_nonblocked_fields.allocateDevice();
+            rad_nonblocked_fields.allocateDevice();
+        }
         copy_blocked_to_nonblocked(IFS_blocked_fields, IFS_nonblocked_fields, on_device);
         IFS_nonblocked_fields.haloExchange(on_device);
         interpolation.execute(IFS_nonblocked_fields, rad_nonblocked_fields);
