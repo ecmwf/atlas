@@ -15,6 +15,8 @@
 #include <type_traits>
 #include <vector>
 
+#include "pluto/pluto.h"
+
 #include "atlas/array/ArrayView.h"
 #include "atlas/library/config.h"
 #include "atlas/parallel/mpi/mpi.h"
@@ -245,8 +247,8 @@ void GatherScatter::gather(parallel::Field<DATA_TYPE const> lfields[], parallel:
                             gfields[jfield].var_shape.data() + gfields[jfield].var_rank, 1, std::multiplies<idx_t>());
         const size_t loc_size = loccnt_ * lvar_size;
         const size_t glb_size = glb_cnt(root) * gvar_size;
-        std::vector<DATA_TYPE> loc_buffer(loc_size);
-        std::vector<DATA_TYPE> glb_buffer(glb_size);
+        std::vector<DATA_TYPE, pluto::host::allocator<DATA_TYPE>> loc_buffer(loc_size);
+        std::vector<DATA_TYPE, pluto::host::allocator<DATA_TYPE>> glb_buffer(glb_size);
         std::vector<int> glb_displs(nproc);
         std::vector<int> glb_counts(nproc);
 
@@ -262,7 +264,7 @@ void GatherScatter::gather(parallel::Field<DATA_TYPE const> lfields[], parallel:
         /// Gather
 
         ATLAS_TRACE_MPI(GATHER) {
-            comm().gatherv(loc_buffer, glb_buffer, glb_counts, glb_displs, root);
+            comm().gatherv(loc_buffer.begin(), loc_buffer.end(), glb_buffer.begin(), glb_buffer.end(), glb_counts, glb_displs, root);
         }
 
         /// Unpack
@@ -283,6 +285,7 @@ void GatherScatter::gather(const DATA_TYPE ldata[], const idx_t lvar_strides[], 
 template <typename DATA_TYPE>
 void GatherScatter::scatter(parallel::Field<DATA_TYPE const> gfields[], parallel::Field<DATA_TYPE> lfields[],
                             const idx_t nb_fields, const idx_t root) const {
+    ATLAS_TRACE("GatherScatter::scatter");
     if (!is_setup_) {
         throw_Exception("GatherScatter was not setup", Here());
     }
@@ -296,8 +299,8 @@ void GatherScatter::scatter(parallel::Field<DATA_TYPE const> gfields[], parallel
                             gfields[jfield].var_shape.data() + gfields[jfield].var_rank, 1, std::multiplies<int>());
         const size_t loc_size = loccnt_ * lvar_size;
         const size_t glb_size = glb_cnt(root) * gvar_size;
-        std::vector<DATA_TYPE> loc_buffer(loc_size);
-        std::vector<DATA_TYPE> glb_buffer(glb_size);
+        std::vector<DATA_TYPE, pluto::host::allocator<DATA_TYPE>> loc_buffer(loc_size);
+        std::vector<DATA_TYPE, pluto::host::allocator<DATA_TYPE>> glb_buffer(glb_size);
         std::vector<int> glb_displs(nproc);
         std::vector<int> glb_counts(nproc);
 
