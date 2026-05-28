@@ -507,6 +507,64 @@ CASE("test_SpectralFunctionSpace") {
     EXPECT(columns_scalar.shape(1) == nb_levels);
 }
 
+CASE("test_createField_copy_preserves_name") {
+    auto expect_copy_preserves_name = [](const auto& fs, const std::string& name, const auto& options) {
+        Field source = fs.template createField<double>(option::name(name) | options);
+        Field copy   = fs.createField(source);
+
+        EXPECT(copy.name() == name);
+    };
+
+    SECTION("CellColumns") {
+        Mesh mesh = StructuredMeshGenerator().generate(Grid("O8"));
+        CellColumns cell_fs(mesh);
+
+        expect_copy_preserves_name(cell_fs, "cell-source", option::levels(2) | option::variables(3));
+    }
+
+    SECTION("EdgeColumns") {
+        Mesh mesh = StructuredMeshGenerator().generate(Grid("O8"));
+        EdgeColumns edge_fs(mesh);
+
+        expect_copy_preserves_name(edge_fs, "edge-source", option::levels(2) | option::variables(3));
+    }
+
+    SECTION("NodeColumns") {
+        Mesh mesh = StructuredMeshGenerator().generate(Grid("O8"));
+        NodeColumns node_fs(mesh);
+
+        expect_copy_preserves_name(node_fs, "node-source", option::levels(2) | option::variables(3));
+    }
+
+    SECTION("PointCloud") {
+        Grid grid("O8");
+        PointCloud pointcloud_fs(grid);
+
+        expect_copy_preserves_name(pointcloud_fs, "pointcloud-source", option::levels(2) | option::variables(3));
+    }
+
+    SECTION("StructuredColumns") {
+        StructuredGrid grid("O8");
+        StructuredColumns structured_fs(grid, option::levels(2));
+
+        expect_copy_preserves_name(structured_fs, "structured-source", option::levels(2) | option::variables(3));
+    }
+
+    SECTION("BlockStructuredColumns") {
+        StructuredGrid grid("O8");
+        BlockStructuredColumns blockstructured_fs(grid, option::levels(2) | option::nproma(4));
+
+        expect_copy_preserves_name(blockstructured_fs, "blockstructured-source",
+                                   option::levels(2) | option::variables(3));
+    }
+
+    SECTION("Spectral") {
+        Spectral spectral_fs(159);
+
+        expect_copy_preserves_name(spectral_fs, "spectral-source", option::levels(2));
+    }
+}
+
 #if ATLAS_HAVE_TRANS
 
 CASE("test_SpectralFunctionSpace_trans_dist") {

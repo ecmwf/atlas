@@ -254,7 +254,8 @@ Field Spectral::createField(const eckit::Configuration& options) const {
 }
 
 Field Spectral::createField(const Field& other, const eckit::Configuration& config) const {
-    return createField(option::datatype(other.datatype()) | option::levels(other.levels()) | config);
+    return createField(option::name(other.name()) | option::datatype(other.datatype()) | option::levels(other.levels()) |
+                       config);
 }
 
 void Spectral::gather(const FieldSet& local_fieldset, FieldSet& global_fieldset) const {

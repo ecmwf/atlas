@@ -580,7 +580,7 @@ Field StructuredColumns::createField(const eckit::Configuration& options) const 
 }
 
 Field StructuredColumns::createField(const Field& other, const eckit::Configuration& config) const {
-    return createField(option::datatype(other.datatype()) | option::levels(other.levels()) |
+    return createField(option::name(other.name()) | option::datatype(other.datatype()) | option::levels(other.levels()) |
                        option::variables(other.variables()) |
                        option::type(other.metadata().getString("type", "scalar")) | config);
 }

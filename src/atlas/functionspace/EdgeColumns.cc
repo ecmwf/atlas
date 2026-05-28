@@ -319,7 +319,7 @@ Field EdgeColumns::createField(const eckit::Configuration& options) const {
 }
 
 Field EdgeColumns::createField(const Field& other, const eckit::Configuration& config) const {
-    return createField(option::datatype(other.datatype()) | option::levels(other.levels()) |
+    return createField(option::name(other.name()) | option::datatype(other.datatype()) | option::levels(other.levels()) |
                        option::variables(other.variables()) | config);
 }
 
