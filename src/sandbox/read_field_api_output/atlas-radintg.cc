@@ -9,6 +9,9 @@
  */
 #define NDEBUG
 
+#include <chrono>
+#include <iomanip>
+
 #include "HDF5Reader.h"
 #include "transpositions.h"
 #include "interpolate.h"
@@ -42,9 +45,7 @@ class Program : public AtlasTool {
 public:
     Program(int argc, char* argv[]): AtlasTool(argc, argv) {
         add_option(new SimpleOption<std::string>("config-file", "configuration file"));
-        add_option(new SimpleOption<std::string>("file", "input file"));
-        add_option(new SimpleOption<std::string>("dataset", "dataset"));
-        add_option(new SimpleOption<long>("index", "dataset"));
+        add_option(new SimpleOption<std::string>("data-file", "input file (hdf5)"));
         add_option(new SimpleOption<std::string>("rad.grid", "target grid to interpolate to"));
         add_option(new SimpleOption<std::string>("rad.nproma", "target grid to nproma interpolate to"));
         add_option(new SimpleOption<std::string>("gmsh.coordinates", "coordinates for gmsh output [lonlat, xyz]"));
@@ -69,31 +70,59 @@ util::Config get_subconfiguration(const eckit::Configuration& config, const std:
     return c;
 }
 
+void read_field_with_timing(const std::string& data_file, Field& field) {
+    auto start = std::chrono::steady_clock::now();
+    HDF5Reader{data_file, field.name()}.read_field(field);
+    auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - start);
+    auto& out = Log::info();
+    out << "    Field " << std::left << std::setw(10) << field.name() << std::right << " took " << elapsed.count() << " ms" << std::endl;
+}
+
+std::tuple<util::Config, std::vector<std::string>, std::map<std::string,util::Metadata>>
+extract_variables(const util::Config& zrgp_in, const std::string& data_file) {
+    ATLAS_TRACE("Reading metadata");
+    Log::info() << "Extracting variable information from data file " << data_file << " :" << std::endl;
+    auto zrgp_in_vars = zrgp_in.getSubConfiguration("variables").getSubConfigurations();
+    std::vector<util::Config> filtered_vars;
+    std::vector<std::string> var_names;
+    std::map<std::string, util::Metadata> var_metadata;
+    for (auto var : zrgp_in_vars) {
+        std::string name = to_upper(var.getString("name"));
+        auto metadata = HDF5Reader{data_file, name}.read_metadata();
+        auto size = metadata.getLong("size");
+
+        std::vector<std::string> dims;
+        var.get("dim", dims);
+        std::string dim = dims[0];
+        for (int i = 1; i < dims.size(); ++i) {
+            dim += "*" + dims[i];
+        }
+        dims = {dim};
+        dims.emplace(dims.begin(), "nblk");
+        dims.emplace_back("nproma");
+        Log::info() << "    " << name << dims;
+        if (size == 0) {
+            Log::info() << "   (empty --> ignored)" << std::endl;
+            continue;
+        }
+        Log::info() << std::endl;
+
+        var_names.emplace_back(name);
+        var_metadata.emplace(name, metadata);
+        filtered_vars.emplace_back(var);
+    }
+    util::Config zrgp_in_filtered = zrgp_in;
+    zrgp_in_filtered.set("variables", filtered_vars);
+    return std::make_tuple(zrgp_in_filtered, var_names, var_metadata);
+}
+
 class IFS {
     public:
-    IFS(util::Config zrgp_in, const std::string& data_file, bool multifield) {
-        auto zrgp_in_vars = zrgp_in.getSubConfiguration("variables").getSubConfigurations();
-        // Log::info() << zrgp_in_vars << std::endl;
-        for( auto& var : zrgp_in_vars ) {
-            std::string name = to_upper(var.getString("name"));
-            var_names.emplace_back(name);
-            var_metadata.emplace(name,HDF5Reader{data_file, name}.read_metadata());
-            auto size = var_metadata[name].getLong("size");
-            var.set("size", size);
-            std::vector<std::string> dims;
-            var.get("dim",dims);
-            std::string dim = dims[0];
-            for(int i=1; i<dims.size(); ++i) {
-                dim += "*" + dims[i];
-            }
-            dims = {dim};
-            dims.emplace(dims.begin(), "nblk");
-            dims.emplace_back("nproma");
-            Log::info() << name << dims;
-            if (size == 0) {
-                Log::info() << "   (empty)";
-            }
-            Log::info() << std::endl;
+    IFS(const util::Config& zrgp_in, const std::string& data_file, bool multifield) {
+        util::Config multifield_config; // A copy of zrgp_in but only with the non-empty variables, and with some additional parameters set (e.g. nproma, nlev, etc.) based on the metadata of the variables
+        std::tie(multifield_config, var_names, var_metadata) = extract_variables(zrgp_in, data_file);
+        if (var_names.empty()) {
+            ATLAS_THROW_EXCEPTION("No non-empty variables found in configuration");
         }
         DataType datatype(var_metadata[var_names[0]].getString("datatype"));
         IFS_grid = Grid(var_metadata[var_names[0]].getString("grid"));
@@ -102,43 +131,40 @@ class IFS {
         int nblk   = var_metadata[var_names[0]].getLong("nblk");
         IFS_blocked_fs = functionspace::BlockStructuredColumns(IFS_grid, util::Config("nproma",nproma));
 
-        zrgp_in.set("variables",zrgp_in_vars);
-        auto get_nfld = [&](const std::string& name) -> long {
-            if (var_metadata.find(name) == var_metadata.end()) {
-                return -1;
-            }
-            return var_metadata[name].getLong("nfld");
-        };
+        auto get_nfld = [&](const std::string& name) -> long { return (var_metadata.find(name) == var_metadata.end()) ? -1 : var_metadata[name].getLong("nfld");};
         int nlev = get_nfld("ISWA");
         int nrftotal_radgrid = get_nfld("IPERT");
         int nlwemiss = get_nfld("IEMISS");
         int nsw = get_nfld("IALD");
         int nprogaer = (get_nfld("IPROGAERO") >= 0 ) ? get_nfld("IPROGAERO") / nlev : -1 ;
-        Log::info() << "ngptotg  : " << ngptotg << "    (grid=" << IFS_grid.name() << ")" << std::endl;
-        Log::info() << "nproma   : " << nproma << std::endl;
-        Log::info() << "nblk     : " << nblk << std::endl;
-        Log::info() << "nlev     : " << nlev << std::endl;
-        Log::info() << "nsw      : " << nsw << std::endl;
-        Log::info() << "nlwemiss : " << nlwemiss << std::endl;
-        Log::info() << "nrftotal_radgrid   : " << nrftotal_radgrid << std::endl;
-        Log::info() << "nprogaer           : " << nprogaer << std::endl;
+        Log::info() << "Extracted variable information:" << std::endl;
+        Log::info() << "    ngptotg  : " << ngptotg << "    (grid=" << IFS_grid.name() << ")" << std::endl;
+        Log::info() << "    nproma   : " << nproma << std::endl;
+        Log::info() << "    nblk     : " << nblk << std::endl;
+        Log::info() << "    nlev     : " << nlev << std::endl;
+        Log::info() << "    nsw      : " << nsw << std::endl;
+        Log::info() << "    nlwemiss : " << nlwemiss << std::endl;
+        Log::info() << "    nrftotal_radgrid   : " << nrftotal_radgrid << std::endl;
+        Log::info() << "    nprogaer           : " << nprogaer << std::endl;
         
-        zrgp_in.set("type","MultiFieldCreatorRad");
-        zrgp_in.set("nproma",nproma);
-        zrgp_in.set("nlev",nlev);
-        zrgp_in.set("nrftotal_radgrid",nrftotal_radgrid);
-        zrgp_in.set("nlwemiss",nlwemiss);
-        zrgp_in.set("nsw",nsw);
-        zrgp_in.set("nprogaer", nprogaer);
-        zrgp_in.set("ngptot",IFS_blocked_fs.size());
+        multifield_config.set("type","MultiFieldCreatorRad");
+        multifield_config.set("nproma",nproma);
+        multifield_config.set("nlev",nlev);
+        multifield_config.set("nrftotal_radgrid",nrftotal_radgrid);
+        multifield_config.set("nlwemiss",nlwemiss);
+        multifield_config.set("nsw",nsw);
+        multifield_config.set("nprogaer", nprogaer);
+        multifield_config.set("ngptot",IFS_blocked_fs.size());
 
         IFS_blocked_fs = functionspace::BlockStructuredColumns(IFS_grid, util::Config("nproma",nproma));
+
+        Log::info() << "Creating IFS fields (multifield=" << std::boolalpha << multifield << "), read data on one rank, and scatter:" << std::endl;
+        ATLAS_TRACE("Reading data");
         if (multifield) {
-            zrgp_fields = field::MultiField(zrgp_in);
+            zrgp_fields = field::MultiField(multifield_config);
             for( auto& f : zrgp_fields) {
                 f.set_functionspace(IFS_blocked_fs);
-                Log::info() << f << std::endl;
-                HDF5Reader{data_file, f.name()}.read_field(f);
+                read_field_with_timing(data_file, f);
             }
         }
         else {
@@ -154,8 +180,7 @@ class IFS {
                     f.set_levels(dim);
                 }
                 f.set_functionspace(IFS_blocked_fs);
-                Log::info() << f << std::endl;
-                HDF5Reader{data_file, name}.read_field(f);
+                read_field_with_timing(data_file, f);
             }
         }
         nproma_ = nproma;
@@ -245,7 +270,7 @@ int Program::execute(const AtlasTool::Args& args) {
 
     IFS ifs(
         util::Config(args.getString("config-file")).getSubConfigurations()[0],
-        args.getString("file"),
+        args.getString("data-file"),
         args.getBool("multifield",false));
 
     FieldSet ifs_input_fields = ifs.fields();

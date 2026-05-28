@@ -105,7 +105,6 @@ MultiFieldImpl* MultiFieldCreatorRad::create(const eckit::Configuration& config)
     auto get_nvar = [&](const auto& field_params) {
         if (field_params.has("size")) {
             auto size = field_params.getLong("size");
-            ATLAS_DEBUG_VAR(size);
             if (size == 0) {
                 return size;
             }
@@ -114,7 +113,6 @@ MultiFieldImpl* MultiFieldCreatorRad::create(const eckit::Configuration& config)
         long nvar = 1;
         std::vector<std::string> dim_str;
         field_params.get("dim", dim_str);
-        ATLAS_DEBUG_VAR(dim_str);
         for( const std::string& dim : dim_str ) {
             if (is_number(dim)) {
                 nvar *= std::stol(dim);
@@ -146,9 +144,7 @@ MultiFieldImpl* MultiFieldCreatorRad::create(const eckit::Configuration& config)
         fields[i].get("name", name);
         name = to_upper(name);
         Field field;
-        ATLAS_DEBUG_VAR(name);
         long field_vars = get_nvar(fields[i]);
-        ATLAS_DEBUG_VAR(field_vars);
         constexpr auto all = array::Range::all();
         if (field_vars == 0) {
             // empty field

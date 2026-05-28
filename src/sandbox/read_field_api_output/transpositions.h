@@ -237,6 +237,9 @@ void copy_blocked_to_blocked_mdspan(const BlockedIn blocked_in, BlockedOut block
 
 template <class ValueType>
 void copy_blocked_to_nonblocked_T(const array::Array& blocked, array::Array& nonblocked, bool on_device) {
+    if (blocked.rank() != nonblocked.rank()+1) {
+        ATLAS_THROW_EXCEPTION("copy_blocked_to_nonblocked_T: blocked rank must be one more than nonblocked rank" << " but got blocked rank " << blocked.rank() << " and nonblocked rank " << nonblocked.rank());
+    }
     ATLAS_ASSERT(nonblocked.rank() == blocked.rank()-1);
     if (blocked.rank()==4) {
         auto blocked_v    = on_device ? array::make_device_view<ValueType, 4>(blocked)    : array::make_host_view<ValueType, 4>(blocked);
@@ -411,4 +414,3 @@ void copy_nonblocked_to_blocked(const FieldSet& nonblocked_fields_in, FieldSet& 
 }
 
 }
-

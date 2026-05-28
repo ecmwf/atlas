@@ -46,9 +46,35 @@ void interpolate(Interpolation interpolation, bool on_device, const FieldSet& IF
         interpolation.execute(IFS_nonblocked_fields, rad_nonblocked_fields);
     }
     ATLAS_TRACE_SCOPE("copy_nonblocked_to_blocked "+std::string(on_device?"[device]":"[host]")){
+        // rad_nonblocked_fields.haloExchange(on_device); Not needed if there's no halo
         copy_nonblocked_to_blocked(rad_nonblocked_fields, rad_blocked_fields, on_device);
     }
 }
+
+void interpolate(Interpolation interpolation, bool on_device, const Field& IFS_blocked_f, Field& rad_blocked_f) {
+    FieldSet IFS_nonblocked_fields;
+    FieldSet rad_nonblocked_fields;
+    auto IFS_nonblocked_fs = interpolation.source();
+    auto rad_nonblocked_fs = interpolation.target();
+    auto IFS_nonblocked_f = IFS_nonblocked_fs.createField(IFS_blocked_f);
+    auto rad_nonblocked_f = rad_nonblocked_fs.createField(IFS_blocked_f);
+    if (on_device) {
+        IFS_nonblocked_f.allocateDevice();
+        rad_nonblocked_f.allocateDevice();
+    }
+    ATLAS_TRACE_SCOPE("copy_blocked_to_nonblocked "+std::string(on_device?"[device]":"[host]")){
+        copy_blocked_to_nonblocked(IFS_blocked_f, IFS_nonblocked_f, on_device);
+        IFS_nonblocked_f.haloExchange(on_device);
+    }
+    ATLAS_TRACE_SCOPE("nonblocked interpolation "+std::string(on_device?"[device]":"[host]")) {
+        interpolation.execute(IFS_nonblocked_f, rad_nonblocked_f);
+    }
+    ATLAS_TRACE_SCOPE("copy_nonblocked_to_blocked "+std::string(on_device?"[device]":"[host]")){
+        copy_nonblocked_to_blocked(rad_nonblocked_f, rad_blocked_f, on_device);
+        rad_blocked_f.haloExchange(on_device);
+    }
+}
+
 
 Interpolation create_interpolation(const std::string& interpolation_method, bool on_device, FunctionSpace IFS_blocked_fs, FunctionSpace rad_blocked_fs) {
     auto IFS_grid = IFS_blocked_fs.grid();
@@ -85,47 +111,15 @@ Interpolation create_interpolation(const std::string& interpolation_method, bool
 void interpolate(const std::string interpolation_method, bool on_device, const Field& IFS_blocked_f, Field& rad_blocked_f) {
     auto IFS_blocked_fs = IFS_blocked_f.functionspace();
     auto rad_blocked_fs = rad_blocked_f.functionspace();
-
     auto interpolation = create_interpolation(interpolation_method, on_device, IFS_blocked_fs, rad_blocked_fs);
-    {
-        FieldSet IFS_nonblocked_fields;
-        FieldSet rad_nonblocked_fields;
-        auto IFS_nonblocked_fs = interpolation.source();
-        auto rad_nonblocked_fs = interpolation.target();
-        auto IFS_nonblocked_f = IFS_nonblocked_fs.createField(IFS_blocked_f);
-        auto rad_nonblocked_f = rad_nonblocked_fs.createField(IFS_blocked_f);
-        copy_blocked_to_nonblocked(IFS_blocked_f, IFS_nonblocked_f, on_device);
-        IFS_nonblocked_fields.haloExchange(on_device);
-        interpolation.execute(IFS_nonblocked_f, rad_nonblocked_f);
-        rad_nonblocked_f.haloExchange(on_device);
-        copy_nonblocked_to_blocked(rad_nonblocked_f, rad_blocked_f, on_device);
-    };
+    interpolate(interpolation, on_device, IFS_blocked_f, rad_blocked_f);
 }
 
 void interpolate(const std::string interpolation_method, bool on_device, const FieldSet& IFS_blocked_fields, FieldSet& rad_blocked_fields) {
     auto IFS_blocked_fs = IFS_blocked_fields[0].functionspace();
     auto rad_blocked_fs = rad_blocked_fields[0].functionspace();
-
     auto interpolation = create_interpolation(interpolation_method, on_device, IFS_blocked_fs, rad_blocked_fs);
-    {
-        FieldSet IFS_nonblocked_fields;
-        FieldSet rad_nonblocked_fields;
-        auto IFS_nonblocked_fs = interpolation.source();
-        auto rad_nonblocked_fs = interpolation.target();
-        for(int i=0; i<IFS_blocked_fields.size(); ++i) {
-            IFS_nonblocked_fields.add(IFS_nonblocked_fs.createField(IFS_blocked_fields[i]));
-            rad_nonblocked_fields.add(rad_nonblocked_fs.createField(IFS_blocked_fields[i]));
-        }
-        if (on_device) {
-            IFS_nonblocked_fields.allocateDevice();
-            rad_nonblocked_fields.allocateDevice();
-        }
-        copy_blocked_to_nonblocked(IFS_blocked_fields, IFS_nonblocked_fields, on_device);
-        IFS_nonblocked_fields.haloExchange(on_device);
-        interpolation.execute(IFS_nonblocked_fields, rad_nonblocked_fields);
-        rad_nonblocked_fields.haloExchange(on_device);
-        copy_nonblocked_to_blocked(rad_nonblocked_fields, rad_blocked_fields, on_device);
-    }
+    interpolate(interpolation, on_device, IFS_blocked_fields, rad_blocked_fields);
 }
 
 //-----------------------------------------------------------------------------
