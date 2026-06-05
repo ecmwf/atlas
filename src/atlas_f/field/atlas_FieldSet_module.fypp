@@ -56,6 +56,12 @@ contains
   generic :: add => add_field, add_fieldset
   generic :: field => field_by_name, field_by_idx_int, field_by_idx_long
 
+  procedure, private :: shape_array_by_name
+  procedure, private :: shape_idx_by_name
+  procedure, private :: shape_array_by_idx
+  procedure, private :: shape_idx_by_idx
+  generic, public :: shape => shape_array_by_name, shape_idx_by_name, shape_array_by_idx, shape_idx_by_idx
+
   procedure, public :: set_dirty
   procedure, public :: halo_exchange
 
@@ -370,6 +376,55 @@ function field_by_idx_int(this,idx) result(field)
   type(atlas_Field) :: field
   field = atlas_Field( atlas__FieldSet__field_by_idx(this%CPTR_PGIBUG_A, int(idx-1_c_int,ATLAS_KIND_IDX) ) ) ! C index
   call field%return()
+end function
+
+!-------------------------------------------------------------------------------
+
+function shape_array_by_name(this, name) result(shape)
+  use atlas_Field_module, only: atlas_Field
+  class(atlas_FieldSet), intent(in) :: this
+  character(len=*), intent(in) :: name
+  integer, allocatable :: shape(:)
+  type(atlas_Field) :: field
+  field = this%field(name)
+  shape = field%shape()
+end function
+
+!-------------------------------------------------------------------------------
+
+function shape_idx_by_name(this, name, dim_idx) result(shape_val)
+  use atlas_Field_module, only: atlas_Field
+  class(atlas_FieldSet), intent(in) :: this
+  character(len=*), intent(in) :: name
+  integer, intent(in) :: dim_idx
+  integer :: shape_val
+  type(atlas_Field) :: field
+  field = this%field(name)
+  shape_val = field%shape(dim_idx)
+end function
+
+!-------------------------------------------------------------------------------
+
+function shape_array_by_idx(this, idx) result(shape)
+  use atlas_Field_module, only: atlas_Field
+  class(atlas_FieldSet), intent(in) :: this
+  integer, intent(in) :: idx
+  integer, allocatable :: shape(:)
+  type(atlas_Field) :: field
+  field = this%field(idx)
+  shape = field%shape()
+end function
+
+!-------------------------------------------------------------------------------
+
+function shape_idx_by_idx(this, idx, dim_idx) result(shape_val)
+  use atlas_Field_module, only: atlas_Field
+  class(atlas_FieldSet), intent(in) :: this
+  integer, intent(in) :: idx, dim_idx
+  integer :: shape_val
+  type(atlas_Field) :: field
+  field = this%field(idx)
+  shape_val = field%shape(dim_idx)
 end function
 
 !-------------------------------------------------------------------------------
