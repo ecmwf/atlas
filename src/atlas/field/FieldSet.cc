@@ -375,6 +375,14 @@ void FieldSetImpl::syncDevice(std::initializer_list<int> findices) const {
 // C wrapper interfaces to C++ routines
 extern "C" {
 
+void atlas__FieldSet__shapef(FieldSetImpl* This, char* name, int*& shape, int& rank) {
+    atlas__Field__shapef(This->field(name).get(), shape, rank);
+}
+
+void atlas__FieldSet__shapef_by_idx(FieldSetImpl* This, int& idx, int*& shape, int& rank) {
+    atlas__Field__shapef(This->operator[](idx).get(), shape, rank);
+}
+
 void atlas__FieldSet__data_int_specf(FieldSetImpl* This, char* name, int*& data, int& rank, int*& shapef, int*& stridesf) {
     atlas__Field__data_int_specf(This->field(name).get(), data, rank, shapef, stridesf);
 }
@@ -405,6 +413,156 @@ void atlas__FieldSet__data_float_specf_by_idx(FieldSetImpl* This, int& idx, floa
 
 void atlas__FieldSet__data_double_specf_by_idx(FieldSetImpl* This, int& idx, double*& data, int& rank, int*& shapef, int*& stridesf) {
     atlas__Field__data_double_specf(This->operator[](idx).get(), data, rank, shapef, stridesf);
+}
+
+void atlas__FieldSet__device_data_int_specf(FieldSetImpl* This, char* name, int*& data, int& rank, int*& shapef,
+                                            int*& stridesf) {
+    atlas__Field__device_data_int_specf(This->field(name).get(), data, rank, shapef, stridesf);
+}
+
+void atlas__FieldSet__device_data_long_specf(FieldSetImpl* This, char* name, long*& data, int& rank, int*& shapef,
+                                             int*& stridesf) {
+    atlas__Field__device_data_long_specf(This->field(name).get(), data, rank, shapef, stridesf);
+}
+
+void atlas__FieldSet__device_data_float_specf(FieldSetImpl* This, char* name, float*& data, int& rank, int*& shapef,
+                                              int*& stridesf) {
+    atlas__Field__device_data_float_specf(This->field(name).get(), data, rank, shapef, stridesf);
+}
+
+void atlas__FieldSet__device_data_double_specf(FieldSetImpl* This, char* name, double*& data, int& rank,
+                                               int*& shapef, int*& stridesf) {
+    atlas__Field__device_data_double_specf(This->field(name).get(), data, rank, shapef, stridesf);
+}
+
+void atlas__FieldSet__device_data_int_specf_by_idx(FieldSetImpl* This, int& idx, int*& data, int& rank,
+                                                   int*& shapef, int*& stridesf) {
+    atlas__Field__device_data_int_specf(This->operator[](idx).get(), data, rank, shapef, stridesf);
+}
+
+void atlas__FieldSet__device_data_long_specf_by_idx(FieldSetImpl* This, int& idx, long*& data, int& rank,
+                                                    int*& shapef, int*& stridesf) {
+    atlas__Field__device_data_long_specf(This->operator[](idx).get(), data, rank, shapef, stridesf);
+}
+
+void atlas__FieldSet__device_data_float_specf_by_idx(FieldSetImpl* This, int& idx, float*& data, int& rank,
+                                                     int*& shapef, int*& stridesf) {
+    atlas__Field__device_data_float_specf(This->operator[](idx).get(), data, rank, shapef, stridesf);
+}
+
+void atlas__FieldSet__device_data_double_specf_by_idx(FieldSetImpl* This, int& idx, double*& data, int& rank,
+                                                      int*& shapef, int*& stridesf) {
+    atlas__Field__device_data_double_specf(This->operator[](idx).get(), data, rank, shapef, stridesf);
+}
+
+void atlas__FieldSet__set_host_needs_update(FieldSetImpl* This, int value) {
+    This->setHostNeedsUpdate(value);
+}
+
+void atlas__FieldSet__set_host_needs_update_name(FieldSetImpl* This, char* name, int value) {
+    This->field(name).setHostNeedsUpdate(value);
+}
+
+void atlas__FieldSet__set_host_needs_update_by_idx(FieldSetImpl* This, int& idx, int value) {
+    This->operator[](idx).setHostNeedsUpdate(value);
+}
+
+void atlas__FieldSet__set_device_needs_update(FieldSetImpl* This, int value) {
+    This->setDeviceNeedsUpdate(value);
+}
+
+void atlas__FieldSet__set_device_needs_update_name(FieldSetImpl* This, char* name, int value) {
+    This->field(name).setDeviceNeedsUpdate(value);
+}
+
+void atlas__FieldSet__set_device_needs_update_by_idx(FieldSetImpl* This, int& idx, int value) {
+    This->operator[](idx).setDeviceNeedsUpdate(value);
+}
+
+void atlas__FieldSet__sync_host_device(FieldSetImpl* This) {
+    for (auto field : *This) {
+        field.syncHostDevice();
+    }
+}
+
+void atlas__FieldSet__sync_host_device_name(FieldSetImpl* This, char* name) {
+    This->field(name).syncHostDevice();
+}
+
+void atlas__FieldSet__sync_host_device_by_idx(FieldSetImpl* This, int& idx) {
+    This->operator[](idx).syncHostDevice();
+}
+
+void atlas__FieldSet__sync_host(FieldSetImpl* This) {
+    This->syncHost();
+}
+
+void atlas__FieldSet__sync_host_name(FieldSetImpl* This, char* name) {
+    This->field(name).syncHost();
+}
+
+void atlas__FieldSet__sync_host_by_idx(FieldSetImpl* This, int& idx) {
+    This->operator[](idx).syncHost();
+}
+
+void atlas__FieldSet__sync_device(FieldSetImpl* This) {
+    This->syncDevice();
+}
+
+void atlas__FieldSet__sync_device_name(FieldSetImpl* This, char* name) {
+    This->field(name).syncDevice();
+}
+
+void atlas__FieldSet__sync_device_by_idx(FieldSetImpl* This, int& idx) {
+    This->operator[](idx).syncDevice();
+}
+
+void atlas__FieldSet__allocate_device(FieldSetImpl* This) {
+    This->allocateDevice();
+}
+
+void atlas__FieldSet__allocate_device_name(FieldSetImpl* This, char* name) {
+    This->field(name).allocateDevice();
+}
+
+void atlas__FieldSet__allocate_device_by_idx(FieldSetImpl* This, int& idx) {
+    This->operator[](idx).allocateDevice();
+}
+
+void atlas__FieldSet__update_device(FieldSetImpl* This) {
+    This->updateDevice();
+}
+
+void atlas__FieldSet__update_device_name(FieldSetImpl* This, char* name) {
+    This->field(name).updateDevice();
+}
+
+void atlas__FieldSet__update_device_by_idx(FieldSetImpl* This, int& idx) {
+    This->operator[](idx).updateDevice();
+}
+
+void atlas__FieldSet__update_host(FieldSetImpl* This) {
+    This->updateHost();
+}
+
+void atlas__FieldSet__update_host_name(FieldSetImpl* This, char* name) {
+    This->field(name).updateHost();
+}
+
+void atlas__FieldSet__update_host_by_idx(FieldSetImpl* This, int& idx) {
+    This->operator[](idx).updateHost();
+}
+
+void atlas__FieldSet__deallocate_device(FieldSetImpl* This) {
+    This->deallocateDevice();
+}
+
+void atlas__FieldSet__deallocate_device_name(FieldSetImpl* This, char* name) {
+    This->field(name).deallocateDevice();
+}
+
+void atlas__FieldSet__deallocate_device_by_idx(FieldSetImpl* This, int& idx) {
+    This->operator[](idx).deallocateDevice();
 }
 
 
