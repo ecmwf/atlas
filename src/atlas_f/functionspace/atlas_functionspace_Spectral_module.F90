@@ -105,7 +105,7 @@ function atlas_functionspace_Spectral__config(truncation,levels) result(this)
   call options%set("truncation",truncation)
   if( present(levels) ) call options%set("levels",levels)
 
-  call this%reset_c_ptr( atlas__SpectralFunctionSpace__new__config(options%CPTR_PGIBUG_B) )
+  call this%reset_c_ptr( atlas__SpectralFunctionSpace__new__config(options%c_ptr()) )
   call options%final()
 
   call this%return()
@@ -116,7 +116,7 @@ subroutine gather_field(this,local,global)
   class(atlas_functionspace_Spectral), intent(in) :: this
   type(atlas_Field), intent(in) :: local
   type(atlas_Field), intent(inout) :: global
-  call atlas__SpectralFunctionSpace__gather(this%CPTR_PGIBUG_A,local%CPTR_PGIBUG_A,global%CPTR_PGIBUG_A)
+  call atlas__SpectralFunctionSpace__gather(this%c_ptr(),local%c_ptr(),global%c_ptr())
 end subroutine
 
 subroutine scatter_field(this,global,local)
@@ -124,7 +124,7 @@ subroutine scatter_field(this,global,local)
   class(atlas_functionspace_Spectral), intent(in) :: this
   type(atlas_Field), intent(in) :: global
   type(atlas_Field), intent(inout) :: local
-  call atlas__SpectralFunctionSpace__scatter(this%CPTR_PGIBUG_A,global%CPTR_PGIBUG_A,local%CPTR_PGIBUG_A)
+  call atlas__SpectralFunctionSpace__scatter(this%c_ptr(),global%c_ptr(),local%c_ptr())
 end subroutine
 
 subroutine gather_fieldset(this,local,global)
@@ -132,7 +132,7 @@ subroutine gather_fieldset(this,local,global)
   class(atlas_functionspace_Spectral), intent(in) :: this
   type(atlas_FieldSet), intent(in) :: local
   type(atlas_FieldSet), intent(inout) :: global
-  call atlas__SpectralFunctionSpace__gather_fieldset(this%CPTR_PGIBUG_A,local%CPTR_PGIBUG_A,global%CPTR_PGIBUG_A)
+  call atlas__SpectralFunctionSpace__gather_fieldset(this%c_ptr(),local%c_ptr(),global%c_ptr())
 end subroutine
 
 subroutine scatter_fieldset(this,global,local)
@@ -140,7 +140,7 @@ subroutine scatter_fieldset(this,global,local)
   class(atlas_functionspace_Spectral), intent(in) :: this
   type(atlas_FieldSet), intent(in) :: global
   type(atlas_FieldSet), intent(inout) :: local
-  call atlas__SpectralFunctionSpace__scatter_fieldset(this%CPTR_PGIBUG_A,global%CPTR_PGIBUG_A,local%CPTR_PGIBUG_A)
+  call atlas__SpectralFunctionSpace__scatter_fieldset(this%c_ptr(),global%c_ptr(),local%c_ptr())
 end subroutine
 
 subroutine norm_scalar(this,field,norm,rank)
@@ -154,7 +154,7 @@ subroutine norm_scalar(this,field,norm,rank)
   real(c_double) :: norm_array(1)
   opt_rank = 0
   if( present(rank) ) opt_rank = rank
-  call atlas__SpectralFunctionSpace__norm(this%CPTR_PGIBUG_A,field%CPTR_PGIBUG_A,norm_array,opt_rank)
+  call atlas__SpectralFunctionSpace__norm(this%c_ptr(),field%c_ptr(),norm_array,opt_rank)
   norm = norm_array(1)
 end subroutine
 
@@ -168,7 +168,7 @@ subroutine norm_array(this,field,norm,rank)
   integer :: opt_rank
   opt_rank = 0
   if( present(rank) ) opt_rank = rank
-  call atlas__SpectralFunctionSpace__norm(this%CPTR_PGIBUG_A,field%CPTR_PGIBUG_A,norm,opt_rank)
+  call atlas__SpectralFunctionSpace__norm(this%c_ptr(),field%c_ptr(),norm,opt_rank)
 end subroutine
 
 function levels( this )

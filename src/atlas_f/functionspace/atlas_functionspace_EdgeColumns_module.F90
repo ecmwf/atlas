@@ -116,7 +116,7 @@ function constructor(mesh,halo,levels) result(this)
   if( present(halo) )   call config%set("halo",halo)
   if( present(levels) ) call config%set("levels",levels)
   call this%reset_c_ptr( atlas__fs__EdgeColumns__new( &
-    mesh%CPTR_PGIBUG_A,config%CPTR_PGIBUG_B) )
+    mesh%c_ptr(),config%c_ptr()) )
   call config%final()
   call this%return()
 end function
@@ -127,7 +127,7 @@ function nb_edges(this)
   use atlas_functionspace_EdgeColumns_c_binding
   integer :: nb_edges
   class(atlas_functionspace_EdgeColumns), intent(in) :: this
-  nb_edges = atlas__fs__EdgeColumns__nb_edges(this%CPTR_PGIBUG_A)
+  nb_edges = atlas__fs__EdgeColumns__nb_edges(this%c_ptr())
 end function
 
 !------------------------------------------------------------------------------
@@ -136,7 +136,7 @@ function mesh(this)
   use atlas_functionspace_EdgeColumns_c_binding
   type(atlas_Mesh) :: mesh
   class(atlas_functionspace_EdgeColumns), intent(in) :: this
-  call mesh%reset_c_ptr( atlas__fs__EdgeColumns__mesh(this%CPTR_PGIBUG_A) )
+  call mesh%reset_c_ptr( atlas__fs__EdgeColumns__mesh(this%c_ptr()) )
   call mesh%return()
 end function
 
@@ -146,7 +146,7 @@ function edges(this)
   use atlas_functionspace_EdgeColumns_c_binding
   type(atlas_mesh_Edges) :: edges
   class(atlas_functionspace_EdgeColumns), intent(in) :: this
-  call edges%reset_c_ptr( atlas__fs__EdgeColumns__edges(this%CPTR_PGIBUG_A) )
+  call edges%reset_c_ptr( atlas__fs__EdgeColumns__edges(this%c_ptr()) )
   call edges%return()
 end function
 
@@ -156,7 +156,7 @@ function get_gather(this) result(gather)
   use atlas_functionspace_EdgeColumns_c_binding
   type(atlas_GatherScatter) :: gather
   class(atlas_functionspace_EdgeColumns), intent(in) :: this
-  call gather%reset_c_ptr( atlas__fs__EdgeColumns__get_gather(this%CPTR_PGIBUG_A) )
+  call gather%reset_c_ptr( atlas__fs__EdgeColumns__get_gather(this%c_ptr()) )
 !   call gather%return()
 end function
 
@@ -166,7 +166,7 @@ function get_scatter(this) result(scatter)
   use atlas_functionspace_EdgeColumns_c_binding
   type(atlas_GatherScatter) :: scatter
   class(atlas_functionspace_EdgeColumns), intent(in) :: this
-  call scatter%reset_c_ptr( atlas__fs__EdgeColumns__get_scatter(this%CPTR_PGIBUG_A) )
+  call scatter%reset_c_ptr( atlas__fs__EdgeColumns__get_scatter(this%c_ptr()) )
 !   call scatter%return()
 end function
 
@@ -177,8 +177,8 @@ subroutine gather_fieldset(this,local,global)
   class(atlas_functionspace_EdgeColumns), intent(in) :: this
   type(atlas_FieldSet), intent(in) :: local
   type(atlas_FieldSet), intent(inout) :: global
-  call atlas__fs__EdgeColumns__gather_fieldset(this%CPTR_PGIBUG_A, &
-    local%CPTR_PGIBUG_A,global%CPTR_PGIBUG_A)
+  call atlas__fs__EdgeColumns__gather_fieldset(this%c_ptr(), &
+    local%c_ptr(),global%c_ptr())
 end subroutine
 
 !------------------------------------------------------------------------------
@@ -188,7 +188,7 @@ subroutine gather_field(this,local,global)
   class(atlas_functionspace_EdgeColumns), intent(in) :: this
   type(atlas_Field), intent(in) :: local
   type(atlas_Field), intent(inout) :: global
-  call atlas__fs__EdgeColumns__gather_field(this%CPTR_PGIBUG_A,local%CPTR_PGIBUG_A,global%CPTR_PGIBUG_A)
+  call atlas__fs__EdgeColumns__gather_field(this%c_ptr(),local%c_ptr(),global%c_ptr())
 end subroutine
 
 !------------------------------------------------------------------------------
@@ -198,8 +198,8 @@ subroutine scatter_fieldset(this,global,local)
   class(atlas_functionspace_EdgeColumns), intent(in) :: this
   type(atlas_FieldSet), intent(in) :: global
   type(atlas_FieldSet), intent(inout) :: local
-  call atlas__fs__EdgeColumns__scatter_fieldset(this%CPTR_PGIBUG_A, &
-    global%CPTR_PGIBUG_A,local%CPTR_PGIBUG_A)
+  call atlas__fs__EdgeColumns__scatter_fieldset(this%c_ptr(), &
+    global%c_ptr(),local%c_ptr())
 end subroutine
 
 !------------------------------------------------------------------------------
@@ -209,8 +209,8 @@ subroutine scatter_field(this,global,local)
   class(atlas_functionspace_EdgeColumns), intent(in) :: this
   type(atlas_Field), intent(in) :: global
   type(atlas_Field), intent(inout) :: local
-  call atlas__fs__EdgeColumns__scatter_field(this%CPTR_PGIBUG_A, &
-    global%CPTR_PGIBUG_A,local%CPTR_PGIBUG_A)
+  call atlas__fs__EdgeColumns__scatter_field(this%c_ptr(), &
+    global%c_ptr(),local%c_ptr())
 end subroutine
 
 !------------------------------------------------------------------------------
@@ -219,7 +219,7 @@ function get_halo_exchange(this) result(halo_exchange)
   use atlas_functionspace_EdgeColumns_c_binding
   type(atlas_HaloExchange) :: halo_exchange
   class(atlas_functionspace_EdgeColumns), intent(in) :: this
-  call halo_exchange%reset_c_ptr( atlas__fs__EdgeColumns__get_halo_exchange(this%CPTR_PGIBUG_A) )
+  call halo_exchange%reset_c_ptr( atlas__fs__EdgeColumns__get_halo_exchange(this%c_ptr()) )
 !   call halo_exchange%return()
 end function
 
@@ -229,7 +229,7 @@ function get_checksum(this) result(checksum)
   use atlas_functionspace_EdgeColumns_c_binding
   type(atlas_Checksum) :: checksum
   class(atlas_functionspace_EdgeColumns), intent(in) :: this
-  call checksum%reset_c_ptr( atlas__fs__EdgeColumns__get_checksum(this%CPTR_PGIBUG_A) )
+  call checksum%reset_c_ptr( atlas__fs__EdgeColumns__get_checksum(this%c_ptr()) )
 !   call checksum%return()
 end function
 
@@ -242,8 +242,8 @@ function checksum_fieldset(this,fieldset) result(checksum)
   type(atlas_FieldSet), intent(in) :: fieldset
   type(c_ptr) :: checksum_cptr
   integer :: checksum_size, checksum_allocated
-  call atlas__fs__EdgeColumns__checksum_fieldset(this%CPTR_PGIBUG_A, &
-    fieldset%CPTR_PGIBUG_A,checksum_cptr,checksum_size,checksum_allocated)
+  call atlas__fs__EdgeColumns__checksum_fieldset(this%c_ptr(), &
+    fieldset%c_ptr(),checksum_cptr,checksum_size,checksum_allocated)
   allocate(character(len=checksum_size) :: checksum )
   checksum = c_ptr_to_string(checksum_cptr)
   if( checksum_allocated == 1 ) call c_ptr_free(checksum_cptr)
@@ -258,8 +258,8 @@ function checksum_field(this,field) result(checksum)
   type(atlas_Field), intent(in) :: field
   type(c_ptr) :: checksum_cptr
   integer :: checksum_size, checksum_allocated
-  call atlas__fs__EdgeColumns__checksum_field(this%CPTR_PGIBUG_A, &
-    field%CPTR_PGIBUG_A,checksum_cptr,checksum_size,checksum_allocated)
+  call atlas__fs__EdgeColumns__checksum_field(this%c_ptr(), &
+    field%c_ptr(),checksum_cptr,checksum_size,checksum_allocated)
   allocate(character(len=checksum_size) :: checksum )
   checksum = c_ptr_to_string(checksum_cptr)
   if( checksum_allocated == 1 ) call c_ptr_free(checksum_cptr)

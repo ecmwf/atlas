@@ -81,7 +81,7 @@ function atlas_MeshGenerator__config(config) result(this)
        meshgenerator_type='structured'
     endif
     call this%reset_c_ptr( atlas__MeshGenerator__create( &
-      c_str(meshgenerator_type),config%CPTR_PGIBUG_B) )
+      c_str(meshgenerator_type),config%c_ptr()) )
   else
     call this%reset_c_ptr( atlas__MeshGenerator__create_noconfig(c_str('structured')) )
   endif
@@ -100,10 +100,10 @@ function atlas_MeshGenerator__generate(this,grid,distribution) result(mesh)
    call mesh%reset_c_ptr() ! Somehow needed with PGI/16.7 and build-type "bit"
    if( present(distribution) ) then
      mesh = atlas_Mesh( atlas__MeshGenerator__generate__grid_griddist( &
-       this%CPTR_PGIBUG_A,grid%CPTR_PGIBUG_A,distribution%CPTR_PGIBUG_A) )
+       this%c_ptr(),grid%c_ptr(),distribution%c_ptr()) )
    else
      mesh = atlas_Mesh( atlas__MeshGenerator__generate__grid( &
-       this%CPTR_PGIBUG_A,grid%CPTR_PGIBUG_A) )
+       this%c_ptr(),grid%c_ptr()) )
    endif
    call mesh%return()
 end function
@@ -119,7 +119,7 @@ function atlas_MeshGenerator__generate_partitioner(this,grid,partitioner) result
    class(atlas_Partitioner), intent(in) :: partitioner
    call mesh%reset_c_ptr() ! Somehow needed with PGI/16.7 and build-type "bit"
    mesh = atlas_Mesh( atlas__MeshGenerator__generate__grid_partitioner( &
-       this%CPTR_PGIBUG_A,grid%CPTR_PGIBUG_A,partitioner%CPTR_PGIBUG_A) )
+       this%c_ptr(),grid%c_ptr(),partitioner%c_ptr()) )
    call mesh%return()
 end function
 

@@ -118,7 +118,7 @@ function constructor(mesh,halo,levels) result(this)
   config = atlas_Config()
   if( present(halo) )   call config%set("halo",halo)
   if( present(levels) ) call config%set("levels",levels)
-  call this%reset_c_ptr( atlas__CellsFunctionSpace__new(mesh%CPTR_PGIBUG_A,config%CPTR_PGIBUG_B) )
+  call this%reset_c_ptr( atlas__CellsFunctionSpace__new(mesh%c_ptr(),config%c_ptr()) )
   call config%final()
   call this%return()
 end function
@@ -129,7 +129,7 @@ function nb_cells(this)
   use atlas_functionspace_CellColumns_c_binding
   integer :: nb_cells
   class(atlas_functionspace_CellColumns), intent(in) :: this
-  nb_cells = atlas__CellsFunctionSpace__nb_cells(this%CPTR_PGIBUG_A)
+  nb_cells = atlas__CellsFunctionSpace__nb_cells(this%c_ptr())
 end function
 
 !------------------------------------------------------------------------------
@@ -138,7 +138,7 @@ function mesh(this)
   use atlas_functionspace_CellColumns_c_binding
   type(atlas_Mesh) :: mesh
   class(atlas_functionspace_CellColumns), intent(in) :: this
-  call mesh%reset_c_ptr( atlas__CellsFunctionSpace__mesh(this%CPTR_PGIBUG_A) )
+  call mesh%reset_c_ptr( atlas__CellsFunctionSpace__mesh(this%c_ptr()) )
   call mesh%return()
 end function
 
@@ -148,7 +148,7 @@ function cells(this)
   use atlas_functionspace_CellColumns_c_binding
   type(atlas_mesh_Cells) :: cells
   class(atlas_functionspace_CellColumns), intent(in) :: this
-  call cells%reset_c_ptr( atlas__CellsFunctionSpace__cells(this%CPTR_PGIBUG_A) )
+  call cells%reset_c_ptr( atlas__CellsFunctionSpace__cells(this%c_ptr()) )
   call cells%return()
 end function
 
@@ -158,7 +158,7 @@ function get_gather(this) result(gather)
   use atlas_functionspace_CellColumns_c_binding
   type(atlas_GatherScatter) :: gather
   class(atlas_functionspace_CellColumns), intent(in) :: this
-  call gather%reset_c_ptr( atlas__CellsFunctioNSpace__get_gather(this%CPTR_PGIBUG_A) )
+  call gather%reset_c_ptr( atlas__CellsFunctioNSpace__get_gather(this%c_ptr()) )
 end function
 
 !------------------------------------------------------------------------------
@@ -167,7 +167,7 @@ function get_scatter(this) result(gather)
   use atlas_functionspace_CellColumns_c_binding
   type(atlas_GatherScatter) :: gather
   class(atlas_functionspace_CellColumns), intent(in) :: this
-  call gather%reset_c_ptr( atlas__CellsFunctioNSpace__get_scatter(this%CPTR_PGIBUG_A) )
+  call gather%reset_c_ptr( atlas__CellsFunctioNSpace__get_scatter(this%c_ptr()) )
 end function
 
 !------------------------------------------------------------------------------
@@ -177,7 +177,7 @@ subroutine gather_fieldset(this,local,global)
   class(atlas_functionspace_CellColumns), intent(in) :: this
   type(atlas_FieldSet), intent(in) :: local
   type(atlas_FieldSet), intent(inout) :: global
-  call atlas__CellsFunctionSpace__gather_fieldset(this%CPTR_PGIBUG_A,local%CPTR_PGIBUG_A,global%CPTR_PGIBUG_A)
+  call atlas__CellsFunctionSpace__gather_fieldset(this%c_ptr(),local%c_ptr(),global%c_ptr())
 end subroutine
 
 !------------------------------------------------------------------------------
@@ -187,7 +187,7 @@ subroutine gather_field(this,local,global)
   class(atlas_functionspace_CellColumns), intent(in) :: this
   type(atlas_Field), intent(in) :: local
   type(atlas_Field), intent(inout) :: global
-  call atlas__CellsFunctionSpace__gather_field(this%CPTR_PGIBUG_A,local%CPTR_PGIBUG_A,global%CPTR_PGIBUG_A)
+  call atlas__CellsFunctionSpace__gather_field(this%c_ptr(),local%c_ptr(),global%c_ptr())
 end subroutine
 
 !------------------------------------------------------------------------------
@@ -197,7 +197,7 @@ subroutine scatter_fieldset(this,global,local)
   class(atlas_functionspace_CellColumns), intent(in) :: this
   type(atlas_FieldSet), intent(in) :: global
   type(atlas_FieldSet), intent(inout) :: local
-  call atlas__CellsFunctionSpace__scatter_fieldset(this%CPTR_PGIBUG_A,global%CPTR_PGIBUG_A,local%CPTR_PGIBUG_A)
+  call atlas__CellsFunctionSpace__scatter_fieldset(this%c_ptr(),global%c_ptr(),local%c_ptr())
 end subroutine
 
 !------------------------------------------------------------------------------
@@ -207,7 +207,7 @@ subroutine scatter_field(this,global,local)
   class(atlas_functionspace_CellColumns), intent(in) :: this
   type(atlas_Field), intent(in) :: global
   type(atlas_Field), intent(inout) :: local
-  call atlas__CellsFunctionSpace__scatter_field(this%CPTR_PGIBUG_A,global%CPTR_PGIBUG_A,local%CPTR_PGIBUG_A)
+  call atlas__CellsFunctionSpace__scatter_field(this%c_ptr(),global%c_ptr(),local%c_ptr())
 end subroutine
 
 !------------------------------------------------------------------------------
@@ -216,7 +216,7 @@ function get_halo_exchange(this) result(halo_exchange)
   use atlas_functionspace_CellColumns_c_binding
   type(atlas_HaloExchange) :: halo_exchange
   class(atlas_functionspace_CellColumns), intent(in) :: this
-  call halo_exchange%reset_c_ptr( atlas__CellsFunctioNSpace__get_halo_exchange(this%CPTR_PGIBUG_A) )
+  call halo_exchange%reset_c_ptr( atlas__CellsFunctioNSpace__get_halo_exchange(this%c_ptr()) )
 end function
 
 !------------------------------------------------------------------------------
@@ -225,7 +225,7 @@ function get_checksum(this) result(checksum)
   use atlas_functionspace_CellColumns_c_binding
   type(atlas_Checksum) :: checksum
   class(atlas_functionspace_CellColumns), intent(in) :: this
-  call checksum%reset_c_ptr( atlas__CellsFunctioNSpace__get_checksum(this%CPTR_PGIBUG_A) )
+  call checksum%reset_c_ptr( atlas__CellsFunctioNSpace__get_checksum(this%c_ptr()) )
 end function
 
 !------------------------------------------------------------------------------
@@ -239,7 +239,7 @@ function checksum_fieldset(this,fieldset) result(checksum)
   type(c_ptr) :: checksum_cptr
   integer :: checksum_size, checksum_allocated
   call atlas__CellsFunctionSpace__checksum_fieldset( &
-    this%CPTR_PGIBUG_A,fieldset%CPTR_PGIBUG_A,checksum_cptr,checksum_size,checksum_allocated)
+    this%c_ptr(),fieldset%c_ptr(),checksum_cptr,checksum_size,checksum_allocated)
   allocate(character(len=checksum_size) :: checksum )
   checksum = c_ptr_to_string(checksum_cptr)
   if( checksum_allocated == 1 ) call c_ptr_free(checksum_cptr)
@@ -256,7 +256,7 @@ function checksum_field(this,field) result(checksum)
   type(c_ptr) :: checksum_cptr
   integer :: checksum_size, checksum_allocated
   call atlas__CellsFunctionSpace__checksum_field( &
-    this%CPTR_PGIBUG_A,field%CPTR_PGIBUG_A,checksum_cptr,checksum_size,checksum_allocated)
+    this%c_ptr(),field%c_ptr(),checksum_cptr,checksum_size,checksum_allocated)
   allocate(character(len=checksum_size) :: checksum )
   checksum = c_ptr_to_string(checksum_cptr)
   if( checksum_allocated == 1 ) call c_ptr_free(checksum_cptr)

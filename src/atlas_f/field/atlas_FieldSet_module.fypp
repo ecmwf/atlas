@@ -165,7 +165,7 @@ subroutine access_data_${dtype}$_r${rank}$_by_name(this, name, field)
   type(c_ptr) :: shape_cptr
   type(c_ptr) :: strides_cptr
   integer(c_int) :: rank
-  call atlas__FieldSet__data_${ctype}$_specf(this%CPTR_PGIBUG_A, c_str(name), field_cptr, rank, shape_cptr, strides_cptr)
+  call atlas__FieldSet__data_${ctype}$_specf(this%c_ptr(), c_str(name), field_cptr, rank, shape_cptr, strides_cptr)
   call array_c_to_f(field_cptr, rank, shape_cptr, strides_cptr, field)
 end subroutine
 subroutine access_data_${dtype}$_r${rank}$_by_idx(this, idx, field)
@@ -179,7 +179,7 @@ subroutine access_data_${dtype}$_r${rank}$_by_idx(this, idx, field)
   type(c_ptr) :: shape_cptr
   type(c_ptr) :: strides_cptr
   integer(c_int) :: rank
-  call atlas__FieldSet__data_${ctype}$_specf_by_idx(this%CPTR_PGIBUG_A, idx-1, field_cptr, rank, shape_cptr, strides_cptr)
+  call atlas__FieldSet__data_${ctype}$_specf_by_idx(this%c_ptr(), idx-1, field_cptr, rank, shape_cptr, strides_cptr)
   call array_c_to_f(field_cptr, rank, shape_cptr, strides_cptr, field)
 end subroutine
 subroutine access_data_${dtype}$_r${rank}$_slice_by_name(this, name, slice, iblk)
@@ -236,7 +236,7 @@ subroutine access_device_data_${dtype}$_r${rank}$_by_name(this, name, field)
   type(c_ptr) :: shape_cptr
   type(c_ptr) :: strides_cptr
   integer(c_int) :: rank
-  call atlas__FieldSet__device_data_${ctype}$_specf(this%CPTR_PGIBUG_A, c_str(name), field_cptr, rank, shape_cptr, strides_cptr)
+  call atlas__FieldSet__device_data_${ctype}$_specf(this%c_ptr(), c_str(name), field_cptr, rank, shape_cptr, strides_cptr)
   call array_c_to_f(field_cptr, rank, shape_cptr, strides_cptr, field)
 end subroutine
 
@@ -252,7 +252,7 @@ subroutine access_device_data_${dtype}$_r${rank}$_by_idx(this, idx, field)
   type(c_ptr) :: shape_cptr
   type(c_ptr) :: strides_cptr
   integer(c_int) :: rank
-  call atlas__FieldSet__device_data_${ctype}$_specf_by_idx(this%CPTR_PGIBUG_A, idx-1, field_cptr, rank, shape_cptr, strides_cptr)
+  call atlas__FieldSet__device_data_${ctype}$_specf_by_idx(this%c_ptr(), idx-1, field_cptr, rank, shape_cptr, strides_cptr)
   call array_c_to_f(field_cptr, rank, shape_cptr, strides_cptr, field)
 end subroutine
 
@@ -295,7 +295,7 @@ function FieldSet__name(this) result(fieldset_name)
   class(atlas_FieldSet), intent(in) :: this
   character(len=:), allocatable :: fieldset_name
   type(c_ptr) :: fieldset_name_c_str
-  fieldset_name_c_str = atlas__FieldSet__name(this%CPTR_PGIBUG_A)
+  fieldset_name_c_str = atlas__FieldSet__name(this%c_ptr())
   fieldset_name = c_ptr_to_string(fieldset_name_c_str)
 end function FieldSet__name
 
@@ -304,14 +304,14 @@ subroutine add_field(this,field)
   use atlas_Field_module, only: atlas_Field
   class(atlas_FieldSet), intent(in) :: this
   type(atlas_Field), intent(in) :: field
-  call atlas__FieldSet__add_field(this%CPTR_PGIBUG_A, field%CPTR_PGIBUG_A)
+  call atlas__FieldSet__add_field(this%c_ptr(), field%c_ptr())
 end subroutine
 
 subroutine add_fieldset(this,fset)
   use atlas_fieldset_c_binding
   class(atlas_FieldSet), intent(inout) :: this
   class(atlas_FieldSet), intent(in) :: fset
-  call atlas__FieldSet__add_fieldset(this%CPTR_PGIBUG_A, fset%CPTR_PGIBUG_A)
+  call atlas__FieldSet__add_fieldset(this%c_ptr(), fset%c_ptr())
 end subroutine
 
 function has(this,name) result(flag)
@@ -322,7 +322,7 @@ function has(this,name) result(flag)
   character(len=*), intent(in) :: name
   logical :: flag
   integer(c_int) :: rc
-  rc = atlas__FieldSet__has_field(this%CPTR_PGIBUG_A, c_str(name))
+  rc = atlas__FieldSet__has_field(this%c_ptr(), c_str(name))
   if( rc == 0 ) then
     flag = .False.
   else
@@ -335,7 +335,7 @@ function FieldSet__size(this) result(nb_fields)
   use atlas_fieldset_c_binding
   class(atlas_FieldSet), intent(in) :: this
   integer(ATLAS_KIND_IDX) :: nb_fields
-  nb_fields = atlas__FieldSet__size(this%CPTR_PGIBUG_A)
+  nb_fields = atlas__FieldSet__size(this%c_ptr())
 end function
 
 function field_by_name(this,name) result(field)
@@ -345,7 +345,7 @@ function field_by_name(this,name) result(field)
   class(atlas_FieldSet), intent(in) :: this
   character(len=*), intent(in) :: name
   type(atlas_Field) :: field
-  field = atlas_Field( atlas__FieldSet__field_by_name(this%CPTR_PGIBUG_A, c_str(name) ) )
+  field = atlas_Field( atlas__FieldSet__field_by_name(this%c_ptr(), c_str(name) ) )
   call field%return()
 end function
 
@@ -356,7 +356,7 @@ function field_by_idx_long(this,idx) result(field)
   class(atlas_FieldSet), intent(in) :: this
   integer(c_long), intent(in) :: idx
   type(atlas_Field) :: field
-  field = atlas_Field( atlas__FieldSet__field_by_idx(this%CPTR_PGIBUG_A, int(idx-1_c_long,ATLAS_KIND_IDX) ) ) ! C index
+  field = atlas_Field( atlas__FieldSet__field_by_idx(this%c_ptr(), int(idx-1_c_long,ATLAS_KIND_IDX) ) ) ! C index
   call field%return()
 end function
 
@@ -367,7 +367,7 @@ function field_by_idx_int(this,idx) result(field)
   class(atlas_FieldSet), intent(in) :: this
   integer(c_int), intent(in) :: idx
   type(atlas_Field) :: field
-  field = atlas_Field( atlas__FieldSet__field_by_idx(this%CPTR_PGIBUG_A, int(idx-1_c_int,ATLAS_KIND_IDX) ) ) ! C index
+  field = atlas_Field( atlas__FieldSet__field_by_idx(this%c_ptr(), int(idx-1_c_int,ATLAS_KIND_IDX) ) ) ! C index
   call field%return()
 end function
 
@@ -383,7 +383,7 @@ function shape_array_by_name(this, name) result(shape)
   type(c_ptr) :: shape_c_ptr
   integer, pointer :: shape_f_ptr(:)
   integer(c_int) :: field_rank
-  call atlas__FieldSet__shapef(this%CPTR_PGIBUG_A, c_str(name), shape_c_ptr, field_rank)
+  call atlas__FieldSet__shapef(this%c_ptr(), c_str(name), shape_c_ptr, field_rank)
   call c_f_pointer ( shape_c_ptr , shape_f_ptr , (/field_rank/) )
   allocate( shape(field_rank) )
   shape(:) = shape_f_ptr(:)
@@ -403,7 +403,7 @@ function shape_idx_by_name(this, name, dim_idx) result(shape_val)
   type(c_ptr) :: shape_c_ptr
   integer, pointer :: shape_f_ptr(:)
   integer(c_int) :: field_rank
-  call atlas__FieldSet__shapef(this%CPTR_PGIBUG_A, c_str(name), shape_c_ptr, field_rank)
+  call atlas__FieldSet__shapef(this%c_ptr(), c_str(name), shape_c_ptr, field_rank)
   call c_f_pointer ( shape_c_ptr , shape_f_ptr , (/field_rank/) )
   @:ATLAS_ASSERT( dim_idx <= field_rank )
   shape_val = shape_f_ptr(dim_idx)
@@ -420,7 +420,7 @@ function shape_array_by_idx(this, idx) result(shape)
   type(c_ptr) :: shape_c_ptr
   integer, pointer :: shape_f_ptr(:)
   integer(c_int) :: field_rank
-  call atlas__FieldSet__shapef_by_idx(this%CPTR_PGIBUG_A, idx-1, shape_c_ptr, field_rank)
+  call atlas__FieldSet__shapef_by_idx(this%c_ptr(), idx-1, shape_c_ptr, field_rank)
   call c_f_pointer ( shape_c_ptr , shape_f_ptr , (/field_rank/) )
   allocate( shape(field_rank) )
   shape(:) = shape_f_ptr(:)
@@ -438,7 +438,7 @@ function shape_idx_by_idx(this, idx, dim_idx) result(shape_val)
   type(c_ptr) :: shape_c_ptr
   integer, pointer :: shape_f_ptr(:)
   integer(c_int) :: field_rank
-  call atlas__FieldSet__shapef_by_idx(this%CPTR_PGIBUG_A, idx-1, shape_c_ptr, field_rank)
+  call atlas__FieldSet__shapef_by_idx(this%c_ptr(), idx-1, shape_c_ptr, field_rank)
   call c_f_pointer ( shape_c_ptr , shape_f_ptr , (/field_rank/) )
   @:ATLAS_ASSERT( dim_idx <= field_rank )
   shape_val = shape_f_ptr(dim_idx)
@@ -456,7 +456,7 @@ subroutine halo_exchange(this,on_device)
   if( present(on_device) ) then
     if( on_device ) on_device_int = 1
   endif
-  call atlas__FieldSet__halo_exchange(this%CPTR_PGIBUG_A, on_device_int)
+  call atlas__FieldSet__halo_exchange(this%c_ptr(), on_device_int)
 end subroutine
 
 !-------------------------------------------------------------------------------
@@ -473,7 +473,7 @@ subroutine set_host_needs_update_value(this, value)
       value_int = 0
     end if
   end if
-  call atlas__FieldSet__set_host_needs_update(this%CPTR_PGIBUG_A, value_int)
+  call atlas__FieldSet__set_host_needs_update(this%c_ptr(), value_int)
 end subroutine
 
 !-------------------------------------------------------------------------------
@@ -492,7 +492,7 @@ subroutine set_host_needs_update_idx(this, field_indices, value)
     end if
   end if
   do i = 1, size(field_indices)
-    call atlas__FieldSet__set_host_needs_update_by_idx(this%CPTR_PGIBUG_A, field_indices(i)-1, value_int)
+    call atlas__FieldSet__set_host_needs_update_by_idx(this%c_ptr(), field_indices(i)-1, value_int)
   end do
 end subroutine
 
@@ -513,7 +513,7 @@ subroutine set_host_needs_update_name(this, field_names, value)
     end if
   end if
   do i = 1, size(field_names)
-    call atlas__FieldSet__set_host_needs_update_name(this%CPTR_PGIBUG_A, c_str(field_names(i)), value_int)
+    call atlas__FieldSet__set_host_needs_update_name(this%c_ptr(), c_str(field_names(i)), value_int)
   end do
 end subroutine
 
@@ -531,7 +531,7 @@ subroutine set_device_needs_update_value(this, value)
       value_int = 0
     end if
   end if
-  call atlas__FieldSet__set_device_needs_update(this%CPTR_PGIBUG_A, value_int)
+  call atlas__FieldSet__set_device_needs_update(this%c_ptr(), value_int)
 end subroutine
 
 !-------------------------------------------------------------------------------
@@ -550,7 +550,7 @@ subroutine set_device_needs_update_idx(this, field_indices, value)
     end if
   end if
   do i = 1, size(field_indices)
-    call atlas__FieldSet__set_device_needs_update_by_idx(this%CPTR_PGIBUG_A, field_indices(i)-1, value_int)
+    call atlas__FieldSet__set_device_needs_update_by_idx(this%c_ptr(), field_indices(i)-1, value_int)
   end do
 end subroutine
 
@@ -571,7 +571,7 @@ subroutine set_device_needs_update_name(this, field_names, value)
     end if
   end if
   do i = 1, size(field_names)
-    call atlas__FieldSet__set_device_needs_update_name(this%CPTR_PGIBUG_A, c_str(field_names(i)), value_int)
+    call atlas__FieldSet__set_device_needs_update_name(this%c_ptr(), c_str(field_names(i)), value_int)
   end do
 end subroutine
 
@@ -585,10 +585,10 @@ subroutine sync_host_device_idx(this, field_indices)
   integer(c_int) :: i
   if (present(field_indices)) then
     do i = 1, size(field_indices)
-      call atlas__FieldSet__sync_host_device_by_idx(this%CPTR_PGIBUG_A, field_indices(i)-1)
+      call atlas__FieldSet__sync_host_device_by_idx(this%c_ptr(), field_indices(i)-1)
     end do
   else
-    call atlas__FieldSet__sync_host_device(this%CPTR_PGIBUG_A)
+    call atlas__FieldSet__sync_host_device(this%c_ptr())
   end if
 end subroutine
 
@@ -602,7 +602,7 @@ subroutine sync_host_device_name(this, field_names)
   character(*), intent(in) :: field_names(:)
   integer(c_int) :: i
   do i = 1, size(field_names)
-    call atlas__FieldSet__sync_host_device_name(this%CPTR_PGIBUG_A, c_str(field_names(i)))
+    call atlas__FieldSet__sync_host_device_name(this%c_ptr(), c_str(field_names(i)))
   end do
 end subroutine
 
@@ -616,10 +616,10 @@ subroutine sync_host_idx(this, field_indices)
   integer(c_int) :: i
   if (present(field_indices)) then
     do i = 1, size(field_indices)
-      call atlas__FieldSet__sync_host_by_idx(this%CPTR_PGIBUG_A, field_indices(i)-1)
+      call atlas__FieldSet__sync_host_by_idx(this%c_ptr(), field_indices(i)-1)
     end do
   else
-    call atlas__FieldSet__sync_host(this%CPTR_PGIBUG_A)
+    call atlas__FieldSet__sync_host(this%c_ptr())
   end if
 end subroutine
 
@@ -633,7 +633,7 @@ subroutine sync_host_name(this, field_names)
   character(*), intent(in) :: field_names(:)
   integer(c_int) :: i
   do i = 1, size(field_names)
-    call atlas__FieldSet__sync_host_name(this%CPTR_PGIBUG_A, c_str(field_names(i)))
+    call atlas__FieldSet__sync_host_name(this%c_ptr(), c_str(field_names(i)))
   end do
 end subroutine
 
@@ -647,10 +647,10 @@ subroutine sync_device_idx(this, field_indices)
   integer(c_int) :: i
   if (present(field_indices)) then
     do i = 1, size(field_indices)
-      call atlas__FieldSet__sync_device_by_idx(this%CPTR_PGIBUG_A, field_indices(i)-1)
+      call atlas__FieldSet__sync_device_by_idx(this%c_ptr(), field_indices(i)-1)
     end do
   else
-    call atlas__FieldSet__sync_device(this%CPTR_PGIBUG_A)
+    call atlas__FieldSet__sync_device(this%c_ptr())
   end if
 end subroutine
 
@@ -664,7 +664,7 @@ subroutine sync_device_name(this, field_names)
   character(*), intent(in) :: field_names(:)
   integer(c_int) :: i
   do i = 1, size(field_names)
-    call atlas__FieldSet__sync_device_name(this%CPTR_PGIBUG_A, c_str(field_names(i)))
+    call atlas__FieldSet__sync_device_name(this%c_ptr(), c_str(field_names(i)))
   end do
 end subroutine
 
@@ -678,10 +678,10 @@ subroutine allocate_device_idx(this, field_indices)
   integer(c_int) :: i
   if (present(field_indices)) then
     do i = 1, size(field_indices)
-      call atlas__FieldSet__allocate_device_by_idx(this%CPTR_PGIBUG_A, field_indices(i)-1)
+      call atlas__FieldSet__allocate_device_by_idx(this%c_ptr(), field_indices(i)-1)
     end do
   else
-    call atlas__FieldSet__allocate_device(this%CPTR_PGIBUG_A)
+    call atlas__FieldSet__allocate_device(this%c_ptr())
   end if
 end subroutine
 
@@ -695,7 +695,7 @@ subroutine allocate_device_name(this, field_names)
   character(*), intent(in) :: field_names(:)
   integer(c_int) :: i
   do i = 1, size(field_names)
-    call atlas__FieldSet__allocate_device_name(this%CPTR_PGIBUG_A, c_str(field_names(i)))
+    call atlas__FieldSet__allocate_device_name(this%c_ptr(), c_str(field_names(i)))
   end do
 end subroutine
 
@@ -709,10 +709,10 @@ subroutine update_device_idx(this, field_indices)
   integer(c_int) :: i
   if (present(field_indices)) then
     do i = 1, size(field_indices)
-      call atlas__FieldSet__update_device_by_idx(this%CPTR_PGIBUG_A, field_indices(i)-1)
+      call atlas__FieldSet__update_device_by_idx(this%c_ptr(), field_indices(i)-1)
     end do
   else
-    call atlas__FieldSet__update_device(this%CPTR_PGIBUG_A)
+    call atlas__FieldSet__update_device(this%c_ptr())
   end if
 end subroutine
 
@@ -726,7 +726,7 @@ subroutine update_device_name(this, field_names)
   character(*), intent(in) :: field_names(:)
   integer(c_int) :: i
   do i = 1, size(field_names)
-    call atlas__FieldSet__update_device_name(this%CPTR_PGIBUG_A, c_str(field_names(i)))
+    call atlas__FieldSet__update_device_name(this%c_ptr(), c_str(field_names(i)))
   end do
 end subroutine
 
@@ -740,10 +740,10 @@ subroutine update_host_idx(this, field_indices)
   integer(c_int) :: i
   if (present(field_indices)) then
     do i = 1, size(field_indices)
-      call atlas__FieldSet__update_host_by_idx(this%CPTR_PGIBUG_A, field_indices(i)-1)
+      call atlas__FieldSet__update_host_by_idx(this%c_ptr(), field_indices(i)-1)
     end do
   else
-    call atlas__FieldSet__update_host(this%CPTR_PGIBUG_A)
+    call atlas__FieldSet__update_host(this%c_ptr())
   end if
 end subroutine
 
@@ -757,7 +757,7 @@ subroutine update_host_name(this, field_names)
   character(*), intent(in) :: field_names(:)
   integer(c_int) :: i
   do i = 1, size(field_names)
-    call atlas__FieldSet__update_host_name(this%CPTR_PGIBUG_A, c_str(field_names(i)))
+    call atlas__FieldSet__update_host_name(this%c_ptr(), c_str(field_names(i)))
   end do
 end subroutine
 
@@ -771,10 +771,10 @@ subroutine deallocate_device_idx(this, field_indices)
   integer(c_int) :: i
   if (present(field_indices)) then
     do i = 1, size(field_indices)
-      call atlas__FieldSet__deallocate_device_by_idx(this%CPTR_PGIBUG_A, field_indices(i)-1)
+      call atlas__FieldSet__deallocate_device_by_idx(this%c_ptr(), field_indices(i)-1)
     end do
   else
-    call atlas__FieldSet__deallocate_device(this%CPTR_PGIBUG_A)
+    call atlas__FieldSet__deallocate_device(this%c_ptr())
   end if
 end subroutine
 
@@ -788,7 +788,7 @@ subroutine deallocate_device_name(this, field_names)
   character(*), intent(in) :: field_names(:)
   integer(c_int) :: i
   do i = 1, size(field_names)
-    call atlas__FieldSet__deallocate_device_name(this%CPTR_PGIBUG_A, c_str(field_names(i)))
+    call atlas__FieldSet__deallocate_device_name(this%c_ptr(), c_str(field_names(i)))
   end do
 end subroutine
 
@@ -809,7 +809,7 @@ subroutine set_dirty(this,value)
   else
       value_int = 1
   endif
-  call atlas__FieldSet__set_dirty(this%CPTR_PGIBUG_A, value_int)
+  call atlas__FieldSet__set_dirty(this%c_ptr(), value_int)
 end subroutine
 
 !-------------------------------------------------------------------------------

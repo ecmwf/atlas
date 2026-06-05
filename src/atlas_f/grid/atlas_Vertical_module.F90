@@ -117,7 +117,7 @@ function z( this )
   use atlas_vertical_c_binding
   type(atlas_Field) :: z
   class(atlas_Vertical), intent(in) :: this
-  z = atlas_Field( atlas__Vertical__z( this%CPTR_PGIBUG_B ) )
+  z = atlas_Field( atlas__Vertical__z( this%c_ptr() ) )
   call z%return()
 end function
 
@@ -128,7 +128,7 @@ function vsize( this )
   use, intrinsic :: iso_c_binding, only : c_int
   integer(c_int) :: vsize
   class(atlas_Vertical), intent(in) :: this
-  vsize = atlas__Vertical__size( this%CPTR_PGIBUG_B )
+  vsize = atlas__Vertical__size( this%c_ptr() )
 end function
 
 ! ----------------------------------------------------------------------------------------

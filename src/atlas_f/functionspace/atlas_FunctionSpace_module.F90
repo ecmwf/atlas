@@ -97,7 +97,7 @@ function atlas_FunctionSpace__name(this) result(name)
   character(len=:), allocatable :: name
   type(c_ptr) :: name_c_str
   integer :: size
-  call atlas__FunctionSpace__name(this%CPTR_PGIBUG_A, name_c_str, size )
+  call atlas__FunctionSpace__name(this%c_ptr(), name_c_str, size )
   name = c_ptr_to_string(name_c_str)
   call c_ptr_free(name_c_str)
 end function
@@ -131,7 +131,7 @@ function create_field_args(this,kind,name,levels,variables,type,alignment,global
   if( present(type) )      call options%set("type",type)
   if( present(alignment) ) call options%set("alignment",alignment)
 
-  field = atlas_Field( atlas__FunctionSpace__create_field( this%CPTR_PGIBUG_A, options%CPTR_PGIBUG_B ) )
+  field = atlas_Field( atlas__FunctionSpace__create_field( this%c_ptr(), options%c_ptr() ) )
 
   call field%return()
   call options%final()
@@ -158,7 +158,7 @@ function create_field_template(this,template,name,global,owner) result(field)
   if( present(global) )    call options%set("global",global)
 
   field = atlas_Field( atlas__FunctionSpace__create_field_template( &
-    & this%CPTR_PGIBUG_A, template%CPTR_PGIBUG_A,options%CPTR_PGIBUG_B) )
+    & this%c_ptr(), template%c_ptr(),options%c_ptr()) )
 
   call options%final()
 
@@ -171,7 +171,7 @@ subroutine halo_exchange_fieldset(this,fieldset)
   use atlas_functionspace_c_binding
   class(atlas_Functionspace), intent(in) :: this
   type(atlas_FieldSet), intent(inout) :: fieldset
-  call atlas__FunctionSpace__halo_exchange_fieldset(this%CPTR_PGIBUG_A,fieldset%CPTR_PGIBUG_A)
+  call atlas__FunctionSpace__halo_exchange_fieldset(this%c_ptr(),fieldset%c_ptr())
 end subroutine
 
 !------------------------------------------------------------------------------
@@ -180,7 +180,7 @@ subroutine halo_exchange_field(this,field)
   use atlas_functionspace_c_binding
   class(atlas_Functionspace), intent(in) :: this
   type(atlas_Field), intent(inout) :: field
-  call atlas__FunctionSpace__halo_exchange_field(this%CPTR_PGIBUG_A,field%CPTR_PGIBUG_A)
+  call atlas__FunctionSpace__halo_exchange_field(this%c_ptr(),field%c_ptr())
 end subroutine
 
 
@@ -190,7 +190,7 @@ subroutine adjoint_halo_exchange_fieldset(this,fieldset)
   use atlas_functionspace_c_binding
   class(atlas_Functionspace), intent(in) :: this
   type(atlas_FieldSet), intent(inout) :: fieldset
-  call atlas__FunctionSpace__adjoint_halo_exchange_fieldset(this%CPTR_PGIBUG_A,fieldset%CPTR_PGIBUG_A)
+  call atlas__FunctionSpace__adjoint_halo_exchange_fieldset(this%c_ptr(),fieldset%c_ptr())
 end subroutine
 
 !------------------------------------------------------------------------------
@@ -199,7 +199,7 @@ subroutine adjoint_halo_exchange_field(this,field)
   use atlas_functionspace_c_binding
   class(atlas_Functionspace), intent(in) :: this
   type(atlas_Field), intent(inout) :: field
-  call atlas__FunctionSpace__adjoint_halo_exchange_field(this%CPTR_PGIBUG_A,field%CPTR_PGIBUG_A)
+  call atlas__FunctionSpace__adjoint_halo_exchange_field(this%c_ptr(),field%c_ptr())
 end subroutine
 
 !------------------------------------------------------------------------------
@@ -229,7 +229,7 @@ function deprecated_create_field_1(this,name,kind,levels,vars) result(field)
   opt_variables = sum(vars)
   call options%set("variables",opt_variables)
 
-  field = atlas_Field( atlas__FunctionSpace__create_field( this%CPTR_PGIBUG_A, options%CPTR_PGIBUG_B ) )
+  field = atlas_Field( atlas__FunctionSpace__create_field( this%c_ptr(), options%c_ptr() ) )
 
   call options%final()
 
@@ -252,7 +252,7 @@ function deprecated_create_field_2(this,require_name,kind,levels) result(field)
   call options%set("name",require_name)
   call options%set("levels",levels)
 
-  field = atlas_Field( atlas__FunctionSpace__create_field( this%CPTR_PGIBUG_A, options%CPTR_PGIBUG_B ) )
+  field = atlas_Field( atlas__FunctionSpace__create_field( this%c_ptr(), options%c_ptr() ) )
   call options%final()
 
   call field%return()

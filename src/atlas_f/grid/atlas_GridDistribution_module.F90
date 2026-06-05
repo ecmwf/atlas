@@ -100,7 +100,7 @@ function atlas_GridDistribution__ctor_Grid_Config( grid, config ) result(this)
   type(atlas_GridDistribution) :: this
   class(atlas_Grid), intent (in) :: grid
   type(atlas_Config), intent(in) :: config
-  call this%reset_c_ptr( atlas__GridDistribution__new__Grid_Config(grid%CPTR_PGIBUG_A, config%CPTR_PGIBUG_B) )
+  call this%reset_c_ptr( atlas__GridDistribution__new__Grid_Config(grid%c_ptr(), config%c_ptr()) )
   call this%return()
 end function
 
@@ -111,7 +111,7 @@ function atlas_GridDistribution__ctor_Grid_Partitioner( grid, partitioner ) resu
   type(atlas_GridDistribution) :: this
   class(atlas_Grid), intent (in) :: grid
   class(fckit_owned_object), intent(in) :: partitioner ! cannot use atlas_Partitioner as it would cause cyclic module dependencies
-  call this%reset_c_ptr( atlas__GridDistribution__new__Grid_Partitioner(grid%CPTR_PGIBUG_A, partitioner%CPTR_PGIBUG_A) )
+  call this%reset_c_ptr( atlas__GridDistribution__new__Grid_Partitioner(grid%c_ptr(), partitioner%c_ptr()) )
   call this%return()
 end function
 
@@ -122,7 +122,7 @@ function partition_int32(this, i) result(partition)
   integer(c_int) :: partition
   class(atlas_GridDistribution), intent(in) :: this
   integer(c_int), intent(in) :: i
-  partition = atlas__GridDistribution__partition_int32(this%CPTR_PGIBUG_A, i-1)
+  partition = atlas__GridDistribution__partition_int32(this%c_ptr(), i-1)
 end function
 
 function partition_int64(this, i) result(partition)
@@ -131,7 +131,7 @@ function partition_int64(this, i) result(partition)
   integer(c_int) :: partition
   class(atlas_GridDistribution), intent(in) :: this
   integer(c_long), intent(in) :: i
-  partition = atlas__GridDistribution__partition_int64(this%CPTR_PGIBUG_A, i-1)
+  partition = atlas__GridDistribution__partition_int64(this%c_ptr(), i-1)
 end function
 
 
@@ -141,7 +141,7 @@ function atlas_GridDistribution__nb_pts(this) result(nb_pts)
   class(atlas_GridDistribution) :: this
   integer(kind=ATLAS_KIND_IDX), allocatable :: nb_pts(:)
   allocate (nb_pts (this%nb_partitions ()))
-  call atlas__GridDistribution__nb_pts(this%CPTR_PGIBUG_A, nb_pts)
+  call atlas__GridDistribution__nb_pts(this%c_ptr(), nb_pts)
 end function
 
 function atlas_GridDistribution__nb_partitions(this) result(nb_partitions)
@@ -149,7 +149,7 @@ function atlas_GridDistribution__nb_partitions(this) result(nb_partitions)
   use atlas_distribution_c_binding
   class(atlas_GridDistribution), intent(in) :: this
   integer(c_long) :: nb_partitions
-  nb_partitions = atlas__atlas__GridDistribution__nb_partitions(this%CPTR_PGIBUG_A)
+  nb_partitions = atlas__atlas__GridDistribution__nb_partitions(this%c_ptr())
 end function
 
 ! ----------------------------------------------------------------------------------------
