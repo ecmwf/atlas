@@ -29,9 +29,18 @@ namespace partitioner {
 
 namespace {
 
-bool isNearInt(double value) {
-    const double diff = value - std::floor(value);
-    return (diff <= std::numeric_limits<double>::epsilon() || diff >= (1.0 - std::numeric_limits<double>::epsilon()));
+bool isPerfectSquare(const atlas::idx_t value, atlas::idx_t& square_root) {
+    if (value <= 0) {
+        square_root = 0;
+        return false;
+    }
+
+    square_root = 1;
+    while ((square_root + 1) <= (value / (square_root + 1))) {
+        ++square_root;
+    }
+
+    return (value % square_root == 0) && (value / square_root == square_root);
 }
 
 bool isConfigSufficient(const eckit::Parametrisation& config) {
@@ -159,10 +168,10 @@ CubedSpherePartitioner::CubedSphere CubedSpherePartitioner::cubedsphere(const Gr
 
         for (std::size_t t = 0; t < 6; ++t) {
             if (cb.nproc[t] > 0) {
-                double sq = std::sqrt(static_cast<double>(cb.nproc[t]));
-                if (isNearInt(sq)) {
-                    cb.nprocx[t] = static_cast<idx_t>(std::round(sq));
-                    cb.nprocy[t] = static_cast<idx_t>(std::round(sq));
+                idx_t square_root = 0;
+                if (isPerfectSquare(cb.nproc[t], square_root)) {
+                    cb.nprocx[t] = square_root;
+                    cb.nprocy[t] = square_root;
                 }
                 else {
                     cb.nprocx[t] = 1;
@@ -194,7 +203,7 @@ CubedSpherePartitioner::CubedSphere CubedSpherePartitioner::cubedsphere(const Gr
         cb.nproc[0] = globalProcEndPE_[0] + 1;
         for (std::size_t t = 1; t < 6; ++t) {
             cb.nproc[t] = cb.globalProcStartPE[t] == cb.globalProcEndPE[t - 1]
-                              ? cb.nproc[t] = 0
+                              ? 0
                               : cb.globalProcEndPE[t] - cb.globalProcStartPE[t] + 1;
         }
     }
