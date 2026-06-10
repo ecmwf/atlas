@@ -41,6 +41,10 @@ void atlas__FunctionSpace__halo_exchange_field(const FunctionSpaceImpl* This, fi
 void atlas__FunctionSpace__halo_exchange_fieldset(const FunctionSpaceImpl* This, field::FieldSetImpl* fieldset);
 void atlas__FunctionSpace__adjoint_halo_exchange_field(const FunctionSpaceImpl* This, field::FieldImpl* field);
 void atlas__FunctionSpace__adjoint_halo_exchange_fieldset(const FunctionSpaceImpl* This, field::FieldSetImpl* fieldset);
+void atlas__FunctionSpace__checksum_field(const FunctionSpaceImpl* This, const field::FieldImpl* field,
+                                          char*& checksum, int& size);
+void atlas__FunctionSpace__checksum_fieldset(const FunctionSpaceImpl* This, const field::FieldSetImpl* fieldset,
+                                             char*& checksum, int& size);
 }
 
 //------------------------------------------------------------------------------------------------------

@@ -851,29 +851,6 @@ const parallel::Checksum* atlas__fs__CellColumns__get_checksum(const CellColumns
 
 // -----------------------------------------------------------------------------------
 
-void atlas__fs__CellColumns__checksum_fieldset(const CellColumns* This, const field::FieldSetImpl* fieldset,
-                                               char*& checksum, int& size, int& allocated) {
-    ATLAS_ASSERT(This);
-    ATLAS_ASSERT(fieldset);
-    std::string checksum_str(This->checksum(fieldset));
-    size      = static_cast<int>(checksum_str.size());
-    checksum  = new char[size + 1];
-    allocated = true;
-    std::strncpy(checksum, checksum_str.c_str(), size + 1);
-}
-
-// -----------------------------------------------------------------------------------
-
-void atlas__fs__CellColumns__checksum_field(const CellColumns* This, const field::FieldImpl* field, char*& checksum,
-                                            int& size, int& allocated) {
-    ATLAS_ASSERT(This);
-    ATLAS_ASSERT(field);
-    std::string checksum_str(This->checksum(field));
-    size      = static_cast<int>(checksum_str.size());
-    checksum  = new char[size + 1];
-    allocated = true;
-    std::strncpy(checksum, checksum_str.c_str(), size + 1);
-}
 }
 
 // -----------------------------------------------------------------------------------

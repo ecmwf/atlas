@@ -149,10 +149,6 @@ void atlas__fs__EdgeColumns__scatter_field(const EdgeColumns* This, const field:
                                            field::FieldImpl* local);
 const parallel::GatherScatter* atlas__fs__EdgeColumns__get_scatter(const EdgeColumns* This);
 
-void atlas__fs__EdgeColumns__checksum_fieldset(const EdgeColumns* This, const field::FieldSetImpl* fieldset,
-                                               char*& checksum, int& size, int& allocated);
-void atlas__fs__EdgeColumns__checksum_field(const EdgeColumns* This, const field::FieldImpl* field, char*& checksum,
-                                            int& size, int& allocated);
 const parallel::Checksum* atlas__fs__EdgeColumns__get_checksum(const EdgeColumns* This);
 }
 

@@ -155,10 +155,6 @@ void atlas__fs__CellColumns__scatter_field(const CellColumns* This, const field:
                                            field::FieldImpl* local);
 const parallel::GatherScatter* atlas__fs__CellColumns__get_scatter(const CellColumns* This);
 
-void atlas__fs__CellColumns__checksum_fieldset(const CellColumns* This, const field::FieldSetImpl* fieldset,
-                                               char*& checksum, int& size, int& allocated);
-void atlas__fs__CellColumns__checksum_field(const CellColumns* This, const field::FieldImpl* field, char*& checksum,
-                                            int& size, int& allocated);
 const parallel::Checksum* atlas__fs__CellColumns__get_checksum(const CellColumns* This);
 }
 

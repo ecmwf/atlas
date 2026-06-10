@@ -126,28 +126,6 @@ const parallel::Checksum* atlas__NodesFunctionSpace__get_checksum(const NodeColu
     return &This->checksum();
 }
 
-void atlas__NodesFunctionSpace__checksum_fieldset(const NodeColumns* This, const field::FieldSetImpl* fieldset,
-                                                  char*& checksum, int& size, int& allocated) {
-    ATLAS_ASSERT(This != nullptr, "Cannot access uninitialised atlas_functionspace_NodeColumns");
-    ATLAS_ASSERT(fieldset != nullptr, "Cannot access uninitialised atlas_FieldSet");
-    std::string checksum_str(This->checksum(fieldset));
-    size      = static_cast<int>(checksum_str.size());
-    checksum  = new char[size + 1];
-    allocated = true;
-    std::strncpy(checksum, checksum_str.c_str(), size + 1);
-}
-
-void atlas__NodesFunctionSpace__checksum_field(const NodeColumns* This, const field::FieldImpl* field, char*& checksum,
-                                               int& size, int& allocated) {
-    ATLAS_ASSERT(This != nullptr, "Cannot access uninitialised atlas_functionspace_NodeColumns");
-    ATLAS_ASSERT(field != nullptr, "Cannot access uninitialised atlas_Field");
-    std::string checksum_str(This->checksum(field));
-    size      = static_cast<int>(checksum_str.size());
-    checksum  = new char[size + 1];
-    allocated = true;
-    std::strncpy(checksum, checksum_str.c_str(), size + 1);
-}
-
 void atlas__NodesFunctionSpace__sum_double(const NodeColumns* This, const field::FieldImpl* field, double& sum,
                                            int& N) {
     ATLAS_ASSERT(This != nullptr, "Cannot access uninitialised atlas_functionspace_NodeColumns");

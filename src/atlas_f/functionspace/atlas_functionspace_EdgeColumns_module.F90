@@ -74,9 +74,6 @@ contains
   generic, public :: scatter => scatter_field, scatter_fieldset
   procedure, public :: get_scatter
 
-  procedure, private :: checksum_fieldset
-  procedure, private :: checksum_field
-  generic, public :: checksum => checksum_field, checksum_fieldset
   procedure, public :: get_checksum
 
 #if FCKIT_FINAL_NOT_INHERITING
@@ -231,38 +228,6 @@ function get_checksum(this) result(checksum)
   class(atlas_functionspace_EdgeColumns), intent(in) :: this
   call checksum%reset_c_ptr( atlas__fs__EdgeColumns__get_checksum(this%c_ptr()) )
 !   call checksum%return()
-end function
-
-!------------------------------------------------------------------------------
-
-function checksum_fieldset(this,fieldset) result(checksum)
-  use atlas_functionspace_EdgeColumns_c_binding
-  character(len=:), allocatable :: checksum
-  class(atlas_functionspace_EdgeColumns), intent(in) :: this
-  type(atlas_FieldSet), intent(in) :: fieldset
-  type(c_ptr) :: checksum_cptr
-  integer :: checksum_size, checksum_allocated
-  call atlas__fs__EdgeColumns__checksum_fieldset(this%c_ptr(), &
-    fieldset%c_ptr(),checksum_cptr,checksum_size,checksum_allocated)
-  allocate(character(len=checksum_size) :: checksum )
-  checksum = c_ptr_to_string(checksum_cptr)
-  if( checksum_allocated == 1 ) call c_ptr_free(checksum_cptr)
-end function
-
-!------------------------------------------------------------------------------
-
-function checksum_field(this,field) result(checksum)
-  use atlas_functionspace_EdgeColumns_c_binding
-  character(len=:), allocatable :: checksum
-  class(atlas_functionspace_EdgeColumns), intent(in) :: this
-  type(atlas_Field), intent(in) :: field
-  type(c_ptr) :: checksum_cptr
-  integer :: checksum_size, checksum_allocated
-  call atlas__fs__EdgeColumns__checksum_field(this%c_ptr(), &
-    field%c_ptr(),checksum_cptr,checksum_size,checksum_allocated)
-  allocate(character(len=checksum_size) :: checksum )
-  checksum = c_ptr_to_string(checksum_cptr)
-  if( checksum_allocated == 1 ) call c_ptr_free(checksum_cptr)
 end function
 
 !-------------------------------------------------------------------------------

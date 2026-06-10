@@ -111,6 +111,30 @@ void atlas__FunctionSpace__adjoint_halo_exchange_fieldset(const FunctionSpaceImp
     FieldSet f(fieldset);
     This->adjointHaloExchange(f);
 }
+
+//------------------------------------------------------------------------------
+
+void atlas__FunctionSpace__checksum_field(const FunctionSpaceImpl* This, const field::FieldImpl* field,
+                                          char*& checksum, int& size) {
+    ATLAS_ASSERT(This != nullptr, "Cannot access uninitialised atlas_FunctionSpace");
+    ATLAS_ASSERT(field != nullptr, "Cannot access uninitialised atlas_Field");
+    std::string s = This->checksum(Field(field));
+    size          = static_cast<int>(s.size());
+    checksum      = new char[size + 1];
+    std::strncpy(checksum, s.c_str(), size + 1);
+}
+
+//------------------------------------------------------------------------------
+
+void atlas__FunctionSpace__checksum_fieldset(const FunctionSpaceImpl* This, const field::FieldSetImpl* fieldset,
+                                             char*& checksum, int& size) {
+    ATLAS_ASSERT(This != nullptr, "Cannot access uninitialised atlas_FunctionSpace");
+    ATLAS_ASSERT(fieldset != nullptr, "Cannot access uninitialised atlas_FieldSet");
+    std::string s = This->checksum(FieldSet(fieldset));
+    size          = static_cast<int>(s.size());
+    checksum      = new char[size + 1];
+    std::strncpy(checksum, s.c_str(), size + 1);
+}
 }
 
 // ------------------------------------------------------------------

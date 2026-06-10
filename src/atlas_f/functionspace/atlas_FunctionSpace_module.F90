@@ -58,6 +58,9 @@ contains
   procedure, private :: adjoint_halo_exchange_field
   procedure, private :: adjoint_halo_exchange_fieldset
 
+  procedure, private :: checksum_field
+  procedure, private :: checksum_fieldset
+
   generic, public :: create_field => &
     & create_field_args, &
     & create_field_template, &
@@ -66,6 +69,7 @@ contains
 
   generic, public :: halo_exchange => halo_exchange_field, halo_exchange_fieldset
   generic, public :: adjoint_halo_exchange => adjoint_halo_exchange_field, adjoint_halo_exchange_fieldset
+  generic, public :: checksum => checksum_field, checksum_fieldset
 
 #if FCKIT_FINAL_NOT_INHERITING
   final :: atlas_FunctionSpace__final_auto
@@ -201,6 +205,40 @@ subroutine adjoint_halo_exchange_field(this,field)
   type(atlas_Field), intent(inout) :: field
   call atlas__FunctionSpace__adjoint_halo_exchange_field(this%c_ptr(),field%c_ptr())
 end subroutine
+
+!------------------------------------------------------------------------------
+
+function checksum_field(this,field) result(checksum)
+  use atlas_functionspace_c_binding
+  use fckit_c_interop_module, only : c_ptr_to_string, c_ptr_free
+  use, intrinsic :: iso_c_binding, only : c_ptr
+  character(len=:), allocatable :: checksum
+  class(atlas_Functionspace), intent(in) :: this
+  type(atlas_Field), intent(in) :: field
+  type(c_ptr) :: checksum_cptr
+  integer :: checksum_size
+  call atlas__FunctionSpace__checksum_field(this%c_ptr(),field%c_ptr(),checksum_cptr,checksum_size)
+  allocate(character(len=checksum_size) :: checksum)
+  checksum = c_ptr_to_string(checksum_cptr)
+  call c_ptr_free(checksum_cptr)
+end function checksum_field
+
+!------------------------------------------------------------------------------
+
+function checksum_fieldset(this,fieldset) result(checksum)
+  use atlas_functionspace_c_binding
+  use fckit_c_interop_module, only : c_ptr_to_string, c_ptr_free
+  use, intrinsic :: iso_c_binding, only : c_ptr
+  character(len=:), allocatable :: checksum
+  class(atlas_Functionspace), intent(in) :: this
+  type(atlas_FieldSet), intent(in) :: fieldset
+  type(c_ptr) :: checksum_cptr
+  integer :: checksum_size
+  call atlas__FunctionSpace__checksum_fieldset(this%c_ptr(),fieldset%c_ptr(),checksum_cptr,checksum_size)
+  allocate(character(len=checksum_size) :: checksum)
+  checksum = c_ptr_to_string(checksum_cptr)
+  call c_ptr_free(checksum_cptr)
+end function checksum_fieldset
 
 !------------------------------------------------------------------------------
 

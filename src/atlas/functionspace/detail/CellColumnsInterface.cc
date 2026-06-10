@@ -126,28 +126,6 @@ const parallel::Checksum* atlas__CellsFunctionSpace__get_checksum(const CellColu
     return &This->checksum();
 }
 
-void atlas__CellsFunctionSpace__checksum_fieldset(const CellColumns* This, const field::FieldSetImpl* fieldset,
-                                                  char*& checksum, int& size, int& allocated) {
-    ATLAS_ASSERT(This != nullptr, "Cannot access uninitialised atlas_functionspace_CellColumns");
-    ATLAS_ASSERT(fieldset != nullptr, "Cannot access uninitialised atlas_FieldSet");
-    std::string checksum_str(This->checksum(fieldset));
-    size      = static_cast<int>(checksum_str.size());
-    checksum  = new char[size + 1];
-    allocated = true;
-    std::strncpy(checksum, checksum_str.c_str(), size + 1);
-}
-
-void atlas__CellsFunctionSpace__checksum_field(const CellColumns* This, const field::FieldImpl* field, char*& checksum,
-                                               int& size, int& allocated) {
-    ATLAS_ASSERT(This != nullptr, "Cannot access uninitialised atlas_functionspace_CellColumns");
-    ATLAS_ASSERT(field != nullptr, "Cannot access uninitialised atlas_Field");
-    std::string checksum_str(This->checksum(field));
-    size      = static_cast<int>(checksum_str.size());
-    checksum  = new char[size + 1];
-    allocated = true;
-    std::strncpy(checksum, checksum_str.c_str(), size + 1);
-}
-
 }  // extern C
 
 }  // namespace detail

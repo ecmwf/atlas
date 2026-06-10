@@ -70,10 +70,6 @@ contains
   procedure, private :: scatter_field
   generic, public :: scatter => scatter_fieldset, scatter_field
 
-  procedure, private :: checksum_fieldset
-  procedure, private :: checksum_field
-  generic, public :: checksum => checksum_fieldset, checksum_field
-
   procedure :: j_begin
   procedure :: j_end
   procedure :: i_begin
@@ -332,39 +328,6 @@ subroutine scatter_fieldset(this,global,local)
   type(atlas_FieldSet), intent(inout) :: local
   call atlas__functionspace__StructuredColumns__scatter_fieldset(this%c_ptr(),global%c_ptr(),local%c_ptr())
 end subroutine
-
-function checksum_fieldset(this,fieldset) result(checksum)
-  use, intrinsic :: iso_c_binding
-  use atlas_functionspace_StructuredColumns_c_binding
-  character(len=:), allocatable :: checksum
-  class(atlas_functionspace_StructuredColumns), intent(in) :: this
-  type(atlas_FieldSet), intent(in) :: fieldset
-  type(c_ptr) :: checksum_cptr
-  integer(ATLAS_KIND_IDX) :: checksum_size
-  integer(c_int) :: checksum_allocated
-  call atlas__fs__StructuredColumns__checksum_fieldset( &
-    & this%c_ptr(),fieldset%c_ptr(),checksum_cptr,checksum_size,checksum_allocated)
-  allocate(character(len=checksum_size) :: checksum )
-  checksum = c_ptr_to_string(checksum_cptr)
-  if( checksum_allocated == 1 ) call c_ptr_free(checksum_cptr)
-end function
-
-
-function checksum_field(this,field) result(checksum)
-  use, intrinsic :: iso_c_binding
-  use atlas_functionspace_StructuredColumns_c_binding
-  character(len=:), allocatable :: checksum
-  class(atlas_functionspace_StructuredColumns), intent(in) :: this
-  type(atlas_Field), intent(in) :: field
-  type(c_ptr) :: checksum_cptr
-  integer(ATLAS_KIND_IDX) :: checksum_size
-  integer(c_int) :: checksum_allocated
-  call atlas__fs__StructuredColumns__checksum_field( &
-      & this%c_ptr(),field%c_ptr(),checksum_cptr,checksum_size,checksum_allocated)
-  allocate(character(len=checksum_size) :: checksum )
-  checksum = c_ptr_to_string(checksum_cptr)
-  if( checksum_allocated == 1 ) call c_ptr_free(checksum_cptr)
-end function
 
 subroutine set_index(this)
   use, intrinsic :: iso_c_binding, only : c_ptr, c_f_pointer
