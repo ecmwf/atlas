@@ -25,7 +25,7 @@
 #include <memory_resource>
 #define STD_PMR std::pmr
 #else
-#include "pluto/memory_resource/compat/memory_resource"
+#include "pluto/memory_resource/compat/memory_resource.h"
 #define STD_PMR pluto::compat
 #endif
 
