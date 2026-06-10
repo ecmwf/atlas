@@ -19,7 +19,7 @@ if( HAVE_FCTEST )
     LINKER_LANGUAGE Fortran
     SOURCES         fctest_functionspace.F90
     LIBS            atlas_f
-    ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
+    ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT} ATLAS_FINALISES_MPI=1
   )
 
   add_fctest( TARGET atlas_fctest_blockstructuredcolumns
@@ -28,7 +28,7 @@ if( HAVE_FCTEST )
     LINKER_LANGUAGE Fortran
     SOURCES         fctest_blockstructuredcolumns.F90
     LIBS            atlas_f
-    ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
+    ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT} ATLAS_FINALISES_MPI=1
 )
 
 endif()
