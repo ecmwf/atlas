@@ -120,8 +120,8 @@ public:
     idx_t k_begin() const { return vertical().k_begin(); }
     idx_t k_end() const { return vertical().k_end(); }
 
-    std::string checksum(const FieldSet&) const;
-    std::string checksum(const Field&) const;
+    std::string checksum(const FieldSet&) const override;
+    std::string checksum(const Field&) const override;
 
     const util::PartitionPolygon& polygon(idx_t halo = 0) const override { return structuredcolumns_->polygon(halo); }
 

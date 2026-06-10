@@ -83,8 +83,8 @@ public:
     void scatter(const Field&, Field&) const override;
     const parallel::GatherScatter& scatter() const override;
 
-    std::string checksum(const FieldSet&) const;
-    std::string checksum(const Field&) const;
+    std::string checksum(const FieldSet&) const override;
+    std::string checksum(const Field&) const override;
     const parallel::Checksum& checksum() const;
 
     idx_t size() const override { return nb_cells_; }

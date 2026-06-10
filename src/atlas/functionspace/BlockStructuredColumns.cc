@@ -49,14 +49,6 @@ BlockStructuredColumns::BlockStructuredColumns(const Grid& grid, const grid::Dis
     FunctionSpace(new detail::BlockStructuredColumns(grid, distribution, vertical, config)),
     functionspace_(dynamic_cast<const detail::BlockStructuredColumns*>(get())) {}
 
-std::string BlockStructuredColumns::checksum(const FieldSet& fieldset) const {
-    return functionspace_->checksum(fieldset);
-}
-
-std::string BlockStructuredColumns::checksum(const Field& field) const {
-    return functionspace_->checksum(field);
-}
-
 // ----------------------------------------------------------------------------
 
 }  // namespace functionspace

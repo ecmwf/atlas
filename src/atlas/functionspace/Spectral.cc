@@ -374,7 +374,6 @@ void Spectral::scatter(const Field& global, Field& local) const {
 }
 
 std::string Spectral::checksum(const FieldSet&) const {
-    eckit::MD5 md5;
     ATLAS_NOTIMPLEMENTED;
 }
 std::string Spectral::checksum(const Field& field) const {

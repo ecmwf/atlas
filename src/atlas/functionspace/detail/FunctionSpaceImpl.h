@@ -90,6 +90,9 @@ public:
     virtual void scatter(const FieldSet&, FieldSet&) const;
     virtual void scatter(const Field&, Field&) const;
 
+    virtual std::string checksum(const FieldSet&) const;
+    virtual std::string checksum(const Field&) const;
+
     virtual const parallel::GatherScatter& gather() const;
     virtual const parallel::GatherScatter& scatter() const;
 
