@@ -11,9 +11,18 @@
 #include "eckit/os/BackTrace.h"
 #include "eckit/config/Resource.h"
 
+#include <chrono>
+#include <thread>
+#include <unistd.h>
+#include "eckit/io/FDataSync.h"
+
+#include "eckit/config/Resource.h"
+
 #include "atlas/library/Library.h"
 #include "atlas/parallel/mpi/mpi.h"
 #include "atlas/runtime/Log.h"
+#include "atlas/runtime/trace/StopWatch.h"
+#include "atlas/runtime/Exception.h"
 
 
 
@@ -297,16 +306,200 @@ std::string backtrace() {
 
 namespace detail {
 
-void debug_parallel_here(const eckit::CodeLocation& here) {
-    const auto& comm = mpi::comm();
-    comm.barrier();
-    Log::info() << "DEBUG_PARALLEL() @ " << here << std::endl;
+namespace {
+
+double ATLAS_MPI_BARRIER_TIMEOUT() {
+    static double timeout = eckit::Resource<double>("$ATLAS_MPI_BARRIER_TIMEOUT", 3.);
+    return timeout;
 }
 
-void debug_parallel_what(const eckit::CodeLocation& here, const std::string& what) {
-    const auto& comm = mpi::comm();
-    comm.barrier();
-    Log::info() << "DEBUG_PARALLEL(" << what << ") @ " << here << std::endl;
+enum class BarrierTimeoutAction
+{
+    ABORT,
+    THROW,
+    CONTINUE
+};
+
+std::string_view to_string_view(BarrierTimeoutAction action) {
+    switch (action) {
+        case BarrierTimeoutAction::ABORT: return "ABORT";
+        case BarrierTimeoutAction::THROW: return "THROW";
+        case BarrierTimeoutAction::CONTINUE: return "CONTINUE";
+    }
+    return "UNKNOWN";
+}
+
+BarrierTimeoutAction to_BarrierTimeoutAction(const std::string& str) {
+    if (str == "ABORT") return BarrierTimeoutAction::ABORT;
+    if (str == "THROW") return BarrierTimeoutAction::THROW;
+    if (str == "CONTINUE") return BarrierTimeoutAction::CONTINUE;
+    ATLAS_THROW_EXCEPTION("Invalid value for ATLAS_MPI_BARRIER_TIMEOUT_ACTION: " << str << "."
+                          << "Valid options are: ABORT, THROW, CONTINUE.");
+}
+
+BarrierTimeoutAction ATLAS_MPI_BARRIER_TIMEOUT_ACTION() {
+    static BarrierTimeoutAction action = to_BarrierTimeoutAction(eckit::Resource<std::string>("$ATLAS_MPI_BARRIER_TIMEOUT_ACTION", "THROW"));
+    return action;
+}
+
+bool mpi_barrier_timeout(const mpi::Comm& comm, double seconds) {
+    if (seconds <= 0.) {
+        return false;
+    }
+    auto req = comm.iBarrier();
+    const auto test_interval = std::chrono::milliseconds(10);
+    const auto deadline = std::chrono::steady_clock::now() + std::chrono::duration<double>(seconds);
+    while (not req.test()) {
+        std::this_thread::sleep_for(test_interval);
+        if (std::chrono::steady_clock::now() > deadline) {
+            return not req.test();
+        }
+    }
+    return false;
+}
+
+std::vector<int> get_mpi_ranks_that_timed_out(const mpi::Comm& comm) {
+    int local_timed_out = 0;
+    const int size = comm.size();
+    const int rank = comm.rank();
+    const int tag  = 0;
+
+    std::vector<int> all_timed_out(size);
+    all_timed_out[rank] = local_timed_out;
+
+    std::vector<int> peers;
+    peers.reserve(size > 0 ? size - 1 : 0);
+    std::vector<eckit::mpi::Request> recv_requests;
+    std::vector<eckit::mpi::Request> send_requests;
+    recv_requests.reserve(size > 0 ? size - 1 : 0);
+    send_requests.reserve(size > 0 ? size - 1 : 0);
+
+    for (int peer = 0; peer < size; ++peer) {
+        if (peer == rank) {
+            continue;
+        }
+        peers.push_back(peer);
+        recv_requests.push_back(comm.iReceive(all_timed_out[peer], peer, tag));
+    }
+
+    for (int peer : peers) {
+        send_requests.push_back(comm.iSend(local_timed_out, peer, tag));
+    }
+
+    std::vector<bool> recv_completed(recv_requests.size(), false);
+    std::vector<bool> send_completed(send_requests.size(), false);
+    size_t recv_pending = recv_requests.size();
+    size_t send_pending = send_requests.size();
+
+    const auto deadline = std::chrono::steady_clock::now() + std::chrono::milliseconds(100);
+    while (recv_pending > 0 || send_pending > 0) {
+        for (size_t i = 0; i < recv_requests.size(); ++i) {
+            if (not recv_completed[i] && recv_requests[i].test()) {
+                recv_completed[i] = true;
+                --recv_pending;
+            }
+        }
+        for (size_t i = 0; i < send_requests.size(); ++i) {
+            if (not send_completed[i] && send_requests[i].test()) {
+                send_completed[i] = true;
+                --send_pending;
+            }
+        }
+
+        if (recv_pending == 0 && send_pending == 0) {
+            break;
+        }
+
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        if (std::chrono::steady_clock::now() > deadline) {
+            for (size_t i = 0; i < recv_requests.size(); ++i) {
+                if (not recv_completed[i]) {
+                    all_timed_out[peers[i]] = 1;
+                }
+            }
+            break;
+        }
+    }
+
+    std::vector<int> timed_out_ranks;
+    for (int i = 0; i < all_timed_out.size(); ++i) {
+        if (all_timed_out[i]) {
+            timed_out_ranks.push_back(i);
+        }
+    }
+    return timed_out_ranks;
+}
+
+void debug_mpi_barrier(const eckit::CodeLocation& here, const mpi::Comm& comm,
+                                     std::string_view what = {}) {
+    if (mpi_barrier_timeout(comm, ATLAS_MPI_BARRIER_TIMEOUT())) {
+        std::ostringstream out;
+        out << "DEBUG_SYNC[" << comm.name() << "]";
+        if (not what.empty()) {
+            out << "(" << what << ")";
+        }
+        out << " @ " << here << "\n";
+        out << "ATLAS_DEBUG_SYNC MPI barrier timed out on ranks " << get_mpi_ranks_that_timed_out(comm)
+            << " in communicator '" << comm.name() << "' (${ATLAS_MPI_BARRIER_TIMEOUT}=" << ATLAS_MPI_BARRIER_TIMEOUT()
+            << ", ${ATLAS_MPI_BARRIER_TIMEOUT_ACTION}=" << to_string_view(ATLAS_MPI_BARRIER_TIMEOUT_ACTION()) << ").\n"
+            << "-----------------------------------------\n"
+            << "BACKTRACE [rank=" << comm.rank() << "]\n"
+            << "-----------------------------------------\n"
+            << backtrace() << "\n"
+            << "-----------------------------------------";
+        switch (ATLAS_MPI_BARRIER_TIMEOUT_ACTION()) {
+            case BarrierTimeoutAction::ABORT:
+                Log::error() << out.str() << " Calling MPI_Abort..." << std::endl;
+                comm.abort();
+                break;
+            case BarrierTimeoutAction::THROW:
+                ATLAS_THROW_EXCEPTION("ATLAS_MPI_BARRIER_TIMEOUT: \n" << out.str());
+                break;
+            case BarrierTimeoutAction::CONTINUE:
+                Log::warning() << out.str() << " Continuing execution despite barrier timeout..." << std::endl;
+                break;
+        }
+    }
+}
+
+void flush_and_sync_output_streams() {
+    for( auto& channel : {
+        &Log::info(),
+        &Log::warning(),
+        &Log::trace(),
+        &Log::debug(),
+        &Log::error()} ) {
+        if (channel) {
+            channel->flush();
+        }
+    }
+    std::cout.flush();
+    std::cerr.flush();
+
+    eckit::fdatasync(STDOUT_FILENO);
+    eckit::fdatasync(STDERR_FILENO);
+}
+
+}  // namespace
+
+void debug_sync(const eckit::CodeLocation& here, const mpi::Comm& comm) {
+    flush_and_sync_output_streams();
+    debug_mpi_barrier(here, comm);
+    Log::info() << "DEBUG_SYNC["<<comm.name()<<"] @ " << here << std::endl;
+}
+
+void debug_sync(const eckit::CodeLocation& here) {
+    debug_sync(here, mpi::comm());
+}
+
+void debug_sync(const eckit::CodeLocation& here, const mpi::Comm& comm, std::string_view what) {
+    flush_and_sync_output_streams();
+    debug_mpi_barrier(here, comm, what);
+    Log::info() << "DEBUG_SYNC["<<comm.name()<<"](" << what << ") @ " << here << std::endl;
+}
+
+void debug_sync(const eckit::CodeLocation& here, std::string_view what) {
+    debug_sync(here, mpi::comm(), what);
 }
 
 }  // namespace detail
