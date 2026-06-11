@@ -16,6 +16,7 @@
 
 #include "atlas/array/MakeView.h"
 #include "atlas/field/detail/FieldImpl.h"
+#include "atlas/functionspace/detail/ColumnChecksum.h"
 #include "atlas/functionspace/EdgeColumns.h"
 #include "atlas/grid/UnstructuredGrid.h"
 #include "atlas/library/config.h"
@@ -486,79 +487,18 @@ void EdgeColumns::scatter(const Field& global, Field& local) const {
     scatter(global_fields, local_fields);
 }
 
-namespace {
-template <typename T>
-std::string checksum_3d_field(const parallel::Checksum& checksum, const Field& field) {
-    auto values = array::make_view<T, 3>(field);
-    array::ArrayT<T> surface_field(field.shape(0), field.shape(2));
-    auto surface = array::make_view<T, 2>(surface_field);
-    for (idx_t n = 0; n < values.shape(0); ++n) {
-        for (idx_t j = 0; j < surface.shape(1); ++j) {
-            surface(n, j) = 0.;
-            for (idx_t l = 0; l < values.shape(1); ++l) {
-                surface(n, j) += values(n, l, j);
-            }
-        }
-    }
-    return checksum.execute(surface.data(), surface_field.stride(0));
-}
-template <typename T>
-std::string checksum_2d_field(const parallel::Checksum& checksum, const Field& field) {
-    auto values = array::make_view<T, 2>(field);
-    return checksum.execute(values.data(), field.stride(0));
-}
-
-}  // namespace
-
 std::string EdgeColumns::checksum(const FieldSet& fieldset) const {
-    eckit::MD5 md5;
-    for (idx_t f = 0; f < fieldset.size(); ++f) {
-        const Field& field = fieldset[f];
-        if (field.datatype() == array::DataType::kind<int>()) {
-            if (field.levels()) {
-                md5 << checksum_3d_field<int>(checksum(), field);
-            }
-            else {
-                md5 << checksum_2d_field<int>(checksum(), field);
-            }
-        }
-        else if (field.datatype() == array::DataType::kind<long>()) {
-            if (field.levels()) {
-                md5 << checksum_3d_field<long>(checksum(), field);
-            }
-            else {
-                md5 << checksum_2d_field<long>(checksum(), field);
-            }
-        }
-        else if (field.datatype() == array::DataType::kind<float>()) {
-            if (field.levels()) {
-                md5 << checksum_3d_field<float>(checksum(), field);
-            }
-            else {
-                md5 << checksum_2d_field<float>(checksum(), field);
-            }
-        }
-        else if (field.datatype() == array::DataType::kind<double>()) {
-            if (field.levels()) {
-                md5 << checksum_3d_field<double>(checksum(), field);
-            }
-            else {
-                md5 << checksum_2d_field<double>(checksum(), field);
-            }
-        }
-        else {
-            throw_Exception("datatype not supported", Here());
-        }
-    }
-    return md5;
+    return ColumnChecksum<EdgeColumns>(*this, static_cast<size_t>(nb_edges_global())).compute(fieldset);
 }
 std::string EdgeColumns::checksum(const Field& field) const {
-    FieldSet fieldset;
-    fieldset.add(field);
-    return checksum(fieldset);
+    return ColumnChecksum<EdgeColumns>(*this, static_cast<size_t>(nb_edges_global())).compute(field);
 }
 
 const parallel::Checksum& EdgeColumns::checksum() const {
+    return deprecated_checksum();
+}
+
+const parallel::Checksum& EdgeColumns::deprecated_checksum() const {
     if (checksum_) {
         return *checksum_;
     }
@@ -608,6 +548,13 @@ const Grid& EdgeColumns::grid() const {
 
 Field EdgeColumns::lonlat() const {
     return edges().field("lonlat");
+}
+
+Field EdgeColumns::ghost() const {
+    if (mesh_.edges().has_field("ghost")) {
+        return mesh_.edges().field("ghost");
+    }
+    return mesh_.edges().halo();
 }
 
 Field EdgeColumns::global_index() const {
@@ -790,7 +737,7 @@ void atlas__fs__EdgeColumns__scatter_field(const EdgeColumns* This, const field:
 
 const parallel::Checksum* atlas__fs__EdgeColumns__get_checksum(const EdgeColumns* This) {
     ATLAS_ASSERT(This);
-    return &This->checksum();
+    return &This->deprecated_checksum();
 }
 
 // -----------------------------------------------------------------------------------
@@ -833,14 +780,6 @@ const mesh::HybridElements& EdgeColumns::edges() const {
 
 const parallel::HaloExchange& EdgeColumns::halo_exchange() const {
     return functionspace_->halo_exchange();
-}
-
-std::string EdgeColumns::checksum(const FieldSet& fieldset) const {
-    return functionspace_->checksum(fieldset);
-}
-
-std::string EdgeColumns::checksum(const Field& field) const {
-    return functionspace_->checksum(field);
 }
 
 const parallel::Checksum& EdgeColumns::checksum() const {

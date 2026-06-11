@@ -123,7 +123,7 @@ void atlas__CellsFunctionSpace__scatter_field(const CellColumns* This, const fie
 
 const parallel::Checksum* atlas__CellsFunctionSpace__get_checksum(const CellColumns* This) {
     ATLAS_ASSERT(This != nullptr, "Cannot access uninitialised atlas_functionspace_CellColumns");
-    return &This->checksum();
+    return &This->deprecated_checksum();
 }
 
 }  // extern C

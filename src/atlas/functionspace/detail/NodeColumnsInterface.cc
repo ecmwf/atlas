@@ -123,7 +123,7 @@ void atlas__NodesFunctionSpace__scatter_field(const NodeColumns* This, const fie
 
 const parallel::Checksum* atlas__NodesFunctionSpace__get_checksum(const NodeColumns* This) {
     ATLAS_ASSERT(This != nullptr, "Cannot access uninitialised atlas_functionspace_NodeColumns");
-    return &This->checksum();
+    return &This->deprecated_checksum();
 }
 
 void atlas__NodesFunctionSpace__sum_double(const NodeColumns* This, const field::FieldImpl* field, double& sum,

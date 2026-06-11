@@ -81,13 +81,20 @@ public:
 
     std::string checksum(const FieldSet&) const override;
     std::string checksum(const Field&) const override;
+
+    [[deprecated("Use FunctionSpaceImpl::checksum(const FieldSet&) or FunctionSpaceImpl::checksum(const Field&) instead")]]
     const parallel::Checksum& checksum() const;
+
+    // Just for internal API at the moment. DO NOT USE!
+    const parallel::Checksum& deprecated_checksum() const;
 
     idx_t size() const override { return nb_edges_; }
 
     const Grid& grid() const override;
 
     Field lonlat() const override;
+
+    Field ghost() const override;
 
     Field global_index() const override;
 
@@ -176,8 +183,9 @@ public:
     // -- Parallelisation aware methods
     const parallel::HaloExchange& halo_exchange() const;
 
-    std::string checksum(const FieldSet&) const;
-    std::string checksum(const Field&) const;
+    using FunctionSpace::checksum;
+
+    [[deprecated("Use FunctionSpace::checksum(const FieldSet&) or FunctionSpace::checksum(const Field&) instead")]]
     const parallel::Checksum& checksum() const;
 
 private:

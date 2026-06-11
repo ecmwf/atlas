@@ -57,17 +57,6 @@ std::string expected_checksum() {
     return result;
 }
 
- std::string expected_checksum_nodes() {
-    if (grid().name()=="O32") {
-        return "75e913d400755a0d2782fc65e2035e97";
-    }
-    else if (grid().name()=="N32") {
-        return "bcb344196d20becbb66f098d91f83abb";
-    }
-    else {
-        return "unknown";
-    }
-}
 struct Fixture {
     Fixture() {
         mpi::comm().split(color(),"split");
@@ -129,7 +118,7 @@ CASE("test FunctionSpace NodeColumns") {
 
     // Checksum
     auto checksum = fs.checksum(field);
-    EXPECT_EQ(checksum, expected_checksum_nodes());
+    EXPECT_EQ(checksum, expected_checksum());
 
     Log::error() << "fs.part() = " << fs.part() << " fs.nb_parts() = " << fs.nb_parts() << " grid = " << fs.grid().name() << " checksum = " << checksum << std::endl;
 

@@ -63,6 +63,14 @@ ecbuild_add_test( TARGET atlas_test_cellcolumns
   ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
 )
 
+ecbuild_add_test( TARGET atlas_test_columns_checksum
+  MPI         2
+  CONDITION   eckit_HAVE_MPI AND MPI_SLOTS GREATER_EQUAL 2
+  SOURCES     test_columns_checksum.cc
+  LIBS        atlas
+  ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
+)
+
 ecbuild_add_test( TARGET atlas_test_cubedsphere_functionspace
   MPI        8
   CONDITION  eckit_HAVE_MPI AND MPI_SLOTS GREATER_EQUAL 8
