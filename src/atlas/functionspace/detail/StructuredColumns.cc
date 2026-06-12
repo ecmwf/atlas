@@ -16,8 +16,6 @@
 #include <sstream>
 #include <string>
 
-#include "eckit/utils/MD5.h"
-
 #include "atlas/array/Array.h"
 #include "atlas/array/MakeView.h"
 #include "atlas/domain.h"
@@ -29,7 +27,6 @@
 #include "atlas/library/Library.h"
 #include "atlas/library/FloatingPointExceptions.h"
 #include "atlas/mesh/Mesh.h"
-#include "atlas/parallel/Checksum.h"
 #include "atlas/parallel/GatherScatter.h"
 #include "atlas/parallel/HaloExchange.h"
 #include "atlas/parallel/mpi/mpi.h"
@@ -74,29 +71,141 @@ array::LocalView<T, 3> make_leveled_view(Field& field) {
     }
 }
 
+struct ChecksumData {
+    Field local_lane_checksums;
+    Field global_lane_checksums;
+    int root{0};
+};
+
 template <typename T>
-std::string checksum_3d_field(const parallel::Checksum& checksum, const Field& field) {
-    bool disabled_fpe_overflow = library::disable_floating_point_exception(FE_OVERFLOW);
-    bool disabled_fpe_invalid  = library::disable_floating_point_exception(FE_INVALID);
-    auto values = make_leveled_view<const T>(field);
-    array::ArrayT<T> surface_field(values.shape(0), values.shape(2));
-    auto surface     = array::make_view<T, 2>(surface_field);
-    const idx_t npts = values.shape(0);
-    atlas_omp_for(idx_t n = 0; n < npts; ++n) {
-        for (idx_t j = 0; j < surface.shape(1); ++j) {
-            surface(n, j) = 0.;
-            for (idx_t l = 0; l < values.shape(1); ++l) {
-                surface(n, j) += values(n, l, j);
+void checksum_update_point(util::checksum_t& checksum, const array::Array& f, const T* data, idx_t dim, idx_t offset) {
+    if (dim == f.rank()) {
+        util::checksum_update(checksum, data + offset, size_t{1});
+        return;
+    }
+    for (idx_t index = 0; index < f.shape(dim); ++index) {
+        checksum_update_point(checksum, f, data, dim + 1, offset + index * f.stride(dim));
+    }
+}
+
+template <typename T>
+void update_lane_checksums_with_field_contiguous(const StructuredColumns& fs, const Field& f, const T* data,
+                                                 array::ArrayView<util::checksum_t, 1>& local_lane_checksums_view) {
+    const idx_t npts = fs.sizeOwned();
+
+    if (f.rank() == 3) {
+        const idx_t nlev = f.shape(1);
+        const idx_t nvar = f.shape(2);
+        atlas_omp_parallel_for(idx_t point = 0; point < npts; ++point) {
+            util::checksum_t lane_checksum = local_lane_checksums_view(point);
+            const T* point_data = data + point * f.stride(0);
+            for (idx_t jlev = 0; jlev < nlev; ++jlev) {
+                util::checksum_update(lane_checksum, point_data + jlev * f.stride(1), static_cast<size_t>(nvar));
             }
+            local_lane_checksums_view(point) = lane_checksum;
         }
     }
-    if (disabled_fpe_overflow) {
-        library::enable_floating_point_exception(FE_OVERFLOW);
+    else if (f.rank() == 2) {
+        const size_t lane_size = static_cast<size_t>(f.shape(1));
+        atlas_omp_parallel_for(idx_t point = 0; point < npts; ++point) {
+            util::checksum_update(local_lane_checksums_view(point), data + point * f.stride(0), lane_size);
+        }
     }
-    if (disabled_fpe_invalid) {
-        library::enable_floating_point_exception(FE_INVALID);
+    else if (f.rank() == 1) {
+        atlas_omp_parallel_for(idx_t point = 0; point < npts; ++point) {
+            util::checksum_update(local_lane_checksums_view(point), data + point, size_t{1});
+        }
     }
-    return checksum.execute(surface.data(), surface_field.stride(0));
+    else {
+        ATLAS_NOTIMPLEMENTED;
+    }
+}
+
+template <typename T>
+void update_lane_checksums_with_field(const StructuredColumns& fs, const Field& f, ChecksumData& checksum_data) {
+    auto local_lane_checksums_view = array::make_view<util::checksum_t, 1>(checksum_data.local_lane_checksums);
+    const auto* data = f.array().host_data<T>();
+    if (f.contiguous()) {
+        update_lane_checksums_with_field_contiguous(fs, f, data, local_lane_checksums_view);
+        return;
+    }
+
+    const idx_t npts = fs.sizeOwned();
+    atlas_omp_parallel_for(idx_t point = 0; point < npts; ++point) {
+        util::checksum_t lane_checksum = local_lane_checksums_view(point);
+        checksum_update_point(lane_checksum, f, data, idx_t{1}, point * f.stride(0));
+        local_lane_checksums_view(point) = lane_checksum;
+    }
+}
+
+void update_lane_checksums_with_field_dynamic(const StructuredColumns& fs, const Field& f, ChecksumData& checksum_data) {
+    switch (f.datatype().kind()) {
+        case array::DataType::kind<int>():
+            return update_lane_checksums_with_field<int>(fs, f, checksum_data);
+        case array::DataType::kind<long>():
+            return update_lane_checksums_with_field<long>(fs, f, checksum_data);
+        case array::DataType::kind<float>():
+            return update_lane_checksums_with_field<float>(fs, f, checksum_data);
+        case array::DataType::kind<double>():
+            return update_lane_checksums_with_field<double>(fs, f, checksum_data);
+        default:
+            throw_Exception("datatype not supported", Here());
+    }
+}
+
+ChecksumData get_checksum_data(const StructuredColumns& fs) {
+    pluto::scope scope;
+    pluto::host::set_default_resource(pluto::host_pool_resource());
+    ChecksumData checksum_data;
+    checksum_data.root = 0;
+    checksum_data.local_lane_checksums = fs.createField(option::name("checksum_local_lane_checksums") |
+                                                        option::datatypeT<util::checksum_t>() | option::levels(0));
+    checksum_data.global_lane_checksums =
+        fs.createField(checksum_data.local_lane_checksums, option::global(checksum_data.root));
+    auto local_lane_checksums_view = array::make_view<util::checksum_t, 1>(checksum_data.local_lane_checksums);
+    local_lane_checksums_view.assign(0);
+    return checksum_data;
+}
+
+util::checksum_t checksum_from_lane_states(const StructuredColumns& fs, ChecksumData& checksum_data) {
+    auto& local_lane_checksums = checksum_data.local_lane_checksums;
+    auto local_lane_checksums_view = array::make_view<util::checksum_t, 1>(local_lane_checksums);
+    for (idx_t point = 0; point < fs.sizeOwned(); ++point) {
+        local_lane_checksums_view(point) = util::checksum_digest(local_lane_checksums_view(point));
+    }
+
+    auto& mpi_comm = mpi::comm(fs.mpi_comm());
+    if (mpi_comm.size() == 1) {
+        ATLAS_ASSERT(local_lane_checksums.contiguous());
+        const auto* local_lane_checksums_data = local_lane_checksums.array().host_data<util::checksum_t>();
+        return util::checksum(local_lane_checksums_data, static_cast<size_t>(fs.sizeOwned()));
+    }
+
+    auto& global_lane_checksums = checksum_data.global_lane_checksums;
+    fs.gather(local_lane_checksums, global_lane_checksums);
+
+    util::checksum_t global_checksum = 0;
+    if (mpi_comm.rank() == checksum_data.root) {
+        ATLAS_ASSERT(global_lane_checksums.contiguous());
+        const auto* global_lane_checksums_data = global_lane_checksums.array().host_data<util::checksum_t>();
+        global_checksum = util::checksum(global_lane_checksums_data, global_lane_checksums.size());
+    }
+    mpi_comm.broadcast(global_checksum, checksum_data.root);
+    return global_checksum;
+}
+
+util::checksum_t field_checksum(const StructuredColumns& fs, const Field& field) {
+    auto checksum_data = get_checksum_data(fs);
+    update_lane_checksums_with_field_dynamic(fs, field, checksum_data);
+    return checksum_from_lane_states(fs, checksum_data);
+}
+
+util::checksum_t fieldset_checksum(const StructuredColumns& fs, const FieldSet& fieldset) {
+    auto checksum_data = get_checksum_data(fs);
+    for (idx_t f = 0; f < fieldset.size(); ++f) {
+        update_lane_checksums_with_field_dynamic(fs, fieldset[f], checksum_data);
+    }
+    return checksum_from_lane_states(fs, checksum_data);
 }
 
 } // namespace
@@ -203,54 +312,6 @@ private:
     ~StructuredColumnsGatherScatterCache() override = default;
 };
 
-class StructuredColumnsChecksumCache : public util::Cache<std::string, parallel::Checksum>,
-                                       public grid::detail::grid::GridObserver {
-private:
-    using Base = util::Cache<std::string, parallel::Checksum>;
-    StructuredColumnsChecksumCache(): Base("StructuredColumnsChecksumCache") {}
-
-public:
-    static StructuredColumnsChecksumCache& instance() {
-        static StructuredColumnsChecksumCache inst;
-        return inst;
-    }
-    util::ObjectHandle<value_type> get_or_create(const detail::StructuredColumns& funcspace) {
-        registerGrid(*funcspace.grid().get());
-        creator_type creator = std::bind(&StructuredColumnsChecksumCache::create, &funcspace);
-        return Base::get_or_create(key(funcspace), remove_key(funcspace), creator);
-    }
-    void onGridDestruction(grid::detail::grid::Grid& grid) override { remove(remove_key(grid)); }
-
-private:
-    static Base::key_type key(const detail::StructuredColumns& funcspace) {
-        std::ostringstream key;
-        key << "grid[address=" << funcspace.grid().get() << ",halo=" << funcspace.halo()
-            << ",periodic_points=" << std::boolalpha << funcspace.periodic_points_
-            << ",distribution=" << funcspace.distribution() << "]";
-        return key.str();
-    }
-
-    static Base::key_type remove_key(const detail::StructuredColumns& funcspace) {
-        return remove_key(*funcspace.grid().get());
-    }
-
-    static Base::key_type remove_key(const grid::detail::grid::Grid& grid) {
-        std::ostringstream key;
-        key << "grid[address=" << &grid << "]";
-        return key.str();
-    }
-
-    static value_type* create(const detail::StructuredColumns* funcspace) {
-        value_type* value = new value_type();
-        util::ObjectHandle<parallel::GatherScatter> gather(
-            StructuredColumnsGatherScatterCache::instance().get_or_create(*funcspace));
-        value->setup(gather);
-        return value;
-    }
-    ~StructuredColumnsChecksumCache() override = default;
-};
-
-
 const parallel::GatherScatter& StructuredColumns::gather() const {
     if (gather_scatter_) {
         return *gather_scatter_;
@@ -265,14 +326,6 @@ const parallel::GatherScatter& StructuredColumns::scatter() const {
     }
     gather_scatter_ = StructuredColumnsGatherScatterCache::instance().get_or_create(*this);
     return *gather_scatter_;
-}
-
-const parallel::Checksum& StructuredColumns::checksum() const {
-    if (checksum_) {
-        return *checksum_;
-    }
-    checksum_ = StructuredColumnsChecksumCache::instance().get_or_create(*this);
-    return *checksum_;
 }
 
 const parallel::HaloExchange& StructuredColumns::halo_exchange() const {
@@ -703,31 +756,10 @@ void StructuredColumns::scatter(const Field& global, Field& local) const {
 // ----------------------------------------------------------------------------
 
 std::string StructuredColumns::checksum(const FieldSet& fieldset) const {
-    eckit::MD5 md5;
-    for (idx_t f = 0; f < fieldset.size(); ++f) {
-        const Field& field = fieldset[f];
-        if (field.datatype() == array::DataType::kind<int>()) {
-            md5 << checksum_3d_field<int>(checksum(), field);
-        }
-        else if (field.datatype() == array::DataType::kind<long>()) {
-            md5 << checksum_3d_field<long>(checksum(), field);
-        }
-        else if (field.datatype() == array::DataType::kind<float>()) {
-            md5 << checksum_3d_field<float>(checksum(), field);
-        }
-        else if (field.datatype() == array::DataType::kind<double>()) {
-            md5 << checksum_3d_field<double>(checksum(), field);
-        }
-        else {
-            throw_Exception("datatype not supported", Here());
-        }
-    }
-    return md5;
+    return util::checksum_to_hex_str(fieldset_checksum(*this, fieldset));
 }
 std::string StructuredColumns::checksum(const Field& field) const {
-    FieldSet fieldset;
-    fieldset.add(field);
-    return checksum(fieldset);
+    return util::checksum_to_hex_str(field_checksum(*this, field));
 }
 
 const StructuredGrid& StructuredColumns::grid() const {

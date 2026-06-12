@@ -33,7 +33,6 @@ namespace atlas {
 namespace parallel {
 class GatherScatter;
 class HaloExchange;
-class Checksum;
 }  // namespace parallel
 }  // namespace atlas
 
@@ -57,7 +56,6 @@ namespace detail {
 
 class StructuredColumnsHaloExchangeCache;
 class StructuredColumnsGatherScatterCache;
-class StructuredColumnsChecksumCache;
 
 
 // -------------------------------------------------------------------
@@ -195,7 +193,6 @@ private:  // methods
 
     const parallel::GatherScatter& gather() const override;
     const parallel::GatherScatter& scatter() const override;
-    const parallel::Checksum& checksum() const;
     const parallel::HaloExchange& halo_exchange() const;
 
     void create_remote_index() const;
@@ -212,12 +209,10 @@ private:  // data
 
     friend class StructuredColumnsHaloExchangeCache;
     friend class StructuredColumnsGatherScatterCache;
-    friend class StructuredColumnsChecksumCache;
     bool periodic_points_{false};
 
     const StructuredGrid* grid_;
     mutable util::ObjectHandle<parallel::GatherScatter> gather_scatter_;
-    mutable util::ObjectHandle<parallel::Checksum> checksum_;
     mutable util::ObjectHandle<parallel::HaloExchange> halo_exchange_;
     mutable std::vector<util::ObjectHandle<util::PartitionPolygon>> polygons_;
     mutable util::PartitionPolygons all_polygons_;

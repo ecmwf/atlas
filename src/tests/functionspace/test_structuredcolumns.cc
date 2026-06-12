@@ -13,6 +13,8 @@
 
 #include "atlas/array/ArrayView.h"
 #include "atlas/array/MakeView.h"
+#include "atlas/field/FieldSet.h"
+#include "atlas/functionspace/BlockStructuredColumns.h"
 #include "atlas/field/Field.h"
 #include "atlas/functionspace/NodeColumns.h"
 #include "atlas/functionspace/StructuredColumns.h"
@@ -33,6 +35,42 @@ using namespace atlas::util;
 
 namespace atlas {
 namespace test {
+
+namespace {
+
+template <typename Value>
+void fill_structured_field(Field& field, Value first_value = Value{1}) {
+    Value next_value = first_value;
+    if (field.variables() && field.levels()) {
+        auto value = array::make_view<Value, 3>(field);
+        for (idx_t point = 0; point < field.shape(0); ++point) {
+            for (idx_t jlev = 0; jlev < field.shape(1); ++jlev) {
+                for (idx_t jvar = 0; jvar < field.shape(2); ++jvar) {
+                    value(point, jlev, jvar) = next_value;
+                    next_value += Value{1};
+                }
+            }
+        }
+    }
+    else if (field.variables() || field.levels()) {
+        auto value = array::make_view<Value, 2>(field);
+        for (idx_t point = 0; point < field.shape(0); ++point) {
+            for (idx_t entry = 0; entry < field.shape(1); ++entry) {
+                value(point, entry) = next_value;
+                next_value += Value{1};
+            }
+        }
+    }
+    else {
+        auto value = array::make_view<Value, 1>(field);
+        for (idx_t point = 0; point < field.shape(0); ++point) {
+            value(point) = next_value;
+            next_value += Value{1};
+        }
+    }
+}
+
+}  // namespace
 
 //-----------------------------------------------------------------------------
 
@@ -271,6 +309,268 @@ CASE("test_functionspace_StructuredColumns_halo with output") {
              "plt.show()"
              "\n";
     }
+}
+
+CASE("StructuredColumns checksum matches BlockStructuredColumns for identical data") {
+    using Value = double;
+    mpi::Scope scope("self");
+
+    auto grid = StructuredGrid("O8");
+    auto structured_fs = [&] {
+        util::Config config;
+        config.set("halo", 0);
+        return functionspace::StructuredColumns(grid, config);
+    }();
+    auto block_fs = [&] {
+        util::Config config;
+        config.set("halo", 0);
+        config.set("nproma", 5);
+        return functionspace::BlockStructuredColumns(grid, config);
+    }();
+
+    auto check_field_checksum_stable_with_blocked = [&](const util::Config& options, Value first_value) {
+        Field structured = structured_fs.createField<Value>(option::name("structured") | options);
+        Field blocked = block_fs.createField<Value>(option::name("blocked") | options);
+        fill_structured_field(structured, first_value);
+        block_fs.scatter(structured, blocked);
+        EXPECT_EQ(structured_fs.checksum(structured), block_fs.checksum(blocked));
+    };
+
+    check_field_checksum_stable_with_blocked(option::variables(3) | option::levels(4), Value{1});
+    check_field_checksum_stable_with_blocked(option::variables(3), Value{1000});
+    check_field_checksum_stable_with_blocked(option::levels(4), Value{2000});
+    check_field_checksum_stable_with_blocked(util::Config{}, Value{3000});
+
+    auto check_fieldset_checksum_stable_with_blocked = [&](const util::Config& options_a, const util::Config& options_b) {
+        FieldSet structured_fieldset;
+        FieldSet blocked_fieldset;
+        Field structured_a = structured_fs.createField<Value>(option::name("structured_a") | options_a);
+        Field structured_b = structured_fs.createField<Value>(option::name("structured_b") | options_b);
+        Field blocked_a = block_fs.createField<Value>(option::name("blocked_a") | options_a);
+        Field blocked_b = block_fs.createField<Value>(option::name("blocked_b") | options_b);
+
+        fill_structured_field(structured_a, Value{4000});
+        fill_structured_field(structured_b, Value{5000});
+        block_fs.scatter(structured_a, blocked_a);
+        block_fs.scatter(structured_b, blocked_b);
+
+        structured_fieldset.add(structured_a);
+        structured_fieldset.add(structured_b);
+        blocked_fieldset.add(blocked_a);
+        blocked_fieldset.add(blocked_b);
+
+        EXPECT_EQ(structured_fs.checksum(structured_fieldset), block_fs.checksum(blocked_fieldset));
+    };
+    check_fieldset_checksum_stable_with_blocked(/*a*/ option::variables(2) | option::levels(3), /*b*/ option::variables(4));
+}
+
+CASE("StructuredColumns checksum matches BlockStructuredColumns in MPI for identical scattered data") {
+    using Value = double;
+
+    constexpr int root = 0;
+    auto grid = StructuredGrid("O8");
+    auto structured_fs = [&] {
+        util::Config config;
+        config.set("halo", 0);
+        return functionspace::StructuredColumns(grid, config);
+    }();
+    auto block_fs = [&] {
+        util::Config config;
+        config.set("halo", 0);
+        config.set("nproma", 5);
+        return functionspace::BlockStructuredColumns(grid, config);
+    }();
+
+    auto run_case = [&](const util::Config& options, Value first_value) {
+        Field global = structured_fs.createField<Value>(option::name("global") | option::global(root) | options);
+        Field structured = structured_fs.createField<Value>(option::name("structured") | options);
+        Field blocked = block_fs.createField<Value>(option::name("blocked") | options);
+        if (mpi::comm().rank() == root) {
+            fill_structured_field(global, first_value);
+        }
+        structured_fs.scatter(global, structured);
+        block_fs.scatter(global, blocked);
+        EXPECT_EQ(structured_fs.checksum(structured), block_fs.checksum(blocked));
+    };
+
+    run_case(option::variables(3) | option::levels(4), Value{1});
+    run_case(option::variables(3), Value{1000});
+    run_case(option::levels(4), Value{2000});
+    run_case(util::Config{}, Value{3000});
+
+    Field global_a = structured_fs.createField<Value>(option::name("global_a") | option::global(root) |
+                                                      option::variables(2) | option::levels(3));
+    Field global_b = structured_fs.createField<Value>(option::name("global_b") | option::global(root) |
+                                                      option::variables(4));
+    Field structured_a = structured_fs.createField<Value>(option::name("structured_a") | option::variables(2) |
+                                                          option::levels(3));
+    Field structured_b = structured_fs.createField<Value>(option::name("structured_b") | option::variables(4));
+    Field blocked_a = block_fs.createField<Value>(option::name("blocked_a") | option::variables(2) | option::levels(3));
+    Field blocked_b = block_fs.createField<Value>(option::name("blocked_b") | option::variables(4));
+
+    if (mpi::comm().rank() == root) {
+        fill_structured_field(global_a, Value{4000});
+        fill_structured_field(global_b, Value{5000});
+    }
+
+    structured_fs.scatter(global_a, structured_a);
+    structured_fs.scatter(global_b, structured_b);
+    block_fs.scatter(global_a, blocked_a);
+    block_fs.scatter(global_b, blocked_b);
+
+    FieldSet structured_fieldset;
+    FieldSet blocked_fieldset;
+    structured_fieldset.add(structured_a);
+    structured_fieldset.add(structured_b);
+    blocked_fieldset.add(blocked_a);
+    blocked_fieldset.add(blocked_b);
+
+    EXPECT_EQ(structured_fs.checksum(structured_fieldset), block_fs.checksum(blocked_fieldset));
+}
+
+CASE("StructuredColumns and BlockStructuredColumns checksums are stable with halo=2") {
+    using Value = double;
+    mpi::Scope scope("self");
+
+    auto grid = StructuredGrid("O8");
+    auto structured_fs = [&] {
+        util::Config config;
+        config.set("halo", 2);
+        return functionspace::StructuredColumns(grid, config);
+    }();
+    auto block_fs = [&] {
+        util::Config config;
+        config.set("halo", 2);
+        config.set("nproma", 5);
+        return functionspace::BlockStructuredColumns(grid, config);
+    }();
+    util::Config options = option::variables(3) | option::levels(4);
+    Field structured = structured_fs.createField<Value>(option::name("structured") | options);
+    fill_structured_field(structured, Value{6000});
+    FieldSet structured_fieldset;
+    structured_fieldset.add(structured);
+    EXPECT_EQ(structured_fs.checksum(structured), structured_fs.checksum(structured_fieldset));
+    EXPECT_EQ(structured_fs.checksum(structured), structured_fs.checksum(structured));
+
+    Field blocked = block_fs.createField<Value>(option::name("blocked") | options);
+    block_fs.scatter(structured, blocked);
+    FieldSet blocked_fieldset;
+    blocked_fieldset.add(blocked);
+    EXPECT_EQ(block_fs.checksum(blocked), block_fs.checksum(blocked_fieldset));
+    EXPECT_EQ(block_fs.checksum(blocked), block_fs.checksum(blocked));
+}
+
+CASE("StructuredColumns checksum with halo=2 matches halo=0 exactly (mpi-serial)") {
+    using Value = double;
+    mpi::Scope scope("self");
+
+    auto grid = StructuredGrid("O8");
+    auto fs_h0 = [&] {
+        util::Config config;
+        config.set("halo", 0);
+        return functionspace::StructuredColumns(grid, config);
+    }();
+    auto fs_h2 = [&] {
+        util::Config config;
+        config.set("halo", 2);
+        return functionspace::StructuredColumns(grid, config);
+    }();
+
+    auto check_field_checksum_stable_with_halo = [&](const util::Config& options, Value first_value) {
+        Field field_h0 = fs_h0.createField<Value>(option::name("field_h0") | options);
+        Field field_h2 = fs_h2.createField<Value>(option::name("field_h2") | options);
+        fill_structured_field(field_h0, first_value);
+        fill_structured_field(field_h2, first_value);
+        EXPECT_EQ(fs_h0.checksum(field_h0), fs_h2.checksum(field_h2));
+    };
+
+    check_field_checksum_stable_with_halo(option::variables(3) | option::levels(4), Value{12000});
+    check_field_checksum_stable_with_halo(option::variables(3), Value{13000});
+    check_field_checksum_stable_with_halo(option::levels(4), Value{14000});
+    check_field_checksum_stable_with_halo(util::Config{}, Value{15000});
+
+    auto check_fieldset_checksum_stable_with_halo = [&](const util::Config& options_a, const util::Config& options_b) {
+        Field field_h0_a = fs_h0.createField<Value>(option::name("field_h0_a") | options_a);
+        Field field_h0_b = fs_h0.createField<Value>(option::name("field_h0_b") | options_b);
+        Field field_h2_a = fs_h2.createField<Value>(option::name("field_h2_a") | options_a);
+        Field field_h2_b = fs_h2.createField<Value>(option::name("field_h2_b") | options_b);
+
+        fill_structured_field(field_h0_a, Value{16000});
+        fill_structured_field(field_h0_b, Value{17000});
+        fill_structured_field(field_h2_a, Value{16000});
+        fill_structured_field(field_h2_b, Value{17000});
+
+        FieldSet fieldset_h0;
+        FieldSet fieldset_h2;
+        fieldset_h0.add(field_h0_a);
+        fieldset_h0.add(field_h0_b);
+        fieldset_h2.add(field_h2_a);
+        fieldset_h2.add(field_h2_b);
+
+        EXPECT_EQ(fs_h0.checksum(fieldset_h0), fs_h2.checksum(fieldset_h2));
+    };
+
+    check_fieldset_checksum_stable_with_halo(/*a*/ option::variables(2) | option::levels(3), /*b*/ option::variables(4));
+
+}
+
+CASE("StructuredColumns checksum with halo=2 matches halo=0 exactly (MPI)") {
+    using Value = double;
+
+    constexpr int root = 0;
+    auto grid = StructuredGrid("O8");
+    auto fs_h0 = [&] {
+        return functionspace::StructuredColumns(grid, option::halo(0));
+    }();
+    auto fs_h2 = [&] {
+        return functionspace::StructuredColumns(grid, option::halo(2));
+    }();
+
+    auto check_field_checksum_stable_with_halo = [&](const util::Config& options, Value first_value) {
+        Field global = fs_h0.createField<Value>(option::name("global") | option::global(root) | options);
+        Field local_h0 = fs_h0.createField<Value>(option::name("local_h0") | options);
+        Field local_h2 = fs_h2.createField<Value>(option::name("local_h2") | options);
+        if (mpi::comm().rank() == root) {
+            fill_structured_field(global, first_value);
+        }
+        fs_h0.scatter(global, local_h0);
+        fs_h2.scatter(global, local_h2);
+        EXPECT_EQ(fs_h0.checksum(local_h0), fs_h2.checksum(local_h2));
+    };
+
+    check_field_checksum_stable_with_halo(option::variables(3) | option::levels(4), Value{18000});
+    check_field_checksum_stable_with_halo(option::variables(3), Value{19000});
+    check_field_checksum_stable_with_halo(option::levels(4), Value{20000});
+    check_field_checksum_stable_with_halo(util::Config{}, Value{21000});
+
+    auto check_fieldset_checksum_stable_with_halo = [&](const util::Config& options_a, const util::Config& options_b) {
+        Field global_a = fs_h0.createField<Value>(option::name("global_a") | option::global(root) | options_a);
+        Field global_b = fs_h0.createField<Value>(option::name("global_b") | option::global(root) | options_b);
+        Field local_h0_a = fs_h0.createField<Value>(option::name("local_h0_a") | options_a);
+        Field local_h0_b = fs_h0.createField<Value>(option::name("local_h0_b") | options_b);
+        Field local_h2_a = fs_h2.createField<Value>(option::name("local_h2_a") | options_a);
+        Field local_h2_b = fs_h2.createField<Value>(option::name("local_h2_b") | options_b);
+
+        if (mpi::comm().rank() == root) {
+            fill_structured_field(global_a, Value{22000});
+            fill_structured_field(global_b, Value{23000});
+        }
+
+        fs_h0.scatter(global_a, local_h0_a);
+        fs_h0.scatter(global_b, local_h0_b);
+        fs_h2.scatter(global_a, local_h2_a);
+        fs_h2.scatter(global_b, local_h2_b);
+
+        FieldSet fieldset_h0;
+        FieldSet fieldset_h2;
+        fieldset_h0.add(local_h0_a);
+        fieldset_h0.add(local_h0_b);
+        fieldset_h2.add(local_h2_a);
+        fieldset_h2.add(local_h2_b);
+
+        EXPECT_EQ(fs_h0.checksum(fieldset_h0), fs_h2.checksum(fieldset_h2));
+    };
+    check_fieldset_checksum_stable_with_halo(/*a*/ option::variables(2) | option::levels(3), /*b*/ option::variables(4));
 }
 
 //-----------------------------------------------------------------------------
