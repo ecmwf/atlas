@@ -229,6 +229,9 @@ CASE("test_debug_sync_timeout_throws_when_configured") {
         return;
     }
 
+    mpi::comm().split(0, "work_comm");  // before forcing the timeout
+    const auto& work_comm = mpi::comm("work_comm");
+
     const int rank = comm.rank();
     const double timeout_seconds = eckit::Resource<double>("$ATLAS_MPI_BARRIER_TIMEOUT", 3.0);
     bool did_throw = false;
@@ -238,7 +241,8 @@ CASE("test_debug_sync_timeout_throws_when_configured") {
         std::this_thread::sleep_for( std::chrono::milliseconds(sleep_ms));
     }
     try {
-        ATLAS_DEBUG_SYNC("forced timeout throw");
+        ATLAS_DEBUG_SYNC(work_comm, "forced timeout throw");
+        // The internal barrier must be on a separate (work_comm) if we are expected to recover
     }
     catch (const eckit::Exception& exception) {
         did_throw = true;
