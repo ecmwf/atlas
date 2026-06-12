@@ -19,6 +19,7 @@
 
 // for MacOS backtrace
 #ifdef __APPLE__
+#include <algorithm>
 #include <execinfo.h>
 #include <dlfcn.h>
 #include <cstdlib>
@@ -257,11 +258,15 @@ std::string macos_backtrace() {
         }
     }
 
+    int nb_emitted_frames = std::count(emit_frame.begin(), emit_frame.end(), true);
     std::stringstream out;
     for (int i = 0, f = 0; f < frames; ++f) {
         if (emit_frame[f]) {
             std::string frame_index_str = "#" + std::to_string(i++);
-            out << std::left << std::setw(6) << frame_index_str << formatted_frames[f] << '\n';
+            out << std::left << std::setw(6) << frame_index_str << formatted_frames[f];
+            if (i < nb_emitted_frames) {
+                out << '\n';
+            }
         }
     }
     return out.str();
