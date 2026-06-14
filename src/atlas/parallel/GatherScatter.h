@@ -11,6 +11,7 @@
 #pragma once
 
 #include <numeric>
+#include <sstream>
 #include <stdexcept>
 #include <type_traits>
 #include <vector>
@@ -189,12 +190,16 @@ public:  // methods
     const mpi::Comm& comm() const { return *comm_; }
 
 private:  // methods
-    template <typename DATA_TYPE>
-    void pack_send_buffer(const parallel::Field<DATA_TYPE const>& field, const std::vector<int>& sendmap,
-                          DATA_TYPE send_buffer[]) const;
+    template <typename FIELD>
+    void validate_field_and_map(const char* context, const FIELD& field, const std::vector<int>& map,
+                                idx_t field_point_count, idx_t buffer_point_count, size_t buffer_size) const;
 
     template <typename DATA_TYPE>
-    void unpack_recv_buffer(const std::vector<int>& recvmap, const DATA_TYPE recv_buffer[],
+    void pack_send_buffer(const parallel::Field<DATA_TYPE const>& field, const std::vector<int>& sendmap,
+                          DATA_TYPE send_buffer[], size_t send_buffer_size) const;
+
+    template <typename DATA_TYPE>
+    void unpack_recv_buffer(const std::vector<int>& recvmap, const DATA_TYPE recv_buffer[], size_t recv_buffer_size,
                             const parallel::Field<DATA_TYPE>& field) const;
 
     template <typename DATA_TYPE, int RANK>
@@ -238,6 +243,8 @@ void GatherScatter::gather(parallel::Field<DATA_TYPE const> lfields[], parallel:
         throw_Exception("GatherScatter was not setup", Here());
     }
 
+    std::vector<int> glb_displs(nproc);
+    std::vector<int> glb_counts(nproc);
     for (idx_t jfield = 0; jfield < nb_fields; ++jfield) {
         const idx_t lvar_size =
             std::accumulate(lfields[jfield].var_shape.data(),
@@ -249,27 +256,30 @@ void GatherScatter::gather(parallel::Field<DATA_TYPE const> lfields[], parallel:
         const size_t glb_size = glb_cnt(root) * gvar_size;
         std::vector<DATA_TYPE, pluto::host::allocator<DATA_TYPE>> loc_buffer(loc_size);
         std::vector<DATA_TYPE, pluto::host::allocator<DATA_TYPE>> glb_buffer(glb_size);
-        std::vector<int> glb_displs(nproc);
-        std::vector<int> glb_counts(nproc);
 
         for (idx_t jproc = 0; jproc < nproc; ++jproc) {
             glb_counts[jproc] = glbcounts_[jproc] * gvar_size;
             glb_displs[jproc] = glbdispls_[jproc] * gvar_size;
         }
 
-        /// Pack
+#if !defined(NDEBUG)
+        validate_field_and_map("GatherScatter::gather local field", lfields[jfield], locmap_, parsize_, loccnt_, loc_size);
+        if (myproc == root) {
+            validate_field_and_map("GatherScatter::gather global field", gfields[jfield], glbmap_, glb_cnt(root), glb_cnt(root), glb_size);
+        }
+#endif
 
-        pack_send_buffer(lfields[jfield], locmap_, loc_buffer.data());
+        /// Pack
+        pack_send_buffer(lfields[jfield], locmap_, loc_buffer.data(), loc_size);
 
         /// Gather
-
         ATLAS_TRACE_MPI(GATHER) {
             comm().gatherv(loc_buffer.begin(), loc_buffer.end(), glb_buffer.begin(), glb_buffer.end(), glb_counts, glb_displs, root);
         }
 
         /// Unpack
         if (myproc == root)
-            unpack_recv_buffer(glbmap_, glb_buffer.data(), gfields[jfield]);
+            unpack_recv_buffer(glbmap_, glb_buffer.data(), glb_size, gfields[jfield]);
     }
 }
 
@@ -290,6 +300,9 @@ void GatherScatter::scatter(parallel::Field<DATA_TYPE const> gfields[], parallel
         throw_Exception("GatherScatter was not setup", Here());
     }
 
+    std::vector<int> glb_displs(nproc);
+    std::vector<int> glb_counts(nproc);
+
     for (idx_t jfield = 0; jfield < nb_fields; ++jfield) {
         const int lvar_size =
             std::accumulate(lfields[jfield].var_shape.data(),
@@ -301,28 +314,32 @@ void GatherScatter::scatter(parallel::Field<DATA_TYPE const> gfields[], parallel
         const size_t glb_size = glb_cnt(root) * gvar_size;
         std::vector<DATA_TYPE, pluto::host::allocator<DATA_TYPE>> loc_buffer(loc_size);
         std::vector<DATA_TYPE, pluto::host::allocator<DATA_TYPE>> glb_buffer(glb_size);
-        std::vector<int> glb_displs(nproc);
-        std::vector<int> glb_counts(nproc);
 
         for (idx_t jproc = 0; jproc < nproc; ++jproc) {
             glb_counts[jproc] = glbcounts_[jproc] * gvar_size;
             glb_displs[jproc] = glbdispls_[jproc] * gvar_size;
         }
 
+#if !defined(NDEBUG)
+        validate_field_and_map("GatherScatter::scatter local field", lfields[jfield], locmap_, parsize_, loccnt_, loc_size);
+        if (myproc == root) {
+            validate_field_and_map("GatherScatter::scatter global field", gfields[jfield], glbmap_, glb_cnt(root), glb_cnt(root), glb_size);
+        }
+#endif
+
         /// Pack
         if (myproc == root) {
-            pack_send_buffer(gfields[jfield], glbmap_, glb_buffer.data());
+            pack_send_buffer(gfields[jfield], glbmap_, glb_buffer.data(), glb_size);
         }
 
         /// Scatter
-
         ATLAS_TRACE_MPI(SCATTER) {
             comm().scatterv(glb_buffer.begin(), glb_buffer.end(), glb_counts, glb_displs, loc_buffer.begin(),
                             loc_buffer.end(), root);
         }
 
         /// Unpack
-        unpack_recv_buffer(locmap_, loc_buffer.data(), lfields[jfield]);
+        unpack_recv_buffer(locmap_, loc_buffer.data(), loc_size, lfields[jfield]);
     }
 }
 
@@ -335,10 +352,88 @@ void GatherScatter::scatter(const DATA_TYPE gdata[], const idx_t gvar_strides[],
     scatter(&gfield, &lfield, 1, root);
 }
 
+template <typename FIELD>
+void GatherScatter::validate_field_and_map(const char* context, const FIELD& field, const std::vector<int>& map,
+                                           idx_t field_point_count, idx_t buffer_point_count, size_t buffer_size) const {
+    auto format_idx_vector = [](const auto& values) {
+        std::ostringstream out;
+        out << '[';
+        for (size_t idx = 0; idx < values.size(); ++idx) {
+            if (idx > 0) {
+                out << ',';
+            }
+            out << values[idx];
+        }
+        out << ']';
+        return out.str();
+    };
+
+    auto base_message = [&]() {
+        std::ostringstream out;
+        out << context << ": "
+            << "var_rank=" << field.var_rank
+            << ", var_shape=" << format_idx_vector(field.var_shape)
+            << ", var_strides=" << format_idx_vector(field.var_strides)
+            << ", map_size=" << map.size()
+            << ", field_point_count=" << field_point_count
+            << ", buffer_point_count=" << buffer_point_count
+            << ", buffer_size=" << buffer_size
+            << ", data=" << static_cast<const void*>(field.data);
+        return out.str();
+    };
+
+    if (field.var_rank < 1 || field.var_rank > 3) {
+        throw_Exception(base_message() + ", unsupported field rank", Here());
+    }
+    if (field.var_shape.size() != static_cast<size_t>(field.var_rank) ||
+        field.var_strides.size() != static_cast<size_t>(field.var_rank)) {
+        throw_Exception(base_message() + ", invalid field metadata", Here());
+    }
+
+    idx_t per_point_size = 1;
+    for (idx_t dim = 0; dim < field.var_rank; ++dim) {
+        if (field.var_shape[dim] < 0) {
+            std::ostringstream out;
+            out << base_message() << ", invalid field shape at dim=" << dim << ", value=" << field.var_shape[dim];
+            throw_Exception(out.str(), Here());
+        }
+        per_point_size *= field.var_shape[dim];
+    }
+
+    const size_t expected_buffer_size = static_cast<size_t>(buffer_point_count * per_point_size);
+    if (expected_buffer_size != buffer_size) {
+        std::ostringstream out;
+        out << base_message() << ", inconsistent buffer size, expected_buffer_size=" << expected_buffer_size
+            << ", per_point_size=" << per_point_size;
+        throw_Exception(out.str(), Here());
+    }
+    if (buffer_size > 0 && field.data == nullptr) {
+        throw_Exception(base_message() + ", field data pointer is null", Here());
+    }
+    if (buffer_size > 0 && per_point_size > 0 && field_point_count == 0) {
+        std::ostringstream out;
+        out << base_message() << ", non-empty buffer with zero field extent, per_point_size=" << per_point_size;
+        throw_Exception(out.str(), Here());
+    }
+
+    for (size_t map_idx = 0; map_idx < map.size(); ++map_idx) {
+        const int mapped_point = map[map_idx];
+        if (mapped_point < 0 || static_cast<idx_t>(mapped_point) >= field_point_count) {
+            std::ostringstream out;
+            out << base_message() << ", map index out of range at map_idx=" << map_idx
+                << ", mapped_point=" << mapped_point;
+            throw_Exception(out.str(), Here());
+        }
+    }
+}
+
 template <typename DATA_TYPE>
 void GatherScatter::pack_send_buffer(const parallel::Field<DATA_TYPE const>& field, const std::vector<int>& sendmap,
-                                     DATA_TYPE send_buffer[]) const {
+                                     DATA_TYPE send_buffer[], size_t send_buffer_size) const {
     const idx_t sendcnt = static_cast<idx_t>(sendmap.size());
+    const idx_t send_buffer_elements =
+        std::accumulate(field.var_shape.begin(), field.var_shape.end(), idx_t{1}, std::multiplies<idx_t>()) * sendcnt;
+    ATLAS_ASSERT(static_cast<size_t>(send_buffer_elements) == send_buffer_size);
 
     idx_t ibuf              = 0;
     const idx_t send_stride = field.var_strides[0] * field.var_shape[0];
@@ -381,12 +476,18 @@ void GatherScatter::pack_send_buffer(const parallel::Field<DATA_TYPE const>& fie
         default:
             ATLAS_NOTIMPLEMENTED;
     }
+
+    ATLAS_ASSERT(static_cast<size_t>(ibuf) == send_buffer_size);
 }
 
 template <typename DATA_TYPE>
 void GatherScatter::unpack_recv_buffer(const std::vector<int>& recvmap, const DATA_TYPE recv_buffer[],
+                                       size_t recv_buffer_size,
                                        const parallel::Field<DATA_TYPE>& field) const {
     const idx_t recvcnt = static_cast<idx_t>(recvmap.size());
+    const idx_t recv_buffer_elements =
+        std::accumulate(field.var_shape.begin(), field.var_shape.end(), idx_t{1}, std::multiplies<idx_t>()) * recvcnt;
+    ATLAS_ASSERT(static_cast<size_t>(recv_buffer_elements) == recv_buffer_size);
 
     size_t ibuf             = 0;
     const idx_t recv_stride = field.var_strides[0] * field.var_shape[0];
@@ -428,6 +529,8 @@ void GatherScatter::unpack_recv_buffer(const std::vector<int>& recvmap, const DA
         default:
             ATLAS_NOTIMPLEMENTED;
     }
+
+    ATLAS_ASSERT(ibuf == recv_buffer_size);
 }
 
 template <typename DATA_TYPE, int RANK>
