@@ -223,7 +223,7 @@ ecbuild_add_library( TARGET atlas_f
         util/atlas_allocate_module.F90
         output/atlas_output_module.F90
         domain/atlas_Domain_module.F90
-        functionspace/atlas_FunctionSpace_module.F90
+        functionspace/atlas_FunctionSpace_module.fypp
         functionspace/atlas_functionspace_EdgeColumns_module.F90
         functionspace/atlas_functionspace_CellColumns_module.F90
         functionspace/atlas_functionspace_NodeColumns_module.fypp
@@ -261,6 +261,7 @@ ecbuild_add_library( TARGET atlas_f
         internals/Library.h
         internals/Library.cc
         runtime/atlas_trace.cc
+        runtime/atlas_Deprecation_module.F90
         runtime/atlas_Trace_module.F90
         ${atlas_trans_srcs}
         ${atlas_interpolation_srcs}

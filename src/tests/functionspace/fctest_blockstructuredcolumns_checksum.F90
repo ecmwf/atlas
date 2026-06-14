@@ -683,4 +683,40 @@ call atlas_log%info(msg)
 FCTEST_CHECK_EQUAL(checksum, "338c")
 END_TEST
 
+TEST( test_blockstructuredcolumns_checksum_array_api )
+type(atlas_StructuredGrid) :: grid
+type(atlas_functionspace_BlockStructuredColumns) :: fs
+real(c_double), allocatable :: gfl(:,:,:,:)
+character(len=256) :: checksum
+integer(c_int) :: nlev = 10, nproma = 8, nvar = 3
+
+grid = atlas_StructuredGrid("O32")
+fs = atlas_functionspace_BlockStructuredColumns(grid, nproma=nproma)
+allocate(gfl(fs%nproma(),nlev,nvar,fs%nblks()))
+call fill_field_with_data(fs, gfl, 42)
+
+checksum = fs%checksum(gfl(:,:,1,:))
+write(msg,*) "Checksum for array API wrapping 3D slice 1: ", trim(checksum)
+call atlas_log%info(msg)
+FCTEST_CHECK_EQUAL(checksum, "8b78")
+
+checksum = fs%checksum(gfl(:,:,2,:))
+write(msg,*) "Checksum for array API wrapping 3D slice 2: ", trim(checksum)
+call atlas_log%info(msg)
+FCTEST_CHECK_EQUAL(checksum, "31a0")
+
+checksum = fs%checksum(gfl(:,:,3,:))
+write(msg,*) "Checksum for array API wrapping 3D slice 3: ", trim(checksum)
+call atlas_log%info(msg)
+FCTEST_CHECK_EQUAL(checksum, "5496")
+
+checksum = fs%checksum(gfl(:,:,:,:))
+write(msg,*) "Checksum for array API wrapping 4D array: ", trim(checksum)
+call atlas_log%info(msg)
+FCTEST_CHECK_EQUAL(checksum, "338c")
+
+call fs%final()
+call grid%final()
+END_TEST
+
 END_TESTSUITE

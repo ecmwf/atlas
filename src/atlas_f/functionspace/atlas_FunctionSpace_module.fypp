@@ -7,6 +7,7 @@
 ! does it submit to any jurisdiction.
 
 #include "atlas/atlas_f.h"
+#:include "internals/atlas_generics.fypp"
 
 module atlas_functionspace_module
 
@@ -60,6 +61,11 @@ contains
 
   procedure, private :: checksum_field
   procedure, private :: checksum_fieldset
+#:for rank in ranks
+#:for dtype in dtypes[:4]
+  procedure, private :: checksum_${dtype}$_r${rank}$
+#:endfor
+#:endfor
 
   generic, public :: create_field => &
     & create_field_args, &
@@ -69,7 +75,17 @@ contains
 
   generic, public :: halo_exchange => halo_exchange_field, halo_exchange_fieldset
   generic, public :: adjoint_halo_exchange => adjoint_halo_exchange_field, adjoint_halo_exchange_fieldset
-  generic, public :: checksum => checksum_field, checksum_fieldset
+  generic, public :: checksum => &
+    & checksum_field, &
+    & checksum_fieldset, &
+#:set counter = 1
+#:set last = len(ranks) * len(dtypes[:4])
+#:for rank in ranks
+#:for dtype in dtypes[:4]
+    & checksum_${dtype}$_r${rank}$#{if counter < last}#, & #{endif}#
+#:set counter = counter + 1
+#:endfor
+#:endfor
 
 #if FCKIT_FINAL_NOT_INHERITING
   final :: atlas_FunctionSpace__final_auto
@@ -241,6 +257,22 @@ function checksum_fieldset(this,fieldset) result(checksum)
 end function checksum_fieldset
 
 !------------------------------------------------------------------------------
+
+#:for rank in ranks
+#:for dtype,ftype,ctype in types[:4]
+function checksum_${dtype}$_r${rank}$(this,array) result(checksum)
+  use, intrinsic :: iso_c_binding, only : c_int, c_long, c_float, c_double
+  character(len=:), allocatable :: checksum
+  class(atlas_Functionspace), intent(in) :: this
+  ${ftype}$, intent(in), target :: array(${dim[rank]}$)
+  type(atlas_Field) :: field
+  field = atlas_Field(array)
+  checksum = checksum_field(this, field)
+  call field%final()
+end function checksum_${dtype}$_r${rank}$
+
+#:endfor
+#:endfor
 
 !------------------------------------------------------------------------------
 
