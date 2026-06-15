@@ -253,26 +253,28 @@ void GatherScatter::setup(const std::string& mpi_comm, const int part[], const i
     locmap_.resize(loccnt_,-1);
     std::vector<int> idx(nproc, 0);
 
-    auto populate_maps = [&](auto global_index_for_node) {
-        for (const auto& node : nodes) {
-            glbmap_[glbdispls_[node.p] + idx[node.p]] = global_index_for_node(node);
+    auto update_local_map = [&](const Node& node) {
+        if (node.p == myproc) {
+            locmap_[idx[node.p]] = node.i;
+        }
+    };
 
-            if (node.p == myproc) {
-                locmap_[idx[node.p]] = node.i;
-            }
+    if (use_dense_global_indices_directly) {
+        for (const auto& node : nodes) {
+            glbmap_[glbdispls_[node.p] + idx[node.p]] = node.g - glb_idx_base;
+            update_local_map(node);
 
             ++idx[node.p];
         }
-    };
-    gidx_t compact_global_index{0};
-    auto compact_global_index_for_node = [&compact_global_index](const Node&) { return compact_global_index++; };
-    auto dense_global_index_for_node = [&](const Node& node) { return node.g - glb_idx_base; };
-
-    if (use_dense_global_indices_directly) {
-        populate_maps(dense_global_index_for_node);
     }
     else {
-        populate_maps(compact_global_index_for_node);
+        gidx_t compact_global_index{0};
+        for (const auto& node : nodes) {
+            glbmap_[glbdispls_[node.p] + idx[node.p]] = compact_global_index++;
+            update_local_map(node);
+
+            ++idx[node.p];
+        }
     }
 
     is_setup_ = true;
