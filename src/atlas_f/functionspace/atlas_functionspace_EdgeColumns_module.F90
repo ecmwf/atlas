@@ -232,7 +232,8 @@ function get_checksum(this) result(checksum)
   end if
 
   if (atlas_deprecation_errors()) then
-    write(0, '(A)') "[ATLAS_DEPRECATION_ERROR] atlas_functionspace_EdgeColumns%get_checksum should no longer be used. Please use atlas_functionspace_EdgeColumns%checksum instead."
+    write(0, '(A)') "[ATLAS_DEPRECATION_ERROR] atlas_functionspace_EdgeColumns%get_checksum should no longer be used.&
+                   & Please use atlas_functionspace_EdgeColumns%checksum instead."
     write(0, '(A)') "[ATLAS_DEPRECATION_ERROR] This error can be disabled with `export ATLAS_DEPRECATION_ERRORS=0`"
     error stop
   end if
@@ -247,7 +248,8 @@ subroutine warn_edgecolumns_get_checksum_deprecation_once()
 
   if (.not. warned) then
     warned = .true.
-    write(0, '(A)') "[ATLAS_DEPRECATION_WARNING] atlas_functionspace_EdgeColumns%get_checksum should no longer be used. Please use atlas_functionspace_EdgeColumns%checksum instead."
+    write(0, '(A)') "[ATLAS_DEPRECATION_WARNING] atlas_functionspace_EdgeColumns%get_checksum should no longer be used.&
+                   & Please use atlas_functionspace_EdgeColumns%checksum instead."
     write(0, '(A)') "[ATLAS_DEPRECATION_WARNING] This warning can be disabled with `export ATLAS_DEPRECATION_WARNINGS=0`"
   end if
 end subroutine
