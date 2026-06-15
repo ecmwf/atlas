@@ -244,7 +244,8 @@ subroutine warn_cellcolumns_get_checksum_deprecation_once()
 
   if (.not. warned) then
     warned = .true.
-    write(0, '(A)') "[ATLAS_DEPRECATION_WARNING] atlas_functionspace_CellColumns%get_checksum should no longer be used. Please use atlas_functionspace_CellColumns%checksum instead."
+    write(0, '(A)') "[ATLAS_DEPRECATION_WARNING] atlas_functionspace_CellColumns%get_checksum should no longer be used.&
+                   & Please use atlas_functionspace_CellColumns%checksum instead."
     write(0, '(A)') "[ATLAS_DEPRECATION_WARNING] This warning can be disabled with `export ATLAS_DEPRECATION_WARNINGS=0`"
   end if
 end subroutine
