@@ -330,9 +330,9 @@ std::string_view to_string_view(BarrierTimeoutAction action) {
 }
 
 BarrierTimeoutAction to_BarrierTimeoutAction(const std::string& str) {
-    if (str == "ABORT") return BarrierTimeoutAction::ABORT;
-    if (str == "THROW") return BarrierTimeoutAction::THROW;
-    if (str == "CONTINUE") return BarrierTimeoutAction::CONTINUE;
+    if (str == "ABORT") { return BarrierTimeoutAction::ABORT };
+    if (str == "THROW") { return BarrierTimeoutAction::THROW };
+    if (str == "CONTINUE") { return BarrierTimeoutAction::CONTINUE };
     ATLAS_THROW_EXCEPTION("Invalid value for ATLAS_MPI_BARRIER_TIMEOUT_ACTION: " << str << "."
                           << "Valid options are: ABORT, THROW, CONTINUE.");
 }

@@ -800,7 +800,7 @@ const parallel::HaloExchange& CellColumns::halo_exchange() const {
 }
 
 const parallel::Checksum& CellColumns::checksum() const {
-    return functionspace_->checksum();
+    return functionspace_->deprecated_checksum();
 }
 
 const mesh::Halo& CellColumns::halo() const {

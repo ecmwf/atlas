@@ -783,7 +783,7 @@ const parallel::HaloExchange& EdgeColumns::halo_exchange() const {
 }
 
 const parallel::Checksum& EdgeColumns::checksum() const {
-    return functionspace_->checksum();
+    return functionspace_->deprecated_checksum();
 }
 
 }  // namespace functionspace
