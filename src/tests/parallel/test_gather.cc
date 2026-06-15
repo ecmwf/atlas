@@ -30,6 +30,7 @@ namespace atlas {
 namespace test {
 
 constexpr size_t MB = 1024 * 1024;
+constexpr size_t GB = 1024 * MB;
 
 size_t peakMemory() {
     return eckit::system::ResourceUsage().maxResidentSetSize();
@@ -744,32 +745,33 @@ CASE("test_gather") {
 
 CASE("test_gather_sparse_global_indices") {
     SparseGlobalIndexFixture f;
-    constexpr size_t sparse_global_index_memory_limit = 256 * MB;
+    // The fixture includes global-index 14399999990.
+    // An 64-bit-value array of this size (a global gathered field) would
+    // require more than 100GB.
+    constexpr size_t sparse_global_index_memory_limit = 10 * GB; // less than 100 GB
 
-    SECTION("test_gather_rank0_sparse_global_indices") {
-        EXPECT(peakMemory() < sparse_global_index_memory_limit);
+    for (f.root = 0; f.root < f.comm_size; ++f.root) {
+        std::vector<POD> loc(f.Nl);
+        std::vector<POD> glb(f.Ng());
 
-        for (f.root = 0; f.root < f.comm_size; ++f.root) {
-            std::vector<POD> loc(f.Nl);
-            std::vector<POD> glb(f.Ng());
+        for (int j = 0; j < f.Nl; ++j) {
+            loc[j] = (idx_t(f.part[j]) != f.rank ? -1. : f.gidx[j] * 10.);
+        }
 
-            for (int j = 0; j < f.Nl; ++j) {
-                loc[j] = (idx_t(f.part[j]) != f.rank ? -1. : f.gidx[j] * 10.);
-            }
+        idx_t strides[] = {1};
+        idx_t extents[] = {1};
+        f.gather_scatter.gather(loc.data(), strides, extents, 1, glb.data(), strides, extents, 1, f.root);
 
-            idx_t strides[] = {1};
-            idx_t extents[] = {1};
-            f.gather_scatter.gather(loc.data(), strides, extents, 1, glb.data(), strides, extents, 1, f.root);
-            EXPECT(peakMemory() < sparse_global_index_memory_limit);
+        EXPECT(f.gather_scatter.glb_dof() == 6);
 
-            EXPECT(f.gather_scatter.glb_dof() == 6);
-
-            if (f.rank == f.root) {
-                POD glb_c[] = {100, 200, 300, 400, 500, 14399999990.};
-                EXPECT(glb == eckit::testing::make_view(glb_c, glb_c + f.Ng()));
-            }
+        if (f.rank == f.root) {
+            POD glb_c[] = {100, 200, 300, 400, 500, 14399999990.};
+            EXPECT(glb == eckit::testing::make_view(glb_c, glb_c + f.Ng()));
         }
     }
+
+    Log::warning() << "test_gather_sparse_global_indices: peak memory usage = " << peakMemory() / MB << " MB" << std::endl;
+    EXPECT(peakMemory() < sparse_global_index_memory_limit);
 }
 
 //-----------------------------------------------------------------------------
