@@ -885,6 +885,9 @@ util/Point.cc
 util/Point.h
 util/Polygon.cc
 util/Polygon.h
+util/relayout.cc
+util/relayout.h
+util/relayout_on_host.cc
 util/Rotation.cc
 util/Rotation.h
 util/Registry.h
@@ -984,10 +987,12 @@ if( atlas_HAVE_GPU )
   include( atlas_host_device )
   list( APPEND source_list
     parallel/detail/DevicePacker.hic
+    util/relayout_on_device.hic
   )
   atlas_host_device( source_list
     SOURCES
       parallel/detail/DevicePacker.hic
+      util/relayout_on_device.hic
       mesh/Connectivity.cc
   )
 
