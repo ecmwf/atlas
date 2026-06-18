@@ -101,6 +101,13 @@ HIC_TYPE(HostFn_t)
 HIC_TYPE(Error_t)
 HIC_TYPE(Event_t)
 HIC_TYPE(Stream_t)
+#if HIC_BACKEND_CUDA
+using HIC_SYMBOL(DeviceProp_t) = cudaDeviceProp;
+#elif HIC_BACKEND_HIP
+using HIC_SYMBOL(DeviceProp_t) = hipDeviceProp_t;
+#elif HIC_BACKEND_DUMMY
+using HIC_SYMBOL(DeviceProp_t) = dummyDeviceProp_t;
+#endif
 #if !HIC_BACKEND_HIP
 HIC_TYPE(PointerAttributes)
 #elif HIP_VERSION_MAJOR >= 6
@@ -131,7 +138,9 @@ inline hicError_t hicMemPrefetchAsync (const void* devPtr, size_t count, int dst
 HIC_FUNCTION(DeviceSynchronize)
 HIC_FUNCTION(Free)
 HIC_FUNCTION(FreeAsync)
+HIC_FUNCTION(GetDevice)
 HIC_FUNCTION(GetDeviceCount)
+HIC_FUNCTION(GetDeviceProperties)
 HIC_FUNCTION(GetErrorString)
 HIC_FUNCTION(GetLastError)
 HIC_FUNCTION(HostGetDevicePointer)
