@@ -357,15 +357,27 @@ void device_copy_blocked_to_blocked_mdspan(BlockedIn blocked_in, BlockedOut bloc
 // Explicit instantiation
 namespace atlas {
 
+#define EXPLICIT_TEMPLATE_INSTANTIATION_MDSPAN_TYPE_RANK_ACCESSOR(TYPE, BLOCKED_RANK, ACCESSOR) \
+    template void device_copy_blocked_to_nonblocked_mdspan<mdspan<const TYPE,dims<BLOCKED_RANK>,layout_stride,ACCESSOR<const TYPE>>,mdspan<TYPE,dims<BLOCKED_RANK-1>,layout_stride,ACCESSOR<TYPE>>>(mdspan<const TYPE,dims<BLOCKED_RANK>,layout_stride,ACCESSOR<const TYPE>>, mdspan<TYPE,dims<BLOCKED_RANK-1>,layout_stride,ACCESSOR<TYPE>>); \
+    template void device_copy_blocked_to_nonblocked_mdspan<mdspan<const TYPE,dims<BLOCKED_RANK>,layout_stride,ACCESSOR<const TYPE>>,mdspan<TYPE,dims<BLOCKED_RANK-1>,layout_right,ACCESSOR<TYPE>>>(mdspan<const TYPE,dims<BLOCKED_RANK>,layout_stride,ACCESSOR<const TYPE>>, mdspan<TYPE,dims<BLOCKED_RANK-1>,layout_right,ACCESSOR<TYPE>>); \
+    template void device_copy_blocked_to_nonblocked_mdspan<mdspan<const TYPE,dims<BLOCKED_RANK>,layout_right,ACCESSOR<const TYPE>>,mdspan<TYPE,dims<BLOCKED_RANK-1>,layout_stride,ACCESSOR<TYPE>>>(mdspan<const TYPE,dims<BLOCKED_RANK>,layout_right,ACCESSOR<const TYPE>>, mdspan<TYPE,dims<BLOCKED_RANK-1>,layout_stride,ACCESSOR<TYPE>>); \
+    template void device_copy_blocked_to_nonblocked_mdspan<mdspan<const TYPE,dims<BLOCKED_RANK>,layout_right,ACCESSOR<const TYPE>>,mdspan<TYPE,dims<BLOCKED_RANK-1>,layout_right,ACCESSOR<TYPE>>>(mdspan<const TYPE,dims<BLOCKED_RANK>,layout_right,ACCESSOR<const TYPE>>, mdspan<TYPE,dims<BLOCKED_RANK-1>,layout_right,ACCESSOR<TYPE>>); \
+\
+    template void device_copy_nonblocked_to_blocked_mdspan<mdspan<const TYPE,dims<BLOCKED_RANK-1>,layout_stride,ACCESSOR<const TYPE>>,mdspan<TYPE,dims<BLOCKED_RANK>,layout_stride,ACCESSOR<TYPE>>>(mdspan<const TYPE,dims<BLOCKED_RANK-1>,layout_stride,ACCESSOR<const TYPE>>, mdspan<TYPE,dims<BLOCKED_RANK>,layout_stride,ACCESSOR<TYPE>>); \
+    template void device_copy_nonblocked_to_blocked_mdspan<mdspan<const TYPE,dims<BLOCKED_RANK-1>,layout_stride,ACCESSOR<const TYPE>>,mdspan<TYPE,dims<BLOCKED_RANK>,layout_right,ACCESSOR<TYPE>>>(mdspan<const TYPE,dims<BLOCKED_RANK-1>,layout_stride,ACCESSOR<const TYPE>>, mdspan<TYPE,dims<BLOCKED_RANK>,layout_right,ACCESSOR<TYPE>>); \
+    template void device_copy_nonblocked_to_blocked_mdspan<mdspan<const TYPE,dims<BLOCKED_RANK-1>,layout_right,ACCESSOR<const TYPE>>,mdspan<TYPE,dims<BLOCKED_RANK>,layout_stride,ACCESSOR<TYPE>>>(mdspan<const TYPE,dims<BLOCKED_RANK-1>,layout_right,ACCESSOR<const TYPE>>, mdspan<TYPE,dims<BLOCKED_RANK>,layout_stride,ACCESSOR<TYPE>>); \
+    template void device_copy_nonblocked_to_blocked_mdspan<mdspan<const TYPE,dims<BLOCKED_RANK-1>,layout_right,ACCESSOR<const TYPE>>,mdspan<TYPE,dims<BLOCKED_RANK>,layout_right,ACCESSOR<TYPE>>>(mdspan<const TYPE,dims<BLOCKED_RANK-1>,layout_right,ACCESSOR<const TYPE>>, mdspan<TYPE,dims<BLOCKED_RANK>,layout_right,ACCESSOR<TYPE>>); \
+\
+    template void device_copy_blocked_to_blocked_mdspan<mdspan<const TYPE,dims<BLOCKED_RANK>,layout_stride,ACCESSOR<const TYPE>>,mdspan<TYPE,dims<BLOCKED_RANK>,layout_stride,ACCESSOR<TYPE>>>(mdspan<const TYPE,dims<BLOCKED_RANK>,layout_stride,ACCESSOR<const TYPE>>, mdspan<TYPE,dims<BLOCKED_RANK>,layout_stride,ACCESSOR<TYPE>>); \
+    template void device_copy_blocked_to_blocked_mdspan<mdspan<const TYPE,dims<BLOCKED_RANK>,layout_stride,ACCESSOR<const TYPE>>,mdspan<TYPE,dims<BLOCKED_RANK>,layout_right,ACCESSOR<TYPE>>>(mdspan<const TYPE,dims<BLOCKED_RANK>,layout_stride,ACCESSOR<const TYPE>>, mdspan<TYPE,dims<BLOCKED_RANK>,layout_right,ACCESSOR<TYPE>>); \
+    template void device_copy_blocked_to_blocked_mdspan<mdspan<const TYPE,dims<BLOCKED_RANK>,layout_right,ACCESSOR<const TYPE>>,mdspan<TYPE,dims<BLOCKED_RANK>,layout_stride,ACCESSOR<TYPE>>>(mdspan<const TYPE,dims<BLOCKED_RANK>,layout_right,ACCESSOR<const TYPE>>, mdspan<TYPE,dims<BLOCKED_RANK>,layout_stride,ACCESSOR<TYPE>>); \
+    template void device_copy_blocked_to_blocked_mdspan<mdspan<const TYPE,dims<BLOCKED_RANK>,layout_right,ACCESSOR<const TYPE>>,mdspan<TYPE,dims<BLOCKED_RANK>,layout_right,ACCESSOR<TYPE>>>(mdspan<const TYPE,dims<BLOCKED_RANK>,layout_right,ACCESSOR<const TYPE>>, mdspan<TYPE,dims<BLOCKED_RANK>,layout_right,ACCESSOR<TYPE>>);
+
 #define EXPLICIT_TEMPLATE_INSTANTIATION_TYPE_RANK(TYPE, BLOCKED_RANK) \
     template void device_copy_blocked_to_nonblocked_mdspan<array::ArrayView<const TYPE,BLOCKED_RANK>,array::ArrayView<TYPE,BLOCKED_RANK-1>>(array::ArrayView<const TYPE,BLOCKED_RANK>, array::ArrayView<TYPE,BLOCKED_RANK-1>); \
-    template void device_copy_blocked_to_nonblocked_mdspan<mdspan<const TYPE,dims<BLOCKED_RANK>,layout_stride>,mdspan<TYPE,dims<BLOCKED_RANK-1>,layout_stride>>(mdspan<const TYPE,dims<BLOCKED_RANK>,layout_stride>, mdspan<TYPE,dims<BLOCKED_RANK-1>,layout_stride>); \
-\
     template void device_copy_nonblocked_to_blocked_mdspan<array::ArrayView<const TYPE,BLOCKED_RANK-1>,array::ArrayView<TYPE,BLOCKED_RANK>>(array::ArrayView<const TYPE,BLOCKED_RANK-1>, array::ArrayView<TYPE,BLOCKED_RANK>); \
-    template void device_copy_nonblocked_to_blocked_mdspan<mdspan<const TYPE,dims<BLOCKED_RANK-1>,layout_stride>,mdspan<TYPE,dims<BLOCKED_RANK>,layout_stride>>(mdspan<const TYPE,dims<BLOCKED_RANK-1>,layout_stride>, mdspan<TYPE,dims<BLOCKED_RANK>,layout_stride>); \
-\
     template void device_copy_blocked_to_blocked_mdspan<array::ArrayView<const TYPE,BLOCKED_RANK>,array::ArrayView<TYPE,BLOCKED_RANK>>(array::ArrayView<const TYPE,BLOCKED_RANK>, array::ArrayView<TYPE,BLOCKED_RANK>); \
-    template void device_copy_blocked_to_blocked_mdspan<mdspan<const TYPE,dims<BLOCKED_RANK>,layout_stride>,mdspan<TYPE,dims<BLOCKED_RANK>,layout_stride>>(mdspan<const TYPE,dims<BLOCKED_RANK>,layout_stride>, mdspan<TYPE,dims<BLOCKED_RANK>,layout_stride>);
+    EXPLICIT_TEMPLATE_INSTANTIATION_MDSPAN_TYPE_RANK_ACCESSOR(TYPE, BLOCKED_RANK, restrict_accessor)
 
 #define EXPLICIT_TEMPLATE_INSTATIATION(RANK)                \
     EXPLICIT_TEMPLATE_INSTANTIATION_TYPE_RANK(double, RANK) \
@@ -379,6 +391,7 @@ EXPLICIT_TEMPLATE_INSTATIATION(3)
 EXPLICIT_TEMPLATE_INSTATIATION(4)
 
 #undef EXPLICIT_TEMPLATE_INSTATIATION_TYPE_RANK
+#undef EXPLICIT_TEMPLATE_INSTANTIATION_MDSPAN_TYPE_RANK_ACCESSOR
 #undef EXPLICIT_TEMPLATE_INSTATIATION
 
 }  // namespace atlas

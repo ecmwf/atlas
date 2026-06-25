@@ -207,7 +207,8 @@
  *
  *   --use-mdspan=true|false
  *       Sets ATLAS_RELAYOUT_USE_MDSPAN.  When enabled, the public relayout wrappers convert Atlas
- *       views to mdspan before dispatching to the host or device relayout implementation.
+ *       views to mdspan before dispatching to the host or device relayout implementation, and
+ *       attempt to use layout_right-compatible mdspan views when the view strides allow it.
  *
  *       Default: false.
  *       When this benchmark is run without --use-mdspan, it explicitly sets
@@ -237,6 +238,29 @@
  *
  *           ATLAS_RELAYOUT_INDEX_OPERATOR=0
  *           ATLAS_RELAYOUT_INDEX_OPERATOR=1
+ *
+ *   --implementation=public_wrapper|raw_pointers_contiguous|arrayview_fallback|
+ *                    mdspan_layout_stride_fallback|mdspan_layout_right_contiguous|
+ *                    mdspan_layout_right_fallback
+ *       Selects the implementation family used by the public relayout wrapper.  public_wrapper
+ *       keeps the normal relayout API behavior and honours --use-mdspan and --index-operator.  The
+ *       other modes are host-only benchmark probes that ask the relayout wrapper to construct a
+ *       specific view type and force the matching index-operator setting:
+ *
+ *       raw_pointers_contiguous uses ArrayView inputs with the optimized raw-pointer contiguous
+ *       path enabled.
+ *
+ *       arrayview_fallback uses ArrayView inputs and forces the generic index-operator fallback.
+ *
+ *       mdspan_layout_stride_fallback uses make_mdspan(), which produces layout_stride
+ *       mdspan views, disables the layout_right-compatible mdspan upgrade, and forces the generic
+ *       index-operator fallback.
+ *
+ *       mdspan_layout_right_contiguous constructs layout_right mdspan views over the same
+ *       contiguous field storage and keeps the optimized contiguous path enabled.
+ *
+ *       mdspan_layout_right_fallback constructs layout_right mdspan views over the same contiguous
+ *       field storage and forces the generic index-operator fallback.
  *
  * Interpreting results
  * --------------------
@@ -287,6 +311,13 @@ using namespace atlas;
 
 namespace {
 
+constexpr const char* implementation_public_wrapper = "public_wrapper";
+constexpr const char* implementation_raw_pointers_contiguous = "raw_pointers_contiguous";
+constexpr const char* implementation_arrayview_fallback = "arrayview_fallback";
+constexpr const char* implementation_mdspan_layout_stride_fallback = "mdspan_layout_stride_fallback";
+constexpr const char* implementation_mdspan_layout_right_contiguous = "mdspan_layout_right_contiguous";
+constexpr const char* implementation_mdspan_layout_right_fallback = "mdspan_layout_right_fallback";
+
 struct Settings {
     idx_t npts{1000000};
     idx_t nlev{137};
@@ -302,6 +333,7 @@ struct Settings {
     bool blocked_nonblocked_use_memcpy{false};
     bool use_mdspan{false};
     bool index_operator{false};
+    std::string implementation{implementation_public_wrapper};
     std::string format{"table"};
     idx_t iterations{20};
     idx_t warmup{2};
@@ -317,6 +349,15 @@ struct Settings {
         assert_one_of("format", {"table", "json"}, format);
         assert_one_of("loop-order", {"nproma_innermost", "nproma_outermost"}, loop_order);
         assert_one_of("nproma-dispatch", {"static", "runtime", "runtime_full_blocks"}, nproma_dispatch);
+        assert_one_of("implementation", {implementation_public_wrapper,
+                                         implementation_raw_pointers_contiguous,
+                                         implementation_arrayview_fallback,
+                                         implementation_mdspan_layout_stride_fallback,
+                                         implementation_mdspan_layout_right_contiguous,
+                                         implementation_mdspan_layout_right_fallback}, implementation);
+        if (on_device && implementation != implementation_public_wrapper) {
+            throw_Exception("implementation benchmark modes are host-only; use --implementation=public_wrapper with --on-device=true");
+        }
     }
 
 private:
@@ -799,7 +840,8 @@ void print_benchmark_json(const RuntimeInfo& runtime, const Settings& settings, 
     Log::info() << "    \"blocked_to_blocked_use_memcpy\": " << (settings.blocked_to_blocked_use_memcpy ? "true" : "false") << "," << std::endl;
     Log::info() << "    \"blocked_nonblocked_use_memcpy\": " << (settings.blocked_nonblocked_use_memcpy ? "true" : "false") << "," << std::endl;
     Log::info() << "    \"use_mdspan\": " << (settings.use_mdspan ? "true" : "false") << "," << std::endl;
-    Log::info() << "    \"index_operator\": " << settings.index_operator << std::endl;
+    Log::info() << "    \"index_operator\": " << settings.index_operator << "," << std::endl;
+    Log::info() << "    \"implementation\": \"" << json_escape(settings.implementation) << "\"" << std::endl;
     Log::info() << "  }," << std::endl;
     Log::info() << "  \"data\": {" << std::endl;
     Log::info() << "    \"value_type\": \"" << json_escape(settings.precision) << "\"," << std::endl;
@@ -881,6 +923,7 @@ int run_benchmark(const Settings& settings) {
         Log::info() << "  blocked_nonblocked_use_memcpy: " << std::boolalpha << settings.blocked_nonblocked_use_memcpy << std::endl;
         Log::info() << "  use_mdspan: " << std::boolalpha << settings.use_mdspan << std::endl;
         Log::info() << "  index_operator: " << std::boolalpha << settings.index_operator << std::endl;
+        Log::info() << "  implementation: " << settings.implementation << std::endl;
         Log::info() << std::noboolalpha;
         Log::info() << std::endl;
         Log::info() << "Data" << std::endl;
@@ -903,22 +946,22 @@ int run_benchmark(const Settings& settings) {
         Log::info() << std::endl;
     }
 
-    warmup([&]() { copy_blocked_to_nonblocked(fields.blocked, fields.nonblocked, settings.on_device); }, settings.warmup,
+     warmup([&]() { copy_blocked_to_nonblocked(fields.blocked, fields.nonblocked, settings.on_device); }, settings.warmup,
            settings.on_device);
     auto b2n = measure("blocked_to_nonblocked",
-                       [&]() { copy_blocked_to_nonblocked(fields.blocked, fields.nonblocked, settings.on_device); },
+                              [&]() { copy_blocked_to_nonblocked(fields.blocked, fields.nonblocked, settings.on_device); },
                        settings.iterations, settings.on_device, settings.verbose && settings.format == "table", bytes_moved, elements_moved);
 
-    warmup([&]() { copy_nonblocked_to_blocked(fields.nonblocked, fields.blocked, settings.on_device); }, settings.warmup,
+     warmup([&]() { copy_nonblocked_to_blocked(fields.nonblocked, fields.blocked, settings.on_device); }, settings.warmup,
            settings.on_device);
     auto n2b = measure("nonblocked_to_blocked",
-                       [&]() { copy_nonblocked_to_blocked(fields.nonblocked, fields.blocked, settings.on_device); },
+                              [&]() { copy_nonblocked_to_blocked(fields.nonblocked, fields.blocked, settings.on_device); },
                        settings.iterations, settings.on_device, settings.verbose && settings.format == "table", bytes_moved, elements_moved);
 
-    warmup([&]() { copy_blocked_to_blocked(fields.blocked, fields.blocked_other, settings.on_device); }, settings.warmup,
+     warmup([&]() { copy_blocked_to_blocked(fields.blocked, fields.blocked_other, settings.on_device); }, settings.warmup,
            settings.on_device);
     auto b2b = measure("blocked_to_blocked",
-                       [&]() { copy_blocked_to_blocked(fields.blocked, fields.blocked_other, settings.on_device); },
+                              [&]() { copy_blocked_to_blocked(fields.blocked, fields.blocked_other, settings.on_device); },
                        settings.iterations, settings.on_device, settings.verbose && settings.format == "table", bytes_moved, elements_moved);
 
     const std::vector<Measurement> results{b2n, n2b, b2b};
@@ -957,6 +1000,7 @@ public:
         add_option(new SimpleOption<bool>("blocked-nonblocked-use-memcpy", "Use memcpy for host rank-2 blocked/nonblocked copies. Default=false"));
         add_option(new SimpleOption<bool>("use-mdspan", "Use mdspan dispatch in the public relayout wrappers. Default=false"));
         add_option(new SimpleOption<bool>("index-operator", "Force blocked/nonblocked relayout to use the generic index-operator fallback path. Default=false"));
+        add_option(new SimpleOption<std::string>("implementation", "Implementation mode: public_wrapper, raw_pointers_contiguous, arrayview_fallback, mdspan_layout_stride_fallback, mdspan_layout_right_contiguous, or mdspan_layout_right_fallback. Default=public_wrapper"));
     }
 
     std::string briefDescription() override { return "Benchmark relayout between blocked and nonblocked field layouts"; }
@@ -996,6 +1040,28 @@ public:
         args.get("blocked-nonblocked-use-memcpy", settings.blocked_nonblocked_use_memcpy);
         args.get("use-mdspan", settings.use_mdspan);
         args.get("index-operator", settings.index_operator);
+        args.get("implementation", settings.implementation);
+
+        if (settings.implementation == implementation_raw_pointers_contiguous) {
+            settings.use_mdspan = false;
+            settings.index_operator = false;
+        }
+        else if (settings.implementation == implementation_arrayview_fallback) {
+            settings.use_mdspan = false;
+            settings.index_operator = true;
+        }
+        else if (settings.implementation == implementation_mdspan_layout_stride_fallback) {
+            settings.use_mdspan = true;
+            settings.index_operator = true;
+        }
+        else if (settings.implementation == implementation_mdspan_layout_right_contiguous) {
+            settings.use_mdspan = true;
+            settings.index_operator = false;
+        }
+        else if (settings.implementation == implementation_mdspan_layout_right_fallback) {
+            settings.use_mdspan = true;
+            settings.index_operator = true;
+        }
 
         settings.validate();
 
@@ -1006,6 +1072,7 @@ public:
         ::setenv("ATLAS_RELAYOUT_BLOCKED_NONBLOCKED_USE_MEMCPY", settings.blocked_nonblocked_use_memcpy ? "1" : "0", overwrite);
         ::setenv("ATLAS_RELAYOUT_USE_MDSPAN", settings.use_mdspan ? "1" : "0", overwrite);
         ::setenv("ATLAS_RELAYOUT_INDEX_OPERATOR", settings.index_operator ? "1" : "0", overwrite);
+        ::setenv("ATLAS_RELAYOUT_IMPLEMENTATION", settings.implementation.c_str(), overwrite);
 
         if (settings.precision == "float" || settings.precision == "single") {
             settings.precision = "float";

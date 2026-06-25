@@ -137,6 +137,31 @@ if( HAVE_TESTS )
     --use-mdspan=true
     --index-operator=0 )
 
+  atlas_add_benchmark_relayout_smoke( atlas_test_app_benchmark_relayout_raw_pointers_contiguous
+    ${ATLAS_RELAYOUT_SMOKE_COMMON_ARGS}
+    --nlev=3 --nvar=2 --nproma=32
+    --implementation=raw_pointers_contiguous )
+
+  atlas_add_benchmark_relayout_smoke( atlas_test_app_benchmark_relayout_arrayview_fallback
+    ${ATLAS_RELAYOUT_SMOKE_COMMON_ARGS}
+    --nlev=3 --nvar=2 --nproma=32
+    --implementation=arrayview_fallback )
+
+  atlas_add_benchmark_relayout_smoke( atlas_test_app_benchmark_relayout_mdspan_layout_stride_fallback
+    ${ATLAS_RELAYOUT_SMOKE_COMMON_ARGS}
+    --nlev=3 --nvar=2 --nproma=32
+    --implementation=mdspan_layout_stride_fallback )
+
+  atlas_add_benchmark_relayout_smoke( atlas_test_app_benchmark_relayout_mdspan_layout_right_contiguous
+    ${ATLAS_RELAYOUT_SMOKE_COMMON_ARGS}
+    --nlev=3 --nvar=2 --nproma=32
+    --implementation=mdspan_layout_right_contiguous )
+
+  atlas_add_benchmark_relayout_smoke( atlas_test_app_benchmark_relayout_mdspan_layout_right_fallback
+    ${ATLAS_RELAYOUT_SMOKE_COMMON_ARGS}
+    --nlev=3 --nvar=2 --nproma=32
+    --implementation=mdspan_layout_right_fallback )
+
   atlas_add_benchmark_relayout_smoke( atlas_test_app_benchmark_relayout_blocked_to_blocked_memcpy_off
     ${ATLAS_RELAYOUT_SMOKE_COMMON_ARGS}
     --nlev=3 --nvar=2 --nproma=32

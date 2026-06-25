@@ -20,17 +20,35 @@
 
 #include <string>
 #include <cstdlib>
+#include <type_traits>
 
 #include "pluto/pluto.h"
 
 #include "atlas/runtime/Trace.h"
+#include "atlas/runtime/Log.h"
+
 #include "atlas/array.h"
+#include "atlas/array/make_mdspan.h"
 #include "atlas/field/Field.h"
 #include "atlas/field/FieldSet.h"
+#include "atlas/mdspan.h"
 
 namespace atlas {
 
 namespace {
+
+constexpr const char* relayout_implementation_env = "ATLAS_RELAYOUT_IMPLEMENTATION";
+constexpr const char* implementation_mdspan_layout_stride_fallback = "mdspan_layout_stride_fallback";
+
+const std::string& relayout_implementation() {
+    static const std::string implementation = []() {
+        if (const char* value = std::getenv(relayout_implementation_env)) {
+            return std::string{value};
+        }
+        return std::string{};
+    }();
+    return implementation;
+}
 
 bool use_mdspan() {
     static const bool ATLAS_RELAYOUT_USE_MDSPAN = []() {
@@ -41,6 +59,44 @@ bool use_mdspan() {
         return false;
     }();
     return ATLAS_RELAYOUT_USE_MDSPAN;
+}
+
+bool use_mdspan_layout_stride() {
+    const std::string& implementation = relayout_implementation();
+    return (use_mdspan() && implementation == implementation_mdspan_layout_stride_fallback);
+}
+
+template <typename SourceView, typename TargetView, typename Operation>
+void dispatch_operation(SourceView& source, TargetView& target, Operation operation) {
+    if (use_mdspan()) {
+        if (use_mdspan_layout_stride()) {
+            ATLAS_DEBUG("dispatch_operation: using layout_stride mdspan");
+            operation(array::make_mdspan<layout_stride>(source), array::make_mdspan<layout_stride>(target));
+        }
+        else if (source.template is_layout<layout_right>() && target.template is_layout<layout_right>()) {
+            ATLAS_DEBUG("dispatch_operation: using layout_right mdspan");
+            operation(array::make_mdspan<layout_right>(source), array::make_mdspan<layout_right>(target));
+        }
+        else if (source.template is_layout<layout_right>() && target.template is_layout<layout_stride>()) {
+            ATLAS_DEBUG("dispatch_operation: using layout_right to layout_stride mdspan");
+            operation(array::make_mdspan<layout_right>(source), array::make_mdspan<layout_stride>(target));
+        }
+        else if (source.template is_layout<layout_stride>() && target.template is_layout<layout_right>()) {
+            ATLAS_DEBUG("dispatch_operation: using layout_stride to layout_right mdspan");
+            operation(array::make_mdspan<layout_stride>(source), array::make_mdspan<layout_right>(target));
+        }
+        else if (source.template is_layout<layout_stride>() && target.template is_layout<layout_stride>()) {
+            ATLAS_DEBUG("dispatch_operation: using layout_stride to layout_stride mdspan");
+            operation(array::make_mdspan<layout_stride>(source), array::make_mdspan<layout_stride>(target));
+        }
+        else {
+            ATLAS_NOTIMPLEMENTED;
+        }
+    }
+    else {
+        ATLAS_DEBUG("dispatch_operation: using arrayview");
+        operation(source, target);
+    }
 }
 
 }  // namespace
@@ -113,35 +169,26 @@ void copy_blocked_to_nonblocked_T(const array::Array& blocked, array::Array& non
     if (blocked.rank()==4) {
         auto blocked_v    = on_device ? array::make_device_view<ValueType, 4>(blocked)    : array::make_host_view<ValueType, 4>(blocked);
         auto nonblocked_v = on_device ? array::make_device_view<ValueType, 3>(nonblocked) : array::make_host_view<ValueType, 3>(nonblocked);
-        if (use_mdspan()) {
-            copy_blocked_to_nonblocked_mdspan(blocked_v.as_mdspan(), nonblocked_v.as_mdspan(), on_device);
-        }
-        else {
-            copy_blocked_to_nonblocked_mdspan(blocked_v, nonblocked_v, on_device);
-        }
+        dispatch_operation(blocked_v, nonblocked_v, [&](const auto blocked_view, const auto nonblocked_view) {
+            copy_blocked_to_nonblocked_mdspan(blocked_view, nonblocked_view, on_device);
+        });
     }
     else if (blocked.rank()==3) {
         auto blocked_v    = on_device ? array::make_device_view<ValueType, 3>(blocked)    : array::make_host_view<ValueType, 3>(blocked);
         auto nonblocked_v = on_device ? array::make_device_view<ValueType, 2>(nonblocked) : array::make_host_view<ValueType, 2>(nonblocked);
-        if (use_mdspan()) {
-            copy_blocked_to_nonblocked_mdspan(blocked_v.as_mdspan(), nonblocked_v.as_mdspan(), on_device);
-        }
-        else {
-            copy_blocked_to_nonblocked_mdspan(blocked_v, nonblocked_v, on_device);
-        }
+        dispatch_operation(blocked_v, nonblocked_v, [&](const auto blocked_view, const auto nonblocked_view) {
+           copy_blocked_to_nonblocked_mdspan(blocked_view, nonblocked_view, on_device);
+        });
     }
     else if (blocked.rank()==2) {
         auto blocked_v    = on_device ? array::make_device_view<ValueType, 2>(blocked)    : array::make_host_view<ValueType, 2>(blocked);
         auto nonblocked_v = on_device ? array::make_device_view<ValueType, 1>(nonblocked) : array::make_host_view<ValueType, 1>(nonblocked);
-        if (use_mdspan()) {
-            copy_blocked_to_nonblocked_mdspan(blocked_v.as_mdspan(), nonblocked_v.as_mdspan(), on_device);
-        }
-        else {
-            copy_blocked_to_nonblocked_mdspan(blocked_v, nonblocked_v, on_device);
-        }
+        dispatch_operation(blocked_v, nonblocked_v, [&](const auto blocked_view, const auto nonblocked_view) {
+            copy_blocked_to_nonblocked_mdspan(blocked_view, nonblocked_view, on_device);
+        });
     }
     else {
-        ATLAS_THROW_EXCEPTION("transposition not implemented");
+        ATLAS_THROW_EXCEPTION("copy_blocked_to_nonblocked not implemented for blocked.rank " + std::to_string(blocked.rank()));
     }
     nonblocked.setHostNeedsUpdate(on_device);
     nonblocked.setDeviceNeedsUpdate(!on_device);
@@ -153,35 +200,26 @@ void copy_nonblocked_to_blocked_T(const array::Array& nonblocked, array::Array& 
     if (blocked.rank()==4) {
         auto blocked_v    = on_device ? array::make_device_view<ValueType,4>(blocked)    : array::make_host_view<ValueType, 4>(blocked);
         auto nonblocked_v = on_device ? array::make_device_view<ValueType,3>(nonblocked) : array::make_host_view<ValueType, 3>(nonblocked);
-        if (use_mdspan()) {
-            copy_nonblocked_to_blocked_mdspan(nonblocked_v.as_mdspan(), blocked_v.as_mdspan(), on_device);
-        }
-        else {
-            copy_nonblocked_to_blocked_mdspan(nonblocked_v, blocked_v, on_device);
-        }
+        dispatch_operation(nonblocked_v, blocked_v, [&](const auto nonblocked_view, const auto blocked_view) {
+            copy_nonblocked_to_blocked_mdspan(nonblocked_view, blocked_view, on_device);
+        });
     }
     else if (blocked.rank()==3) {
         auto blocked_v    = on_device ? array::make_device_view<ValueType,3>(blocked)    : array::make_host_view<ValueType, 3>(blocked);
         auto nonblocked_v = on_device ? array::make_device_view<ValueType,2>(nonblocked) : array::make_host_view<ValueType, 2>(nonblocked);
-        if (use_mdspan()) {
-            copy_nonblocked_to_blocked_mdspan(nonblocked_v.as_mdspan(), blocked_v.as_mdspan(), on_device);
-        }
-        else {
-            copy_nonblocked_to_blocked_mdspan(nonblocked_v, blocked_v, on_device);
-        }
+        dispatch_operation(nonblocked_v, blocked_v, [&](const auto nonblocked_view, const auto blocked_view) {
+            copy_nonblocked_to_blocked_mdspan(nonblocked_view, blocked_view, on_device);
+        });
     }
     else if (blocked.rank()==2) {
         auto blocked_v    = on_device ? array::make_device_view<ValueType,2>(blocked)    : array::make_host_view<ValueType, 2>(blocked);
         auto nonblocked_v = on_device ? array::make_device_view<ValueType,1>(nonblocked) : array::make_host_view<ValueType, 1>(nonblocked);
-        if (use_mdspan()) {
-            copy_nonblocked_to_blocked_mdspan(nonblocked_v.as_mdspan(), blocked_v.as_mdspan(), on_device);
-        }
-        else {
-            copy_nonblocked_to_blocked_mdspan(nonblocked_v, blocked_v, on_device);
-        }
+        dispatch_operation(nonblocked_v, blocked_v, [&](const auto nonblocked_view, const auto blocked_view) {
+            copy_nonblocked_to_blocked_mdspan(nonblocked_view, blocked_view, on_device);
+        });
     }
     else {
-        ATLAS_THROW_EXCEPTION("transposition not implemented");
+        ATLAS_THROW_EXCEPTION("copy_nonblocked_to_blocked not implemented for blocked.rank " + std::to_string(blocked.rank()));
     }
     blocked.setHostNeedsUpdate(on_device);
     blocked.setDeviceNeedsUpdate(!on_device);
@@ -193,35 +231,26 @@ void copy_blocked_to_blocked_T(const array::Array& blocked_in, array::Array& blo
     if (blocked_in.rank()==4) {
         auto blocked_in_v  = on_device ? array::make_device_view<ValueType, 4>(blocked_in)  : array::make_host_view<ValueType, 4>(blocked_in);
         auto blocked_out_v = on_device ? array::make_device_view<ValueType, 4>(blocked_out) : array::make_host_view<ValueType, 4>(blocked_out);
-        if (use_mdspan()) {
-            copy_blocked_to_blocked_mdspan(blocked_in_v.as_mdspan(), blocked_out_v.as_mdspan(), on_device);
-        }
-        else {
-            copy_blocked_to_blocked_mdspan(blocked_in_v, blocked_out_v, on_device);
-        }
+        dispatch_operation(blocked_in_v, blocked_out_v, [&](const auto blocked_in_view, const auto blocked_out_view) {
+            copy_blocked_to_blocked_mdspan(blocked_in_view, blocked_out_view, on_device);
+        });
     }
     else if (blocked_in.rank()==3) {
         auto blocked_in_v  = on_device ? array::make_device_view<ValueType, 3>(blocked_in)  : array::make_host_view<ValueType, 3>(blocked_in);
         auto blocked_out_v = on_device ? array::make_device_view<ValueType, 3>(blocked_out) : array::make_host_view<ValueType, 3>(blocked_out);
-        if (use_mdspan()) {
-            copy_blocked_to_blocked_mdspan(blocked_in_v.as_mdspan(), blocked_out_v.as_mdspan(), on_device);
-        }
-        else {
-            copy_blocked_to_blocked_mdspan(blocked_in_v, blocked_out_v, on_device);
-        }
+        dispatch_operation(blocked_in_v, blocked_out_v, [&](const auto blocked_in_view, const auto blocked_out_view) {
+            copy_blocked_to_blocked_mdspan(blocked_in_view, blocked_out_view, on_device);
+        });
     }
     else if (blocked_in.rank()==2) {
         auto blocked_in_v  = on_device ? array::make_device_view<ValueType, 2>(blocked_in)  : array::make_host_view<ValueType, 2>(blocked_in);
         auto blocked_out_v = on_device ? array::make_device_view<ValueType, 2>(blocked_out) : array::make_host_view<ValueType, 2>(blocked_out);
-        if (use_mdspan()) {
-            copy_blocked_to_blocked_mdspan(blocked_in_v.as_mdspan(), blocked_out_v.as_mdspan(), on_device);
-        }
-        else {
-            copy_blocked_to_blocked_mdspan(blocked_in_v, blocked_out_v, on_device);
-        }
+        dispatch_operation(blocked_in_v, blocked_out_v, [&](const auto blocked_in_view, const auto blocked_out_view) {
+            copy_blocked_to_blocked_mdspan(blocked_in_view, blocked_out_view, on_device);
+        });
     }
     else {
-        ATLAS_THROW_EXCEPTION("transposition not implemented");
+        ATLAS_THROW_EXCEPTION("copy_blocked_to_blocked not implemented for blocked.rank " + std::to_string(blocked_in.rank()));
     }
     blocked_out.setHostNeedsUpdate(on_device);
     blocked_out.setDeviceNeedsUpdate(!on_device);

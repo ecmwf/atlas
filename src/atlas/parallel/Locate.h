@@ -39,7 +39,7 @@ public:
         std::size_t size_{0};
     };
 
-    template<class T, std::size_t Extents = dynamic_extent, class Layout = layout_right, class Accessor = default_accessor<T>>
+    template<class T, std::size_t Extents = dynamic_extent, class Layout = layout_right, class Accessor = restrict_accessor<T>>
     using span = mdspan<T, extents<size_t,Extents>, Layout, Accessor>;
 
     static void locate_partition(

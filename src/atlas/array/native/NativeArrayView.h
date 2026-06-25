@@ -61,6 +61,7 @@
 #include "atlas/array/LocalView.h"
 #include "atlas/array/Range.h"
 #include "atlas/array/helpers/ArraySlicer.h"
+#include "atlas/array/make_mdspan.h"
 #include "atlas/library/config.h"
 #include "atlas/mdspan.h"
 
@@ -167,12 +168,95 @@ public:
     }
 #endif
 
-    mdspan_type as_mdspan() {
-        return mdspan_type{this->data(), {mdspan_extents(), mdspan_strides()}};
+    template <typename>
+    [[maybe_unused]] inline static constexpr bool always_false_v = false;
+
+    template <typename Layout>
+    bool is_layout() const {
+        if constexpr (std::is_same_v<Layout, layout_stride>) {
+            return true;
+        }
+        else if constexpr (std::is_same_v<Layout, layout_right>) {
+            // 1. Trivial layouts are always layout_right by definition
+            if (Rank <= 1) {
+                return true;
+            }
+
+            // 2. The rightmost stride must always be 1 for fully contiguous row-major layout
+            if (strides_[Rank - 1] != 1) {
+                return false;
+            }
+
+            // 3. Track the expected stride moving from right to left
+            idx_t expected_stride{1};
+
+            // Unroll manually or iterate backward to optimize cache access pattern
+            for (int i = Rank - 1; i > 0; --i) {
+                // Multiply by the shape of the dimension we just evaluated
+                expected_stride *= shape_[i];
+
+                // Check if the current dimension's stride matches the layout rule
+                if (strides_[i - 1] != expected_stride) {
+                    return false;
+                }
+            }
+            return true;
+        }
+        else {
+            static_assert(always_false_v<Layout>, "is_layout() is only implemented for layout_right and layout_stride");
+        }
     }
 
-    const_mdspan_type as_mdspan() const {
-        return const_mdspan_type{this->data(), {mdspan_extents(), mdspan_strides()}};
+    template<
+        typename Extents = mdspan_extents_type,
+        typename Layout = layout_stride,
+        template <typename> typename AccessorPolicy = restrict_accessor,
+        typename std::enable_if_t<detail::is_extent_like_v<Extents>, int> = 0 >
+    auto as_mdspan() {
+        return make_mdspan<Extents, Layout, AccessorPolicy>(*this);
+    }
+
+    template<
+        typename Layout,
+        template <typename> typename AccessorPolicy = restrict_accessor,
+        typename std::enable_if_t<!detail::is_extent_like_v<Layout>, int> = 0 >
+    auto as_mdspan() {
+        return make_mdspan<Layout, AccessorPolicy>(*this);
+    }
+
+    template<
+        typename Layout = layout_stride,
+        template <typename> typename AccessorPolicy = restrict_accessor,
+        typename InputExtents,
+        typename std::enable_if_t<!detail::is_extent_like_v<Layout>, int> = 0 >
+    auto as_mdspan(InputExtents input_shape) {
+        return make_mdspan<Layout, AccessorPolicy>(*this, input_shape);
+    }
+
+    template<
+        typename Extents = mdspan_extents_type,
+        typename Layout = layout_stride,
+        template <typename> typename AccessorPolicy = restrict_accessor,
+        typename std::enable_if_t<detail::is_extent_like_v<Extents>, int> = 0 >
+    auto as_mdspan() const {
+        return make_mdspan<Extents, Layout, AccessorPolicy>(*this);
+    }
+
+    template<
+        typename Layout,
+        template <typename> typename AccessorPolicy = restrict_accessor,
+        typename std::enable_if_t<!detail::is_extent_like_v<Layout>, int> = 0 >
+    auto as_mdspan() const {
+        return make_mdspan<Layout, AccessorPolicy>(*this);
+    }
+
+    template<
+        typename Layout = layout_stride,
+        template <typename> typename AccessorPolicy = restrict_accessor,
+        typename InputExtents,
+        typename std::enable_if_t<!detail::is_extent_like_v<Layout>, int> = 0 >
+    auto as_mdspan(InputExtents input_shape) const {
+        return make_mdspan<Layout, AccessorPolicy>(*this, input_shape);
     }
 
     ENABLE_IF_CONST_WITH_NON_CONST(value_type)

@@ -22,6 +22,7 @@
 #include "atlas/array/ArrayDataStore.h"
 #include "atlas/array/ArrayViewDefs.h"
 #include "atlas/array/helpers/ArraySlicer.h"
+#include "atlas/array/make_mdspan.h"
 #include "atlas/library/config.h"
 #include "atlas/mdspan.h"
 
@@ -151,13 +152,58 @@ public:
         return (const LocalView<value_type, Rank>&)(*this);
     }
 
-    const_mdspan_type as_mdspan() const {
-        return const_mdspan_type{this->data(), {mdspan_extents(), mdspan_strides()}};
+    template<
+        typename Extents = mdspan_extents_type,
+        typename Layout = layout_stride,
+        template <typename> typename AccessorPolicy = restrict_accessor,
+        typename std::enable_if_t<detail::is_extent_like_v<Extents>, int> = 0 >
+    auto as_mdspan() {
+        return make_mdspan<Extents, Layout, AccessorPolicy>(*this);
     }
 
-    mdspan_type as_mdspan() {
-        return mdspan_type{this->data(), {mdspan_extents(), mdspan_strides()}};
+    template<
+        typename Layout,
+        template <typename> typename AccessorPolicy = restrict_accessor,
+        typename std::enable_if_t<!detail::is_extent_like_v<Layout>, int> = 0 >
+    auto as_mdspan() {
+        return make_mdspan<Layout, AccessorPolicy>(*this);
     }
+
+    template<
+        typename Layout = layout_stride,
+        template <typename> typename AccessorPolicy = restrict_accessor,
+        typename InputExtents,
+        typename std::enable_if_t<!detail::is_extent_like_v<Layout>, int> = 0 >
+    auto as_mdspan(InputExtents input_shape) {
+        return make_mdspan<Layout, AccessorPolicy>(*this, input_shape);
+    }
+
+    template<
+        typename Extents = mdspan_extents_type,
+        typename Layout = layout_stride,
+        template <typename> typename AccessorPolicy = restrict_accessor,
+        typename std::enable_if_t<detail::is_extent_like_v<Extents>, int> = 0 >
+    auto as_mdspan() const {
+        return make_mdspan<Extents, Layout, AccessorPolicy>(*this);
+    }
+
+    template<
+        typename Layout,
+        template <typename> typename AccessorPolicy = restrict_accessor,
+        typename std::enable_if_t<!detail::is_extent_like_v<Layout>, int> = 0 >
+    auto as_mdspan() const {
+        return make_mdspan<Layout, AccessorPolicy>(*this);
+    }
+
+    template<
+        typename Layout = layout_stride,
+        template <typename> typename AccessorPolicy = restrict_accessor,
+        typename InputExtents,
+        typename std::enable_if_t<!detail::is_extent_like_v<Layout>, int> = 0 >
+    auto as_mdspan(InputExtents input_shape) const {
+        return make_mdspan<Layout, AccessorPolicy>(*this, input_shape);
+    }
+
 
     // -- Access methods
 

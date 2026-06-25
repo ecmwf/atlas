@@ -44,6 +44,7 @@
 #include <utility>
 
 #include "atlas/array/ArrayDataStore.h"
+#include "atlas/array/make_mdspan.h"
 #include "atlas/library/config.h"
 #include "atlas/mdspan.h"
 
@@ -84,10 +85,13 @@ public:
     using value_type = typename remove_const<Value>::type;
     using accessor_type = index_accessor<Value,ATLAS_HAVE_FORTRAN>;
     using reference = typename accessor_type::reference;
+    static constexpr int RANK{Rank};
 
 private:
     using mdspan_extents_type = dextents<size_t,Rank>;
     using mdspan_strides_type = std::array<size_t,Rank>;
+    template <typename ElementType>
+    using mdspan_accessor_policy = index_accessor<ElementType,ATLAS_HAVE_FORTRAN>;
     using mdspan_type         = mdspan<Value, mdspan_extents_type, layout_stride, index_accessor<Value,ATLAS_HAVE_FORTRAN>>;
     using const_mdspan_type   = mdspan<const Value, mdspan_extents_type, layout_stride, index_accessor<const Value,ATLAS_HAVE_FORTRAN>>;
 
@@ -130,12 +134,32 @@ public:
         return shape_[idx];
     }
 
+    template <typename Int>
+    idx_t extent(Int idx) const {
+        return shape(idx);
+    }
+
+    template <typename Int>
+    idx_t stride(Int idx) const {
+        return strides_[idx];
+    }
+
+    const idx_t* shape() const { return shape_; }
+
+    const idx_t* strides() const { return strides_; }
+
+    Value const* data() const { return data_; }
+
+    Value* data() { return data_; }
+
+    static constexpr idx_t rank() { return Rank; }
+
     mdspan_type as_mdspan() {
-        return mdspan_type{data_, {mdspan_extents(), mdspan_strides()}};
+        return make_mdspan<mdspan_extents_type, layout_stride, mdspan_accessor_policy>(*this);
     }
 
     const_mdspan_type as_mdspan() const {
-        return const_mdspan_type{data_, {mdspan_extents(), mdspan_strides()}};
+        return make_mdspan<mdspan_extents_type, layout_stride, mdspan_accessor_policy>(*this);
     }
 
 private:

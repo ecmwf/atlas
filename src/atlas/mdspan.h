@@ -18,6 +18,10 @@ using ::pluto::layout_left;
 using ::pluto::layout_right;
 using ::pluto::layout_stride;
 using ::pluto::default_accessor;
+using ::pluto::aligned_accessor;
+using ::pluto::restrict_accessor;
+using ::pluto::restrict_aligned_accessor;
+using ::pluto::is_sufficiently_aligned;
 using ::pluto::extents;
 using ::pluto::dextents;
 using ::pluto::dims;
@@ -115,6 +119,7 @@ struct index_accessor {
 
     static constexpr ElementType base_{Base};
 };
+
 
 } // namespace atlas
 

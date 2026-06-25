@@ -10,6 +10,7 @@
 
 #include "atlas/array.h"
 #include "atlas/array/MakeView.h"
+#include "atlas/array/make_mdspan.h"
 #include "atlas/array/helpers/ArraySlicer.h"
 #include "atlas/library/config.h"
 
@@ -343,7 +344,8 @@ CASE("test_arrayview_slice_type") {
     {
         const auto const_read_write_view = make_view<double, 3>(arr);
 
-        auto slice1 = const_read_write_view.slice(Range{0, 2}, 2, Range{2, 5}).as_mdspan();
+        auto slice1_local_view = const_read_write_view.slice(Range{0, 2}, 2, Range{2, 5});
+        auto slice1 = make_mdspan(slice1_local_view);
 #define INDEX(...) std::array{__VA_ARGS__}
         EXPECT(slice1[INDEX(0, 0)] == 133);
         EXPECT(slice1[INDEX(0, 1)] == 134);
@@ -352,7 +354,8 @@ CASE("test_arrayview_slice_type") {
         EXPECT(slice1[INDEX(1, 1)] == 234);
         EXPECT(slice1[INDEX(1, 2)] == 235);
 
-        auto slice2 = const_read_write_view.slice(Range::all(), Range::to(2), Range::from(3)).as_mdspan();
+        auto slice2_local_view = const_read_write_view.slice(Range::all(), Range::to(2), Range::from(3));
+        auto slice2 = make_mdspan(slice2_local_view);
 
         EXPECT(slice2[INDEX(0, 0, 0)] == 114);
         EXPECT(slice2[INDEX(0, 0, 1)] == 115);
@@ -374,8 +377,8 @@ CASE("test_arrayview_slice_type") {
         EXPECT(slice2_view(1, 1, 0) == 224);
         EXPECT(slice2_view(1, 1, 1) == 225);
 
-        static_assert(std::is_same<decltype(slice1), mdspan<const double, dims<2>, layout_stride>>::value, "failed");
-        static_assert(std::is_same<decltype(slice2), mdspan<const double, dims<3>, layout_stride>>::value, "failed");
+        static_assert(std::is_same<decltype(slice1), mdspan<const double, dims<2>, layout_stride, restrict_accessor<const double>>>::value, "failed");
+        static_assert(std::is_same<decltype(slice2), mdspan<const double, dims<3>, layout_stride, restrict_accessor<const double>>>::value, "failed");
     }
 
 

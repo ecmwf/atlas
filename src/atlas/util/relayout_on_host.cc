@@ -225,6 +225,22 @@ template <typename Blocked>
     return true;
 }
 
+// Helper to detect if a view has stride-1 in the last dimension
+// This allows it to be treated as layout_right for better performance
+template <typename ViewType>
+[[nodiscard]] bool has_stride_one_last_dimension(const ViewType& view) {
+    const idx_t rank = view.rank();
+    if (rank == 0) return true;  // scalar edge case
+    return view.stride(rank - 1) == 1;
+}
+
+// Check if a view has layout_right-like properties: contiguous and stride-1 in last dimension
+// Works for both ArrayView and mdspan types
+template <typename ViewType>
+[[nodiscard]] bool has_layout_right(const ViewType& view) {
+    return is_contiguous(view) && has_stride_one_last_dimension(view);
+}
+
 template <idx_t nrof_static = 0, typename BlockedValue, typename NonblockedValue>
 void copy_nonblocked_to_blocked_rank4_block(BlockedValue* ATLAS_RELAYOUT_RESTRICT raw_blocked_jblk,
                                             const NonblockedValue* ATLAS_RELAYOUT_RESTRICT raw_nonblocked_jblk,
@@ -380,10 +396,10 @@ void copy_nonblocked_to_blocked_rank3_full_block(BlockedValue* ATLAS_RELAYOUT_RE
 }
 
 template <idx_t nproma_static = 0, class Nonblocked, class Blocked>
-void host_copy_nonblocked_to_blocked_contiguous_mdspan(const Nonblocked nonblocked, Blocked blocked) {
+void host_copy_nonblocked_to_blocked_contiguous_raw_pointers(const Nonblocked nonblocked, Blocked blocked) {
     // Requirements for this implementation are that the blocked view is contiguous in the last rank, and the nonblocked view is contiguous in the first rank.
     ATLAS_ASSERT(is_block_contiguous(blocked));
-    ATLAS_ASSERT(is_contiguous(nonblocked));
+    ATLAS_ASSERT(has_layout_right(nonblocked));
 
     const idx_t nproma = blocked.extent(blocked.rank()-1);
     if constexpr (nproma_static != 0) {
@@ -670,7 +686,7 @@ template <idx_t nproma_static = 0, class Blocked, class Nonblocked>
 void host_copy_blocked_to_nonblocked_contiguous_mdspan(const Blocked blocked, Nonblocked nonblocked) {
     // Requirements: blocked and nonblocked must be contiguous, and if nproma_static is specified, it must match the last dimension of blocked.
     ATLAS_ASSERT(is_block_contiguous(blocked));
-    ATLAS_ASSERT(is_contiguous(nonblocked));
+    ATLAS_ASSERT(has_layout_right(nonblocked));
 
     const idx_t nproma = blocked.extent(blocked.rank()-1);
     if constexpr (nproma_static != 0) {
@@ -784,174 +800,16 @@ void host_copy_blocked_to_nonblocked_contiguous_mdspan_nproma(const Blocked bloc
     host_copy_blocked_to_nonblocked_contiguous_mdspan<nproma>(blocked, nonblocked);
 }
 
-}  // namespace
-
-
-/**
- * @brief Copy a nonblocked host view into a blocked host view.
- *
- * @param nonblocked Source Atlas view (`atlas::View`/`atlas::ArrayView`) or mdspan-like view
- *        with rank one less than `blocked`.  For rank-3 views, the dimension order is
- *        `[npoint, nlev, nvar]`.
- * @param blocked Target Atlas view (`atlas::View`/`atlas::ArrayView`) or mdspan-like view with
- *        rank 2, 3, or 4.  For rank-4 views, the dimension order is
- *        `[nblk, nvar, nlev, nproma]`.
- *
- * @pre `nonblocked.rank() == blocked.rank() - 1`.
- * @pre Shared dimensions must match; for rank 4, `nonblocked.extent(1) == blocked.extent(2)`
- *      and `nonblocked.extent(2) == blocked.extent(1)`.
- */
-template <idx_t nproma, class Nonblocked, class Blocked>
-void host_copy_nonblocked_to_blocked_contiguous_mdspan_nproma(const Nonblocked nonblocked, Blocked blocked) {
-    host_copy_nonblocked_to_blocked_contiguous_mdspan<nproma>(nonblocked, blocked);
-}
-
-template <class Nonblocked, class Blocked>
-void host_copy_nonblocked_to_blocked_mdspan(const Nonblocked nonblocked, Blocked blocked) {
-    const idx_t nproma = blocked.extent(blocked.rank()-1);
-    const idx_t np     = nonblocked.extent(0);
-    const idx_t nblks  = blocked.extent(0);
-    static_assert(nonblocked.rank() == blocked.rank()-1);
-
-    if (!relayout_index_operator() && is_contiguous(nonblocked) && is_block_contiguous(blocked)) {
-        if (relayout_nproma_dispatch() != RelayoutNpromaDispatch::static_dispatch) {
-            return host_copy_nonblocked_to_blocked_contiguous_mdspan(nonblocked, blocked);
-        }
-
-        // Optimized paths possible with static nproma dispatch.
-        switch (nproma) {
-            case 8:   return host_copy_nonblocked_to_blocked_contiguous_mdspan_nproma<8 >(nonblocked, blocked);
-            case 16:  return host_copy_nonblocked_to_blocked_contiguous_mdspan_nproma<16>(nonblocked, blocked);
-            case 32:  return host_copy_nonblocked_to_blocked_contiguous_mdspan_nproma<32>(nonblocked, blocked);
-            case 64:  return host_copy_nonblocked_to_blocked_contiguous_mdspan_nproma<64>(nonblocked, blocked);
-            case 128: return host_copy_nonblocked_to_blocked_contiguous_mdspan_nproma<128>(nonblocked, blocked);
-            case 256: return host_copy_nonblocked_to_blocked_contiguous_mdspan_nproma<256>(nonblocked, blocked);
-            default:  return host_copy_nonblocked_to_blocked_contiguous_mdspan(nonblocked, blocked);
-        }
-    }
-
-    // Fall back to generic implementation if the views are not contiguous or block-contiguous.
+// Fallback implementation wrapper with static nproma dispatch
+template <idx_t nproma, class Blocked, class Nonblocked>
+void host_copy_blocked_to_nonblocked_fallback_nproma(const Blocked blocked, Nonblocked nonblocked) {
+    const idx_t np    = nonblocked.extent(0);
+    const idx_t nblks = blocked.extent(0);
     [[maybe_unused]] const RelayoutLoopOrder loop_order = relayout_loop_order();
 
     if constexpr(blocked.rank()==4) {
-        ATLAS_ASSERT(nonblocked.extent(1) == blocked.extent(2));
-        ATLAS_ASSERT(nonblocked.extent(2) == blocked.extent(1));
-        idx_t nlev = nonblocked.extent(1);
-        idx_t nvar = nonblocked.extent(2);
-
-        if (loop_order == RelayoutLoopOrder::nproma_outermost) {
-            atlas_omp_parallel_for(idx_t jblk = 0; jblk < nblks; ++jblk) {
-                const idx_t jpbegin = jblk * nproma;
-                const idx_t nrof = std::min(np - jpbegin, nproma);
-                for (idx_t jvar = 0; jvar < nvar; ++jvar) {
-                    for (idx_t jlev = 0; jlev < nlev; ++jlev) {
-                        for (idx_t jrof = 0, jp = jpbegin; jrof < nrof; ++jrof, ++jp) {
-                            blocked(jblk, jvar, jlev, jrof) = nonblocked(jp, jlev, jvar);
-                        }
-                    }
-                }
-            }
-        } else {
-            atlas_omp_parallel_for(idx_t jblk = 0; jblk < nblks; ++jblk) {
-                const idx_t jpbegin = jblk * nproma;
-                const idx_t nrof = std::min(np - jpbegin, nproma);
-                for (idx_t jrof = 0, jp = jpbegin; jrof < nrof; ++jrof, ++jp) {
-                    for (idx_t jvar = 0; jvar < nvar; ++jvar) {
-                        for (idx_t jlev = 0; jlev < nlev; ++jlev) {
-                            blocked(jblk, jvar, jlev, jrof) = nonblocked(jp, jlev, jvar);
-                        }
-                    }
-                }
-            }
-        }
-    }
-    else if constexpr (blocked.rank()==3) {
-        ATLAS_ASSERT(nonblocked.extent(1) == blocked.extent(1));
-        idx_t nlev = nonblocked.extent(1);
-
-        if (loop_order == RelayoutLoopOrder::nproma_outermost) {
-            atlas_omp_parallel_for(idx_t jblk = 0; jblk < nblks; ++jblk) {
-                const idx_t jpbegin = jblk * nproma;
-                const idx_t nrof = std::min(np - jpbegin, nproma);
-                for (idx_t jlev = 0; jlev < nlev; ++jlev) {
-                    for (idx_t jrof = 0, jp = jpbegin; jrof < nrof; ++jrof, ++jp) {
-                        blocked(jblk, jlev, jrof) = nonblocked(jp, jlev);
-                    }
-                }
-            }
-        } else {
-            atlas_omp_parallel_for(idx_t jblk = 0; jblk < nblks; ++jblk) {
-                const idx_t jpbegin = jblk * nproma;
-                const idx_t nrof = std::min(np - jpbegin, nproma);
-                for (idx_t jrof = 0, jp = jpbegin; jrof < nrof; ++jrof, ++jp) {
-                    for (idx_t jlev = 0; jlev < nlev; ++jlev) {
-                        blocked(jblk, jlev, jrof) = nonblocked(jp, jlev);
-                    }
-                }
-            }
-        }
-    }
-    else if constexpr (blocked.rank()==2) {
-        atlas_omp_parallel_for(idx_t jblk = 0; jblk < nblks; ++jblk) {
-            const idx_t jpbegin = jblk * nproma;
-            const idx_t nrof = std::min(np - jpbegin, nproma);
-            for (idx_t jrof = 0, jp = jpbegin; jrof < nrof; ++jrof, ++jp) {
-                blocked(jblk, jrof) = nonblocked(jp);
-            }
-        }
-    }
-    else {
-        ATLAS_THROW_EXCEPTION("host_copy_blocked_to_nonblocked_mdspan not implemented");
-    }
-}
-
-
-template <class Blocked, class Nonblocked>
-/**
- * @brief Copy a blocked host view into a nonblocked host view.
- *
- * @param blocked Source Atlas view (`atlas::View`/`atlas::ArrayView`) or mdspan-like view with
- *        rank 2, 3, or 4.  For rank-4 views, the dimension order is
- *        `[nblk, nvar, nlev, nproma]`.
- * @param nonblocked Target Atlas view (`atlas::View`/`atlas::ArrayView`) or mdspan-like view
- *        with rank one less than `blocked`.  For rank-3 views, the dimension order is
- *        `[npoint, nlev, nvar]`.
- *
- * @pre `nonblocked.rank() == blocked.rank() - 1`.
- * @pre Shared dimensions must match; for rank 4, `nonblocked.extent(1) == blocked.extent(2)`
- *      and `nonblocked.extent(2) == blocked.extent(1)`.
- */
-void host_copy_blocked_to_nonblocked_mdspan(const Blocked blocked, Nonblocked nonblocked) {
-    auto np     = nonblocked.extent(0);
-    auto nblks  = blocked.extent(0);
-    auto nproma = blocked.extent(blocked.rank()-1);
-    static_assert(nonblocked.rank() == blocked.rank()-1);
-
-    if (!relayout_index_operator() && is_contiguous(nonblocked) && is_block_contiguous(blocked)) {
-        if (relayout_nproma_dispatch() != RelayoutNpromaDispatch::static_dispatch) {
-            return host_copy_blocked_to_nonblocked_contiguous_mdspan(blocked, nonblocked);
-        }
-
-        // Optimized paths possible with static nproma dispatch.
-        switch (nproma) {
-            case 8:   return host_copy_blocked_to_nonblocked_contiguous_mdspan_nproma<8  >(blocked, nonblocked);
-            case 16:  return host_copy_blocked_to_nonblocked_contiguous_mdspan_nproma<16 >(blocked, nonblocked);
-            case 32:  return host_copy_blocked_to_nonblocked_contiguous_mdspan_nproma<32 >(blocked, nonblocked);
-            case 64:  return host_copy_blocked_to_nonblocked_contiguous_mdspan_nproma<64 >(blocked, nonblocked);
-            case 128: return host_copy_blocked_to_nonblocked_contiguous_mdspan_nproma<128>(blocked, nonblocked);
-            case 256: return host_copy_blocked_to_nonblocked_contiguous_mdspan_nproma<256>(blocked, nonblocked);
-            default:  return host_copy_blocked_to_nonblocked_contiguous_mdspan(blocked, nonblocked);
-        }
-    }
-
-    // Fall back to generic implementation if the views are not contiguous or block-contiguous.
-    [[maybe_unused]] const RelayoutLoopOrder loop_order = relayout_loop_order();
-
-    if constexpr(blocked.rank()==4) {
-        ATLAS_ASSERT(nonblocked.extent(1) == blocked.extent(2));
-        ATLAS_ASSERT(nonblocked.extent(2) == blocked.extent(1));
-        idx_t nlev = nonblocked.extent(1);
-        idx_t nvar = nonblocked.extent(2);
+        const idx_t nlev = nonblocked.extent(1);
+        const idx_t nvar = nonblocked.extent(2);
 
         if (loop_order == RelayoutLoopOrder::nproma_outermost) {
             atlas_omp_parallel_for(idx_t jblk = 0; jblk < nblks; ++jblk) {
@@ -980,8 +838,7 @@ void host_copy_blocked_to_nonblocked_mdspan(const Blocked blocked, Nonblocked no
         }
     }
     else if constexpr (blocked.rank()==3) {
-        ATLAS_ASSERT(nonblocked.extent(1) == blocked.extent(1));
-        idx_t nlev = nonblocked.extent(1);
+        const idx_t nlev = nonblocked.extent(1);
 
         if (loop_order == RelayoutLoopOrder::nproma_outermost) {
             atlas_omp_parallel_for(idx_t jblk = 0; jblk < nblks; ++jblk) {
@@ -1016,6 +873,201 @@ void host_copy_blocked_to_nonblocked_mdspan(const Blocked blocked, Nonblocked no
     }
     else {
         ATLAS_THROW_EXCEPTION("host_copy_blocked_to_nonblocked_mdspan not implemented");
+    }
+}
+
+}  // namespace
+
+
+/**
+ * @brief Copy a nonblocked host view into a blocked host view.
+ *
+ * @param nonblocked Source Atlas view (`atlas::View`/`atlas::ArrayView`) or mdspan-like view
+ *        with rank one less than `blocked`.  For rank-3 views, the dimension order is
+ *        `[npoint, nlev, nvar]`.
+ * @param blocked Target Atlas view (`atlas::View`/`atlas::ArrayView`) or mdspan-like view with
+ *        rank 2, 3, or 4.  For rank-4 views, the dimension order is
+ *        `[nblk, nvar, nlev, nproma]`.
+ *
+ * @pre `nonblocked.rank() == blocked.rank() - 1`.
+ * @pre Shared dimensions must match; for rank 4, `nonblocked.extent(1) == blocked.extent(2)`
+ *      and `nonblocked.extent(2) == blocked.extent(1)`.
+ */
+template <idx_t nproma, class Nonblocked, class Blocked>
+void host_copy_nonblocked_to_blocked_contiguous_raw_pointers_nproma(const Nonblocked nonblocked, Blocked blocked) {
+    host_copy_nonblocked_to_blocked_contiguous_raw_pointers<nproma>(nonblocked, blocked);
+}
+
+// Fallback implementation wrappers with static nproma dispatch
+template <idx_t nproma, class Nonblocked, class Blocked>
+void host_copy_nonblocked_to_blocked_fallback_nproma(const Nonblocked nonblocked, Blocked blocked) {
+    const idx_t np    = nonblocked.extent(0);
+    const idx_t nblks = blocked.extent(0);
+    [[maybe_unused]] const RelayoutLoopOrder loop_order = relayout_loop_order();
+
+    if constexpr(blocked.rank()==4) {
+        const idx_t nlev = nonblocked.extent(1);
+        const idx_t nvar = nonblocked.extent(2);
+
+        if (loop_order == RelayoutLoopOrder::nproma_outermost) {
+            atlas_omp_parallel_for(idx_t jblk = 0; jblk < nblks; ++jblk) {
+                const idx_t jpbegin = jblk * nproma;
+                const idx_t nrof = std::min(np - jpbegin, nproma);
+                for (idx_t jvar = 0; jvar < nvar; ++jvar) {
+                    for (idx_t jlev = 0; jlev < nlev; ++jlev) {
+                        for (idx_t jrof = 0, jp = jpbegin; jrof < nrof; ++jrof, ++jp) {
+                            blocked(jblk, jvar, jlev, jrof) = nonblocked(jp, jlev, jvar);
+                        }
+                    }
+                }
+            }
+        } else {
+            atlas_omp_parallel_for(idx_t jblk = 0; jblk < nblks; ++jblk) {
+                const idx_t jpbegin = jblk * nproma;
+                const idx_t nrof = std::min(np - jpbegin, nproma);
+                for (idx_t jrof = 0, jp = jpbegin; jrof < nrof; ++jrof, ++jp) {
+                    for (idx_t jvar = 0; jvar < nvar; ++jvar) {
+                        for (idx_t jlev = 0; jlev < nlev; ++jlev) {
+                            blocked(jblk, jvar, jlev, jrof) = nonblocked(jp, jlev, jvar);
+                        }
+                    }
+                }
+            }
+        }
+    }
+    else if constexpr (blocked.rank()==3) {
+        const idx_t nlev = nonblocked.extent(1);
+
+        if (loop_order == RelayoutLoopOrder::nproma_outermost) {
+            atlas_omp_parallel_for(idx_t jblk = 0; jblk < nblks; ++jblk) {
+                const idx_t jpbegin = jblk * nproma;
+                const idx_t nrof = std::min(np - jpbegin, nproma);
+                for (idx_t jlev = 0; jlev < nlev; ++jlev) {
+                    for (idx_t jrof = 0, jp = jpbegin; jrof < nrof; ++jrof, ++jp) {
+                        blocked(jblk, jlev, jrof) = nonblocked(jp, jlev);
+                    }
+                }
+            }
+        } else {
+            atlas_omp_parallel_for(idx_t jblk = 0; jblk < nblks; ++jblk) {
+                const idx_t jpbegin = jblk * nproma;
+                const idx_t nrof = std::min(np - jpbegin, nproma);
+                for (idx_t jrof = 0, jp = jpbegin; jrof < nrof; ++jrof, ++jp) {
+                    for (idx_t jlev = 0; jlev < nlev; ++jlev) {
+                        blocked(jblk, jlev, jrof) = nonblocked(jp, jlev);
+                    }
+                }
+            }
+        }
+    }
+    else if constexpr (blocked.rank()==2) {
+        atlas_omp_parallel_for(idx_t jblk = 0; jblk < nblks; ++jblk) {
+            const idx_t jpbegin = jblk * nproma;
+            const idx_t nrof = std::min(np - jpbegin, nproma);
+            for (idx_t jrof = 0, jp = jpbegin; jrof < nrof; ++jrof, ++jp) {
+                blocked(jblk, jrof) = nonblocked(jp);
+            }
+        }
+    }
+    else {
+        ATLAS_THROW_EXCEPTION("host_copy_nonblocked_to_blocked_mdspan not implemented");
+    }
+}
+
+template <class Nonblocked, class Blocked>
+void host_copy_nonblocked_to_blocked_mdspan(const Nonblocked nonblocked, Blocked blocked) {
+    const idx_t nproma = blocked.extent(blocked.rank()-1);
+    static_assert(nonblocked.rank() == blocked.rank()-1);
+
+    if (!relayout_index_operator() && has_layout_right(nonblocked) && is_block_contiguous(blocked)) {
+        if (relayout_nproma_dispatch() != RelayoutNpromaDispatch::static_dispatch) {
+            return host_copy_nonblocked_to_blocked_contiguous_raw_pointers(nonblocked, blocked);
+        }
+
+        // Optimized paths possible with static nproma dispatch.
+        switch (nproma) {
+            case 8:   return host_copy_nonblocked_to_blocked_contiguous_raw_pointers_nproma<8 >(nonblocked, blocked);
+            case 16:  return host_copy_nonblocked_to_blocked_contiguous_raw_pointers_nproma<16>(nonblocked, blocked);
+            case 32:  return host_copy_nonblocked_to_blocked_contiguous_raw_pointers_nproma<32>(nonblocked, blocked);
+            case 64:  return host_copy_nonblocked_to_blocked_contiguous_raw_pointers_nproma<64>(nonblocked, blocked);
+            case 128: return host_copy_nonblocked_to_blocked_contiguous_raw_pointers_nproma<128>(nonblocked, blocked);
+            case 256: return host_copy_nonblocked_to_blocked_contiguous_raw_pointers_nproma<256>(nonblocked, blocked);
+            default:  return host_copy_nonblocked_to_blocked_contiguous_raw_pointers(nonblocked, blocked);
+        }
+    }
+
+    // Fall back to generic implementation if the views are not contiguous or block-contiguous.
+    // Apply static dispatch even for fallback paths for better performance.
+    if (relayout_nproma_dispatch() != RelayoutNpromaDispatch::static_dispatch) {
+        // Runtime dispatch for fallback
+        return host_copy_nonblocked_to_blocked_fallback_nproma<0>(nonblocked, blocked);
+    }
+
+    // Optimized fallback paths with static nproma dispatch.
+    switch (nproma) {
+        case 8:   return host_copy_nonblocked_to_blocked_fallback_nproma<8 >(nonblocked, blocked);
+        case 16:  return host_copy_nonblocked_to_blocked_fallback_nproma<16>(nonblocked, blocked);
+        case 32:  return host_copy_nonblocked_to_blocked_fallback_nproma<32>(nonblocked, blocked);
+        case 64:  return host_copy_nonblocked_to_blocked_fallback_nproma<64>(nonblocked, blocked);
+        case 128: return host_copy_nonblocked_to_blocked_fallback_nproma<128>(nonblocked, blocked);
+        case 256: return host_copy_nonblocked_to_blocked_fallback_nproma<256>(nonblocked, blocked);
+        default:  return host_copy_nonblocked_to_blocked_fallback_nproma<0>(nonblocked, blocked);
+    }
+}
+
+
+template <class Blocked, class Nonblocked>
+/**
+ * @brief Copy a blocked host view into a nonblocked host view.
+ *
+ * @param blocked Source Atlas view (`atlas::View`/`atlas::ArrayView`) or mdspan-like view with
+ *        rank 2, 3, or 4.  For rank-4 views, the dimension order is
+ *        `[nblk, nvar, nlev, nproma]`.
+ * @param nonblocked Target Atlas view (`atlas::View`/`atlas::ArrayView`) or mdspan-like view
+ *        with rank one less than `blocked`.  For rank-3 views, the dimension order is
+ *        `[npoint, nlev, nvar]`.
+ *
+ * @pre `nonblocked.rank() == blocked.rank() - 1`.
+ * @pre Shared dimensions must match; for rank 4, `nonblocked.extent(1) == blocked.extent(2)`
+ *      and `nonblocked.extent(2) == blocked.extent(1)`.
+ */
+void host_copy_blocked_to_nonblocked_mdspan(const Blocked blocked, Nonblocked nonblocked) {
+    auto nproma = blocked.extent(blocked.rank()-1);
+    static_assert(nonblocked.rank() == blocked.rank()-1);
+
+    if (!relayout_index_operator() && has_layout_right(nonblocked) && is_block_contiguous(blocked)) {
+        if (relayout_nproma_dispatch() != RelayoutNpromaDispatch::static_dispatch) {
+            return host_copy_blocked_to_nonblocked_contiguous_mdspan(blocked, nonblocked);
+        }
+
+        // Optimized paths possible with static nproma dispatch.
+        switch (nproma) {
+            case 8:   return host_copy_blocked_to_nonblocked_contiguous_mdspan_nproma<8  >(blocked, nonblocked);
+            case 16:  return host_copy_blocked_to_nonblocked_contiguous_mdspan_nproma<16 >(blocked, nonblocked);
+            case 32:  return host_copy_blocked_to_nonblocked_contiguous_mdspan_nproma<32 >(blocked, nonblocked);
+            case 64:  return host_copy_blocked_to_nonblocked_contiguous_mdspan_nproma<64 >(blocked, nonblocked);
+            case 128: return host_copy_blocked_to_nonblocked_contiguous_mdspan_nproma<128>(blocked, nonblocked);
+            case 256: return host_copy_blocked_to_nonblocked_contiguous_mdspan_nproma<256>(blocked, nonblocked);
+            default:  return host_copy_blocked_to_nonblocked_contiguous_mdspan(blocked, nonblocked);
+        }
+    }
+
+    // Fall back to generic implementation if the views are not contiguous or block-contiguous.
+    // Apply static dispatch even for fallback paths for better performance.
+    if (relayout_nproma_dispatch() != RelayoutNpromaDispatch::static_dispatch) {
+        // Runtime dispatch for fallback
+        return host_copy_blocked_to_nonblocked_fallback_nproma<0>(blocked, nonblocked);
+    }
+
+    // Optimized fallback paths with static nproma dispatch.
+    switch (nproma) {
+        case 8:   return host_copy_blocked_to_nonblocked_fallback_nproma<8  >(blocked, nonblocked);
+        case 16:  return host_copy_blocked_to_nonblocked_fallback_nproma<16 >(blocked, nonblocked);
+        case 32:  return host_copy_blocked_to_nonblocked_fallback_nproma<32 >(blocked, nonblocked);
+        case 64:  return host_copy_blocked_to_nonblocked_fallback_nproma<64 >(blocked, nonblocked);
+        case 128: return host_copy_blocked_to_nonblocked_fallback_nproma<128>(blocked, nonblocked);
+        case 256: return host_copy_blocked_to_nonblocked_fallback_nproma<256>(blocked, nonblocked);
+        default:  return host_copy_blocked_to_nonblocked_fallback_nproma<0>(blocked, nonblocked);
     }
 }
 
@@ -1196,17 +1248,29 @@ void host_copy_blocked_to_blocked_mdspan(const BlockedIn blocked_in, BlockedOut 
     }
 }
 
+#define EXPLICIT_TEMPLATE_INSTANTIATION_MDSPAN_TYPE_RANK_ACCESSOR(TYPE, BLOCKED_RANK, ACCESSOR) \
+    template void host_copy_blocked_to_nonblocked_mdspan<mdspan<const TYPE,dims<BLOCKED_RANK>,layout_stride,ACCESSOR<const TYPE>>,mdspan<TYPE,dims<BLOCKED_RANK-1>,layout_stride,ACCESSOR<TYPE>>>(mdspan<const TYPE,dims<BLOCKED_RANK>,layout_stride,ACCESSOR<const TYPE>>, mdspan<TYPE,dims<BLOCKED_RANK-1>,layout_stride,ACCESSOR<TYPE>>); \
+    template void host_copy_blocked_to_nonblocked_mdspan<mdspan<const TYPE,dims<BLOCKED_RANK>,layout_stride,ACCESSOR<const TYPE>>,mdspan<TYPE,dims<BLOCKED_RANK-1>,layout_right,ACCESSOR<TYPE>>>(mdspan<const TYPE,dims<BLOCKED_RANK>,layout_stride,ACCESSOR<const TYPE>>, mdspan<TYPE,dims<BLOCKED_RANK-1>,layout_right,ACCESSOR<TYPE>>); \
+    template void host_copy_blocked_to_nonblocked_mdspan<mdspan<const TYPE,dims<BLOCKED_RANK>,layout_right,ACCESSOR<const TYPE>>,mdspan<TYPE,dims<BLOCKED_RANK-1>,layout_stride,ACCESSOR<TYPE>>>(mdspan<const TYPE,dims<BLOCKED_RANK>,layout_right,ACCESSOR<const TYPE>>, mdspan<TYPE,dims<BLOCKED_RANK-1>,layout_stride,ACCESSOR<TYPE>>); \
+    template void host_copy_blocked_to_nonblocked_mdspan<mdspan<const TYPE,dims<BLOCKED_RANK>,layout_right,ACCESSOR<const TYPE>>,mdspan<TYPE,dims<BLOCKED_RANK-1>,layout_right,ACCESSOR<TYPE>>>(mdspan<const TYPE,dims<BLOCKED_RANK>,layout_right,ACCESSOR<const TYPE>>, mdspan<TYPE,dims<BLOCKED_RANK-1>,layout_right,ACCESSOR<TYPE>>); \
+\
+    template void host_copy_nonblocked_to_blocked_mdspan<mdspan<const TYPE,dims<BLOCKED_RANK-1>,layout_stride,ACCESSOR<const TYPE>>,mdspan<TYPE,dims<BLOCKED_RANK>,layout_stride,ACCESSOR<TYPE>>>(mdspan<const TYPE,dims<BLOCKED_RANK-1>,layout_stride,ACCESSOR<const TYPE>>, mdspan<TYPE,dims<BLOCKED_RANK>,layout_stride,ACCESSOR<TYPE>>); \
+    template void host_copy_nonblocked_to_blocked_mdspan<mdspan<const TYPE,dims<BLOCKED_RANK-1>,layout_stride,ACCESSOR<const TYPE>>,mdspan<TYPE,dims<BLOCKED_RANK>,layout_right,ACCESSOR<TYPE>>>(mdspan<const TYPE,dims<BLOCKED_RANK-1>,layout_stride,ACCESSOR<const TYPE>>, mdspan<TYPE,dims<BLOCKED_RANK>,layout_right,ACCESSOR<TYPE>>); \
+    template void host_copy_nonblocked_to_blocked_mdspan<mdspan<const TYPE,dims<BLOCKED_RANK-1>,layout_right,ACCESSOR<const TYPE>>,mdspan<TYPE,dims<BLOCKED_RANK>,layout_stride,ACCESSOR<TYPE>>>(mdspan<const TYPE,dims<BLOCKED_RANK-1>,layout_right,ACCESSOR<const TYPE>>, mdspan<TYPE,dims<BLOCKED_RANK>,layout_stride,ACCESSOR<TYPE>>); \
+    template void host_copy_nonblocked_to_blocked_mdspan<mdspan<const TYPE,dims<BLOCKED_RANK-1>,layout_right,ACCESSOR<const TYPE>>,mdspan<TYPE,dims<BLOCKED_RANK>,layout_right,ACCESSOR<TYPE>>>(mdspan<const TYPE,dims<BLOCKED_RANK-1>,layout_right,ACCESSOR<const TYPE>>, mdspan<TYPE,dims<BLOCKED_RANK>,layout_right,ACCESSOR<TYPE>>); \
+\
+    template void host_copy_blocked_to_blocked_mdspan<mdspan<const TYPE,dims<BLOCKED_RANK>,layout_stride,ACCESSOR<const TYPE>>,mdspan<TYPE,dims<BLOCKED_RANK>,layout_stride,ACCESSOR<TYPE>>>(mdspan<const TYPE,dims<BLOCKED_RANK>,layout_stride,ACCESSOR<const TYPE>>, mdspan<TYPE,dims<BLOCKED_RANK>,layout_stride,ACCESSOR<TYPE>>); \
+    template void host_copy_blocked_to_blocked_mdspan<mdspan<const TYPE,dims<BLOCKED_RANK>,layout_stride,ACCESSOR<const TYPE>>,mdspan<TYPE,dims<BLOCKED_RANK>,layout_right,ACCESSOR<TYPE>>>(mdspan<const TYPE,dims<BLOCKED_RANK>,layout_stride,ACCESSOR<const TYPE>>, mdspan<TYPE,dims<BLOCKED_RANK>,layout_right,ACCESSOR<TYPE>>); \
+    template void host_copy_blocked_to_blocked_mdspan<mdspan<const TYPE,dims<BLOCKED_RANK>,layout_right,ACCESSOR<const TYPE>>,mdspan<TYPE,dims<BLOCKED_RANK>,layout_stride,ACCESSOR<TYPE>>>(mdspan<const TYPE,dims<BLOCKED_RANK>,layout_right,ACCESSOR<const TYPE>>, mdspan<TYPE,dims<BLOCKED_RANK>,layout_stride,ACCESSOR<TYPE>>); \
+    template void host_copy_blocked_to_blocked_mdspan<mdspan<const TYPE,dims<BLOCKED_RANK>,layout_right,ACCESSOR<const TYPE>>,mdspan<TYPE,dims<BLOCKED_RANK>,layout_right,ACCESSOR<TYPE>>>(mdspan<const TYPE,dims<BLOCKED_RANK>,layout_right,ACCESSOR<const TYPE>>, mdspan<TYPE,dims<BLOCKED_RANK>,layout_right,ACCESSOR<TYPE>>); \
+
 #define EXPLICIT_TEMPLATE_INSTANTIATION_TYPE_RANK(TYPE, BLOCKED_RANK) \
     template void host_copy_blocked_to_nonblocked_mdspan<array::ArrayView<const TYPE,BLOCKED_RANK>,array::ArrayView<TYPE,BLOCKED_RANK-1>>(array::ArrayView<const TYPE,BLOCKED_RANK>, array::ArrayView<TYPE,BLOCKED_RANK-1>); \
-    template void host_copy_blocked_to_nonblocked_mdspan<mdspan<const TYPE,dims<BLOCKED_RANK>,layout_stride>,mdspan<TYPE,dims<BLOCKED_RANK-1>,layout_stride>>(mdspan<const TYPE,dims<BLOCKED_RANK>,layout_stride>, mdspan<TYPE,dims<BLOCKED_RANK-1>,layout_stride>); \
-\
     template void host_copy_nonblocked_to_blocked_mdspan<array::ArrayView<const TYPE,BLOCKED_RANK-1>,array::ArrayView<TYPE,BLOCKED_RANK>>(array::ArrayView<const TYPE,BLOCKED_RANK-1>, array::ArrayView<TYPE,BLOCKED_RANK>); \
-    template void host_copy_nonblocked_to_blocked_mdspan<mdspan<const TYPE,dims<BLOCKED_RANK-1>,layout_stride>,mdspan<TYPE,dims<BLOCKED_RANK>,layout_stride>>(mdspan<const TYPE,dims<BLOCKED_RANK-1>,layout_stride>, mdspan<TYPE,dims<BLOCKED_RANK>,layout_stride>); \
-\
     template void host_copy_blocked_to_blocked_mdspan<array::ArrayView<const TYPE,BLOCKED_RANK>,array::ArrayView<TYPE,BLOCKED_RANK>>(array::ArrayView<const TYPE,BLOCKED_RANK>, array::ArrayView<TYPE,BLOCKED_RANK>); \
-    template void host_copy_blocked_to_blocked_mdspan<mdspan<const TYPE,dims<BLOCKED_RANK>,layout_stride>,mdspan<TYPE,dims<BLOCKED_RANK>,layout_stride>>(mdspan<const TYPE,dims<BLOCKED_RANK>,layout_stride>, mdspan<TYPE,dims<BLOCKED_RANK>,layout_stride>); \
+    EXPLICIT_TEMPLATE_INSTANTIATION_MDSPAN_TYPE_RANK_ACCESSOR(TYPE, BLOCKED_RANK, restrict_accessor)
 
-#define EXPLICIT_TEMPLATE_INSTANTIATION(RANK)                \
+#define EXPLICIT_TEMPLATE_INSTANTIATION(RANK)               \
     EXPLICIT_TEMPLATE_INSTANTIATION_TYPE_RANK(double, RANK) \
     EXPLICIT_TEMPLATE_INSTANTIATION_TYPE_RANK(float , RANK) \
     EXPLICIT_TEMPLATE_INSTANTIATION_TYPE_RANK(int   , RANK) \
@@ -1217,6 +1281,7 @@ EXPLICIT_TEMPLATE_INSTANTIATION(3)
 EXPLICIT_TEMPLATE_INSTANTIATION(4)
 
 #undef EXPLICIT_TEMPLATE_INSTANTIATION_TYPE_RANK
+#undef EXPLICIT_TEMPLATE_INSTANTIATION_MDSPAN_TYPE_RANK_ACCESSOR
 #undef EXPLICIT_TEMPLATE_INSTANTIATION
 #undef ATLAS_RELAYOUT_RESTRICT
 
