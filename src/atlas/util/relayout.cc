@@ -69,27 +69,24 @@ template <typename SourceView, typename TargetView, typename Operation>
 void dispatch_operation(SourceView& source, TargetView& target, Operation operation) {
     if (use_mdspan()) {
         if (use_mdspan_layout_stride()) {
-            ATLAS_DEBUG("dispatch_operation: using layout_stride mdspan");
+            ATLAS_DEBUG("dispatch_operation: using mdspan with layout_stride");
             operation(make_mdspan<layout_stride>(source), make_mdspan<layout_stride>(target));
         }
-        else if (source.template is_layout<layout_right>() && target.template is_layout<layout_right>()) {
-            ATLAS_DEBUG("dispatch_operation: using layout_right mdspan");
+        else if (can_use_layout_right(source) && can_use_layout_right(target)) {
+            ATLAS_DEBUG("dispatch_operation: using mdspan with layout_right");
             operation(make_mdspan<layout_right>(source), make_mdspan<layout_right>(target));
         }
-        else if (source.template is_layout<layout_right>() && target.template is_layout<layout_stride>()) {
-            ATLAS_DEBUG("dispatch_operation: using layout_right to layout_stride mdspan");
-            operation(make_mdspan<layout_right>(source), make_mdspan<layout_stride>(target));
+        else if (can_use_layout_right(source)) {
+            ATLAS_DEBUG("dispatch_operation: using mdspan with layout_right for source");
+            operation(make_mdspan<layout_right>(source), make_mdspan(target));
         }
-        else if (source.template is_layout<layout_stride>() && target.template is_layout<layout_right>()) {
-            ATLAS_DEBUG("dispatch_operation: using layout_stride to layout_right mdspan");
-            operation(make_mdspan<layout_stride>(source), make_mdspan<layout_right>(target));
-        }
-        else if (source.template is_layout<layout_stride>() && target.template is_layout<layout_stride>()) {
-            ATLAS_DEBUG("dispatch_operation: using layout_stride to layout_stride mdspan");
-            operation(make_mdspan<layout_stride>(source), make_mdspan<layout_stride>(target));
+        else if (can_use_layout_right(target)) {
+            ATLAS_DEBUG("dispatch_operation: using mdspan with layout_right for target");
+            operation(make_mdspan(source), make_mdspan<layout_right>(target));
         }
         else {
-            ATLAS_NOTIMPLEMENTED;
+            ATLAS_DEBUG("dispatch_operation: using mdspan with default layout (layout_stride)");
+            operation(make_mdspan(source), make_mdspan(target));
         }
     }
     else {
