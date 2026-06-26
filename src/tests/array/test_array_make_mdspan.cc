@@ -284,7 +284,7 @@ CASE("test_make_mdspan_pointer_reshape_accessor_first") {
     double data[6]{1., 2., 3., 4., 5., 6.};
 
     std::array<std::size_t, 2> shape{2, 3};
-    auto span = make_mdspan<aligned_accessor>(data, shape);
+    auto span = make_mdspan<aligned_accessor_policy<alignof(double)>>(data, shape);
 
     static_assert(decltype(span)::rank() == 2);
     static_assert(std::is_same_v<typename decltype(span)::layout_type, layout_right>);
@@ -458,6 +458,11 @@ CASE("test_make_mdspan_native_indexview") {
 }
 
 CASE("test_make_mdspan_queries_layout_right") {
+    struct LayoutRightViewWithoutStrides {
+        using layout_type = layout_right;
+        static constexpr std::size_t rank() { return 2; }
+    };
+
     double contiguous_data[6]{};
     auto contiguous_view = make_local_view(contiguous_data);
 
@@ -474,6 +479,7 @@ CASE("test_make_mdspan_queries_layout_right") {
     auto stride_span = make_mdspan<layout_stride>(contiguous_view);
     auto right_span = make_mdspan<layout_right>(contiguous_view);
 
+    EXPECT(can_use_layout_right(LayoutRightViewWithoutStrides{}));
     EXPECT(can_use_layout_right(contiguous_view));
     EXPECT(can_use_layout_right(stride_span));
     EXPECT(can_use_layout_right(right_span));
@@ -559,9 +565,9 @@ CASE("test_make_mdspan_accessor_first_syntax") {
     auto view = make_local_view(data);
 
     auto default_span = make_mdspan<default_accessor>(view);
-    auto aligned_span = make_mdspan<aligned_accessor>(view);
+    auto aligned_span = make_mdspan<aligned_accessor_policy<alignof(double)>>(view);
     auto restrict_span = make_mdspan<restrict_accessor>(view);
-    auto restrict_aligned_span = make_mdspan<restrict_aligned_accessor>(view);
+    auto restrict_aligned_span = make_mdspan<restrict_aligned_accessor_policy<alignof(double)>>(view);
 
     static_assert(std::is_same_v<typename decltype(default_span)::accessor_type, default_accessor<double>>);
     static_assert(std::is_same_v<typename decltype(aligned_span)::accessor_type, aligned_accessor<double, alignof(double)>>);
@@ -582,6 +588,72 @@ CASE("test_make_mdspan_accessor_first_syntax") {
     EXPECT(view(1, 1) == 52.);
     EXPECT(view(1, 2) == 53.);
     EXPECT(view(0, 2) == 54.);
+}
+
+CASE("test_make_mdspan_accessor_first_explicit_alignment") {
+    alignas(64) double data[6]{};
+    auto view = make_local_view(data);
+
+    std::array<std::size_t, 2> shape{2, 3};
+    auto aligned_span = make_mdspan<aligned_accessor_policy<64>>(view);
+    auto restrict_aligned_span = make_mdspan<restrict_aligned_accessor_policy<64>>(view, shape);
+
+    static_assert(std::is_same_v<typename decltype(aligned_span)::accessor_type, aligned_accessor<double, 64>>);
+    static_assert(std::is_same_v<typename decltype(restrict_aligned_span)::accessor_type,
+                                 restrict_aligned_accessor<double, 64>>);
+    static_assert(std::is_same_v<typename decltype(aligned_span)::layout_type, layout_stride>);
+    static_assert(std::is_same_v<typename decltype(restrict_aligned_span)::layout_type, layout_stride>);
+
+    aligned_span(1, 1) = 65.;
+    restrict_aligned_span(1, 2) = 66.;
+
+    EXPECT(aligned_span.data_handle() == view.data());
+    EXPECT(restrict_aligned_span.data_handle() == view.data());
+    EXPECT(aligned_span(1, 1) == 65.);
+    EXPECT(restrict_aligned_span(1, 2) == 66.);
+    EXPECT(is_sufficiently_aligned<64>(data));
+}
+
+CASE("test_make_mdspan_accessor_type") {
+    alignas(64) double data[6]{};
+    auto view = make_local_view(data);
+
+    std::array<std::size_t, 2> shape{2, 3};
+    auto aligned_span = make_mdspan<aligned_accessor<double, 64>>(view);
+    auto restrict_aligned_span = make_mdspan<layout_stride, restrict_aligned_accessor<double, 64>>(view, shape);
+    auto pointer_span = make_mdspan<aligned_accessor<double, 64>>(data, shape);
+    auto const_pointer_span = make_mdspan<default_accessor<const double>>(data, shape);
+
+    static_assert(std::is_same_v<typename decltype(aligned_span)::accessor_type, aligned_accessor<double, 64>>);
+    static_assert(std::is_same_v<typename decltype(restrict_aligned_span)::accessor_type,
+                                 restrict_aligned_accessor<double, 64>>);
+    static_assert(std::is_same_v<typename decltype(pointer_span)::accessor_type, aligned_accessor<double, 64>>);
+    static_assert(std::is_same_v<typename decltype(const_pointer_span)::accessor_type, default_accessor<const double>>);
+    static_assert(std::is_const_v<typename decltype(const_pointer_span)::element_type>);
+
+    aligned_span(1, 0) = 67.;
+    restrict_aligned_span(1, 1) = 68.;
+    pointer_span(1, 2) = 69.;
+
+    EXPECT(aligned_span.data_handle() == view.data());
+    EXPECT(restrict_aligned_span.data_handle() == view.data());
+    EXPECT(pointer_span.data_handle() == data);
+    EXPECT(const_pointer_span.data_handle() == data);
+    EXPECT(view(1, 0) == 67.);
+    EXPECT(view(1, 1) == 68.);
+    EXPECT(view(1, 2) == 69.);
+}
+
+CASE("test_make_mdspan_container_accessor_type") {
+    std::vector<double> values{1., 2., 3., 4., 5., 6.};
+
+    std::array<std::size_t, 2> shape{2, 3};
+    auto span = make_mdspan<layout_right, default_accessor<double>>(values, shape);
+
+    static_assert(std::is_same_v<typename decltype(span)::layout_type, layout_right>);
+    static_assert(std::is_same_v<typename decltype(span)::accessor_type, default_accessor<double>>);
+    EXPECT(span.data_handle() == values.data());
+    EXPECT(span(1, 2) == 6.);
 }
 
 CASE("test_make_mdspan_from_mdspan_changes_layout") {

@@ -207,57 +207,57 @@ public:
         }
     }
 
-    template<
-        typename Extents = mdspan_extents_type,
-        typename Layout = layout_stride,
-        template <typename> typename AccessorPolicy = restrict_accessor,
-        typename std::enable_if_t<detail::is_extent_like_v<Extents>, int> = 0 >
-    auto as_mdspan() {
-        return make_mdspan<Extents, Layout, AccessorPolicy>(*this);
-    }
+    // template<
+    //     typename Extents = mdspan_extents_type,
+    //     typename Layout = layout_stride,
+    //     template <typename> typename AccessorPolicy = restrict_accessor,
+    //     typename std::enable_if_t<detail::is_extent_like_v<Extents>, int> = 0 >
+    // auto as_mdspan() {
+    //     return make_mdspan<Extents, Layout, AccessorPolicy>(*this);
+    // }
 
-    template<
-        typename Layout,
-        template <typename> typename AccessorPolicy = restrict_accessor,
-        typename std::enable_if_t<!detail::is_extent_like_v<Layout>, int> = 0 >
-    auto as_mdspan() {
-        return make_mdspan<Layout, AccessorPolicy>(*this);
-    }
+    // template<
+    //     typename Layout,
+    //     template <typename> typename AccessorPolicy = restrict_accessor,
+    //     typename std::enable_if_t<!detail::is_extent_like_v<Layout>, int> = 0 >
+    // auto as_mdspan() {
+    //     return make_mdspan<Layout, AccessorPolicy>(*this);
+    // }
 
-    template<
-        typename Layout = layout_stride,
-        template <typename> typename AccessorPolicy = restrict_accessor,
-        typename InputExtents,
-        typename std::enable_if_t<!detail::is_extent_like_v<Layout>, int> = 0 >
-    auto as_mdspan(InputExtents input_shape) {
-        return make_mdspan<Layout, AccessorPolicy>(*this, input_shape);
-    }
+    // template<
+    //     typename Layout = layout_stride,
+    //     template <typename> typename AccessorPolicy = restrict_accessor,
+    //     typename InputExtents,
+    //     typename std::enable_if_t<!detail::is_extent_like_v<Layout>, int> = 0 >
+    // auto as_mdspan(InputExtents input_shape) {
+    //     return make_mdspan<Layout, AccessorPolicy>(*this, input_shape);
+    // }
 
-    template<
-        typename Extents = mdspan_extents_type,
-        typename Layout = layout_stride,
-        template <typename> typename AccessorPolicy = restrict_accessor,
-        typename std::enable_if_t<detail::is_extent_like_v<Extents>, int> = 0 >
-    auto as_mdspan() const {
-        return make_mdspan<Extents, Layout, AccessorPolicy>(*this);
-    }
+    // template<
+    //     typename Extents = mdspan_extents_type,
+    //     typename Layout = layout_stride,
+    //     template <typename> typename AccessorPolicy = restrict_accessor,
+    //     typename std::enable_if_t<detail::is_extent_like_v<Extents>, int> = 0 >
+    // auto as_mdspan() const {
+    //     return make_mdspan<Extents, Layout, AccessorPolicy>(*this);
+    // }
 
-    template<
-        typename Layout,
-        template <typename> typename AccessorPolicy = restrict_accessor,
-        typename std::enable_if_t<!detail::is_extent_like_v<Layout>, int> = 0 >
-    auto as_mdspan() const {
-        return make_mdspan<Layout, AccessorPolicy>(*this);
-    }
+    // template<
+    //     typename Layout,
+    //     template <typename> typename AccessorPolicy = restrict_accessor,
+    //     typename std::enable_if_t<!detail::is_extent_like_v<Layout>, int> = 0 >
+    // auto as_mdspan() const {
+    //     return make_mdspan<Layout, AccessorPolicy>(*this);
+    // }
 
-    template<
-        typename Layout = layout_stride,
-        template <typename> typename AccessorPolicy = restrict_accessor,
-        typename InputExtents,
-        typename std::enable_if_t<!detail::is_extent_like_v<Layout>, int> = 0 >
-    auto as_mdspan(InputExtents input_shape) const {
-        return make_mdspan<Layout, AccessorPolicy>(*this, input_shape);
-    }
+    // template<
+    //     typename Layout = layout_stride,
+    //     template <typename> typename AccessorPolicy = restrict_accessor,
+    //     typename InputExtents,
+    //     typename std::enable_if_t<!detail::is_extent_like_v<Layout>, int> = 0 >
+    // auto as_mdspan(InputExtents input_shape) const {
+    //     return make_mdspan<Layout, AccessorPolicy>(*this, input_shape);
+    // }
 
     ENABLE_IF_CONST_WITH_NON_CONST(value_type)
     operator const ArrayView<value_type, Rank>&() const { return *(const ArrayView<value_type, Rank>*)(this); }

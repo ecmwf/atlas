@@ -64,8 +64,8 @@ void Locator::locate(
         ::atlas::parallel::Locator::locate(
             // context
             mpi_comm_,
-            array::make_mdspan<layout_right>(fs_global_index_view), fs_global_index_base_,
-            array::make_mdspan<layout_right>(fs_ghost_view),
+            make_mdspan<layout_right>(fs_global_index_view), fs_global_index_base_,
+            make_mdspan<layout_right>(fs_ghost_view),
             span<const int>{distribution_array_.data(), distribution_array_.size()}, distribution_base_,
             // input
             global_index, global_index_base,
@@ -77,9 +77,9 @@ void Locator::locate(
         ::atlas::parallel::Locator::locate(
             // context
             mpi_comm_,
-            array::make_mdspan<layout_right>(fs_global_index_view),
+            make_mdspan<layout_right>(fs_global_index_view),
             fs_global_index_base_,
-            array::make_mdspan<layout_right>(fs_ghost_view),
+            make_mdspan<layout_right>(fs_ghost_view),
             fspan<const int>{&distribution_function_, distribution_size_}, distribution_base_,
             // input
             global_index, global_index_base,

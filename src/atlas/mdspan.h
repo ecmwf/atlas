@@ -120,6 +120,25 @@ struct index_accessor {
     static constexpr ElementType base_{Base};
 };
 
+template <std::size_t Dim, std::size_t N>
+struct StaticExtent {};
+
+template <std::size_t N>
+struct StaticLastExtent {};
+
+template <std::size_t ByteAlignment>
+struct aligned_accessor_policy {
+    template <typename ElementType>
+    using type = aligned_accessor<ElementType, ByteAlignment>;
+};
+
+template <std::size_t ByteAlignment>
+struct restrict_aligned_accessor_policy {
+    template <typename ElementType>
+    using type = restrict_aligned_accessor<ElementType, ByteAlignment>;
+};
+
+
 
 } // namespace atlas
 

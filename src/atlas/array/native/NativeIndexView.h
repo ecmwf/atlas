@@ -154,13 +154,13 @@ public:
 
     static constexpr idx_t rank() { return Rank; }
 
-    mdspan_type as_mdspan() {
-        return make_mdspan<mdspan_extents_type, layout_stride, mdspan_accessor_policy>(*this);
-    }
+    // mdspan_type as_mdspan() {
+    //     return make_mdspan<mdspan_extents_type, layout_stride, mdspan_accessor_policy>(*this);
+    // }
 
-    const_mdspan_type as_mdspan() const {
-        return make_mdspan<mdspan_extents_type, layout_stride, mdspan_accessor_policy>(*this);
-    }
+    // const_mdspan_type as_mdspan() const {
+    //     return make_mdspan<mdspan_extents_type, layout_stride, mdspan_accessor_policy>(*this);
+    // }
 
 private:
     // -- Private methods

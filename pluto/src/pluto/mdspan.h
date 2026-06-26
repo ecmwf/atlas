@@ -150,6 +150,14 @@ namespace pluto {
         template<class OtherElementType, typename = std::enable_if_t<std::is_convertible<OtherElementType(*)[], ElementType(*)[]>::value> >
         constexpr restrict_accessor(restrict_accessor<OtherElementType>) noexcept {}
 
+        template<class OtherElementType, typename = std::enable_if_t<std::is_convertible<OtherElementType(*)[], ElementType(*)[]>::value> >
+        constexpr restrict_accessor(default_accessor<OtherElementType>) noexcept {}
+
+        template<class OtherElementType, typename = std::enable_if_t<std::is_convertible<ElementType(*)[], OtherElementType(*)[]>::value> >
+        constexpr operator default_accessor<OtherElementType>() const noexcept {
+            return {};
+        }
+
         constexpr reference access(data_handle_type ptr, std::size_t index) const noexcept {
             return ptr[index];
         }
@@ -186,7 +194,7 @@ namespace pluto {
         template<
             class OtherElementType,
             typename = std::enable_if_t<std::is_convertible<OtherElementType(*)[], ElementType(*)[]>::value> >
-        explicit constexpr restrict_aligned_accessor(restrict_accessor<OtherElementType>) noexcept {}
+        constexpr restrict_aligned_accessor(restrict_accessor<OtherElementType>) noexcept {}
 
         template<
             class OtherElementType,
@@ -199,7 +207,7 @@ namespace pluto {
         template<
             class OtherElementType,
             typename = std::enable_if_t<std::is_convertible<OtherElementType(*)[], ElementType(*)[]>::value> >
-        explicit constexpr restrict_aligned_accessor(default_accessor<OtherElementType>) noexcept {}
+        constexpr restrict_aligned_accessor(default_accessor<OtherElementType>) noexcept {}
 
         template<
             class OtherElementType,
