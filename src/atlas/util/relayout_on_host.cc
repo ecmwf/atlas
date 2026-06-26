@@ -37,6 +37,7 @@
 #include "atlas/array.h"
 #include "atlas/field/Field.h"
 #include "atlas/field/FieldSet.h"
+#include "atlas/mdspan.h"
 #include "atlas/runtime/Log.h"
 namespace atlas {
 
@@ -47,6 +48,7 @@ constexpr const char* relayout_nproma_dispatch_env = "ATLAS_RELAYOUT_NPROMA_DISP
 constexpr const char* relayout_blocked_to_blocked_use_memcpy_env = "ATLAS_RELAYOUT_BLOCKED_TO_BLOCKED_USE_MEMCPY";
 constexpr const char* relayout_blocked_nonblocked_use_memcpy_env = "ATLAS_RELAYOUT_BLOCKED_NONBLOCKED_USE_MEMCPY";
 constexpr const char* relayout_index_operator_env = "ATLAS_RELAYOUT_INDEX_OPERATOR";
+constexpr const char* relayout_use_mdspan_env = "ATLAS_RELAYOUT_USE_MDSPAN";
 constexpr bool blocked_to_blocked_use_memcpy_default = true;
 constexpr bool blocked_nonblocked_use_memcpy_default = false;
 constexpr bool index_operator_default = false;
@@ -120,6 +122,71 @@ bool relayout_blocked_nonblocked_use_memcpy() {
 bool relayout_index_operator() {
     static bool cached = relayout_env_flag(relayout_index_operator_env, index_operator_default);
     return cached;
+}
+
+bool relayout_use_mdspan() {
+    static bool cached = relayout_env_flag(relayout_use_mdspan_env, false);
+    return cached;
+}
+
+template <typename Layout, bool BlockedView, typename View, typename Operation>
+void dispatch_relayout_view_mdspan(View& view, Operation&& op) {
+    if (is_aligned<64>(view)) {
+        using accessor_policy = restrict_aligned_accessor_policy<64>;
+        if constexpr (BlockedView) {
+            switch (last_extent(view)) {
+                case 16: return op(make_mdspan<extent_with_static_last_dim<16>, Layout, accessor_policy>(view));
+                case 32: return op(make_mdspan<extent_with_static_last_dim<32>, Layout, accessor_policy>(view));
+                case 64: return op(make_mdspan<extent_with_static_last_dim<64>, Layout, accessor_policy>(view));
+                default: return op(make_mdspan<Layout, accessor_policy>(view));
+            }
+        }
+        return op(make_mdspan<Layout, accessor_policy>(view));
+    }
+
+    if constexpr (BlockedView) {
+        switch (last_extent(view)) {
+            case 16: return op(make_mdspan<extent_with_static_last_dim<16>, Layout, restrict_accessor>(view));
+            case 32: return op(make_mdspan<extent_with_static_last_dim<32>, Layout, restrict_accessor>(view));
+            case 64: return op(make_mdspan<extent_with_static_last_dim<64>, Layout, restrict_accessor>(view));
+            default: return op(make_mdspan<Layout, restrict_accessor>(view));
+        }
+    }
+    return op(make_mdspan<Layout, restrict_accessor>(view));
+}
+
+template <bool SourceBlocked, bool TargetBlocked, typename SourceView, typename TargetView, typename Operation>
+void dispatch_relayout_mdspan(SourceView& source, TargetView& target, Operation&& operation) {
+    if (can_use_layout_right(source) && can_use_layout_right(target)) {
+        ATLAS_DEBUG("host relayout: using mdspan with layout_right for both views");
+        return dispatch_relayout_view_mdspan<layout_right, SourceBlocked>(source, [&](const auto& source_view) {
+            return dispatch_relayout_view_mdspan<layout_right, TargetBlocked>(target, [&](const auto& target_view) {
+                return operation(source_view, target_view);
+            });
+        });
+    }
+    if (can_use_layout_right(source)) {
+        ATLAS_DEBUG("host relayout: using mdspan with layout_right for source and layout_stride for target");
+        return dispatch_relayout_view_mdspan<layout_right, SourceBlocked>(source, [&](const auto& source_view) {
+            return dispatch_relayout_view_mdspan<layout_stride, TargetBlocked>(target, [&](const auto& target_view) {
+                return operation(source_view, target_view);
+            });
+        });
+    }
+    if (can_use_layout_right(target)) {
+        ATLAS_DEBUG("host relayout: using mdspan with layout_stride for source and layout_right for target");
+        return dispatch_relayout_view_mdspan<layout_stride, SourceBlocked>(source, [&](const auto& source_view) {
+            return dispatch_relayout_view_mdspan<layout_right, TargetBlocked>(target, [&](const auto& target_view) {
+                return operation(source_view, target_view);
+            });
+        });
+    }
+    ATLAS_DEBUG("host relayout: using mdspan with layout_stride");
+    return dispatch_relayout_view_mdspan<layout_stride, SourceBlocked>(source, [&](const auto& source_view) {
+        return dispatch_relayout_view_mdspan<layout_stride, TargetBlocked>(target, [&](const auto& target_view) {
+            return operation(source_view, target_view);
+        });
+    });
 }
 
 // C++17 SFINAE detector to check if a type is a std::mdspan 
@@ -975,7 +1042,7 @@ void host_copy_nonblocked_to_blocked_fallback_nproma(const Nonblocked nonblocked
 }
 
 template <class Nonblocked, class Blocked>
-void host_copy_nonblocked_to_blocked_mdspan(const Nonblocked nonblocked, Blocked blocked) {
+void host_copy_nonblocked_to_blocked_impl(const Nonblocked nonblocked, Blocked blocked) {
     const idx_t nproma = blocked.extent(blocked.rank()-1);
     static_assert(nonblocked.rank() == blocked.rank()-1);
 
@@ -1031,7 +1098,7 @@ template <class Blocked, class Nonblocked>
  * @pre Shared dimensions must match; for rank 4, `nonblocked.extent(1) == blocked.extent(2)`
  *      and `nonblocked.extent(2) == blocked.extent(1)`.
  */
-void host_copy_blocked_to_nonblocked_mdspan(const Blocked blocked, Nonblocked nonblocked) {
+void host_copy_blocked_to_nonblocked_impl(const Blocked blocked, Nonblocked nonblocked) {
     auto nproma = blocked.extent(blocked.rank()-1);
     static_assert(nonblocked.rank() == blocked.rank()-1);
 
@@ -1084,7 +1151,7 @@ template <class BlockedIn, class BlockedOut>
  * @pre The value types of the two views must match.
  * @pre Non-horizontal dimensions must match; for rank 4 this means matching `nvar` and `nlev`.
  */
-void host_copy_blocked_to_blocked_mdspan(const BlockedIn blocked_in, BlockedOut blocked_out) {
+void host_copy_blocked_to_blocked_impl(const BlockedIn blocked_in, BlockedOut blocked_out) {
     static_assert(std::is_same_v<std::decay_t<typename BlockedIn::value_type>, std::decay_t<typename BlockedOut::value_type>>, "Data types of input and output views must match for blocked-to-blocked copy");
     using Value = std::decay_t<typename BlockedOut::value_type>;
     const idx_t nblks_in  = blocked_in.extent(0);
@@ -1248,21 +1315,45 @@ void host_copy_blocked_to_blocked_mdspan(const BlockedIn blocked_in, BlockedOut 
     }
 }
 
+template <class Nonblocked, class Blocked>
+void host_copy_nonblocked_to_blocked_mdspan(const Nonblocked nonblocked, Blocked blocked) {
+    if (relayout_use_mdspan()) {
+        return dispatch_relayout_mdspan<false, true>(nonblocked, blocked, [&](const auto& nonblocked_view, const auto& blocked_view) {
+            return host_copy_nonblocked_to_blocked_impl(nonblocked_view, blocked_view);
+        });
+    }
+    ATLAS_DEBUG("host relayout: using arrayview");
+    return host_copy_nonblocked_to_blocked_impl(nonblocked, blocked);
+}
+
+template <class Blocked, class Nonblocked>
+void host_copy_blocked_to_nonblocked_mdspan(const Blocked blocked, Nonblocked nonblocked) {
+    if (relayout_use_mdspan()) {
+        return dispatch_relayout_mdspan<true, false>(blocked, nonblocked, [&](const auto& blocked_view, const auto& nonblocked_view) {
+            return host_copy_blocked_to_nonblocked_impl(blocked_view, nonblocked_view);
+        });
+    }
+    ATLAS_DEBUG("host relayout: using arrayview");
+    return host_copy_blocked_to_nonblocked_impl(blocked, nonblocked);
+}
+
+template <class BlockedIn, class BlockedOut>
+void host_copy_blocked_to_blocked_mdspan(const BlockedIn blocked_in, BlockedOut blocked_out) {
+    if (relayout_use_mdspan()) {
+        return dispatch_relayout_mdspan<true, true>(blocked_in, blocked_out, [&](const auto& blocked_in_view, const auto& blocked_out_view) {
+            return host_copy_blocked_to_blocked_impl(blocked_in_view, blocked_out_view);
+        });
+    }
+    ATLAS_DEBUG("host relayout: using arrayview");
+    return host_copy_blocked_to_blocked_impl(blocked_in, blocked_out);
+}
+
 #define EXPLICIT_TEMPLATE_INSTANTIATION_MDSPAN_TYPE_RANK_ACCESSOR(TYPE, BLOCKED_RANK, ACCESSOR) \
     template void host_copy_blocked_to_nonblocked_mdspan<mdspan<const TYPE,dims<BLOCKED_RANK>,layout_stride,ACCESSOR<const TYPE>>,mdspan<TYPE,dims<BLOCKED_RANK-1>,layout_stride,ACCESSOR<TYPE>>>(mdspan<const TYPE,dims<BLOCKED_RANK>,layout_stride,ACCESSOR<const TYPE>>, mdspan<TYPE,dims<BLOCKED_RANK-1>,layout_stride,ACCESSOR<TYPE>>); \
-    template void host_copy_blocked_to_nonblocked_mdspan<mdspan<const TYPE,dims<BLOCKED_RANK>,layout_stride,ACCESSOR<const TYPE>>,mdspan<TYPE,dims<BLOCKED_RANK-1>,layout_right,ACCESSOR<TYPE>>>(mdspan<const TYPE,dims<BLOCKED_RANK>,layout_stride,ACCESSOR<const TYPE>>, mdspan<TYPE,dims<BLOCKED_RANK-1>,layout_right,ACCESSOR<TYPE>>); \
-    template void host_copy_blocked_to_nonblocked_mdspan<mdspan<const TYPE,dims<BLOCKED_RANK>,layout_right,ACCESSOR<const TYPE>>,mdspan<TYPE,dims<BLOCKED_RANK-1>,layout_stride,ACCESSOR<TYPE>>>(mdspan<const TYPE,dims<BLOCKED_RANK>,layout_right,ACCESSOR<const TYPE>>, mdspan<TYPE,dims<BLOCKED_RANK-1>,layout_stride,ACCESSOR<TYPE>>); \
-    template void host_copy_blocked_to_nonblocked_mdspan<mdspan<const TYPE,dims<BLOCKED_RANK>,layout_right,ACCESSOR<const TYPE>>,mdspan<TYPE,dims<BLOCKED_RANK-1>,layout_right,ACCESSOR<TYPE>>>(mdspan<const TYPE,dims<BLOCKED_RANK>,layout_right,ACCESSOR<const TYPE>>, mdspan<TYPE,dims<BLOCKED_RANK-1>,layout_right,ACCESSOR<TYPE>>); \
 \
     template void host_copy_nonblocked_to_blocked_mdspan<mdspan<const TYPE,dims<BLOCKED_RANK-1>,layout_stride,ACCESSOR<const TYPE>>,mdspan<TYPE,dims<BLOCKED_RANK>,layout_stride,ACCESSOR<TYPE>>>(mdspan<const TYPE,dims<BLOCKED_RANK-1>,layout_stride,ACCESSOR<const TYPE>>, mdspan<TYPE,dims<BLOCKED_RANK>,layout_stride,ACCESSOR<TYPE>>); \
-    template void host_copy_nonblocked_to_blocked_mdspan<mdspan<const TYPE,dims<BLOCKED_RANK-1>,layout_stride,ACCESSOR<const TYPE>>,mdspan<TYPE,dims<BLOCKED_RANK>,layout_right,ACCESSOR<TYPE>>>(mdspan<const TYPE,dims<BLOCKED_RANK-1>,layout_stride,ACCESSOR<const TYPE>>, mdspan<TYPE,dims<BLOCKED_RANK>,layout_right,ACCESSOR<TYPE>>); \
-    template void host_copy_nonblocked_to_blocked_mdspan<mdspan<const TYPE,dims<BLOCKED_RANK-1>,layout_right,ACCESSOR<const TYPE>>,mdspan<TYPE,dims<BLOCKED_RANK>,layout_stride,ACCESSOR<TYPE>>>(mdspan<const TYPE,dims<BLOCKED_RANK-1>,layout_right,ACCESSOR<const TYPE>>, mdspan<TYPE,dims<BLOCKED_RANK>,layout_stride,ACCESSOR<TYPE>>); \
-    template void host_copy_nonblocked_to_blocked_mdspan<mdspan<const TYPE,dims<BLOCKED_RANK-1>,layout_right,ACCESSOR<const TYPE>>,mdspan<TYPE,dims<BLOCKED_RANK>,layout_right,ACCESSOR<TYPE>>>(mdspan<const TYPE,dims<BLOCKED_RANK-1>,layout_right,ACCESSOR<const TYPE>>, mdspan<TYPE,dims<BLOCKED_RANK>,layout_right,ACCESSOR<TYPE>>); \
 \
     template void host_copy_blocked_to_blocked_mdspan<mdspan<const TYPE,dims<BLOCKED_RANK>,layout_stride,ACCESSOR<const TYPE>>,mdspan<TYPE,dims<BLOCKED_RANK>,layout_stride,ACCESSOR<TYPE>>>(mdspan<const TYPE,dims<BLOCKED_RANK>,layout_stride,ACCESSOR<const TYPE>>, mdspan<TYPE,dims<BLOCKED_RANK>,layout_stride,ACCESSOR<TYPE>>); \
-    template void host_copy_blocked_to_blocked_mdspan<mdspan<const TYPE,dims<BLOCKED_RANK>,layout_stride,ACCESSOR<const TYPE>>,mdspan<TYPE,dims<BLOCKED_RANK>,layout_right,ACCESSOR<TYPE>>>(mdspan<const TYPE,dims<BLOCKED_RANK>,layout_stride,ACCESSOR<const TYPE>>, mdspan<TYPE,dims<BLOCKED_RANK>,layout_right,ACCESSOR<TYPE>>); \
-    template void host_copy_blocked_to_blocked_mdspan<mdspan<const TYPE,dims<BLOCKED_RANK>,layout_right,ACCESSOR<const TYPE>>,mdspan<TYPE,dims<BLOCKED_RANK>,layout_stride,ACCESSOR<TYPE>>>(mdspan<const TYPE,dims<BLOCKED_RANK>,layout_right,ACCESSOR<const TYPE>>, mdspan<TYPE,dims<BLOCKED_RANK>,layout_stride,ACCESSOR<TYPE>>); \
-    template void host_copy_blocked_to_blocked_mdspan<mdspan<const TYPE,dims<BLOCKED_RANK>,layout_right,ACCESSOR<const TYPE>>,mdspan<TYPE,dims<BLOCKED_RANK>,layout_right,ACCESSOR<TYPE>>>(mdspan<const TYPE,dims<BLOCKED_RANK>,layout_right,ACCESSOR<const TYPE>>, mdspan<TYPE,dims<BLOCKED_RANK>,layout_right,ACCESSOR<TYPE>>); \
 
 #define EXPLICIT_TEMPLATE_INSTANTIATION_TYPE_RANK(TYPE, BLOCKED_RANK) \
     template void host_copy_blocked_to_nonblocked_mdspan<array::ArrayView<const TYPE,BLOCKED_RANK>,array::ArrayView<TYPE,BLOCKED_RANK-1>>(array::ArrayView<const TYPE,BLOCKED_RANK>, array::ArrayView<TYPE,BLOCKED_RANK-1>); \

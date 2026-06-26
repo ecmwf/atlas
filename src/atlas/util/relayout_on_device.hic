@@ -10,6 +10,9 @@
 
 #include "atlas/runtime/Exception.h"
 
+#include <cstdlib>
+#include <cstring>
+
 /**
  * @file relayout_on_device.hic
  * @brief Device implementations for copying Atlas data between blocked and nonblocked layouts.
@@ -21,13 +24,12 @@
 
 #include "hic/hic.h"
 #include "atlas/array.h"
+#include "atlas/mdspan.h"
 #include "atlas/util/relayout.h"
 
 #include "atlas/runtime/Log.h"
 
 namespace atlas {
-
-#define USE_MDSPAN 0
 
 ATLAS_DEVICE inline idx_t min(idx_t a, idx_t b) {
     return a < b ? a : b;
@@ -52,6 +54,104 @@ public:
 };
 
 namespace {
+constexpr const char* relayout_use_mdspan_env = "ATLAS_RELAYOUT_USE_MDSPAN";
+
+bool relayout_env_flag(const char* name, const bool default_value) {
+    const char* value = std::getenv(name);
+    if (value == nullptr) {
+        return default_value;
+    }
+    if (std::strcmp(value, "0") == 0 || std::strcmp(value, "false") == 0 || std::strcmp(value, "off") == 0) {
+        return false;
+    }
+    if (std::strcmp(value, "1") == 0 || std::strcmp(value, "true") == 0 || std::strcmp(value, "on") == 0) {
+        return true;
+    }
+    return default_value;
+}
+
+bool relayout_use_mdspan() {
+    static bool cached = relayout_env_flag(relayout_use_mdspan_env, false);
+    return cached;
+}
+
+template <typename Layout, typename View>
+auto make_relayout_mdspan(View& view) {
+    return make_mdspan<Layout, restrict_accessor>(view);
+}
+
+template <typename View>
+auto make_relayout_mdspan(View& view) {
+    return make_relayout_mdspan<layout_stride>(view);
+}
+
+template <typename Layout, bool BlockedView, typename View, typename Operation>
+void dispatch_relayout_view_mdspan(View& view, Operation&& operation) {
+    if (is_aligned<64>(view)) {
+        if constexpr (BlockedView) {
+            switch (last_extent(view)) {
+                case 16:
+                    return operation(make_mdspan<extent_with_static_last_dim<16>, Layout, restrict_aligned_accessor_policy<64>>(view));
+                case 32:
+                    return operation(make_mdspan<extent_with_static_last_dim<32>, Layout, restrict_aligned_accessor_policy<64>>(view));
+                case 64:
+                    return operation(make_mdspan<extent_with_static_last_dim<64>, Layout, restrict_aligned_accessor_policy<64>>(view));
+                default:
+                    return operation(make_mdspan<Layout, restrict_aligned_accessor_policy<64>>(view));
+            }
+        }
+        return operation(make_mdspan<Layout, restrict_aligned_accessor_policy<64>>(view));
+    }
+
+    if constexpr (BlockedView) {
+        switch (last_extent(view)) {
+            case 16:
+                return operation(make_mdspan<extent_with_static_last_dim<16>, Layout, restrict_accessor>(view));
+            case 32:
+                return operation(make_mdspan<extent_with_static_last_dim<32>, Layout, restrict_accessor>(view));
+            case 64:
+                return operation(make_mdspan<extent_with_static_last_dim<64>, Layout, restrict_accessor>(view));
+            default:
+                return operation(make_relayout_mdspan<Layout>(view));
+        }
+    }
+    return operation(make_relayout_mdspan<Layout>(view));
+}
+
+template <bool SourceBlocked, bool TargetBlocked, typename SourceView, typename TargetView, typename Operation>
+void dispatch_relayout_mdspan(SourceView& source, TargetView& target, Operation&& operation) {
+    if (can_use_layout_right(source) && can_use_layout_right(target)) {
+        ATLAS_DEBUG("device relayout: using mdspan with layout_right for both views");
+        return dispatch_relayout_view_mdspan<layout_right, SourceBlocked>(source, [&](const auto& source_view) {
+            return dispatch_relayout_view_mdspan<layout_right, TargetBlocked>(target, [&](const auto& target_view) {
+                return operation(source_view, target_view);
+            });
+        });
+    }
+    if (can_use_layout_right(source)) {
+        ATLAS_DEBUG("device relayout: using mdspan with layout_right for source and layout_stride for target");
+        return dispatch_relayout_view_mdspan<layout_right, SourceBlocked>(source, [&](const auto& source_view) {
+            return dispatch_relayout_view_mdspan<layout_stride, TargetBlocked>(target, [&](const auto& target_view) {
+                return operation(source_view, target_view);
+            });
+        });
+    }
+    if (can_use_layout_right(target)) {
+        ATLAS_DEBUG("device relayout: using mdspan with layout_stride for source and layout_right for target");
+        return dispatch_relayout_view_mdspan<layout_stride, SourceBlocked>(source, [&](const auto& source_view) {
+            return dispatch_relayout_view_mdspan<layout_right, TargetBlocked>(target, [&](const auto& target_view) {
+                return operation(source_view, target_view);
+            });
+        });
+    }
+    ATLAS_DEBUG("device relayout: using mdspan with layout_stride");
+    return dispatch_relayout_view_mdspan<layout_stride, SourceBlocked>(source, [&](const auto& source_view) {
+        return dispatch_relayout_view_mdspan<layout_stride, TargetBlocked>(target, [&](const auto& target_view) {
+            return operation(source_view, target_view);
+        });
+    });
+}
+
 #if HIC_COMPILER
 // These relayout kernels are simple memory-bound copies with light index arithmetic.
 // A 256-thread block is a conservative default on CUDA/HIP GPUs: it is large enough
@@ -192,7 +292,7 @@ template <class Nonblocked, class Blocked>
  * @pre Shared dimensions must match; for rank 4, `nonblocked.extent(1) == blocked.extent(2)`
  *      and `nonblocked.extent(2) == blocked.extent(1)`.
  */
-void device_copy_nonblocked_to_blocked_mdspan(Nonblocked nonblocked, Blocked blocked) {
+void device_copy_nonblocked_to_blocked_impl(Nonblocked nonblocked, Blocked blocked) {
     if constexpr(blocked.rank()==4) {
         ATLAS_ASSERT(nonblocked.extent(1) == blocked.extent(2));
         ATLAS_ASSERT(nonblocked.extent(2) == blocked.extent(1));
@@ -228,7 +328,7 @@ template <class Blocked, class Nonblocked>
  * @pre Shared dimensions must match; for rank 4, `nonblocked.extent(1) == blocked.extent(2)`
  *      and `nonblocked.extent(2) == blocked.extent(1)`.
  */
-void device_copy_blocked_to_nonblocked_mdspan(Blocked blocked, Nonblocked nonblocked) {
+void device_copy_blocked_to_nonblocked_impl(Blocked blocked, Nonblocked nonblocked) {
     ATLAS_ASSERT(nonblocked.rank() == blocked.rank()-1);
     if constexpr(blocked.rank()==4) {
         ATLAS_ASSERT(nonblocked.extent(1) == blocked.extent(2));
@@ -322,7 +422,7 @@ template <class BlockedIn, class BlockedOut>
  * @pre `blocked_in.rank() == blocked_out.rank()`.
  * @pre Non-horizontal dimensions must match.
  */
-void device_copy_blocked_to_blocked_mdspan(BlockedIn blocked_in, BlockedOut blocked_out) {
+void device_copy_blocked_to_blocked_impl(BlockedIn blocked_in, BlockedOut blocked_out) {
     static_assert(blocked_in.rank() == blocked_out.rank());
     if constexpr (blocked_in.rank()==4) {
         ATLAS_ASSERT(blocked_in.extent(1) == blocked_out.extent(1));
@@ -347,7 +447,39 @@ void device_copy_blocked_to_blocked_mdspan(BlockedIn blocked_in, BlockedOut bloc
     #else
     kernel_copy_blocked_to_blocked_mdspan(blocked_in, blocked_out);
     #endif
+}
 
+template <class Nonblocked, class Blocked>
+void device_copy_nonblocked_to_blocked_mdspan(Nonblocked nonblocked, Blocked blocked) {
+    if (relayout_use_mdspan()) {
+        return dispatch_relayout_mdspan<false, true>(nonblocked, blocked, [&](const auto& nonblocked_view, const auto& blocked_view) {
+            return device_copy_nonblocked_to_blocked_impl(nonblocked_view, blocked_view);
+        });
+    }
+    ATLAS_DEBUG("device relayout: using arrayview");
+    return device_copy_nonblocked_to_blocked_impl(nonblocked, blocked);
+}
+
+template <class Blocked, class Nonblocked>
+void device_copy_blocked_to_nonblocked_mdspan(Blocked blocked, Nonblocked nonblocked) {
+    if (relayout_use_mdspan()) {
+        return dispatch_relayout_mdspan<true, false>(blocked, nonblocked, [&](const auto& blocked_view, const auto& nonblocked_view) {
+            return device_copy_blocked_to_nonblocked_impl(blocked_view, nonblocked_view);
+        });
+    }
+    ATLAS_DEBUG("device relayout: using arrayview");
+    return device_copy_blocked_to_nonblocked_impl(blocked, nonblocked);
+}
+
+template <class BlockedIn, class BlockedOut>
+void device_copy_blocked_to_blocked_mdspan(BlockedIn blocked_in, BlockedOut blocked_out) {
+    if (relayout_use_mdspan()) {
+        return dispatch_relayout_mdspan<true, true>(blocked_in, blocked_out, [&](const auto& blocked_in_view, const auto& blocked_out_view) {
+            return device_copy_blocked_to_blocked_impl(blocked_in_view, blocked_out_view);
+        });
+    }
+    ATLAS_DEBUG("device relayout: using arrayview");
+    return device_copy_blocked_to_blocked_impl(blocked_in, blocked_out);
 }
 
 } //namespace atlas
@@ -359,19 +491,8 @@ namespace atlas {
 
 #define EXPLICIT_TEMPLATE_INSTANTIATION_MDSPAN_TYPE_RANK_ACCESSOR(TYPE, BLOCKED_RANK, ACCESSOR) \
     template void device_copy_blocked_to_nonblocked_mdspan<mdspan<const TYPE,dims<BLOCKED_RANK>,layout_stride,ACCESSOR<const TYPE>>,mdspan<TYPE,dims<BLOCKED_RANK-1>,layout_stride,ACCESSOR<TYPE>>>(mdspan<const TYPE,dims<BLOCKED_RANK>,layout_stride,ACCESSOR<const TYPE>>, mdspan<TYPE,dims<BLOCKED_RANK-1>,layout_stride,ACCESSOR<TYPE>>); \
-    template void device_copy_blocked_to_nonblocked_mdspan<mdspan<const TYPE,dims<BLOCKED_RANK>,layout_stride,ACCESSOR<const TYPE>>,mdspan<TYPE,dims<BLOCKED_RANK-1>,layout_right,ACCESSOR<TYPE>>>(mdspan<const TYPE,dims<BLOCKED_RANK>,layout_stride,ACCESSOR<const TYPE>>, mdspan<TYPE,dims<BLOCKED_RANK-1>,layout_right,ACCESSOR<TYPE>>); \
-    template void device_copy_blocked_to_nonblocked_mdspan<mdspan<const TYPE,dims<BLOCKED_RANK>,layout_right,ACCESSOR<const TYPE>>,mdspan<TYPE,dims<BLOCKED_RANK-1>,layout_stride,ACCESSOR<TYPE>>>(mdspan<const TYPE,dims<BLOCKED_RANK>,layout_right,ACCESSOR<const TYPE>>, mdspan<TYPE,dims<BLOCKED_RANK-1>,layout_stride,ACCESSOR<TYPE>>); \
-    template void device_copy_blocked_to_nonblocked_mdspan<mdspan<const TYPE,dims<BLOCKED_RANK>,layout_right,ACCESSOR<const TYPE>>,mdspan<TYPE,dims<BLOCKED_RANK-1>,layout_right,ACCESSOR<TYPE>>>(mdspan<const TYPE,dims<BLOCKED_RANK>,layout_right,ACCESSOR<const TYPE>>, mdspan<TYPE,dims<BLOCKED_RANK-1>,layout_right,ACCESSOR<TYPE>>); \
-\
     template void device_copy_nonblocked_to_blocked_mdspan<mdspan<const TYPE,dims<BLOCKED_RANK-1>,layout_stride,ACCESSOR<const TYPE>>,mdspan<TYPE,dims<BLOCKED_RANK>,layout_stride,ACCESSOR<TYPE>>>(mdspan<const TYPE,dims<BLOCKED_RANK-1>,layout_stride,ACCESSOR<const TYPE>>, mdspan<TYPE,dims<BLOCKED_RANK>,layout_stride,ACCESSOR<TYPE>>); \
-    template void device_copy_nonblocked_to_blocked_mdspan<mdspan<const TYPE,dims<BLOCKED_RANK-1>,layout_stride,ACCESSOR<const TYPE>>,mdspan<TYPE,dims<BLOCKED_RANK>,layout_right,ACCESSOR<TYPE>>>(mdspan<const TYPE,dims<BLOCKED_RANK-1>,layout_stride,ACCESSOR<const TYPE>>, mdspan<TYPE,dims<BLOCKED_RANK>,layout_right,ACCESSOR<TYPE>>); \
-    template void device_copy_nonblocked_to_blocked_mdspan<mdspan<const TYPE,dims<BLOCKED_RANK-1>,layout_right,ACCESSOR<const TYPE>>,mdspan<TYPE,dims<BLOCKED_RANK>,layout_stride,ACCESSOR<TYPE>>>(mdspan<const TYPE,dims<BLOCKED_RANK-1>,layout_right,ACCESSOR<const TYPE>>, mdspan<TYPE,dims<BLOCKED_RANK>,layout_stride,ACCESSOR<TYPE>>); \
-    template void device_copy_nonblocked_to_blocked_mdspan<mdspan<const TYPE,dims<BLOCKED_RANK-1>,layout_right,ACCESSOR<const TYPE>>,mdspan<TYPE,dims<BLOCKED_RANK>,layout_right,ACCESSOR<TYPE>>>(mdspan<const TYPE,dims<BLOCKED_RANK-1>,layout_right,ACCESSOR<const TYPE>>, mdspan<TYPE,dims<BLOCKED_RANK>,layout_right,ACCESSOR<TYPE>>); \
-\
-    template void device_copy_blocked_to_blocked_mdspan<mdspan<const TYPE,dims<BLOCKED_RANK>,layout_stride,ACCESSOR<const TYPE>>,mdspan<TYPE,dims<BLOCKED_RANK>,layout_stride,ACCESSOR<TYPE>>>(mdspan<const TYPE,dims<BLOCKED_RANK>,layout_stride,ACCESSOR<const TYPE>>, mdspan<TYPE,dims<BLOCKED_RANK>,layout_stride,ACCESSOR<TYPE>>); \
-    template void device_copy_blocked_to_blocked_mdspan<mdspan<const TYPE,dims<BLOCKED_RANK>,layout_stride,ACCESSOR<const TYPE>>,mdspan<TYPE,dims<BLOCKED_RANK>,layout_right,ACCESSOR<TYPE>>>(mdspan<const TYPE,dims<BLOCKED_RANK>,layout_stride,ACCESSOR<const TYPE>>, mdspan<TYPE,dims<BLOCKED_RANK>,layout_right,ACCESSOR<TYPE>>); \
-    template void device_copy_blocked_to_blocked_mdspan<mdspan<const TYPE,dims<BLOCKED_RANK>,layout_right,ACCESSOR<const TYPE>>,mdspan<TYPE,dims<BLOCKED_RANK>,layout_stride,ACCESSOR<TYPE>>>(mdspan<const TYPE,dims<BLOCKED_RANK>,layout_right,ACCESSOR<const TYPE>>, mdspan<TYPE,dims<BLOCKED_RANK>,layout_stride,ACCESSOR<TYPE>>); \
-    template void device_copy_blocked_to_blocked_mdspan<mdspan<const TYPE,dims<BLOCKED_RANK>,layout_right,ACCESSOR<const TYPE>>,mdspan<TYPE,dims<BLOCKED_RANK>,layout_right,ACCESSOR<TYPE>>>(mdspan<const TYPE,dims<BLOCKED_RANK>,layout_right,ACCESSOR<const TYPE>>, mdspan<TYPE,dims<BLOCKED_RANK>,layout_right,ACCESSOR<TYPE>>);
+    template void device_copy_blocked_to_blocked_mdspan<mdspan<const TYPE,dims<BLOCKED_RANK>,layout_stride,ACCESSOR<const TYPE>>,mdspan<TYPE,dims<BLOCKED_RANK>,layout_stride,ACCESSOR<TYPE>>>(mdspan<const TYPE,dims<BLOCKED_RANK>,layout_stride,ACCESSOR<const TYPE>>, mdspan<TYPE,dims<BLOCKED_RANK>,layout_stride,ACCESSOR<TYPE>>);
 
 #define EXPLICIT_TEMPLATE_INSTANTIATION_TYPE_RANK(TYPE, BLOCKED_RANK) \
     template void device_copy_blocked_to_nonblocked_mdspan<array::ArrayView<const TYPE,BLOCKED_RANK>,array::ArrayView<TYPE,BLOCKED_RANK-1>>(array::ArrayView<const TYPE,BLOCKED_RANK>, array::ArrayView<TYPE,BLOCKED_RANK-1>); \
