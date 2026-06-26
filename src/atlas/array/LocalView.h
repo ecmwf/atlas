@@ -22,7 +22,6 @@
 #include "atlas/array/ArrayDataStore.h"
 #include "atlas/array/ArrayViewDefs.h"
 #include "atlas/array/helpers/ArraySlicer.h"
-#include "atlas/array/make_mdspan.h"
 #include "atlas/library/config.h"
 #include "atlas/mdspan.h"
 

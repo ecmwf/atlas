@@ -61,7 +61,6 @@
 #include "atlas/array/LocalView.h"
 #include "atlas/array/Range.h"
 #include "atlas/array/helpers/ArraySlicer.h"
-#include "atlas/array/make_mdspan.h"
 #include "atlas/library/config.h"
 #include "atlas/mdspan.h"
 

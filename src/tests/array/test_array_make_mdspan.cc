@@ -8,7 +8,6 @@
 #include "atlas/array/LocalView.h"
 #include "atlas/array/MakeView.h"
 #include "atlas/array/native/NativeIndexView.h"
-#include "atlas/array/make_mdspan.h"
 #include "atlas/mdspan.h"
 
 #include "tests/AtlasTestEnvironment.h"
@@ -169,8 +168,8 @@ CASE("test_make_mdspan_static_extent_transform") {
 
     view(1, 2) = 63.;
 
-    auto dim_span = make_mdspan<StaticExtent<1, 3>>(view);
-    auto last_span = make_mdspan<StaticLastExtent<3>, layout_right, default_accessor>(view);
+    auto dim_span = make_mdspan<extent_with_static_dim<1, 3>>(view);
+    auto last_span = make_mdspan<extent_with_static_last_dim<3>, layout_right, default_accessor>(view);
 
     static_assert(decltype(dim_span)::extents_type::static_extent(0) == dynamic_extent);
     static_assert(decltype(dim_span)::extents_type::static_extent(1) == 3);
@@ -193,7 +192,7 @@ CASE("test_make_mdspan_static_extent_transform_argument") {
     view(3, 2) = 64.;
 
     std::array<std::size_t, 2> extents{4, 3};
-    auto span = make_mdspan<StaticLastExtent<3>, layout_right, default_accessor>(view, extents);
+    auto span = make_mdspan<extent_with_static_last_dim<3>, layout_right, default_accessor>(view, extents);
 
     static_assert(decltype(span)::extents_type::static_extent(0) == dynamic_extent);
     static_assert(decltype(span)::extents_type::static_extent(1) == 3);
@@ -202,6 +201,70 @@ CASE("test_make_mdspan_static_extent_transform_argument") {
     EXPECT(span.extent(0) == 4);
     EXPECT(span.extent(1) == 3);
     EXPECT(span(3, 2) == 64.);
+}
+
+CASE("test_make_mdspan_static_last_extent_layout_right_restrict_aligned_policy") {
+    constexpr idx_t nproma = 32;
+    alignas(64) double data[2 * 4 * nproma]{};
+    idx_t shape[3]{2, 4, nproma};
+    idx_t strides[3]{4 * nproma, nproma, 1};
+    auto view = LocalView<double, 3>{data, shape, strides};
+
+    view(1, 3, 31) = 71.;
+
+    EXPECT(last_extent(view) == nproma);
+    EXPECT(can_use_layout<layout_right>(view));
+    EXPECT(is_last_dimension_aligned(view, 64));
+
+    auto span = make_mdspan<extent_with_static_last_dim<nproma>, layout_right,
+                            restrict_aligned_accessor_policy<64>>(view);
+
+    static_assert(decltype(span)::extents_type::static_extent(2) == nproma);
+    static_assert(std::is_same_v<typename decltype(span)::layout_type, layout_right>);
+    static_assert(std::is_same_v<typename decltype(span)::accessor_type,
+                                 restrict_aligned_accessor<double, 64>>);
+    EXPECT(span.data_handle() == data);
+    EXPECT(span.extent(0) == 2);
+    EXPECT(span.extent(1) == 4);
+    EXPECT(span.extent(2) == nproma);
+    EXPECT(span(1, 3, 31) == 71.);
+}
+
+CASE("test_make_mdspan_documented_simd_fast_path_example_compiles") {
+    constexpr idx_t nproma = 32;
+    alignas(64) double data[2 * 4 * nproma]{};
+    auto view = LocalView<double, 3>{data, ArrayShape{2, 4, nproma}};
+
+    view(1, 3, 31) = 73.;
+
+    auto kernel = [](auto span) {
+        return span(1, 3, 31);
+    };
+
+    auto result = [&]() {
+        if (can_use_layout<layout_right>(view) && is_last_dimension_aligned(view, 64)) {
+            using layout = layout_right;
+            using accessor_policy = restrict_aligned_accessor_policy<64>;
+            using Span32 = decltype(make_mdspan<extent_with_static_last_dim<32>, layout, accessor_policy>(view));
+            static_assert(Span32::extents_type::static_extent(2) == 32);
+            static_assert(std::is_same_v<typename Span32::layout_type, layout_right>);
+            static_assert(std::is_same_v<typename Span32::accessor_type,
+                                         restrict_aligned_accessor<double, 64>>);
+            switch (last_extent(view)) {
+                case 16:
+                    return kernel(make_mdspan<extent_with_static_last_dim<16>, layout, accessor_policy>(view));
+                case 32:
+                    return kernel(make_mdspan<extent_with_static_last_dim<32>, layout, accessor_policy>(view));
+                case 64:
+                    return kernel(make_mdspan<extent_with_static_last_dim<64>, layout, accessor_policy>(view));
+                default:
+                    return kernel(make_mdspan<layout, accessor_policy>(view));
+            }
+        }
+        return kernel(make_mdspan(view));
+    }();
+
+    EXPECT(result == 73.);
 }
 
 CASE("test_make_mdspan_vector_default_1d") {
@@ -254,6 +317,21 @@ CASE("test_make_mdspan_pointer_reshape") {
     auto span = make_mdspan(data, shape);
 
     static_assert(decltype(span)::rank() == 2);
+    static_assert(std::is_same_v<typename decltype(span)::layout_type, layout_right>);
+    static_assert(std::is_same_v<typename decltype(span)::accessor_type, restrict_accessor<double>>);
+    EXPECT(span.data_handle() == data);
+    EXPECT(span.extent(0) == 2);
+    EXPECT(span.extent(1) == 3);
+    EXPECT(span(1, 2) == 6.);
+}
+
+CASE("test_make_mdspan_pointer_reshape_explicit_dims") {
+    double data[6]{1., 2., 3., 4., 5., 6.};
+
+    auto span = make_mdspan<dims<2>>(data, {2, 3});
+
+    static_assert(decltype(span)::rank() == 2);
+    static_assert(std::is_same_v<typename decltype(span)::extents_type, dims<2>>);
     static_assert(std::is_same_v<typename decltype(span)::layout_type, layout_right>);
     static_assert(std::is_same_v<typename decltype(span)::accessor_type, restrict_accessor<double>>);
     EXPECT(span.data_handle() == data);
@@ -485,6 +563,9 @@ CASE("test_make_mdspan_queries_layout_right") {
     EXPECT(can_use_layout_right(right_span));
     EXPECT(can_use_layout_right(index_view));
     EXPECT(not can_use_layout_right(padded_view));
+    EXPECT(last_extent(contiguous_view) == 3);
+    EXPECT(last_extent(stride_span) == 3);
+    EXPECT(last_extent(contiguous_view) != 4);
 }
 
 CASE("test_make_mdspan_queries_alignment") {

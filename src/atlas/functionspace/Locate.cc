@@ -13,7 +13,7 @@
 #include "atlas/functionspace/FunctionSpace.h"
 #include "atlas/array/ArrayView.h"
 #include "atlas/array/Array.h"
-#include "atlas/array/make_mdspan.h"
+#include "atlas/mdspan.h"
 #include "atlas/option.h"
 #include "atlas/parallel/mpi/mpi.h"
 
