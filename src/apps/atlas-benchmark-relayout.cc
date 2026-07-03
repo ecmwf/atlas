@@ -120,7 +120,7 @@
  *       Sets ATLAS_RELAYOUT_LOOP_ORDER.  This controls the order of loops in optimized host
  *       blocked/nonblocked copies for rank-3 and rank-4 field shapes.
  *
- *       Default: nproma_innermost.
+ *       Default: nproma_innermost
  *       When this benchmark is run without --loop-order, it explicitly
  *       sets ATLAS_RELAYOUT_LOOP_ORDER=nproma_innermost before calling the relayout routines.  In
  *       applications that do not use this benchmark, leaving ATLAS_RELAYOUT_LOOP_ORDER unset has
@@ -139,11 +139,11 @@
  *           ATLAS_RELAYOUT_LOOP_ORDER=nproma_innermost
  *           ATLAS_RELAYOUT_LOOP_ORDER=nproma_outermost
  *
- *   --nproma-dispatch=static|runtime|runtime_full_blocks
+ *   --nproma-dispatch=static|dynamic
  *       Sets ATLAS_RELAYOUT_NPROMA_DISPATCH.  This controls how the public host relayout wrapper
  *       selects optimized implementations for nproma.
  *
- *       Default: static.
+ *       Default: static
  *       When this benchmark is run without --nproma-dispatch, it explicitly sets
  *       ATLAS_RELAYOUT_NPROMA_DISPATCH=static.  In applications that do not use this benchmark,
  *       leaving ATLAS_RELAYOUT_NPROMA_DISPATCH unset also selects static dispatch.
@@ -152,27 +152,23 @@
  *       compile-time constants for the block length in the most optimized paths, which can improve
  *       unrolling, vectorization, and address arithmetic.
  *
- *       runtime bypasses the explicit static nproma dispatch and uses implementations where nproma
- *       is a runtime value.  This is useful as a baseline for the cost of avoiding many specialized
+ *       dynamic bypasses the explicit static nproma dispatch and uses implementations where nproma
+ *       is a dynamic value.  This is useful as a baseline for the cost of avoiding many specialized
  *       template instantiations.
- *
- *       runtime_full_blocks still avoids the top-level static nproma dispatch, but dispatches full
- *       blocks inside the runtime implementation for selected compile-time nproma values.  It is
- *       intended to separate the benefit of compile-time full-block loop bounds from the rest of
- *       the static dispatch machinery.
+
+ *       kernels.  Partial final blocks still use the generic runtime path.
  *
  *       Equivalent environment variable use outside this benchmark:
  *
  *           ATLAS_RELAYOUT_NPROMA_DISPATCH=static
- *           ATLAS_RELAYOUT_NPROMA_DISPATCH=runtime
- *           ATLAS_RELAYOUT_NPROMA_DISPATCH=runtime_full_blocks
+ *           ATLAS_RELAYOUT_NPROMA_DISPATCH=dynamic
  *
  *   --blocked-to-blocked-use-memcpy=true|false
  *       Sets ATLAS_RELAYOUT_BLOCKED_TO_BLOCKED_USE_MEMCPY.  When enabled, host blocked-to-blocked
  *       copies use std::memcpy for whole contiguous copies and for contiguous chunks within each
  *       block repacking operation.
  *
- *       Default: true.
+ *       Default: true
  *       When this benchmark is run without --blocked-to-blocked-use-memcpy, it
  *       explicitly sets ATLAS_RELAYOUT_BLOCKED_TO_BLOCKED_USE_MEMCPY=1.  In applications that do
  *       not use this benchmark, leaving ATLAS_RELAYOUT_BLOCKED_TO_BLOCKED_USE_MEMCPY unset also
@@ -192,7 +188,7 @@
  *       Sets ATLAS_RELAYOUT_BLOCKED_NONBLOCKED_USE_MEMCPY.  When enabled, rank-2 host
  *       blocked/nonblocked copies may use std::memcpy for contiguous spans.
  *
- *       Default: false.
+ *       Default: false
  *       When this benchmark is run without --blocked-nonblocked-use-memcpy, it
  *       explicitly sets ATLAS_RELAYOUT_BLOCKED_NONBLOCKED_USE_MEMCPY=0.  In applications that do
  *       not use this benchmark, leaving ATLAS_RELAYOUT_BLOCKED_NONBLOCKED_USE_MEMCPY unset also
@@ -205,62 +201,27 @@
  *           ATLAS_RELAYOUT_BLOCKED_NONBLOCKED_USE_MEMCPY=1
  *           ATLAS_RELAYOUT_BLOCKED_NONBLOCKED_USE_MEMCPY=0
  *
- *   --use-mdspan=true|false
- *       Sets ATLAS_RELAYOUT_USE_MDSPAN.  When enabled, the public relayout wrappers convert Atlas
- *       views to mdspan before dispatching to the host or device relayout implementation, and
- *       attempt to use layout_right-compatible mdspan views when the view strides allow it.
+ *   --implementation=raw_pointers|mdspan
+ *       Sets ATLAS_RELAYOUT_IMPLEMENTATION.  This selects the host implementation family used by
+ *       the public relayout wrapper.
  *
- *       Default: false.
- *       When this benchmark is run without --use-mdspan, it explicitly sets
- *       ATLAS_RELAYOUT_USE_MDSPAN=0.  In applications that do not use this benchmark, leaving
- *       ATLAS_RELAYOUT_USE_MDSPAN unset also disables mdspan dispatch.
+ *       Default: raw_pointers
+ *       When this benchmark is run without --implementation, it explicitly sets
+ *       ATLAS_RELAYOUT_IMPLEMENTATION=raw_pointers.  In applications that do not use
+ *       this benchmark, leaving ATLAS_RELAYOUT_IMPLEMENTATION unset also selects the raw-pointer
+ *       contiguous implementation when the view layouts allow it.
  *
- *       This option is useful for comparing the Atlas view path against the mdspan-based path
- *       under the same problem shape, compiler, and optimisation settings.
+ *       raw_pointers keeps the optimized raw-pointer host path for layout_right
+ *       nonblocked views and block-contiguous blocked views.  If those layout requirements are not
+ *       met, the relayout wrapper falls back to the generic blocked/nonblocked implementation.
  *
- *       Equivalent environment variable use outside this benchmark:
- *
- *           ATLAS_RELAYOUT_USE_MDSPAN=1
- *           ATLAS_RELAYOUT_USE_MDSPAN=0
- *
- *   --index-operator=true|false
- *       Sets ATLAS_RELAYOUT_INDEX_OPERATOR.  When enabled, host blocked/nonblocked relayout
- *       wrappers bypass the contiguous optimized path and unconditionally use the generic
- *       index-operator fallback implementation in both blocked-to-nonblocked and
- *       nonblocked-to-blocked directions.
- *
- *       Default: false
- *       When this benchmark is run without --index-operator, it explicitly sets
- *       ATLAS_RELAYOUT_INDEX_OPERATOR=0.  In applications that do not use this benchmark,
- *       leaving ATLAS_RELAYOUT_INDEX_OPERATOR unset also keeps the optimized path enabled.
+ *       mdspan selects the mdspan-based host path, which builds mdspan views and dispatches to the
+ *       mdspan relayout kernels directly.
  *
  *       Equivalent environment variable use outside this benchmark:
  *
- *           ATLAS_RELAYOUT_INDEX_OPERATOR=0
- *           ATLAS_RELAYOUT_INDEX_OPERATOR=1
- *
- *   --implementation=public_wrapper|raw_pointers_contiguous|arrayview_fallback|
- *                    mdspan_layout_stride_fallback|mdspan_layout_right_contiguous|
- *                    mdspan_layout_right_fallback
- *       Selects the implementation family used by the public relayout wrapper.  public_wrapper
- *       keeps the normal relayout API behavior and honours --use-mdspan and --index-operator.  The
- *       other modes are host-only benchmark probes that ask the relayout wrapper to construct a
- *       specific view type and force the matching index-operator setting:
- *
- *       raw_pointers_contiguous uses ArrayView inputs with the optimized raw-pointer contiguous
- *       path enabled.
- *
- *       arrayview_fallback uses ArrayView inputs and forces the generic index-operator fallback.
- *
- *       mdspan_layout_stride_fallback uses make_mdspan(), which produces layout_stride
- *       mdspan views, disables the layout_right-compatible mdspan upgrade, and forces the generic
- *       index-operator fallback.
- *
- *       mdspan_layout_right_contiguous constructs layout_right mdspan views over the same
- *       contiguous field storage and keeps the optimized contiguous path enabled.
- *
- *       mdspan_layout_right_fallback constructs layout_right mdspan views over the same contiguous
- *       field storage and forces the generic index-operator fallback.
+ *           ATLAS_RELAYOUT_IMPLEMENTATION=raw_pointers
+ *           ATLAS_RELAYOUT_IMPLEMENTATION=mdspan
  *
  * Interpreting results
  * --------------------
@@ -311,12 +272,8 @@ using namespace atlas;
 
 namespace {
 
-constexpr const char* implementation_public_wrapper = "public_wrapper";
-constexpr const char* implementation_raw_pointers_contiguous = "raw_pointers_contiguous";
-constexpr const char* implementation_arrayview_fallback = "arrayview_fallback";
-constexpr const char* implementation_mdspan_layout_stride_fallback = "mdspan_layout_stride_fallback";
-constexpr const char* implementation_mdspan_layout_right_contiguous = "mdspan_layout_right_contiguous";
-constexpr const char* implementation_mdspan_layout_right_fallback = "mdspan_layout_right_fallback";
+constexpr const char* implementation_raw_pointers = "raw_pointers";
+constexpr const char* implementation_mdspan = "mdspan";
 
 struct Settings {
     idx_t npts{1000000};
@@ -331,9 +288,8 @@ struct Settings {
     std::string nproma_dispatch{"static"};
     bool blocked_to_blocked_use_memcpy{true};
     bool blocked_nonblocked_use_memcpy{false};
-    bool use_mdspan{false};
     bool index_operator{false};
-    std::string implementation{implementation_public_wrapper};
+    std::string implementation{implementation_raw_pointers};
     std::string format{"table"};
     idx_t iterations{20};
     idx_t warmup{2};
@@ -348,16 +304,9 @@ struct Settings {
         assert_one_of("precision", {"float", "single", "double"}, precision);
         assert_one_of("format", {"table", "json"}, format);
         assert_one_of("loop-order", {"nproma_innermost", "nproma_outermost"}, loop_order);
-        assert_one_of("nproma-dispatch", {"static", "runtime", "runtime_full_blocks"}, nproma_dispatch);
-        assert_one_of("implementation", {implementation_public_wrapper,
-                                         implementation_raw_pointers_contiguous,
-                                         implementation_arrayview_fallback,
-                                         implementation_mdspan_layout_stride_fallback,
-                                         implementation_mdspan_layout_right_contiguous,
-                                         implementation_mdspan_layout_right_fallback}, implementation);
-        if (on_device && implementation != implementation_public_wrapper) {
-            throw_Exception("implementation benchmark modes are host-only; use --implementation=public_wrapper with --on-device=true");
-        }
+        assert_one_of("nproma-dispatch", {"static", "dynamic"}, nproma_dispatch);
+        assert_one_of("implementation", {implementation_raw_pointers,
+                                         implementation_mdspan}, implementation);
     }
 
 private:
@@ -839,8 +788,6 @@ void print_benchmark_json(const RuntimeInfo& runtime, const Settings& settings, 
     Log::info() << "    \"nproma_dispatch\": \"" << json_escape(settings.nproma_dispatch) << "\"," << std::endl;
     Log::info() << "    \"blocked_to_blocked_use_memcpy\": " << (settings.blocked_to_blocked_use_memcpy ? "true" : "false") << "," << std::endl;
     Log::info() << "    \"blocked_nonblocked_use_memcpy\": " << (settings.blocked_nonblocked_use_memcpy ? "true" : "false") << "," << std::endl;
-    Log::info() << "    \"use_mdspan\": " << (settings.use_mdspan ? "true" : "false") << "," << std::endl;
-    Log::info() << "    \"index_operator\": " << settings.index_operator << "," << std::endl;
     Log::info() << "    \"implementation\": \"" << json_escape(settings.implementation) << "\"" << std::endl;
     Log::info() << "  }," << std::endl;
     Log::info() << "  \"data\": {" << std::endl;
@@ -921,8 +868,6 @@ int run_benchmark(const Settings& settings) {
         Log::info() << "  nproma_dispatch: " << settings.nproma_dispatch << std::endl;
         Log::info() << "  blocked_to_blocked_use_memcpy: " << std::boolalpha << settings.blocked_to_blocked_use_memcpy << std::endl;
         Log::info() << "  blocked_nonblocked_use_memcpy: " << std::boolalpha << settings.blocked_nonblocked_use_memcpy << std::endl;
-        Log::info() << "  use_mdspan: " << std::boolalpha << settings.use_mdspan << std::endl;
-        Log::info() << "  index_operator: " << std::boolalpha << settings.index_operator << std::endl;
         Log::info() << "  implementation: " << settings.implementation << std::endl;
         Log::info() << std::noboolalpha;
         Log::info() << std::endl;
@@ -998,9 +943,7 @@ public:
         add_option(new SimpleOption<std::string>("nproma-dispatch", "Host relayout nproma dispatch: static, runtime, or runtime_full_blocks. Default=static"));
         add_option(new SimpleOption<bool>("blocked-to-blocked-use-memcpy", "Use memcpy for host blocked-to-blocked contiguous chunks. Default=true"));
         add_option(new SimpleOption<bool>("blocked-nonblocked-use-memcpy", "Use memcpy for host rank-2 blocked/nonblocked copies. Default=false"));
-        add_option(new SimpleOption<bool>("use-mdspan", "Use mdspan dispatch in the public relayout wrappers. Default=false"));
-        add_option(new SimpleOption<bool>("index-operator", "Force blocked/nonblocked relayout to use the generic index-operator fallback path. Default=false"));
-        add_option(new SimpleOption<std::string>("implementation", "Implementation mode: public_wrapper, raw_pointers_contiguous, arrayview_fallback, mdspan_layout_stride_fallback, mdspan_layout_right_contiguous, or mdspan_layout_right_fallback. Default=public_wrapper"));
+        add_option(new SimpleOption<std::string>("implementation", "Implementation mode: raw_pointers, mdspan. Default=raw_pointers"));
     }
 
     std::string briefDescription() override { return "Benchmark relayout between blocked and nonblocked field layouts"; }
@@ -1038,30 +981,7 @@ public:
         args.get("nproma-dispatch", settings.nproma_dispatch);
         args.get("blocked-to-blocked-use-memcpy", settings.blocked_to_blocked_use_memcpy);
         args.get("blocked-nonblocked-use-memcpy", settings.blocked_nonblocked_use_memcpy);
-        args.get("use-mdspan", settings.use_mdspan);
-        args.get("index-operator", settings.index_operator);
         args.get("implementation", settings.implementation);
-
-        if (settings.implementation == implementation_raw_pointers_contiguous) {
-            settings.use_mdspan = false;
-            settings.index_operator = false;
-        }
-        else if (settings.implementation == implementation_arrayview_fallback) {
-            settings.use_mdspan = false;
-            settings.index_operator = true;
-        }
-        else if (settings.implementation == implementation_mdspan_layout_stride_fallback) {
-            settings.use_mdspan = true;
-            settings.index_operator = true;
-        }
-        else if (settings.implementation == implementation_mdspan_layout_right_contiguous) {
-            settings.use_mdspan = true;
-            settings.index_operator = false;
-        }
-        else if (settings.implementation == implementation_mdspan_layout_right_fallback) {
-            settings.use_mdspan = true;
-            settings.index_operator = true;
-        }
 
         settings.validate();
 
@@ -1070,8 +990,6 @@ public:
         ::setenv("ATLAS_RELAYOUT_NPROMA_DISPATCH", settings.nproma_dispatch.c_str(), overwrite);
         ::setenv("ATLAS_RELAYOUT_BLOCKED_TO_BLOCKED_USE_MEMCPY", settings.blocked_to_blocked_use_memcpy ? "1" : "0", overwrite);
         ::setenv("ATLAS_RELAYOUT_BLOCKED_NONBLOCKED_USE_MEMCPY", settings.blocked_nonblocked_use_memcpy ? "1" : "0", overwrite);
-        ::setenv("ATLAS_RELAYOUT_USE_MDSPAN", settings.use_mdspan ? "1" : "0", overwrite);
-        ::setenv("ATLAS_RELAYOUT_INDEX_OPERATOR", settings.index_operator ? "1" : "0", overwrite);
         ::setenv("ATLAS_RELAYOUT_IMPLEMENTATION", settings.implementation.c_str(), overwrite);
 
         if (settings.precision == "float" || settings.precision == "single") {

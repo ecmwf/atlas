@@ -348,6 +348,15 @@ if( CGAL_COMPILE_FLAGS )
                                PROPERTIES COMPILE_FLAGS "${CGAL_COMPILE_FLAGS}" )
 endif()
 
+# Append the -ftime-trace flag to the slow relayout instantiation files
+set_property(SOURCE
+             util/relayout_on_host_double.cc
+             util/relayout_on_host_float.cc
+             util/relayout_on_host_int.cc
+             util/relayout_on_host_long.cc
+             APPEND_STRING
+             PROPERTY COMPILE_FLAGS " -ftime-trace")
+
 list( APPEND atlas_mesh_srcs
 grid/detail/vertical/VerticalInterface.h     # Uses Field
 grid/detail/vertical/VerticalInterface.cc    # Uses Field
@@ -892,7 +901,10 @@ util/Polygon.cc
 util/Polygon.h
 util/relayout.cc
 util/relayout.h
-util/relayout_on_host.cc
+util/relayout_on_host_double.cc
+util/relayout_on_host_float.cc
+util/relayout_on_host_int.cc
+util/relayout_on_host_long.cc
 util/Rotation.cc
 util/Rotation.h
 util/Registry.h
