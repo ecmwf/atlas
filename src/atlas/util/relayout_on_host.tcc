@@ -289,373 +289,234 @@ template <typename ViewType>
 }
 
 #if DISABLE_RAW_POINTERS == 0
-template <idx_t nrof_static = 0, typename BlockedValue, typename NonblockedValue>
-void copy_nonblocked_to_blocked_contiguous_rank4_block(BlockedValue* ATLAS_RELAYOUT_RESTRICT raw_blocked_jblk,
-                                            const NonblockedValue* ATLAS_RELAYOUT_RESTRICT raw_nonblocked_jblk,
-                                            [[maybe_unused]] const idx_t nrof, // unused if nrof_static != 0
-                                            const idx_t nlev,
-                                            const idx_t nvar,
-                                            const idx_t nproma,
-                                            const RelayoutLoopOrder loop_order) {
-    const idx_t point_stride = nlev * nvar;
-    const idx_t var_block_stride = nlev * nproma;
-    const idx_t lev_block_stride = nproma;
-    const idx_t lev_nonblocked_stride = nvar;
-    if (loop_order == RelayoutLoopOrder::nproma_innermost) {
-        for (idx_t jvar = 0; jvar < nvar; ++jvar) {
-            BlockedValue* ATLAS_RELAYOUT_RESTRICT raw_blocked_jblk_jvar = raw_blocked_jblk + jvar * var_block_stride;
-            const NonblockedValue* ATLAS_RELAYOUT_RESTRICT raw_nonblocked_jblk_jvar = raw_nonblocked_jblk + jvar;
-            for (idx_t jlev = 0; jlev < nlev; ++jlev) {
-                BlockedValue* ATLAS_RELAYOUT_RESTRICT raw_blocked_jblk_jvar_jlev = raw_blocked_jblk_jvar + jlev * lev_block_stride;
-                const NonblockedValue* ATLAS_RELAYOUT_RESTRICT raw_nonblocked_jblk_jvar_jlev = raw_nonblocked_jblk_jvar + jlev * lev_nonblocked_stride;
-                if constexpr (nrof_static == 0) {
-                    ATLAS_RELAYOUT_SIMD
-                    for (idx_t jrof = 0; jrof < nrof; ++jrof) {
-                        raw_blocked_jblk_jvar_jlev[jrof] = raw_nonblocked_jblk_jvar_jlev[jrof * point_stride];
-                    }
-                }
-                else {
-                    ATLAS_RELAYOUT_SIMD
-                    for (idx_t jrof = 0; jrof < nrof_static; ++jrof) {
-                        raw_blocked_jblk_jvar_jlev[jrof] = raw_nonblocked_jblk_jvar_jlev[jrof * point_stride];
-                    }
-                }
-            }
-        }
-    }
-    else {
-        if constexpr (nrof_static == 0) {
-            for (idx_t jrof = 0; jrof < nrof; ++jrof) {
-                BlockedValue* ATLAS_RELAYOUT_RESTRICT raw_blocked_jblk_jrof = raw_blocked_jblk + jrof;
-                const NonblockedValue* ATLAS_RELAYOUT_RESTRICT raw_nonblocked_jblk_jrof = raw_nonblocked_jblk + jrof * point_stride;
-                for (idx_t jvar = 0; jvar < nvar; ++jvar) {
-                    BlockedValue* ATLAS_RELAYOUT_RESTRICT raw_blocked_jblk_jrof_jvar = raw_blocked_jblk_jrof + jvar * var_block_stride;
-                    const NonblockedValue* ATLAS_RELAYOUT_RESTRICT raw_nonblocked_jblk_jrof_jvar = raw_nonblocked_jblk_jrof + jvar;
-                    ATLAS_RELAYOUT_SIMD
-                    for (idx_t jlev = 0; jlev < nlev; ++jlev) {
-                        raw_blocked_jblk_jrof_jvar[jlev * lev_block_stride] = raw_nonblocked_jblk_jrof_jvar[jlev * lev_nonblocked_stride];
-                    }
-                }
-            }
+template <size_t nproma_extent, class Nonblocked, class Blocked>
+struct CopyNonblockedToBlockedContiguousRawPointersBlock {
+    using blocked_value_t = mdspan_introspection_detail::view_value_t<Blocked>;
+    using nonblocked_value_t = mdspan_introspection_detail::view_value_t<Nonblocked>;
+    using value_t = std::remove_cv_t<blocked_value_t>;
+
+    static constexpr idx_t static_nrof() {
+        if constexpr (nproma_extent != dynamic_extent) {
+            return nproma_extent;
         }
         else {
-            for (idx_t jrof = 0; jrof < nrof_static; ++jrof) {
-                BlockedValue* ATLAS_RELAYOUT_RESTRICT raw_blocked_jblk_jrof = raw_blocked_jblk + jrof;
-                const NonblockedValue* ATLAS_RELAYOUT_RESTRICT raw_nonblocked_jblk_jrof = raw_nonblocked_jblk + jrof * point_stride;
-                for (idx_t jvar = 0; jvar < nvar; ++jvar) {
-                    BlockedValue* ATLAS_RELAYOUT_RESTRICT raw_blocked_jblk_jrof_jvar = raw_blocked_jblk_jrof + jvar * var_block_stride;
-                    const NonblockedValue* ATLAS_RELAYOUT_RESTRICT raw_nonblocked_jblk_jrof_jvar = raw_nonblocked_jblk_jrof + jvar;
-                    ATLAS_RELAYOUT_SIMD
-                    for (idx_t jlev = 0; jlev < nlev; ++jlev) {
-                        raw_blocked_jblk_jrof_jvar[jlev * lev_block_stride] = raw_nonblocked_jblk_jrof_jvar[jlev * lev_nonblocked_stride];
-                    }
-                }
-            }
+            return 0;
         }
     }
-}
 
-template <idx_t nrof_static = 0, typename BlockedValue, typename NonblockedValue>
-void copy_nonblocked_to_blocked_contiguous_rank3_block(BlockedValue* ATLAS_RELAYOUT_RESTRICT raw_blocked_jblk,
-                                            const NonblockedValue* ATLAS_RELAYOUT_RESTRICT raw_nonblocked_jblk,
-                                            [[maybe_unused]] const idx_t nrof, // unused if nrof_static != 0
-                                            const idx_t nlev,
-                                            [[maybe_unused]] const idx_t nproma, // unused if nrof_static != 0
-                                            const RelayoutLoopOrder loop_order) {
-    constexpr auto nproma_static = nrof_static; // if nrof_static, then nproma is a compile-time constant equal to nrof_static
-    if (loop_order == RelayoutLoopOrder::nproma_innermost) {
-        for (idx_t jlev = 0; jlev < nlev; ++jlev) {
-            const NonblockedValue* ATLAS_RELAYOUT_RESTRICT raw_nonblocked_jblk_jlev = raw_nonblocked_jblk + jlev;
-            if constexpr (nrof_static) {
-                BlockedValue* ATLAS_RELAYOUT_RESTRICT raw_blocked_jblk_jlev = raw_blocked_jblk + jlev * nproma_static;
-                ATLAS_RELAYOUT_SIMD
-                for (idx_t jrof = 0; jrof < nrof_static; ++jrof) {
-                    raw_blocked_jblk_jlev[jrof] = raw_nonblocked_jblk_jlev[jrof * nlev];
-                }
+    Nonblocked nonblocked;
+    mutable Blocked blocked;
+    idx_t np;
+    idx_t nblks;
+    idx_t nproma;
+    RelayoutLoopOrder loop_order;
+    bool use_memcpy;
+
+    CopyNonblockedToBlockedContiguousRawPointersBlock(Nonblocked nonblocked, Blocked blocked):
+        nonblocked(nonblocked),
+        blocked(blocked),
+        np(nonblocked.extent(0)),
+        nblks(blocked.extent(0)),
+        nproma(last_extent(blocked)),
+        loop_order(relayout_loop_order()),
+        use_memcpy(relayout_blocked_nonblocked_use_memcpy()) {
+        if constexpr (Blocked::rank() == 4) {
+            ATLAS_ASSERT(nonblocked.extent(1) == blocked.extent(2));
+            ATLAS_ASSERT(nonblocked.extent(2) == blocked.extent(1));
+        }
+        else if constexpr (Blocked::rank() == 3) {
+            ATLAS_ASSERT(nonblocked.extent(1) == blocked.extent(1));
+        }
+    }
+
+    void operator()(idx_t jblk) const {
+        const idx_t jpbegin = jblk * nproma;
+
+        if constexpr(Blocked::rank()==4) {
+            auto* ATLAS_RELAYOUT_RESTRICT raw_blocked_jblk = &blocked(jblk, 0, 0, 0);
+            const auto* ATLAS_RELAYOUT_RESTRICT raw_nonblocked_jblk = &nonblocked(jpbegin, 0, 0);
+            if (jblk < nblks-1) {
+                const idx_t nrof = nproma;
+                copy_nonblocked_to_blocked_rank4_block<static_nrof()>(raw_blocked_jblk, raw_nonblocked_jblk, nrof);
             }
             else {
-                BlockedValue* ATLAS_RELAYOUT_RESTRICT raw_blocked_jblk_jlev = raw_blocked_jblk + jlev * nproma;
-                ATLAS_RELAYOUT_SIMD
-                for (idx_t jrof = 0; jrof < nrof; ++jrof) {
-                    raw_blocked_jblk_jlev[jrof] = raw_nonblocked_jblk_jlev[jrof * nlev];
-                }
+                const idx_t nrof = std::min(np - jpbegin, nproma);
+                copy_nonblocked_to_blocked_rank4_block(raw_blocked_jblk, raw_nonblocked_jblk, nrof);
             }
         }
-    }
-    else {
-        if constexpr (nrof_static) {
-            for (idx_t jrof = 0; jrof < nrof_static; ++jrof) {
-                BlockedValue* ATLAS_RELAYOUT_RESTRICT raw_blocked_jblk_jrof = raw_blocked_jblk + jrof;
-                const NonblockedValue* ATLAS_RELAYOUT_RESTRICT raw_nonblocked_jblk_jrof = raw_nonblocked_jblk + jrof * nlev;
-                ATLAS_RELAYOUT_SIMD
-                for (idx_t jlev = 0; jlev < nlev; ++jlev) {
-                    raw_blocked_jblk_jrof[jlev * nproma_static] = raw_nonblocked_jblk_jrof[jlev];
-                }
+        else if constexpr (Blocked::rank()==3) {
+            auto* ATLAS_RELAYOUT_RESTRICT raw_blocked_jblk = &blocked(jblk, 0, 0);
+            const auto* ATLAS_RELAYOUT_RESTRICT raw_nonblocked_jblk = &nonblocked(jpbegin, 0);
+            if (jblk < nblks-1) {
+                const idx_t nrof = nproma;
+                copy_nonblocked_to_blocked_rank3_block<static_nrof()>(raw_blocked_jblk, raw_nonblocked_jblk, nrof);
+            }
+            else {
+                const idx_t nrof = std::min(np - jpbegin, nproma);
+                copy_nonblocked_to_blocked_rank3_block(raw_blocked_jblk, raw_nonblocked_jblk, nrof);
+            }
+        }
+        else if constexpr (Blocked::rank()==2) {
+            auto* ATLAS_RELAYOUT_RESTRICT raw_blocked_jblk = &blocked(jblk, 0);
+            const auto* ATLAS_RELAYOUT_RESTRICT raw_nonblocked_jblk = &nonblocked(jpbegin);
+            if (jblk < nblks-1) {
+                const idx_t nrof = nproma;
+                copy_nonblocked_to_blocked_rank2_block<static_nrof()>(raw_blocked_jblk, raw_nonblocked_jblk, nrof);
+            }
+            else {
+                const idx_t nrof = std::min(np - jpbegin, nproma);
+                copy_nonblocked_to_blocked_rank2_block(raw_blocked_jblk, raw_nonblocked_jblk, nrof);
             }
         }
         else {
-            for (idx_t jrof = 0; jrof < nrof; ++jrof) {
-                BlockedValue* ATLAS_RELAYOUT_RESTRICT raw_blocked_jblk_jrof = raw_blocked_jblk + jrof;
-                const NonblockedValue* ATLAS_RELAYOUT_RESTRICT raw_nonblocked_jblk_jrof = raw_nonblocked_jblk + jrof * nlev;
-                ATLAS_RELAYOUT_SIMD
-                for (idx_t jlev = 0; jlev < nlev; ++jlev) {
-                    raw_blocked_jblk_jrof[jlev * nproma] = raw_nonblocked_jblk_jrof[jlev];
-                }
-            }
+            ATLAS_THROW_EXCEPTION("host_copy_nonblocked_to_blocked_mdspan not implemented");
         }
     }
-}
-#endif
 
-#if DISABLE_RAW_POINTERS == 0
-template <size_t nproma_extent, class Nonblocked, class Blocked>
-void host_copy_nonblocked_to_blocked_contiguous_raw_pointers_nproma(const Nonblocked nonblocked, Blocked blocked) {
-    // Requirements for this implementation are that the blocked view is contiguous in the last rank, and the nonblocked view is contiguous in the first rank.
-    ATLAS_ASSERT(is_block_contiguous(blocked));
-    ATLAS_ASSERT(has_layout_right(nonblocked));
-
-    const idx_t nproma = blocked.extent(blocked.rank()-1);
-    if constexpr (nproma_extent != dynamic_extent) {
-        ATLAS_ASSERT(nproma_extent == nproma);
-    }
-
-    const idx_t np     = nonblocked.extent(0);
-    const idx_t nblks  = blocked.extent(0);
-    [[maybe_unused]] const RelayoutLoopOrder loop_order = relayout_loop_order();
-    [[maybe_unused]] const RelayoutNpromaDispatch nproma_dispatch = relayout_nproma_dispatch();
-    [[maybe_unused]] const bool use_memcpy = relayout_blocked_nonblocked_use_memcpy();
-    static_assert(nonblocked.rank() == blocked.rank()-1);
-
-    if constexpr(blocked.rank()==4) {
-        ATLAS_ASSERT(nonblocked.extent(1) == blocked.extent(2));
-        ATLAS_ASSERT(nonblocked.extent(2) == blocked.extent(1));
+private:
+    template <idx_t nrof_static = 0>
+    void copy_nonblocked_to_blocked_rank4_block(blocked_value_t* ATLAS_RELAYOUT_RESTRICT raw_blocked_jblk,
+                                                const nonblocked_value_t* ATLAS_RELAYOUT_RESTRICT raw_nonblocked_jblk,
+                                                [[maybe_unused]] const idx_t nrof) const {
         const idx_t nlev = nonblocked.extent(1);
         const idx_t nvar = nonblocked.extent(2);
-        atlas_omp_parallel_for(idx_t jblk = 0; jblk < nblks; ++jblk) {
-            const idx_t jpbegin = jblk * nproma;
-            auto* raw_blocked_jblk = &blocked(jblk, 0, 0, 0);
-            auto* raw_nonblocked_jblk = &nonblocked(jpbegin, 0, 0);
-            if (jblk < nblks-1) {
-                const idx_t nrof = nproma;
-                if constexpr (nproma_extent != dynamic_extent) {
-                    constexpr idx_t nrof_static = nproma_extent;
-                    copy_nonblocked_to_blocked_contiguous_rank4_block<nrof_static>(
-                        raw_blocked_jblk, raw_nonblocked_jblk, nrof, nlev, nvar, nproma, loop_order);
-                }
-                else {
-                    copy_nonblocked_to_blocked_contiguous_rank4_block(
-                        raw_blocked_jblk, raw_nonblocked_jblk, nrof, nlev, nvar, nproma, loop_order);
-                }
-            }
-            else {
-                // Last block may be partial, so compute nrof on the fly to avoid out-of-bounds accesses.
-                const idx_t nrof = std::min(np - jpbegin, nproma);
-                if constexpr (nproma_extent != dynamic_extent) {
-                    constexpr idx_t nrof_static = nproma_extent;
-                    copy_nonblocked_to_blocked_contiguous_rank4_block<nrof_static>(
-                        raw_blocked_jblk, raw_nonblocked_jblk, nrof, nlev, nvar, nproma, loop_order);
-                }
-                else {
-                    copy_nonblocked_to_blocked_contiguous_rank4_block(
-                        raw_blocked_jblk, raw_nonblocked_jblk, nrof, nlev, nvar, nproma, loop_order);
-                }
-            }
-        }
-    }
-    else if constexpr (blocked.rank()==3) {
-        ATLAS_ASSERT(nonblocked.extent(1) == blocked.extent(1));
-        const idx_t nlev = nonblocked.extent(1);
-        atlas_omp_parallel_for(idx_t jblk = 0; jblk < nblks; ++jblk) {
-            const idx_t jpbegin = jblk * nproma;
-            auto* raw_blocked_jblk = &blocked(jblk, 0, 0);
-            auto* raw_nonblocked_jblk = &nonblocked(jpbegin, 0);
-            if (jblk < nblks-1) {
-                const idx_t nrof = nproma;
-                if constexpr (nproma_extent != dynamic_extent) {
-                    constexpr idx_t nrof_static = nproma_extent;
-                    copy_nonblocked_to_blocked_contiguous_rank3_block<nrof_static>(
-                        raw_blocked_jblk, raw_nonblocked_jblk, nrof, nlev, nproma, loop_order);
-                }
-                else {
-                    copy_nonblocked_to_blocked_contiguous_rank3_block(
-                        raw_blocked_jblk, raw_nonblocked_jblk, nrof, nlev, nproma, loop_order);
-                }
-            }
-            else { // last block may not be complete
-                const idx_t nrof = std::min(np - jpbegin, nproma);
-                if constexpr (nproma_extent != dynamic_extent) {
-                    constexpr idx_t nrof_static = nproma_extent;
-                    copy_nonblocked_to_blocked_contiguous_rank3_block<nrof_static>(
-                        raw_blocked_jblk, raw_nonblocked_jblk, nrof, nlev, nproma, loop_order);
-                }
-                else {
-                    copy_nonblocked_to_blocked_contiguous_rank3_block(
-                        raw_blocked_jblk, raw_nonblocked_jblk, nrof, nlev, nproma, loop_order);
-                }
-            }
-        }
-    }
-    else if constexpr (blocked.rank()==2) {
-        using Value = std::decay_t<decltype(nonblocked(0))>;
-        atlas_omp_parallel_for(idx_t jblk = 0; jblk < nblks; ++jblk) {
-            const idx_t jpbegin = jblk * nproma;
-            auto* raw_blocked_jblk = &blocked(jblk, 0);
-            auto* raw_nonblocked_jblk = &nonblocked(jpbegin);
-            if constexpr (nproma_extent != dynamic_extent) {
-                constexpr idx_t nrof_static = nproma_extent;
-                if (use_memcpy) {
-                    std::memcpy(
-                        raw_blocked_jblk,
-                        raw_nonblocked_jblk,
-                        static_cast<std::size_t>(nrof_static) * sizeof(Value));
-                }
-                else {
-                    for (idx_t jrof = 0; jrof < nrof_static; ++jrof) {
-                        raw_blocked_jblk[jrof] = raw_nonblocked_jblk[jrof];
-                    }
-                }
+        const idx_t point_stride = nlev * nvar;
+        const idx_t var_block_stride = nlev * nproma;
+        const idx_t lev_block_stride = nproma;
+        const idx_t lev_nonblocked_stride = nvar;
 
-            }
-            else {
-                const idx_t nrof = std::min(np - jpbegin, nproma);
-                if (use_memcpy) {
-                    std::memcpy(
-                        raw_blocked_jblk,
-                        raw_nonblocked_jblk,
-                        static_cast<std::size_t>(nrof) * sizeof(Value));
-                }
-                else {
-                    for (idx_t jrof = 0; jrof < nrof; ++jrof) {
-                        raw_blocked_jblk[jrof] = raw_nonblocked_jblk[jrof];
+        if (loop_order == RelayoutLoopOrder::nproma_innermost) {
+            for (idx_t jvar = 0; jvar < nvar; ++jvar) {
+                blocked_value_t* ATLAS_RELAYOUT_RESTRICT raw_blocked_jblk_jvar = raw_blocked_jblk + jvar * var_block_stride;
+                const nonblocked_value_t* ATLAS_RELAYOUT_RESTRICT raw_nonblocked_jblk_jvar = raw_nonblocked_jblk + jvar;
+                for (idx_t jlev = 0; jlev < nlev; ++jlev) {
+                    blocked_value_t* ATLAS_RELAYOUT_RESTRICT raw_blocked_jblk_jvar_jlev = raw_blocked_jblk_jvar + jlev * lev_block_stride;
+                    const nonblocked_value_t* ATLAS_RELAYOUT_RESTRICT raw_nonblocked_jblk_jvar_jlev = raw_nonblocked_jblk_jvar + jlev * lev_nonblocked_stride;
+                    if constexpr (nrof_static == 0) {
+                        ATLAS_RELAYOUT_SIMD
+                        for (idx_t jrof = 0; jrof < nrof; ++jrof) {
+                            raw_blocked_jblk_jvar_jlev[jrof] = raw_nonblocked_jblk_jvar_jlev[jrof * point_stride];
+                        }
                     }
-                }
-            }
-        }
-    }
-    else {
-        ATLAS_THROW_EXCEPTION("host_copy_nonblocked_to_blocked_mdspan not implemented");
-    }
-}
-
-template <idx_t nrof_static = 0, typename BlockedValue, typename NonblockedValue>
-void copy_blocked_to_nonblocked_contiguous_rank4_block(const BlockedValue* ATLAS_RELAYOUT_RESTRICT raw_blocked_jblk,
-                                            NonblockedValue* ATLAS_RELAYOUT_RESTRICT raw_nonblocked_jblk,
-                                            [[maybe_unused]] const idx_t nrof, // unused if nrof_static != 0
-                                            const idx_t nlev,
-                                            const idx_t nvar,
-                                            const idx_t nproma,
-                                            const RelayoutLoopOrder loop_order) {
-    const idx_t point_stride = nlev * nvar;
-    const idx_t var_block_stride = nlev * nproma;
-    const idx_t lev_block_stride = nproma;
-    const idx_t lev_nonblocked_stride = nvar;
-
-    if (loop_order == RelayoutLoopOrder::nproma_innermost) {
-        for (idx_t jvar = 0; jvar < nvar; ++jvar) {
-            const BlockedValue* ATLAS_RELAYOUT_RESTRICT raw_blocked_jblk_jvar = raw_blocked_jblk + jvar * var_block_stride;
-            NonblockedValue* ATLAS_RELAYOUT_RESTRICT raw_nonblocked_jblk_jvar = raw_nonblocked_jblk + jvar;
-            for (idx_t jlev = 0; jlev < nlev; ++jlev) {
-                const BlockedValue* ATLAS_RELAYOUT_RESTRICT raw_blocked_jblk_jvar_jlev = raw_blocked_jblk_jvar + jlev * lev_block_stride;
-                NonblockedValue* ATLAS_RELAYOUT_RESTRICT raw_nonblocked_jblk_jvar_jlev = raw_nonblocked_jblk_jvar + jlev * lev_nonblocked_stride;
-                if constexpr (nrof_static == 0) {
-                    ATLAS_RELAYOUT_SIMD
-                    for (idx_t jrof = 0; jrof < nrof; ++jrof) {
-                        raw_nonblocked_jblk_jvar_jlev[jrof * point_stride] = raw_blocked_jblk_jvar_jlev[jrof];
-                    }
-                }
-                else {
-                    ATLAS_RELAYOUT_SIMD
-                    for (idx_t jrof = 0; jrof < nrof_static; ++jrof) {
-                        raw_nonblocked_jblk_jvar_jlev[jrof * point_stride] = raw_blocked_jblk_jvar_jlev[jrof];
-                    }
-                }
-            }
-        }
-    }
-    else {
-        if constexpr (nrof_static == 0) {
-            for (idx_t jrof = 0; jrof < nrof; ++jrof) {
-                const BlockedValue* ATLAS_RELAYOUT_RESTRICT raw_blocked_jblk_jrof = raw_blocked_jblk + jrof;
-                NonblockedValue* ATLAS_RELAYOUT_RESTRICT raw_nonblocked_jblk_jrof = raw_nonblocked_jblk + jrof * point_stride;
-                for (idx_t jvar = 0; jvar < nvar; ++jvar) {
-                    const BlockedValue* ATLAS_RELAYOUT_RESTRICT raw_blocked_jblk_jrof_jvar = raw_blocked_jblk_jrof + jvar * var_block_stride;
-                    NonblockedValue* ATLAS_RELAYOUT_RESTRICT raw_nonblocked_jblk_jrof_jvar = raw_nonblocked_jblk_jrof + jvar;
-                    ATLAS_RELAYOUT_SIMD
-                    for (idx_t jlev = 0; jlev < nlev; ++jlev) {
-                        raw_nonblocked_jblk_jrof_jvar[jlev * lev_nonblocked_stride] = raw_blocked_jblk_jrof_jvar[jlev * lev_block_stride];
+                    else {
+                        ATLAS_RELAYOUT_SIMD
+                        for (idx_t jrof = 0; jrof < nrof_static; ++jrof) {
+                            raw_blocked_jblk_jvar_jlev[jrof] = raw_nonblocked_jblk_jvar_jlev[jrof * point_stride];
+                        }
                     }
                 }
             }
         }
         else {
-            for (idx_t jrof = 0; jrof < nrof_static; ++jrof) {
-                const BlockedValue* ATLAS_RELAYOUT_RESTRICT raw_blocked_jblk_jrof = raw_blocked_jblk + jrof;
-                NonblockedValue* ATLAS_RELAYOUT_RESTRICT raw_nonblocked_jblk_jrof = raw_nonblocked_jblk + jrof * point_stride;
-                for (idx_t jvar = 0; jvar < nvar; ++jvar) {
-                    const BlockedValue* ATLAS_RELAYOUT_RESTRICT raw_blocked_jblk_jrof_jvar = raw_blocked_jblk_jrof + jvar * var_block_stride;
-                    NonblockedValue* ATLAS_RELAYOUT_RESTRICT raw_nonblocked_jblk_jrof_jvar = raw_nonblocked_jblk_jrof + jvar;
-                    ATLAS_RELAYOUT_SIMD
-                    for (idx_t jlev = 0; jlev < nlev; ++jlev) {
-                        raw_nonblocked_jblk_jrof_jvar[jlev * lev_nonblocked_stride] = raw_blocked_jblk_jrof_jvar[jlev * lev_block_stride];
-                    }
-                }
-            }
-        }
-    }
-}
-
-template <idx_t nrof_static = 0, typename BlockedValue, typename NonblockedValue>
-void copy_blocked_to_nonblocked_contiguous_rank3_block(const BlockedValue* ATLAS_RELAYOUT_RESTRICT raw_blocked_jblk,
-                                            NonblockedValue* ATLAS_RELAYOUT_RESTRICT raw_nonblocked_jblk,
-                                            [[maybe_unused]] const idx_t nrof, // unused if nrof_static != 0
-                                            const idx_t nlev,
-                                            const idx_t nproma,
-                                            const RelayoutLoopOrder loop_order) {
-    if (loop_order == RelayoutLoopOrder::nproma_innermost) {
-        for (idx_t jlev = 0; jlev < nlev; ++jlev) {
-            const BlockedValue* ATLAS_RELAYOUT_RESTRICT raw_blocked_jblk_jlev = raw_blocked_jblk + jlev * nproma;
-            NonblockedValue* ATLAS_RELAYOUT_RESTRICT raw_nonblocked_jblk_jlev = raw_nonblocked_jblk + jlev;
             if constexpr (nrof_static == 0) {
-                ATLAS_RELAYOUT_SIMD
                 for (idx_t jrof = 0; jrof < nrof; ++jrof) {
-                    raw_nonblocked_jblk_jlev[jrof * nlev] = raw_blocked_jblk_jlev[jrof];
+                    blocked_value_t* ATLAS_RELAYOUT_RESTRICT raw_blocked_jblk_jrof = raw_blocked_jblk + jrof;
+                    const nonblocked_value_t* ATLAS_RELAYOUT_RESTRICT raw_nonblocked_jblk_jrof = raw_nonblocked_jblk + jrof * point_stride;
+                    for (idx_t jvar = 0; jvar < nvar; ++jvar) {
+                        blocked_value_t* ATLAS_RELAYOUT_RESTRICT raw_blocked_jblk_jrof_jvar = raw_blocked_jblk_jrof + jvar * var_block_stride;
+                        const nonblocked_value_t* ATLAS_RELAYOUT_RESTRICT raw_nonblocked_jblk_jrof_jvar = raw_nonblocked_jblk_jrof + jvar;
+                        ATLAS_RELAYOUT_SIMD
+                        for (idx_t jlev = 0; jlev < nlev; ++jlev) {
+                            raw_blocked_jblk_jrof_jvar[jlev * lev_block_stride] = raw_nonblocked_jblk_jrof_jvar[jlev * lev_nonblocked_stride];
+                        }
+                    }
                 }
             }
             else {
-                ATLAS_RELAYOUT_SIMD
                 for (idx_t jrof = 0; jrof < nrof_static; ++jrof) {
-                    raw_nonblocked_jblk_jlev[jrof * nlev] = raw_blocked_jblk_jlev[jrof];
+                    blocked_value_t* ATLAS_RELAYOUT_RESTRICT raw_blocked_jblk_jrof = raw_blocked_jblk + jrof;
+                    const nonblocked_value_t* ATLAS_RELAYOUT_RESTRICT raw_nonblocked_jblk_jrof = raw_nonblocked_jblk + jrof * point_stride;
+                    for (idx_t jvar = 0; jvar < nvar; ++jvar) {
+                        blocked_value_t* ATLAS_RELAYOUT_RESTRICT raw_blocked_jblk_jrof_jvar = raw_blocked_jblk_jrof + jvar * var_block_stride;
+                        const nonblocked_value_t* ATLAS_RELAYOUT_RESTRICT raw_nonblocked_jblk_jrof_jvar = raw_nonblocked_jblk_jrof + jvar;
+                        ATLAS_RELAYOUT_SIMD
+                        for (idx_t jlev = 0; jlev < nlev; ++jlev) {
+                            raw_blocked_jblk_jrof_jvar[jlev * lev_block_stride] = raw_nonblocked_jblk_jrof_jvar[jlev * lev_nonblocked_stride];
+                        }
+                    }
                 }
             }
         }
     }
-    else {
-        if constexpr (nrof_static == 0) {
-            for (idx_t jrof = 0; jrof < nrof; ++jrof) {
-                const BlockedValue* ATLAS_RELAYOUT_RESTRICT raw_blocked_jblk_jrof = raw_blocked_jblk + jrof;
-                NonblockedValue* ATLAS_RELAYOUT_RESTRICT raw_nonblocked_jblk_jrof = raw_nonblocked_jblk + jrof * nlev;
-                ATLAS_RELAYOUT_SIMD
-                for (idx_t jlev = 0; jlev < nlev; ++jlev) {
-                    raw_nonblocked_jblk_jrof[jlev] = raw_blocked_jblk_jrof[jlev * nproma];
+
+    template <idx_t nrof_static = 0>
+    void copy_nonblocked_to_blocked_rank3_block(blocked_value_t* ATLAS_RELAYOUT_RESTRICT raw_blocked_jblk,
+                                                const nonblocked_value_t* ATLAS_RELAYOUT_RESTRICT raw_nonblocked_jblk,
+                                                [[maybe_unused]] const idx_t nrof) const {
+        constexpr auto nproma_static = nrof_static;
+        const idx_t nlev = nonblocked.extent(1);
+
+        if (loop_order == RelayoutLoopOrder::nproma_innermost) {
+            for (idx_t jlev = 0; jlev < nlev; ++jlev) {
+                const nonblocked_value_t* ATLAS_RELAYOUT_RESTRICT raw_nonblocked_jblk_jlev = raw_nonblocked_jblk + jlev;
+                if constexpr (nrof_static == 0) {
+                    blocked_value_t* ATLAS_RELAYOUT_RESTRICT raw_blocked_jblk_jlev = raw_blocked_jblk + jlev * nproma;
+                    ATLAS_RELAYOUT_SIMD
+                    for (idx_t jrof = 0; jrof < nrof; ++jrof) {
+                        raw_blocked_jblk_jlev[jrof] = raw_nonblocked_jblk_jlev[jrof * nlev];
+                    }
+                }
+                else {
+                    blocked_value_t* ATLAS_RELAYOUT_RESTRICT raw_blocked_jblk_jlev = raw_blocked_jblk + jlev * nproma_static;
+                    ATLAS_RELAYOUT_SIMD
+                    for (idx_t jrof = 0; jrof < nrof_static; ++jrof) {
+                        raw_blocked_jblk_jlev[jrof] = raw_nonblocked_jblk_jlev[jrof * nlev];
+                    }
                 }
             }
         }
         else {
-            for (idx_t jrof = 0; jrof < nrof_static; ++jrof) {
-                const BlockedValue* ATLAS_RELAYOUT_RESTRICT raw_blocked_jblk_jrof = raw_blocked_jblk + jrof;
-                NonblockedValue* ATLAS_RELAYOUT_RESTRICT raw_nonblocked_jblk_jrof = raw_nonblocked_jblk + jrof * nlev;
-                ATLAS_RELAYOUT_SIMD
-                for (idx_t jlev = 0; jlev < nlev; ++jlev) {
-                    raw_nonblocked_jblk_jrof[jlev] = raw_blocked_jblk_jrof[jlev * nproma];
+            if constexpr (nrof_static == 0) {
+                for (idx_t jrof = 0; jrof < nrof; ++jrof) {
+                    blocked_value_t* ATLAS_RELAYOUT_RESTRICT raw_blocked_jblk_jrof = raw_blocked_jblk + jrof;
+                    const nonblocked_value_t* ATLAS_RELAYOUT_RESTRICT raw_nonblocked_jblk_jrof = raw_nonblocked_jblk + jrof * nlev;
+                    ATLAS_RELAYOUT_SIMD
+                    for (idx_t jlev = 0; jlev < nlev; ++jlev) {
+                        raw_blocked_jblk_jrof[jlev * nproma] = raw_nonblocked_jblk_jrof[jlev];
+                    }
+                }
+            }
+            else {
+                for (idx_t jrof = 0; jrof < nrof_static; ++jrof) {
+                    blocked_value_t* ATLAS_RELAYOUT_RESTRICT raw_blocked_jblk_jrof = raw_blocked_jblk + jrof;
+                    const nonblocked_value_t* ATLAS_RELAYOUT_RESTRICT raw_nonblocked_jblk_jrof = raw_nonblocked_jblk + jrof * nlev;
+                    ATLAS_RELAYOUT_SIMD
+                    for (idx_t jlev = 0; jlev < nlev; ++jlev) {
+                        raw_blocked_jblk_jrof[jlev * nproma_static] = raw_nonblocked_jblk_jrof[jlev];
+                    }
                 }
             }
         }
     }
+
+    template <idx_t nrof_static = 0>
+    void copy_nonblocked_to_blocked_rank2_block(blocked_value_t* ATLAS_RELAYOUT_RESTRICT raw_blocked_jblk,
+                                                const nonblocked_value_t* ATLAS_RELAYOUT_RESTRICT raw_nonblocked_jblk,
+                                                [[maybe_unused]] const idx_t nrof) const {
+        if (use_memcpy) {
+            const std::size_t count = static_cast<std::size_t>((nrof_static == 0) ? nrof : nrof_static);
+            std::memcpy(raw_blocked_jblk, raw_nonblocked_jblk, count * sizeof(value_t));
+        }
+        else if constexpr (nrof_static == 0) {
+            for (idx_t jrof = 0; jrof < nrof; ++jrof) {
+                raw_blocked_jblk[jrof] = raw_nonblocked_jblk[jrof];
+            }
+        }
+        else {
+            for (idx_t jrof = 0; jrof < nrof_static; ++jrof) {
+                raw_blocked_jblk[jrof] = raw_nonblocked_jblk[jrof];
+            }
+        }
+    }
+};
+
+template <size_t nproma_extent, class Nonblocked, class Blocked>
+auto make_copy_nonblocked_to_blocked_contiguous_raw_pointers_block(const Nonblocked nonblocked, Blocked blocked) {
+    return CopyNonblockedToBlockedContiguousRawPointersBlock<nproma_extent, Nonblocked, Blocked>{nonblocked, blocked};
 }
 
-template <size_t nproma_extent, class Blocked, class Nonblocked>
-void host_copy_blocked_to_nonblocked_contiguous_raw_pointers_nproma(const Blocked blocked, Nonblocked nonblocked) {
-    // Requirements: blocked and nonblocked must be contiguous, and if nproma_static is specified, it must match the last dimension of blocked.
+template <size_t nproma_extent, class Nonblocked, class Blocked>
+void host_copy_nonblocked_to_blocked_contiguous_raw_pointers_nproma(const Nonblocked nonblocked, Blocked blocked) {
     ATLAS_ASSERT(is_block_contiguous(blocked));
     ATLAS_ASSERT(has_layout_right(nonblocked));
 
@@ -664,103 +525,253 @@ void host_copy_blocked_to_nonblocked_contiguous_raw_pointers_nproma(const Blocke
         ATLAS_ASSERT(nproma_extent == nproma);
     }
 
-    const idx_t np     = nonblocked.extent(0);
-    const idx_t nblks  = blocked.extent(0);
-    [[maybe_unused]] const RelayoutLoopOrder loop_order = relayout_loop_order();
-    [[maybe_unused]] const RelayoutNpromaDispatch nproma_dispatch = relayout_nproma_dispatch();
-    [[maybe_unused]] const bool use_memcpy = relayout_blocked_nonblocked_use_memcpy();
     static_assert(nonblocked.rank() == blocked.rank()-1);
 
-    if constexpr(blocked.rank()==4) {
-        ATLAS_ASSERT(nonblocked.extent(1) == blocked.extent(2));
-        ATLAS_ASSERT(nonblocked.extent(2) == blocked.extent(1));
-        const idx_t nlev = nonblocked.extent(1);
-        const idx_t nvar = nonblocked.extent(2);
-        atlas_omp_parallel_for(idx_t jblk = 0; jblk < nblks; ++jblk) {
-            const idx_t jpbegin = jblk * nproma;
+    auto copy_nonblocked_to_blocked_block = make_copy_nonblocked_to_blocked_contiguous_raw_pointers_block<nproma_extent>(nonblocked, blocked);
+    atlas_omp_parallel_for(idx_t jblk = 0; jblk < copy_nonblocked_to_blocked_block.nblks; ++jblk) {
+        copy_nonblocked_to_blocked_block(jblk);
+    }
+}
+
+template <size_t nproma_extent, class Blocked, class Nonblocked>
+struct CopyBlockedToNonblockedContiguousRawPointersBlock {
+    using blocked_value_t = mdspan_introspection_detail::view_value_t<Blocked>;
+    using nonblocked_value_t = mdspan_introspection_detail::view_value_t<Nonblocked>;
+    using value_t = std::remove_cv_t<nonblocked_value_t>;
+
+    static constexpr idx_t static_nrof() {
+        if constexpr (nproma_extent != dynamic_extent) {
+            return nproma_extent;
+        }
+        else {
+            return 0;
+        }
+    }
+
+    Blocked blocked;
+    mutable Nonblocked nonblocked;
+    idx_t np;
+    idx_t nblks;
+    idx_t nproma;
+    RelayoutLoopOrder loop_order;
+    bool use_memcpy;
+
+    CopyBlockedToNonblockedContiguousRawPointersBlock(Blocked blocked, Nonblocked nonblocked):
+        blocked(blocked),
+        nonblocked(nonblocked),
+        np(nonblocked.extent(0)),
+        nblks(blocked.extent(0)),
+        nproma(last_extent(blocked)),
+        loop_order(relayout_loop_order()),
+        use_memcpy(relayout_blocked_nonblocked_use_memcpy()) {
+        if constexpr (Blocked::rank() == 4) {
+            ATLAS_ASSERT(nonblocked.extent(1) == blocked.extent(2));
+            ATLAS_ASSERT(nonblocked.extent(2) == blocked.extent(1));
+        }
+        else if constexpr (Blocked::rank() == 3) {
+            ATLAS_ASSERT(nonblocked.extent(1) == blocked.extent(1));
+        }
+    }
+
+    void operator()(idx_t jblk) const {
+        const idx_t jpbegin = jblk * nproma;
+
+        if constexpr(Blocked::rank()==4) {
             const auto* ATLAS_RELAYOUT_RESTRICT raw_blocked_jblk = &blocked(jblk, 0, 0, 0);
             auto* ATLAS_RELAYOUT_RESTRICT raw_nonblocked_jblk = &nonblocked(jpbegin, 0, 0);
             if (jblk < nblks-1) {
                 const idx_t nrof = nproma;
-                if constexpr (nproma_extent != dynamic_extent) {
-                    constexpr idx_t nrof_static = nproma_extent;
-                    copy_blocked_to_nonblocked_contiguous_rank4_block<nrof_static>(
-                        raw_blocked_jblk, raw_nonblocked_jblk, nrof, nlev, nvar, nproma, loop_order);
-                }
-                else {
-                    copy_blocked_to_nonblocked_contiguous_rank4_block(
-                        raw_blocked_jblk, raw_nonblocked_jblk, nproma, nlev, nvar, nproma, loop_order);
-                }
+                copy_blocked_to_nonblocked_rank4_block<static_nrof()>(raw_blocked_jblk, raw_nonblocked_jblk, nrof);
             }
             else {
                 const idx_t nrof = std::min(np - jpbegin, nproma);
-                if constexpr (nproma_extent != dynamic_extent) {
-                    copy_blocked_to_nonblocked_contiguous_rank4_block<nproma_extent>(
-                        raw_blocked_jblk, raw_nonblocked_jblk, nrof, nlev, nvar, nproma_extent, loop_order);
-                }
-                else {
-                    copy_blocked_to_nonblocked_contiguous_rank4_block(
-                        raw_blocked_jblk, raw_nonblocked_jblk, nrof, nlev, nvar, nproma, loop_order);
-                }
+                copy_blocked_to_nonblocked_rank4_block(raw_blocked_jblk, raw_nonblocked_jblk, nrof);
             }
         }
-    }
-    else if constexpr (blocked.rank()==3) {
-        ATLAS_ASSERT(nonblocked.extent(1) == blocked.extent(1));
-        const idx_t nlev = nonblocked.extent(1);
-        atlas_omp_parallel_for(idx_t jblk = 0; jblk < nblks; ++jblk) {
-            const idx_t jpbegin = jblk * nproma;
+        else if constexpr(Blocked::rank()==3) {
             const auto* ATLAS_RELAYOUT_RESTRICT raw_blocked_jblk = &blocked(jblk, 0, 0);
             auto* ATLAS_RELAYOUT_RESTRICT raw_nonblocked_jblk = &nonblocked(jpbegin, 0);
             if (jblk < nblks-1) {
                 const idx_t nrof = nproma;
-                if constexpr (nproma_extent != dynamic_extent) {
-                    constexpr idx_t nrof_static = nproma_extent;
-                    copy_blocked_to_nonblocked_contiguous_rank3_block<nrof_static>(
-                        raw_blocked_jblk, raw_nonblocked_jblk, nrof, nlev, nproma, loop_order);
-                }
-                else {
-
-                    copy_blocked_to_nonblocked_contiguous_rank3_block(
-                        raw_blocked_jblk, raw_nonblocked_jblk, nproma, nlev, nproma, loop_order);
-                }
+                copy_blocked_to_nonblocked_rank3_block<static_nrof()>(raw_blocked_jblk, raw_nonblocked_jblk, nrof);
             }
             else {
                 const idx_t nrof = std::min(np - jpbegin, nproma);
-                if constexpr (nproma_extent != dynamic_extent) {
-                    constexpr idx_t nrof_static = nproma_extent;
-                    copy_blocked_to_nonblocked_contiguous_rank3_block<nrof_static>(
-                        raw_blocked_jblk, raw_nonblocked_jblk, nrof, nlev, nproma, loop_order);
-                }
-                else {
-                    copy_blocked_to_nonblocked_contiguous_rank3_block(
-                        raw_blocked_jblk, raw_nonblocked_jblk, nrof, nlev, nproma, loop_order);
-                }
+                copy_blocked_to_nonblocked_rank3_block(raw_blocked_jblk, raw_nonblocked_jblk, nrof);
             }
         }
-    }
-    else if constexpr (blocked.rank()==2) {
-        using Value = std::remove_cv_t<std::remove_reference_t<decltype(blocked(0, 0))>>;
-        atlas_omp_parallel_for(idx_t jblk = 0; jblk < nblks; ++jblk) {
-            const idx_t jpbegin = jblk * nproma;
-            const idx_t nrof = std::min(np - jpbegin, nproma);
-            const auto* raw_blocked_jblk = &blocked(jblk, 0);
-            auto* raw_nonblocked_jblk = &nonblocked(jpbegin);
-            if (use_memcpy) {
-                std::memcpy(
-                    raw_nonblocked_jblk,
-                    raw_blocked_jblk,
-                    static_cast<std::size_t>(nrof) * sizeof(Value));
+        else if constexpr (Blocked::rank()==2) {
+            const auto* ATLAS_RELAYOUT_RESTRICT raw_blocked_jblk = &blocked(jblk, 0);
+            auto* ATLAS_RELAYOUT_RESTRICT raw_nonblocked_jblk = &nonblocked(jpbegin);
+            if (jblk < nblks-1) {
+                const idx_t nrof = nproma;
+                copy_blocked_to_nonblocked_rank2_block<static_nrof()>(raw_blocked_jblk, raw_nonblocked_jblk, nrof);
             }
             else {
+                const idx_t nrof = std::min(np - jpbegin, nproma);
+                copy_blocked_to_nonblocked_rank2_block(raw_blocked_jblk, raw_nonblocked_jblk, nrof);
+            }
+        }
+        else {
+            ATLAS_THROW_EXCEPTION("host_copy_blocked_to_nonblocked_mdspan not implemented");
+        }
+    }
+
+private:
+    template <idx_t nrof_static = 0>
+    void copy_blocked_to_nonblocked_rank4_block(const blocked_value_t* ATLAS_RELAYOUT_RESTRICT raw_blocked_jblk,
+                                                nonblocked_value_t* ATLAS_RELAYOUT_RESTRICT raw_nonblocked_jblk,
+                                                [[maybe_unused]] const idx_t nrof) const {
+        const idx_t nlev = nonblocked.extent(1);
+        const idx_t nvar = nonblocked.extent(2);
+        const idx_t point_stride = nlev * nvar;
+        const idx_t var_block_stride = nlev * nproma;
+        const idx_t lev_block_stride = nproma;
+        const idx_t lev_nonblocked_stride = nvar;
+
+        if (loop_order == RelayoutLoopOrder::nproma_innermost) {
+            for (idx_t jvar = 0; jvar < nvar; ++jvar) {
+                const blocked_value_t* ATLAS_RELAYOUT_RESTRICT raw_blocked_jblk_jvar = raw_blocked_jblk + jvar * var_block_stride;
+                nonblocked_value_t* ATLAS_RELAYOUT_RESTRICT raw_nonblocked_jblk_jvar = raw_nonblocked_jblk + jvar;
+                for (idx_t jlev = 0; jlev < nlev; ++jlev) {
+                    const blocked_value_t* ATLAS_RELAYOUT_RESTRICT raw_blocked_jblk_jvar_jlev = raw_blocked_jblk_jvar + jlev * lev_block_stride;
+                    nonblocked_value_t* ATLAS_RELAYOUT_RESTRICT raw_nonblocked_jblk_jvar_jlev = raw_nonblocked_jblk_jvar + jlev * lev_nonblocked_stride;
+                    if constexpr (nrof_static == 0) {
+                        ATLAS_RELAYOUT_SIMD
+                        for (idx_t jrof = 0; jrof < nrof; ++jrof) {
+                            raw_nonblocked_jblk_jvar_jlev[jrof * point_stride] = raw_blocked_jblk_jvar_jlev[jrof];
+                        }
+                    }
+                    else {
+                        ATLAS_RELAYOUT_SIMD
+                        for (idx_t jrof = 0; jrof < nrof_static; ++jrof) {
+                            raw_nonblocked_jblk_jvar_jlev[jrof * point_stride] = raw_blocked_jblk_jvar_jlev[jrof];
+                        }
+                    }
+                }
+            }
+        }
+        else {
+            if constexpr (nrof_static == 0) {
                 for (idx_t jrof = 0; jrof < nrof; ++jrof) {
-                    raw_nonblocked_jblk[jrof] = raw_blocked_jblk[jrof];
+                    const blocked_value_t* ATLAS_RELAYOUT_RESTRICT raw_blocked_jblk_jrof = raw_blocked_jblk + jrof;
+                    nonblocked_value_t* ATLAS_RELAYOUT_RESTRICT raw_nonblocked_jblk_jrof = raw_nonblocked_jblk + jrof * point_stride;
+                    for (idx_t jvar = 0; jvar < nvar; ++jvar) {
+                        const blocked_value_t* ATLAS_RELAYOUT_RESTRICT raw_blocked_jblk_jrof_jvar = raw_blocked_jblk_jrof + jvar * var_block_stride;
+                        nonblocked_value_t* ATLAS_RELAYOUT_RESTRICT raw_nonblocked_jblk_jrof_jvar = raw_nonblocked_jblk_jrof + jvar;
+                        ATLAS_RELAYOUT_SIMD
+                        for (idx_t jlev = 0; jlev < nlev; ++jlev) {
+                            raw_nonblocked_jblk_jrof_jvar[jlev * lev_nonblocked_stride] = raw_blocked_jblk_jrof_jvar[jlev * lev_block_stride];
+                        }
+                    }
+                }
+            }
+            else {
+                for (idx_t jrof = 0; jrof < nrof_static; ++jrof) {
+                    const blocked_value_t* ATLAS_RELAYOUT_RESTRICT raw_blocked_jblk_jrof = raw_blocked_jblk + jrof;
+                    nonblocked_value_t* ATLAS_RELAYOUT_RESTRICT raw_nonblocked_jblk_jrof = raw_nonblocked_jblk + jrof * point_stride;
+                    for (idx_t jvar = 0; jvar < nvar; ++jvar) {
+                        const blocked_value_t* ATLAS_RELAYOUT_RESTRICT raw_blocked_jblk_jrof_jvar = raw_blocked_jblk_jrof + jvar * var_block_stride;
+                        nonblocked_value_t* ATLAS_RELAYOUT_RESTRICT raw_nonblocked_jblk_jrof_jvar = raw_nonblocked_jblk_jrof + jvar;
+                        ATLAS_RELAYOUT_SIMD
+                        for (idx_t jlev = 0; jlev < nlev; ++jlev) {
+                            raw_nonblocked_jblk_jrof_jvar[jlev * lev_nonblocked_stride] = raw_blocked_jblk_jrof_jvar[jlev * lev_block_stride];
+                        }
+                    }
                 }
             }
         }
     }
-    else {
-        ATLAS_THROW_EXCEPTION("host_copy_blocked_to_nonblocked_mdspan not implemented");
+
+    template <idx_t nrof_static = 0>
+    void copy_blocked_to_nonblocked_rank3_block(const blocked_value_t* ATLAS_RELAYOUT_RESTRICT raw_blocked_jblk,
+                                                nonblocked_value_t* ATLAS_RELAYOUT_RESTRICT raw_nonblocked_jblk,
+                                                [[maybe_unused]] const idx_t nrof) const {
+        const idx_t nlev = nonblocked.extent(1);
+
+        if (loop_order == RelayoutLoopOrder::nproma_innermost) {
+            for (idx_t jlev = 0; jlev < nlev; ++jlev) {
+                const blocked_value_t* ATLAS_RELAYOUT_RESTRICT raw_blocked_jblk_jlev = raw_blocked_jblk + jlev * nproma;
+                nonblocked_value_t* ATLAS_RELAYOUT_RESTRICT raw_nonblocked_jblk_jlev = raw_nonblocked_jblk + jlev;
+                if constexpr (nrof_static == 0) {
+                    ATLAS_RELAYOUT_SIMD
+                    for (idx_t jrof = 0; jrof < nrof; ++jrof) {
+                        raw_nonblocked_jblk_jlev[jrof * nlev] = raw_blocked_jblk_jlev[jrof];
+                    }
+                }
+                else {
+                    ATLAS_RELAYOUT_SIMD
+                    for (idx_t jrof = 0; jrof < nrof_static; ++jrof) {
+                        raw_nonblocked_jblk_jlev[jrof * nlev] = raw_blocked_jblk_jlev[jrof];
+                    }
+                }
+            }
+        }
+        else {
+            if constexpr (nrof_static == 0) {
+                for (idx_t jrof = 0; jrof < nrof; ++jrof) {
+                    const blocked_value_t* ATLAS_RELAYOUT_RESTRICT raw_blocked_jblk_jrof = raw_blocked_jblk + jrof;
+                    nonblocked_value_t* ATLAS_RELAYOUT_RESTRICT raw_nonblocked_jblk_jrof = raw_nonblocked_jblk + jrof * nlev;
+                    ATLAS_RELAYOUT_SIMD
+                    for (idx_t jlev = 0; jlev < nlev; ++jlev) {
+                        raw_nonblocked_jblk_jrof[jlev] = raw_blocked_jblk_jrof[jlev * nproma];
+                    }
+                }
+            }
+            else {
+                for (idx_t jrof = 0; jrof < nrof_static; ++jrof) {
+                    const blocked_value_t* ATLAS_RELAYOUT_RESTRICT raw_blocked_jblk_jrof = raw_blocked_jblk + jrof;
+                    nonblocked_value_t* ATLAS_RELAYOUT_RESTRICT raw_nonblocked_jblk_jrof = raw_nonblocked_jblk + jrof * nlev;
+                    ATLAS_RELAYOUT_SIMD
+                    for (idx_t jlev = 0; jlev < nlev; ++jlev) {
+                        raw_nonblocked_jblk_jrof[jlev] = raw_blocked_jblk_jrof[jlev * nproma];
+                    }
+                }
+            }
+        }
+    }
+
+    template <idx_t nrof_static = 0>
+    void copy_blocked_to_nonblocked_rank2_block(const blocked_value_t* ATLAS_RELAYOUT_RESTRICT raw_blocked_jblk,
+                                                nonblocked_value_t* ATLAS_RELAYOUT_RESTRICT raw_nonblocked_jblk,
+                                                [[maybe_unused]] const idx_t nrof) const {
+        if (use_memcpy) {
+            const std::size_t count = static_cast<std::size_t>((nrof_static == 0) ? nrof : nrof_static);
+            std::memcpy(raw_nonblocked_jblk, raw_blocked_jblk, count * sizeof(value_t));
+        }
+        else if constexpr (nrof_static == 0) {
+            for (idx_t jrof = 0; jrof < nrof; ++jrof) {
+                raw_nonblocked_jblk[jrof] = raw_blocked_jblk[jrof];
+            }
+        }
+        else {
+            for (idx_t jrof = 0; jrof < nrof_static; ++jrof) {
+                raw_nonblocked_jblk[jrof] = raw_blocked_jblk[jrof];
+            }
+        }
+    }
+};
+
+template <size_t nproma_extent, class Blocked, class Nonblocked>
+auto make_copy_blocked_to_nonblocked_contiguous_raw_pointers_block(const Blocked blocked, Nonblocked nonblocked) {
+    return CopyBlockedToNonblockedContiguousRawPointersBlock<nproma_extent, Blocked, Nonblocked>{blocked, nonblocked};
+}
+
+template <size_t nproma_extent, class Blocked, class Nonblocked>
+void host_copy_blocked_to_nonblocked_contiguous_raw_pointers_nproma(const Blocked blocked, Nonblocked nonblocked) {
+    ATLAS_ASSERT(is_block_contiguous(blocked));
+    ATLAS_ASSERT(has_layout_right(nonblocked));
+
+    const idx_t nproma = last_extent(blocked);
+    if constexpr (nproma_extent != dynamic_extent) {
+        ATLAS_ASSERT(nproma_extent == nproma);
+    }
+
+    static_assert(nonblocked.rank() == blocked.rank()-1);
+
+    auto copy_blocked_to_nonblocked_block = make_copy_blocked_to_nonblocked_contiguous_raw_pointers_block<nproma_extent>(blocked, nonblocked);
+    atlas_omp_parallel_for(idx_t jblk = 0; jblk < copy_blocked_to_nonblocked_block.nblks; ++jblk) {
+        copy_blocked_to_nonblocked_block(jblk);
     }
 }
 
@@ -1316,158 +1327,6 @@ void host_copy_nonblocked_to_blocked_nproma(const Nonblocked nonblocked, Blocked
 }
 
 }  // namespace
-
-// Fallback implementation wrappers with static nproma dispatch
-template <idx_t nproma, class Nonblocked, class Blocked>
-void host_copy_nonblocked_to_blocked_fallback_nproma(const Nonblocked nonblocked, Blocked blocked) {
-    const idx_t np    = nonblocked.extent(0);
-    const idx_t nblks = blocked.extent(0);
-    [[maybe_unused]] const RelayoutLoopOrder loop_order = relayout_loop_order();
-
-    if constexpr(blocked.rank()==4) {
-        const idx_t nlev = nonblocked.extent(1);
-        const idx_t nvar = nonblocked.extent(2);
-
-        if (loop_order == RelayoutLoopOrder::nproma_outermost) {
-            atlas_omp_parallel_for(idx_t jblk = 0; jblk < nblks; ++jblk) {
-                const idx_t jpbegin = jblk * nproma;
-                const idx_t nrof = std::min(np - jpbegin, nproma);
-                for (idx_t jvar = 0; jvar < nvar; ++jvar) {
-                    for (idx_t jlev = 0; jlev < nlev; ++jlev) {
-                        for (idx_t jrof = 0, jp = jpbegin; jrof < nrof; ++jrof, ++jp) {
-                            blocked(jblk, jvar, jlev, jrof) = nonblocked(jp, jlev, jvar);
-                        }
-                    }
-                }
-            }
-        } else {
-            atlas_omp_parallel_for(idx_t jblk = 0; jblk < nblks; ++jblk) {
-                const idx_t jpbegin = jblk * nproma;
-                const idx_t nrof = std::min(np - jpbegin, nproma);
-                for (idx_t jrof = 0, jp = jpbegin; jrof < nrof; ++jrof, ++jp) {
-                    for (idx_t jvar = 0; jvar < nvar; ++jvar) {
-                        for (idx_t jlev = 0; jlev < nlev; ++jlev) {
-                            blocked(jblk, jvar, jlev, jrof) = nonblocked(jp, jlev, jvar);
-                        }
-                    }
-                }
-            }
-        }
-    }
-    else if constexpr (blocked.rank()==3) {
-        const idx_t nlev = nonblocked.extent(1);
-
-        if (loop_order == RelayoutLoopOrder::nproma_outermost) {
-            atlas_omp_parallel_for(idx_t jblk = 0; jblk < nblks; ++jblk) {
-                const idx_t jpbegin = jblk * nproma;
-                const idx_t nrof = std::min(np - jpbegin, nproma);
-                for (idx_t jlev = 0; jlev < nlev; ++jlev) {
-                    for (idx_t jrof = 0, jp = jpbegin; jrof < nrof; ++jrof, ++jp) {
-                        blocked(jblk, jlev, jrof) = nonblocked(jp, jlev);
-                    }
-                }
-            }
-        } else {
-            atlas_omp_parallel_for(idx_t jblk = 0; jblk < nblks; ++jblk) {
-                const idx_t jpbegin = jblk * nproma;
-                const idx_t nrof = std::min(np - jpbegin, nproma);
-                for (idx_t jrof = 0, jp = jpbegin; jrof < nrof; ++jrof, ++jp) {
-                    for (idx_t jlev = 0; jlev < nlev; ++jlev) {
-                        blocked(jblk, jlev, jrof) = nonblocked(jp, jlev);
-                    }
-                }
-            }
-        }
-    }
-    else if constexpr (blocked.rank()==2) {
-        atlas_omp_parallel_for(idx_t jblk = 0; jblk < nblks; ++jblk) {
-            const idx_t jpbegin = jblk * nproma;
-            const idx_t nrof = std::min(np - jpbegin, nproma);
-            for (idx_t jrof = 0, jp = jpbegin; jrof < nrof; ++jrof, ++jp) {
-                blocked(jblk, jrof) = nonblocked(jp);
-            }
-        }
-    }
-    else {
-        ATLAS_THROW_EXCEPTION("host_copy_nonblocked_to_blocked_mdspan not implemented");
-    }
-}
-
-template <class Nonblocked, class Blocked>
-void host_copy_nonblocked_to_blocked_fallback(const Nonblocked nonblocked, Blocked blocked) {
-    const idx_t np    = nonblocked.extent(0);
-    const idx_t nblks = blocked.extent(0);
-    const idx_t nproma = blocked.extent(blocked.rank()-1);
-    [[maybe_unused]] const RelayoutLoopOrder loop_order = relayout_loop_order();
-
-    if constexpr(blocked.rank()==4) {
-        const idx_t nlev = nonblocked.extent(1);
-        const idx_t nvar = nonblocked.extent(2);
-
-        if (loop_order == RelayoutLoopOrder::nproma_outermost) {
-            atlas_omp_parallel_for(idx_t jblk = 0; jblk < nblks; ++jblk) {
-                const idx_t jpbegin = jblk * nproma;
-                const idx_t nrof = std::min(np - jpbegin, nproma);
-                for (idx_t jvar = 0; jvar < nvar; ++jvar) {
-                    for (idx_t jlev = 0; jlev < nlev; ++jlev) {
-                        for (idx_t jrof = 0, jp = jpbegin; jrof < nrof; ++jrof, ++jp) {
-                            blocked(jblk, jvar, jlev, jrof) = nonblocked(jp, jlev, jvar);
-                        }
-                    }
-                }
-            }
-        } else {
-            atlas_omp_parallel_for(idx_t jblk = 0; jblk < nblks; ++jblk) {
-                const idx_t jpbegin = jblk * nproma;
-                const idx_t nrof = std::min(np - jpbegin, nproma);
-                for (idx_t jrof = 0, jp = jpbegin; jrof < nrof; ++jrof, ++jp) {
-                    for (idx_t jvar = 0; jvar < nvar; ++jvar) {
-                        for (idx_t jlev = 0; jlev < nlev; ++jlev) {
-                            blocked(jblk, jvar, jlev, jrof) = nonblocked(jp, jlev, jvar);
-                        }
-                    }
-                }
-            }
-        }
-    }
-    else if constexpr (blocked.rank()==3) {
-        const idx_t nlev = nonblocked.extent(1);
-
-        if (loop_order == RelayoutLoopOrder::nproma_outermost) {
-            atlas_omp_parallel_for(idx_t jblk = 0; jblk < nblks; ++jblk) {
-                const idx_t jpbegin = jblk * nproma;
-                const idx_t nrof = std::min(np - jpbegin, nproma);
-                for (idx_t jlev = 0; jlev < nlev; ++jlev) {
-                    for (idx_t jrof = 0, jp = jpbegin; jrof < nrof; ++jrof, ++jp) {
-                        blocked(jblk, jlev, jrof) = nonblocked(jp, jlev);
-                    }
-                }
-            }
-        } else {
-            atlas_omp_parallel_for(idx_t jblk = 0; jblk < nblks; ++jblk) {
-                const idx_t jpbegin = jblk * nproma;
-                const idx_t nrof = std::min(np - jpbegin, nproma);
-                for (idx_t jrof = 0, jp = jpbegin; jrof < nrof; ++jrof, ++jp) {
-                    for (idx_t jlev = 0; jlev < nlev; ++jlev) {
-                        blocked(jblk, jlev, jrof) = nonblocked(jp, jlev);
-                    }
-                }
-            }
-        }
-    }
-    else if constexpr (blocked.rank()==2) {
-        atlas_omp_parallel_for(idx_t jblk = 0; jblk < nblks; ++jblk) {
-            const idx_t jpbegin = jblk * nproma;
-            const idx_t nrof = std::min(np - jpbegin, nproma);
-            for (idx_t jrof = 0, jp = jpbegin; jrof < nrof; ++jrof, ++jp) {
-                blocked(jblk, jrof) = nonblocked(jp);
-            }
-        }
-    }
-    else {
-        ATLAS_THROW_EXCEPTION("host_copy_nonblocked_to_blocked_mdspan not implemented");
-    }
-}
 
 template <class Nonblocked, class Blocked>
 void host_copy_nonblocked_to_blocked_impl(const Nonblocked nonblocked, Blocked blocked) {
