@@ -288,6 +288,21 @@ template <typename ViewType>
     return is_contiguous(view) && has_stride_one_last_dimension(view);
 }
 
+template <typename View, typename = void>
+struct get_nproma_extent {
+    static constexpr std::size_t value = dynamic_extent;
+};
+
+template <typename View>
+struct get_nproma_extent<View, std::enable_if_t<is_mdspan<View>::value>> {
+    static constexpr std::size_t value = View::static_extent(View::rank() - 1);
+};
+
+template <typename View>
+inline constexpr std::size_t nproma_extent_v = get_nproma_extent<View>::value;
+
+
+
 #if DISABLE_RAW_POINTERS == 0
 template <size_t nproma_extent, class Nonblocked, class Blocked>
 /// @brief Per-block raw-pointer kernel for nonblocked-to-blocked host relayout.
@@ -1415,14 +1430,7 @@ void host_copy_nonblocked_to_blocked_impl(const Nonblocked nonblocked, Blocked b
     // If Blocked is an mdspan whose last (nproma) dimension is a static extent, then nproma is
     // known at compile time.  In that case we can call the statically-sized kernels directly and
     // skip the runtime switch dispatch below, avoiding the unused template instantiations.
-    constexpr std::size_t nproma_extent = []() {
-        if constexpr (is_mdspan<Blocked>::value) {
-            return Blocked::static_extent(Blocked::rank() - 1);
-        }
-        else {
-            return dynamic_extent;
-        }
-    }();
+    constexpr std::size_t nproma_extent = nproma_extent_v<Blocked>;
 
     ATLAS_ASSERT(has_layout_right(nonblocked));
     ATLAS_ASSERT(is_block_contiguous(blocked));
@@ -1503,14 +1511,7 @@ void host_copy_blocked_to_nonblocked_impl(const Blocked blocked, Nonblocked nonb
     // If Blocked is an mdspan whose last (nproma) dimension is a static extent, then nproma is
     // known at compile time.  In that case we can call the statically-sized kernels directly and
     // skip the runtime switch dispatch below, avoiding the unused template instantiations.
-    constexpr std::size_t nproma_extent = []() {
-        if constexpr (is_mdspan<Blocked>::value) {
-            return Blocked::static_extent(Blocked::rank() - 1);
-        }
-        else {
-            return dynamic_extent;
-        }
-    }();
+    constexpr std::size_t nproma_extent = nproma_extent_v<Blocked>;
 
     ATLAS_ASSERT(has_layout_right(nonblocked));
     ATLAS_ASSERT(is_block_contiguous(blocked));
@@ -1802,4 +1803,4 @@ void host_copy_blocked_to_blocked_mdspan(const BlockedIn blocked_in, BlockedOut 
 #define ATLAS_RELAYOUT_EXPLICIT_TEMPLATE_INSTANTIATION_TYPE_RANK(TYPE, BLOCKED_RANK) \
     template void atlas::host_copy_blocked_to_nonblocked_mdspan<atlas::array::ArrayView<const TYPE,BLOCKED_RANK>,atlas::array::ArrayView<TYPE,BLOCKED_RANK-1>>(atlas::array::ArrayView<const TYPE,BLOCKED_RANK>, atlas::array::ArrayView<TYPE,BLOCKED_RANK-1>); \
     template void atlas::host_copy_nonblocked_to_blocked_mdspan<atlas::array::ArrayView<const TYPE,BLOCKED_RANK-1>,atlas::array::ArrayView<TYPE,BLOCKED_RANK>>(atlas::array::ArrayView<const TYPE,BLOCKED_RANK-1>, atlas::array::ArrayView<TYPE,BLOCKED_RANK>); \
-    template void atlas::host_copy_blocked_to_blocked_mdspan<atlas::array::ArrayView<const TYPE,BLOCKED_RANK>,atlas::array::ArrayView<TYPE,BLOCKED_RANK>>(atlas::array::ArrayView<const TYPE,BLOCKED_RANK>, atlas::array::ArrayView<TYPE,BLOCKED_RANK>); \
+    template void atlas::host_copy_blocked_to_blocked_mdspan<atlas::array::ArrayView<const TYPE,BLOCKED_RANK>,atlas::array::ArrayView<TYPE,BLOCKED_RANK>>(atlas::array::ArrayView<const TYPE,BLOCKED_RANK>, atlas::array::ArrayView<TYPE,BLOCKED_RANK>);

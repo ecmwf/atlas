@@ -222,7 +222,7 @@ void SphericalVector::interpolate_vector_field(const Field& sourceField,
 
   const auto sourceViewVisitor = [&](auto sourceView) {
     if constexpr (array::is_rank<2, 3>(sourceView) &&
-                  array::is_non_const_value_type<float, double>(sourceView)) {
+                  array::is_value_type<float, double>(sourceView)) {
       using SourceView = std::decay_t<decltype(sourceView)>;
       using Value = typename SourceView::non_const_value_type;
       constexpr auto Rank = SourceView::rank();
