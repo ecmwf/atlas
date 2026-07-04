@@ -115,7 +115,7 @@ namespace pluto {
         }
 
     private:
-        static constexpr data_handle_type assume_aligned(data_handle_type ptr) noexcept {
+        static inline constexpr auto assume_aligned(data_handle_type ptr) noexcept {
         #if defined(__cpp_lib_assume_aligned)
             return std::assume_aligned<byte_alignment>(ptr);
         #elif defined(__GNUC__) || defined(__clang__)
@@ -143,7 +143,7 @@ namespace pluto {
         using element_type     = ElementType;
         using reference        = ElementType&;
         using data_handle_type = ElementType* PLUTO_MDSPAN_RESTRICT;
-        using offset_policy    = restrict_accessor<ElementType>;
+        using offset_policy    = default_accessor<ElementType>;
 
         constexpr restrict_accessor() noexcept = default;
 
@@ -162,12 +162,12 @@ namespace pluto {
             return ptr[index];
         }
 
-        constexpr data_handle_type offset(data_handle_type ptr, std::size_t index) const noexcept {
+        constexpr typename offset_policy::data_handle_type offset(data_handle_type ptr, std::size_t index) const noexcept {
             return ptr + index;
         }
     };
 
-    // A combination of restrict_accessor and aligned_accessor
+// A combination of restrict_accessor and aligned_accessor
     template<class ElementType, std::size_t ByteAlignment>
     struct restrict_aligned_accessor {
         static_assert(ByteAlignment != 0 && (ByteAlignment & (ByteAlignment - 1)) == 0,
@@ -177,6 +177,7 @@ namespace pluto {
         using element_type     = ElementType;
         using reference        = ElementType&;
         using data_handle_type = ElementType* PLUTO_MDSPAN_RESTRICT;
+        using offset_data_handle_type = ElementType*;
         using offset_policy    = default_accessor<ElementType>;
 
         static constexpr std::size_t byte_alignment = ByteAlignment;
@@ -239,11 +240,11 @@ namespace pluto {
         }
 
     private:
-        static constexpr data_handle_type assume_aligned(data_handle_type ptr) noexcept {
+        static inline constexpr auto assume_aligned(data_handle_type ptr) noexcept {
         #if defined(__cpp_lib_assume_aligned)
             return std::assume_aligned<byte_alignment>(ptr);
         #elif defined(__GNUC__) || defined(__clang__)
-            return static_cast<data_handle_type>(__builtin_assume_aligned(ptr, byte_alignment));
+            return static_cast<typename offset_policy::data_handle_type>(__builtin_assume_aligned(ptr, byte_alignment));
         #else
             return ptr;
         #endif

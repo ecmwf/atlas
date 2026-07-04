@@ -34,6 +34,7 @@ bool can_use_layout(const View& view) {
     }
     else {
         static_assert(mdspan_introspection_detail::always_false_v<Layout>, "can_use_layout() is only implemented for layout_right and layout_stride");
+        return false;
     }
 }
 
