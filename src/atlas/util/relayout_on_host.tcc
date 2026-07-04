@@ -215,7 +215,7 @@ template <typename ViewType,
     if constexpr (is_layout_always_contiguous<ViewType>()) {
         return true;
     } 
-    // Branch B: Handle standard mdspan fallbacks (dynamic/strided layouts)
+    // Branch B: Handle standard mdspan implementations (dynamic/strided layouts)
     else if constexpr (is_mdspan<ViewType>::value) {
         return view.is_unique() && view.is_exhaustive();
     } 
@@ -290,6 +290,15 @@ template <typename ViewType>
 
 #if DISABLE_RAW_POINTERS == 0
 template <size_t nproma_extent, class Nonblocked, class Blocked>
+/// @brief Per-block raw-pointer kernel for nonblocked-to-blocked host relayout.
+///
+/// This worker is selected when the nonblocked input is layout-right and the blocked
+/// output is block-contiguous, allowing direct pointer arithmetic rather than mdspan
+/// subviews. `nproma_extent` may be a compile-time block width or `dynamic_extent`
+/// when the tail width is known only at runtime.
+///
+/// `operator()(jblk)` copies exactly one blocked chunk, using the full `nproma`
+/// width for interior blocks and a shortened width for the final partial block.
 struct CopyNonblockedToBlockedContiguousRawPointers {
     using blocked_element_type = mdspan_introspection_detail::view_value_t<Blocked>;
     using nonblocked_element_type = mdspan_introspection_detail::view_value_t<Nonblocked>;
@@ -329,6 +338,8 @@ struct CopyNonblockedToBlockedContiguousRawPointers {
         }
     }
 
+    /// @brief Copy one logical blocked chunk into the output blocked view.
+    /// @param jblk Block index in the blocked output view.
     void operator()(idx_t jblk) const {
         const idx_t jpbegin = jblk * nproma;
 
@@ -516,6 +527,12 @@ auto make_copy_nonblocked_to_blocked_contiguous_raw_pointers(const Nonblocked no
 }
 
 template <size_t nproma_extent, class Nonblocked, class Blocked>
+/// @brief Launch the raw-pointer nonblocked-to-blocked kernel for all blocks.
+///
+/// Preconditions:
+/// - `nonblocked.rank() == blocked.rank() - 1`
+/// - `blocked` is block-contiguous
+/// - `nonblocked` behaves like layout-right contiguous storage
 void host_copy_nonblocked_to_blocked_contiguous_raw_pointers_nproma(const Nonblocked nonblocked, Blocked blocked) {
     ATLAS_ASSERT(is_block_contiguous(blocked));
     ATLAS_ASSERT(has_layout_right(nonblocked));
@@ -535,6 +552,11 @@ void host_copy_nonblocked_to_blocked_contiguous_raw_pointers_nproma(const Nonblo
 }
 
 template <size_t nproma_extent, class Blocked, class Nonblocked>
+/// @brief Per-block raw-pointer kernel for blocked-to-nonblocked host relayout.
+///
+/// This is the inverse of `CopyNonblockedToBlockedContiguousRawPointers`. It is used
+/// when the blocked input is block-contiguous and the nonblocked output is layout-right,
+/// so the copy can be expressed in terms of restricted raw pointers and simple strides.
 struct CopyBlockedToNonblockedContiguousRawPointers {
     using blocked_element_type = mdspan_introspection_detail::view_value_t<Blocked>;
     using nonblocked_element_type = mdspan_introspection_detail::view_value_t<Nonblocked>;
@@ -574,6 +596,8 @@ struct CopyBlockedToNonblockedContiguousRawPointers {
         }
     }
 
+    /// @brief Copy one blocked chunk into its corresponding logical point range.
+    /// @param jblk Block index in the blocked input view.
     void operator()(idx_t jblk) const {
         const idx_t jpbegin = jblk * nproma;
 
@@ -759,6 +783,12 @@ auto make_copy_blocked_to_nonblocked_contiguous_raw_pointers(const Blocked block
 }
 
 template <size_t nproma_extent, class Blocked, class Nonblocked>
+/// @brief Launch the raw-pointer blocked-to-nonblocked kernel for all blocks.
+///
+/// Preconditions:
+/// - `nonblocked.rank() == blocked.rank() - 1`
+/// - `blocked` is block-contiguous
+/// - `nonblocked` behaves like layout-right contiguous storage
 void host_copy_blocked_to_nonblocked_contiguous_raw_pointers_nproma(const Blocked blocked, Nonblocked nonblocked) {
     ATLAS_ASSERT(is_block_contiguous(blocked));
     ATLAS_ASSERT(has_layout_right(nonblocked));
@@ -779,7 +809,11 @@ void host_copy_blocked_to_nonblocked_contiguous_raw_pointers_nproma(const Blocke
 
 #endif
 
-// Fallback implementation wrapper with static nproma dispatch
+/// @brief Trait family describing one blocked subspan used by the mdspan implementation kernels.
+///
+/// Specializations adapt the blocked Atlas or mdspan-like view into a layout-right mdspan
+/// representing one logical block. `block_alignment` selects aligned or unaligned accessor
+/// policies, and `nproma` may be static or dynamic.
 template <typename Blocked, size_t nproma, BlockAlignment block_alignment, idx_t Rank = Blocked::rank()>
 struct BlockedSubspanTraits;
 
@@ -817,6 +851,11 @@ struct BlockedSubspanTraits<Blocked, nproma, block_alignment, 2> {
 };
 
 template <typename Nonblocked, size_t nproma, idx_t Rank = Nonblocked::rank()>
+/// @brief Trait family describing one nonblocked chunk used by the mdspan implementation kernels.
+///
+/// Each specialization exposes an mdspan type covering the logical point interval that maps
+/// to one blocked chunk. These traits let the mdspan implementation kernels operate on regular
+/// layout-right mdspan slices irrespective of the original view type.
 struct NonblockedSubspanTraits;
 
 template <typename Nonblocked, size_t nproma>
@@ -918,6 +957,10 @@ auto make_nonblocked_subspan_extents(const Nonblocked& nonblocked) {
 }
 
 template<typename Blocked>
+/// @brief Return whether the first stride inside a blocked chunk satisfies the alignment contract.
+///
+/// The mdspan implementation distinguishes aligned and unaligned block accessors. This test
+/// checks both the data pointer alignment and the stride between consecutive inner slices.
 bool is_block_aligned(const Blocked& blocked) {
     using value_type = mdspan_introspection_detail::view_value_t<decltype(blocked)>;
     return is_aligned(blocked,alignment) &&
@@ -925,10 +968,12 @@ bool is_block_aligned(const Blocked& blocked) {
 }
 
 template<typename Blocked>
+/// @brief Assert the blocked-view preconditions shared by all host relayout kernels.
 void assert_requirements_on_blocked(const Blocked& blocked) {
     ATLAS_ASSERT(is_block_contiguous(blocked));
 }
 template<typename Nonblocked>
+/// @brief Assert the nonblocked-view preconditions shared by all host relayout kernels.
 void assert_requirements_on_nonblocked(const Nonblocked& nonblocked) {
     bool nonblocked_is_aligned = is_aligned(nonblocked,alignment);
     ATLAS_ASSERT(nonblocked_is_aligned);
@@ -936,6 +981,11 @@ void assert_requirements_on_nonblocked(const Nonblocked& nonblocked) {
 }
 
 template <size_t nproma_extent, BlockAlignment block_alignment, class Blocked, class Nonblocked>
+/// @brief Per-block mdspan implementation kernel for blocked-to-nonblocked host relayout.
+///
+/// This worker materializes one blocked subspan and one nonblocked chunk as layout-right mdspans,
+/// then performs the copy with either aligned or unaligned accessor policies. It is selected when
+/// the raw-pointer path is not used or when the mdspan implementation is chosen.
 struct CopyBlockedToNonblockedMdspan {
     using blocked_subspan_type = blocked_subspan_t<Blocked, nproma_extent, block_alignment>;
     using nonblocked_subspan_type = nonblocked_subspan_t<Nonblocked, nproma_extent>;
@@ -970,6 +1020,8 @@ struct CopyBlockedToNonblockedMdspan {
         block_extents(make_blocked_subspan_extents<nproma_extent>(blocked)),
         nonblocked_extents(make_nonblocked_subspan_extents<nproma_extent>(nonblocked)) {}
 
+    /// @brief Copy one blocked chunk into the corresponding nonblocked chunk.
+    /// @param jblk Block index in the blocked input view.
     void operator()(idx_t jblk) const {
         const idx_t jpbegin = jblk * nproma;
 
@@ -1111,6 +1163,11 @@ auto make_copy_blocked_to_nonblocked_mdspan(const Blocked blocked, Nonblocked no
 }
 
 template <size_t nproma_extent, BlockAlignment block_alignment, class Nonblocked, class Blocked>
+/// @brief Per-block mdspan implementation kernel for nonblocked-to-blocked host relayout.
+///
+/// This is the inverse of `CopyBlockedToNonblockedMdspan`. It presents the logical source
+/// chunk and destination block as mdspan slices and copies one block at a time while preserving
+/// the selected loop order and aligned/unaligned accessor policy.
 struct CopyNonblockedToBlockedMdspan {
     using blocked_subspan_type = blocked_subspan_t<Blocked, nproma_extent, block_alignment>;
     using nonblocked_subspan_type = nonblocked_subspan_t<Nonblocked, nproma_extent>;
@@ -1145,6 +1202,8 @@ struct CopyNonblockedToBlockedMdspan {
         block_extents(make_blocked_subspan_extents<nproma_extent>(blocked)),
         nonblocked_extents(make_nonblocked_subspan_extents<nproma_extent>(nonblocked)) {}
 
+    /// @brief Copy one nonblocked chunk into the corresponding blocked chunk.
+    /// @param jblk Block index in the blocked output view.
     void operator()(idx_t jblk) const {
         const idx_t jpbegin = jblk * nproma;
 
@@ -1285,6 +1344,10 @@ auto make_copy_nonblocked_to_blocked_block(const Nonblocked nonblocked, Blocked 
 }
 
 template <size_t nproma_extent, class Blocked, class Nonblocked>
+/// @brief Run the mdspan implementation blocked-to-nonblocked kernel for a fixed or dynamic `nproma`.
+///
+/// This wrapper validates the common preconditions, chooses aligned or unaligned block access,
+/// and then launches one per-block worker over the blocked extent.
 void host_copy_blocked_to_nonblocked_nproma(const Blocked blocked, Nonblocked nonblocked) {
     assert_requirements_on_blocked(blocked);
     assert_requirements_on_nonblocked(nonblocked);
@@ -1297,7 +1360,7 @@ void host_copy_blocked_to_nonblocked_nproma(const Blocked blocked, Nonblocked no
         }
     }
     else {
-        Log::debug() << "host_copy_blocked_to_nonblocked_nproma: A block is not aligned, falling back to unaligned copy.";
+        Log::debug() << "host_copy_blocked_to_nonblocked_nproma: A block is not aligned, using the unaligned mdspan implementation.";
         Log::debug() << "\nBlocked: " << std::vector<idx_t>(blocked.shape(), blocked.shape() + blocked.rank()) << std::endl;
 
         auto copy_blocked_to_nonblocked_block = make_copy_blocked_to_nonblocked_mdspan<nproma_extent, BlockAlignment::unaligned>(blocked, nonblocked);
@@ -1308,6 +1371,10 @@ void host_copy_blocked_to_nonblocked_nproma(const Blocked blocked, Nonblocked no
 }
 
 template <size_t nproma_extent, class Nonblocked, class Blocked>
+/// @brief Run the mdspan implementation nonblocked-to-blocked kernel for a fixed or dynamic `nproma`.
+///
+/// This wrapper validates the common preconditions, chooses aligned or unaligned block access,
+/// and then launches one per-block worker over the blocked extent.
 void host_copy_nonblocked_to_blocked_nproma(const Nonblocked nonblocked, Blocked blocked) {
     assert_requirements_on_nonblocked(nonblocked);
     assert_requirements_on_blocked(blocked);
@@ -1320,7 +1387,7 @@ void host_copy_nonblocked_to_blocked_nproma(const Nonblocked nonblocked, Blocked
         }
     }
     else {
-        Log::debug() << "host_copy_nonblocked_to_blocked_nproma: A block is not aligned, falling back to unaligned copy.";
+        Log::debug() << "host_copy_nonblocked_to_blocked_nproma: A block is not aligned, using the unaligned mdspan implementation.";
         Log::debug() << "\nBlocked: " << std::vector<idx_t>(blocked.shape(), blocked.shape() + blocked.rank()) << std::endl;
 
         auto copy_nonblocked_to_blocked_block = make_copy_nonblocked_to_blocked_block<nproma_extent, BlockAlignment::unaligned>(nonblocked, blocked);
@@ -1333,6 +1400,14 @@ void host_copy_nonblocked_to_blocked_nproma(const Nonblocked nonblocked, Blocked
 }  // namespace
 
 template <class Nonblocked, class Blocked>
+/// @brief Dispatch nonblocked-to-blocked host relayout to the best available kernel family.
+///
+/// Selection order:
+/// - raw-pointer contiguous kernel when implementation mode is `raw_pointers` and both layouts
+///   allow direct pointer access;
+/// - otherwise the mdspan/subspan implementation;
+/// - within each family, prefer compile-time `nproma` specialization when available, otherwise
+///   switch over common runtime `nproma` values before using `dynamic_extent`.
 void host_copy_nonblocked_to_blocked_impl(const Nonblocked nonblocked, Blocked blocked) {
     static_assert(nonblocked.rank() == blocked.rank()-1);
     const idx_t nproma = blocked.extent(blocked.rank() - 1);
@@ -1349,8 +1424,11 @@ void host_copy_nonblocked_to_blocked_impl(const Nonblocked nonblocked, Blocked b
         }
     }();
 
+    ATLAS_ASSERT(has_layout_right(nonblocked));
+    ATLAS_ASSERT(is_block_contiguous(blocked));
+
 #if DISABLE_RAW_POINTERS == 0
-    if (relayout_implementation() == RelayoutImplementation::raw_pointers && has_layout_right(nonblocked) && is_block_contiguous(blocked)) {
+    if (relayout_implementation() == RelayoutImplementation::raw_pointers) {
         if (relayout_nproma_dispatch() != RelayoutNpromaDispatch::static_dispatch) {
             return host_copy_nonblocked_to_blocked_contiguous_raw_pointers_nproma<dynamic_extent>(nonblocked, blocked);
         }
@@ -1373,14 +1451,16 @@ void host_copy_nonblocked_to_blocked_impl(const Nonblocked nonblocked, Blocked b
     }
 #endif
 
-    // Fall back to generic implementation if the views are not contiguous or block-contiguous.
-    // Apply static dispatch even for fallback paths for better performance.
+    // Use the mdspan implementation when the raw-pointer implementation is not selected.
+    // This path still requires a contiguous nonblocked view and a block-contiguous blocked view,
+    // enforced by `assert_requirements_on_nonblocked()` and `assert_requirements_on_blocked()`.
+    // Apply static dispatch there as well for better performance.
     if (relayout_nproma_dispatch() != RelayoutNpromaDispatch::static_dispatch) {
-        // Runtime dispatch for fallback
+        // Runtime dispatch for the mdspan implementation
         host_copy_nonblocked_to_blocked_nproma<dynamic_extent>(nonblocked, blocked);
     }
 
-    // Optimized fallback paths with static nproma dispatch.
+    // Optimized mdspan implementation paths with static nproma dispatch.
     if constexpr (nproma_extent != dynamic_extent) {
         return host_copy_nonblocked_to_blocked_nproma<nproma_extent>(nonblocked, blocked);
     }
@@ -1400,7 +1480,7 @@ void host_copy_nonblocked_to_blocked_impl(const Nonblocked nonblocked, Blocked b
 
 template <class Blocked, class Nonblocked>
 /**
- * @brief Copy a blocked host view into a nonblocked host view.
+ * @brief Dispatch blocked-to-nonblocked host relayout to the best available kernel family.
  *
  * @param blocked Source Atlas view (`atlas::View`/`atlas::ArrayView`) or mdspan-like view with
  *        rank 2, 3, or 4.  For rank-4 views, the dimension order is
@@ -1412,6 +1492,10 @@ template <class Blocked, class Nonblocked>
  * @pre `nonblocked.rank() == blocked.rank() - 1`.
  * @pre Shared dimensions must match; for rank 4, `nonblocked.extent(1) == blocked.extent(2)`
  *      and `nonblocked.extent(2) == blocked.extent(1)`.
+ *
+ * Dispatch order mirrors `host_copy_nonblocked_to_blocked_impl`: choose the raw-pointer fast
+ * path when possible, otherwise use the mdspan/subspan implementation, and in both cases prefer
+ * statically-sized `nproma` instantiations over runtime-generic variants.
  */
 void host_copy_blocked_to_nonblocked_impl(const Blocked blocked, Nonblocked nonblocked) {
     static_assert(nonblocked.rank() == blocked.rank()-1);
@@ -1428,8 +1512,11 @@ void host_copy_blocked_to_nonblocked_impl(const Blocked blocked, Nonblocked nonb
         }
     }();
 
+    ATLAS_ASSERT(has_layout_right(nonblocked));
+    ATLAS_ASSERT(is_block_contiguous(blocked));
+
 #if DISABLE_RAW_POINTERS == 0
-    if (relayout_implementation() == RelayoutImplementation::raw_pointers && has_layout_right(nonblocked) && is_block_contiguous(blocked)) {
+    if (relayout_implementation() == RelayoutImplementation::raw_pointers) {
         if (relayout_nproma_dispatch() != RelayoutNpromaDispatch::static_dispatch) {
             return host_copy_blocked_to_nonblocked_contiguous_raw_pointers_nproma<dynamic_extent>(blocked, nonblocked);
         }
@@ -1453,14 +1540,16 @@ void host_copy_blocked_to_nonblocked_impl(const Blocked blocked, Nonblocked nonb
     }
 #endif
 
-    // Fall back to generic implementation if the views are not contiguous or block-contiguous.
-    // Apply static dispatch even for fallback paths for better performance.
+    // Use the mdspan implementation when the raw-pointer implementation is not selected.
+    // This path still requires a contiguous nonblocked view and a block-contiguous blocked view,
+    // enforced by `assert_requirements_on_nonblocked()` and `assert_requirements_on_blocked()`.
+    // Apply static dispatch there as well for better performance.
     if (relayout_nproma_dispatch() != RelayoutNpromaDispatch::static_dispatch) {
-        // Runtime dispatch for fallback
+        // Runtime dispatch for the mdspan implementation
         return host_copy_blocked_to_nonblocked_nproma<dynamic_extent>(blocked, nonblocked);
     }
 
-    // Optimized fallback paths with static nproma dispatch.
+    // Optimized mdspan implementation paths with static nproma dispatch.
     if constexpr (nproma_extent != dynamic_extent) {
         return host_copy_blocked_to_nonblocked_nproma<nproma_extent>(blocked, nonblocked);
     }
@@ -1479,6 +1568,12 @@ void host_copy_blocked_to_nonblocked_impl(const Blocked blocked, Nonblocked nonb
 }
 
 template <class BlockedIn, class BlockedOut>
+/// @brief Per-block raw-pointer kernel for blocked-to-blocked host relayout.
+///
+/// This worker supports different input and output `nproma` values by walking the logical point
+/// range and copying maximal contiguous chunks between the source block and destination block.
+/// Rank-specific helpers preserve the inner non-horizontal layout while remapping the horizontal
+/// blocked dimension.
 struct CopyBlockedToBlockedBlockRawPointers {
     using value_t = std::decay_t<typename BlockedOut::value_type>;
 
@@ -1512,6 +1607,8 @@ struct CopyBlockedToBlockedBlockRawPointers {
         }
     }
 
+    /// @brief Copy one destination block from the corresponding logical source range.
+    /// @param jblk_out Block index in the blocked output view.
     void operator()(idx_t jblk_out) const {
         const idx_t jpbegin = jblk_out * nproma_out;
         if (jpbegin >= total_points) {
@@ -1640,6 +1737,10 @@ template <class BlockedIn, class BlockedOut>
  * @pre `blocked_in.rank() == blocked_out.rank()`.
  * @pre The value types of the two views must match.
  * @pre Non-horizontal dimensions must match; for rank 4 this means matching `nvar` and `nlev`.
+ *
+ * When enabled and safe, the implementation first attempts a single whole-view `memcpy` for the
+ * equal-`nproma`, fully contiguous case. Otherwise it falls back to the per-block raw-pointer
+ * kernel, which preserves logical ordering while repacking points into the destination block size.
  */
 void host_copy_blocked_to_blocked_impl(const BlockedIn blocked_in, BlockedOut blocked_out) {
     static_assert(std::is_same_v<std::decay_t<typename BlockedIn::value_type>, std::decay_t<typename BlockedOut::value_type>>, "Data types of input and output views must match for blocked-to-blocked copy");
