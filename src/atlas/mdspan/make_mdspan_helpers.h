@@ -180,14 +180,17 @@ template<typename Extents, typename Layout, typename Accessor, typename DataHand
 auto make_mdspan_from_extents(DataHandle data, Extents extents, StridesFactory strides_factory) {
     if constexpr (std::is_same_v<Layout, layout_right>) {
         typename layout_right::template mapping<Extents> mapping{extents};
-        return mdspan(data, mapping, Accessor{});
+        using Mdspan = mdspan<typename Accessor::element_type, Extents, layout_right, Accessor>;
+        return Mdspan{data, mapping, Accessor{}};
     }
     else if constexpr (std::is_same_v<Layout, layout_stride>) {
         typename layout_stride::template mapping<Extents> mapping{extents, strides_factory()};
-        return mdspan(data, mapping, Accessor{});
+        using Mdspan = mdspan<typename Accessor::element_type, Extents, layout_stride, Accessor>;
+        return Mdspan{data, mapping, Accessor{}};
     }
     else {
         static_assert(mdspan_introspection_detail::always_false_v<Layout>, "make_mdspan() is only implemented for layout_right and layout_stride");
+        return mdspan<typename Accessor::element_type, Extents, layout_right, Accessor>{data};
     }
 }
 
