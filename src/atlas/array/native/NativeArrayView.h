@@ -96,30 +96,32 @@ namespace array {
 ///
 /// The ArrayView class is therefore also compiled differently dependening on this feature.
 
-template <typename Value, int Rank>
+template <typename ElementType, int Rank>
 class ArrayView {
     template <typename T>
-    using is_non_const_value_type = typename std::is_same<T, typename std::remove_const<Value>::type>;
+    using is_non_const_value_type = typename std::is_same<T, typename std::remove_const<ElementType>::type>;
 
 #define ENABLE_IF_NON_CONST                                                                             \
     template <bool EnableBool                                                                   = true, \
-              typename std::enable_if<(!std::is_const<Value>::value && EnableBool), int>::type* = nullptr>
+              typename std::enable_if<(!std::is_const<ElementType>::value && EnableBool), int>::type* = nullptr>
 
 #define ENABLE_IF_CONST_WITH_NON_CONST(T)                                                                             \
-    template <typename T, typename std::enable_if<(std::is_const<Value>::value && is_non_const_value_type<T>::value), \
+    template <typename T, typename std::enable_if<(std::is_const<ElementType>::value && is_non_const_value_type<T>::value), \
                                                   int>::type* = nullptr>
 
 public:
     // -- Type definitions
-    using value_type                   = Value;
-    using non_const_value_type         = typename std::remove_const<Value>::type;
-    static constexpr bool is_const     = std::is_const<Value>::value;
-    static constexpr bool is_non_const = !std::is_const<Value>::value;
+    using element_type                 = ElementType;
+    using value_type                   = std::remove_cv_t<element_type>;
+    using data_handle_type             = element_type*;
+    using non_const_value_type         = value_type;
+    static constexpr bool is_const     = std::is_const<element_type>::value;
+    static constexpr bool is_non_const = !std::is_const<element_type>::value;
     static constexpr int RANK{Rank};
 
 private:
-    using slicer_t       = typename helpers::ArraySlicer<ArrayView<Value, Rank>>;
-    using const_slicer_t = typename helpers::ArraySlicer<const ArrayView<const Value, Rank>>;
+    using slicer_t       = typename helpers::ArraySlicer<ArrayView<ElementType, Rank>>;
+    using const_slicer_t = typename helpers::ArraySlicer<const ArrayView<const ElementType, Rank>>;
 
     template <typename... Args>
     struct slice_t {
@@ -137,16 +139,16 @@ private:
 public:
     // -- Constructors
 
-    template <typename ValueTp, typename = std::enable_if_t<std::is_convertible_v<ValueTp*,value_type*>>>
-    ArrayView(const ArrayView<ValueTp, Rank>& other): data_(other.data()), size_(other.size()) {
+    template <typename ElementTypeTp, typename = std::enable_if_t<std::is_convertible_v<ElementTypeTp*,element_type*>>>
+    ArrayView(const ArrayView<ElementTypeTp, Rank>& other): data_(other.data()), size_(other.size()) {
         for (int j = 0; j < Rank; ++j) {
             shape_[j]   = other.shape_[j];
             strides_[j] = other.strides_[j];
         }
     }
 
-    template <typename ValueTp, typename = std::enable_if_t<std::is_convertible_v<ValueTp*,value_type*>>>
-    ArrayView(ArrayView<ValueTp, Rank>&& other):data_(other.data()), size_(other.size()) {
+    template <typename ElementTypeTp, typename = std::enable_if_t<std::is_convertible_v<ElementTypeTp*,element_type*>>>
+    ArrayView(ArrayView<ElementTypeTp, Rank>&& other):data_(other.data()), size_(other.size()) {
         for (int j = 0; j < Rank; ++j) {
             shape_[j]   = other.shape_[j];
             strides_[j] = other.strides_[j];
@@ -155,7 +157,7 @@ public:
 
 #ifndef DOXYGEN_SHOULD_SKIP_THIS
     // This constructor should not be used directly, but only through a array::make_view() function.
-    ArrayView(value_type* data, const ArrayShape& shape, const ArrayStrides& strides): data_(data) {
+    ArrayView(element_type* data, const ArrayShape& shape, const ArrayStrides& strides): data_(data) {
         size_ = 1;
         for (int j = 0; j < Rank; ++j) {
             shape_[j]   = shape[j];
@@ -168,15 +170,15 @@ public:
     template <typename>
     [[maybe_unused]] inline static constexpr bool always_false_v = false;
 
-    ENABLE_IF_CONST_WITH_NON_CONST(value_type)
-    operator const ArrayView<value_type, Rank>&() const { return *(const ArrayView<value_type, Rank>*)(this); }
+    ENABLE_IF_CONST_WITH_NON_CONST(element_type)
+    operator const ArrayView<element_type, Rank>&() const { return *(const ArrayView<element_type, Rank>*)(this); }
 
     // -- Access methods
 
     /// @brief Multidimensional index operator: view(i,j,k,...)
     template <typename... Idx, int Rank_ = Rank, typename = std::enable_if_t<sizeof...(Idx) == Rank_>>
     ATLAS_HOST_DEVICE
-    value_type& operator()(Idx... idx) {
+    element_type& operator()(Idx... idx) {
         check_bounds(idx...);
         return data_[index(idx...)];
     }
@@ -184,7 +186,7 @@ public:
     /// @brief Multidimensional index operator: view(i,j,k,...)
     template <typename... Idx, int Rank_ = Rank, typename = std::enable_if_t<sizeof...(Idx) == Rank_>>
     ATLAS_HOST_DEVICE
-    const value_type& operator()(Idx... idx) const {
+    const element_type& operator()(Idx... idx) const {
         return data_[index(idx...)];
     }
 
@@ -194,12 +196,12 @@ public:
 #ifndef DOXYGEN_SHOULD_SKIP_THIS
     template <typename Idx, int Rank_ = Rank, typename = std::enable_if_t<Rank_ == 1>>
     ATLAS_HOST_DEVICE
-    const value_type& operator[](Idx idx) const {
+    const element_type& operator[](Idx idx) const {
 #else
     // Doxygen API is cleaner!
     template <typename Int>
     ATLAS_HOST_DEVICE
-    value_type operator[](Int idx) const {
+    element_type operator[](Int idx) const {
 #endif
         check_bounds(idx);
         return data_[idx * strides_[0]];
@@ -211,12 +213,12 @@ public:
 #ifndef DOXYGEN_SHOULD_SKIP_THIS
     template <typename Idx, int Rank_ = Rank, typename = std::enable_if_t<Rank_ == 1>>
     ATLAS_HOST_DEVICE
-    value_type& operator[](Idx idx) {
+    element_type& operator[](Idx idx) {
 #else
     // Doxygen API is cleaner!
     template <typename Idx>
     ATLAS_HOST_DEVICE
-    value_type operator[](Idx idx) {
+    element_type operator[](Idx idx) {
 #endif
         check_bounds(idx);
         return data_[idx * strides_[0]];
@@ -282,11 +284,14 @@ public:
 
     /// @brief Access to internal data. @m_class{m-label m-danger} **dangerous**
     ATLAS_HOST_DEVICE
-    value_type const* data() const { return data_; }
+    element_type const* data() const { return data_; }
 
     /// @brief Access to internal data. @m_class{m-label m-danger} **dangerous**
     ATLAS_HOST_DEVICE
-    value_type* data() { return data_; }
+    element_type* data() { return data_; }
+
+    ATLAS_HOST_DEVICE
+    constexpr data_handle_type data_handle() const noexcept { return data_; }
 
     ATLAS_HOST_DEVICE
     bool valid() const { return true; }
@@ -435,7 +440,7 @@ private:
 
     template<typename,int> friend class ArrayView;
 
-    value_type* data_;
+    data_handle_type data_;
     size_t size_;
     idx_t shape_[Rank];
     idx_t strides_[Rank];

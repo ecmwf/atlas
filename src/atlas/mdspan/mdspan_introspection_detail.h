@@ -55,13 +55,24 @@ template <typename View>
 using view_extents_t = typename view_extents<View>::type;
 
 template <typename View, typename = std::void_t<>>
-struct view_value {
+struct view_value_fallback {
     using type = std::remove_pointer_t<std::remove_reference_t<decltype(std::declval<View&>().data())>>;
 };
 
 template <typename View>
-struct view_value<View, std::void_t<decltype(std::declval<View&>().data_handle())>> {
+struct view_value_fallback<View, std::void_t<decltype(std::declval<View&>().data_handle())>> {
     using type = std::remove_pointer_t<std::remove_reference_t<decltype(std::declval<View&>().data_handle())>>;
+};
+
+template <typename View, typename = std::void_t<>>
+struct view_value {
+    using type = typename view_value_fallback<View>::type;
+};
+
+template <typename View>
+struct view_value<View, std::void_t<typename view_type_t<View>::element_type>> {
+    using raw_type = typename view_type_t<View>::element_type;
+    using type = std::conditional_t<std::is_const_v<view_type_t<View>>, std::add_const_t<raw_type>, raw_type>;
 };
 
 template <typename View>
@@ -96,12 +107,18 @@ using view_layout_t = typename view_layout<View>::type;
 template <typename>
 [[maybe_unused]] inline static constexpr bool always_false_v = false;
 
+template <typename View, typename = std::void_t<>>
+struct has_data_handle : std::false_type {};
+
 template <typename View>
+struct has_data_handle<View, std::void_t<decltype(std::declval<View&>().data_handle())>> : std::true_type {};
+
+template <typename View, typename std::enable_if_t<has_data_handle<View>::value, int> = 0>
 auto data_handle(View& view) -> decltype(view.data_handle()) {
     return view.data_handle();
 }
 
-template <typename View>
+template <typename View, typename std::enable_if_t<!has_data_handle<View>::value, int> = 0>
 auto data_handle(View& view) -> decltype(view.data()) {
     return view.data();
 }

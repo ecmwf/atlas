@@ -64,30 +64,32 @@ namespace array {
 /// @endcode
 
 
-template <typename Value, int Rank>
+template <typename ElementType, int Rank>
 class LocalView {
     template <typename T>
-    using is_non_const_value_type = typename std::is_same<T, typename std::remove_const<Value>::type>;
+    using is_non_const_value_type = typename std::is_same<T, typename std::remove_const<ElementType>::type>;
 
 #define ENABLE_IF_NON_CONST                                                                             \
     template <bool EnableBool                                                                   = true, \
-              typename std::enable_if<(!std::is_const<Value>::value && EnableBool), int>::type* = nullptr>
+              typename std::enable_if<(!std::is_const<ElementType>::value && EnableBool), int>::type* = nullptr>
 
 #define ENABLE_IF_CONST_WITH_NON_CONST(T)                                                                             \
-    template <typename T, typename std::enable_if<(std::is_const<Value>::value && is_non_const_value_type<T>::value), \
+    template <typename T, typename std::enable_if<(std::is_const<ElementType>::value && is_non_const_value_type<T>::value), \
                                                   int>::type* = nullptr>
 
 
 public:
     // -- Type definitions
-    using value_type  = Value;
-    using return_type = value_type;
+    using element_type = ElementType;
+    using value_type  = std::remove_cv_t<element_type>;
+    using return_type = element_type;
+    using data_handle_type = element_type*;
 
     static constexpr int RANK{Rank};
 
 private:
-    using slicer_t       = typename helpers::ArraySlicer<LocalView<Value, Rank>>;
-    using const_slicer_t = typename helpers::ArraySlicer<const LocalView<const Value, Rank>>;
+    using slicer_t       = typename helpers::ArraySlicer<LocalView<ElementType, Rank>>;
+    using const_slicer_t = typename helpers::ArraySlicer<const LocalView<const ElementType, Rank>>;
 
     template <typename... Args>
     struct slice_t {
@@ -106,11 +108,11 @@ public:
     // -- Constructors
 
 
-    template <typename ValueTp, typename = std::enable_if_t<std::is_convertible_v<ValueTp*, Value*>>>
-    LocalView(const LocalView<ValueTp,Rank>& other): data_(other.data_), size_(other.size_), shape_(other.shape_), strides_(other.strides_) {}
+    template <typename ElementTypeTp, typename = std::enable_if_t<std::is_convertible_v<ElementTypeTp*, ElementType*>>>
+    LocalView(const LocalView<ElementTypeTp,Rank>& other): data_(other.data_), size_(other.size_), shape_(other.shape_), strides_(other.strides_) {}
 
-    template <typename ValueTp, typename Int1, typename Int2, typename = std::enable_if_t<std::is_convertible_v<ValueTp*, Value*> && std::is_integral_v<Int1> && std::is_integral_v<Int2>>>
-    LocalView(ValueTp* data, const Int1 shape[], const Int2 strides[]): data_(data) {
+    template <typename ElementTypeTp, typename Int1, typename Int2, typename = std::enable_if_t<std::is_convertible_v<ElementTypeTp*, ElementType*> && std::is_integral_v<Int1> && std::is_integral_v<Int2>>>
+    LocalView(ElementTypeTp* data, const Int1 shape[], const Int2 strides[]): data_(data) {
         size_ = 1;
         for (idx_t j = 0; j < Rank; ++j) {
             shape_[j]   = shape[j];
@@ -119,8 +121,8 @@ public:
         }
     }
 
-    template <typename ValueTp, typename Int, typename = std::enable_if_t<std::is_convertible_v<ValueTp*, Value*> && std::is_integral_v<Int>>>
-    LocalView(ValueTp* data, const Int shape[]): data_(data) {
+    template <typename ElementTypeTp, typename Int, typename = std::enable_if_t<std::is_convertible_v<ElementTypeTp*, ElementType*> && std::is_integral_v<Int>>>
+    LocalView(ElementTypeTp* data, const Int shape[]): data_(data) {
         size_ = 1;
         for (int j = Rank - 1; j >= 0; --j) {
             shape_[j]   = shape[j];
@@ -129,11 +131,11 @@ public:
         }
     }
 
-    template <typename ValueTp, typename ArrayShape, typename = std::enable_if_t<std::is_convertible_v<ValueTp*, Value*>>>
-    LocalView(ValueTp* data, const ArrayShape& shape) : LocalView(data,shape.data()) {}
+    template <typename ElementTypeTp, typename ArrayShape, typename = std::enable_if_t<std::is_convertible_v<ElementTypeTp*, ElementType*>>>
+    LocalView(ElementTypeTp* data, const ArrayShape& shape) : LocalView(data,shape.data()) {}
 
 
-    template <typename T, typename E, typename L, typename A, typename = std::enable_if_t<std::is_convertible_v<typename A::data_handle_type, Value*> && E::rank() == Rank>>
+    template <typename T, typename E, typename L, typename A, typename = std::enable_if_t<std::is_convertible_v<typename A::data_handle_type, ElementType*> && E::rank() == Rank>>
     LocalView(mdspan<T,E,L,A>& other) :
         data_(other.data_handle()), size_(other.size()) {
         for (int j = 0; j < Rank; ++j) {
@@ -142,36 +144,36 @@ public:
         }
     }
 
-    ENABLE_IF_CONST_WITH_NON_CONST(value_type)
-    operator const LocalView<value_type, Rank>&() const {
-        static_assert(std::is_const<Value>::value, "must be const");
+    ENABLE_IF_CONST_WITH_NON_CONST(element_type)
+    operator const LocalView<element_type, Rank>&() const {
+        static_assert(std::is_const<element_type>::value, "must be const");
         static_assert(!std::is_const<value_type>::value, "must be non-const");
-        return (const LocalView<value_type, Rank>&)(*this);
+        return (const LocalView<element_type, Rank>&)(*this);
     }
 
 
     // -- Access methods
 
     template <typename... Idx, int Rank_ = Rank, typename = std::enable_if_t<sizeof...(Idx) == Rank_>>
-    value_type& operator()(Idx... idx) {
+    element_type& operator()(Idx... idx) {
         check_bounds(idx...);
         return data_[index(idx...)];
     }
 
     template <typename... Idx, int Rank_ = Rank, typename = std::enable_if_t<sizeof...(Idx) == Rank_>>
-    const value_type& operator()(Idx... idx) const {
+    const element_type& operator()(Idx... idx) const {
         check_bounds(idx...);
         return data_[index(idx...)];
     }
 
     template <typename Idx, int Rank_ = Rank, typename = std::enable_if_t<Rank_ == 1>>
-    const value_type& operator[](Idx idx) const {
+    const element_type& operator[](Idx idx) const {
         check_bounds(idx);
         return data_[index(idx)];
     }
 
     template <typename Idx, int Rank_ = Rank, typename = std::enable_if_t<Rank_ == 1>>
-    value_type& operator[](Idx idx) {
+    element_type& operator[](Idx idx) {
         check_bounds(idx);
         return data_[index(idx)];
     }
@@ -199,9 +201,11 @@ public:
 
     const idx_t* strides() const { return strides_.data(); }
 
-    value_type const* data() const { return data_; }
+    element_type const* data() const { return data_; }
 
-    value_type* data() { return data_; }
+    element_type* data() { return data_; }
+
+    constexpr data_handle_type data_handle() const { return data_; }
 
     bool contiguous() const { return (size_ == shape_[0] * strides_[0] ? true : false); }
 
@@ -305,7 +309,7 @@ private:
     // -- Private data
     template<typename,int> friend class LocalView;
 
-    value_type* data_;
+    element_type* data_;
     idx_t size_;
     std::array<idx_t,Rank> shape_;
     std::array<idx_t,Rank> strides_;

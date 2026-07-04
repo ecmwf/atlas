@@ -62,12 +62,12 @@ bool is_dimension_aligned(View& view, std::size_t alignment) {
     if (!is_aligned(view, alignment)) {
         return false;
     }
-
     if constexpr (Rank <= 1) {
         return true;
     }
     else {
-        return detail::dimension_start_strides_are_aligned<Dim>(view, alignment, std::make_index_sequence<Rank - 1>{});
+        return detail::dimension_start_strides_are_aligned<Dim>(
+            view, alignment, std::make_index_sequence<Rank - 1>{});
     }
 }
 

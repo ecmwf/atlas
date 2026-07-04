@@ -64,7 +64,7 @@ namespace array {
 
 #define ENABLE_IF_NON_CONST                                                                             \
     template <bool EnableBool                                                                   = true, \
-              typename std::enable_if<(!std::is_const<Value>::value && EnableBool), int>::type* = nullptr>
+              typename std::enable_if<(!std::is_const<ElementType>::value && EnableBool), int>::type* = nullptr>
 
 //------------------------------------------------------------------------------------------------------
 
@@ -78,30 +78,32 @@ namespace array {
 ///
 /// If Atlas is compiled without the FORTRAN feature (ATLAS_HAVE_FORTRAN==0), then the addition
 /// and substraction of `1` is compiled out, which may slightly improve performance.
-template <typename Value, int Rank>
+template <typename ElementType, int Rank>
 class IndexView {
 public:
-    using value_type = typename remove_const<Value>::type;
-    using accessor_type = index_accessor<Value,ATLAS_HAVE_FORTRAN>;
+    using element_type = ElementType;
+    using value_type = std::remove_cv_t<element_type>;
+    using data_handle_type = element_type*;
+    using accessor_type = index_accessor<element_type,ATLAS_HAVE_FORTRAN>;
     using reference = typename accessor_type::reference;
     static constexpr int RANK{Rank};
 
 private:
     using mdspan_extents_type = dextents<size_t,Rank>;
     using mdspan_strides_type = std::array<size_t,Rank>;
-    template <typename ElementType>
-    using mdspan_accessor_policy = index_accessor<ElementType,ATLAS_HAVE_FORTRAN>;
-    using mdspan_type         = mdspan<Value, mdspan_extents_type, layout_stride, index_accessor<Value,ATLAS_HAVE_FORTRAN>>;
-    using const_mdspan_type   = mdspan<const Value, mdspan_extents_type, layout_stride, index_accessor<const Value,ATLAS_HAVE_FORTRAN>>;
+    template <typename ElementTypeTp>
+    using mdspan_accessor_policy = index_accessor<ElementTypeTp,ATLAS_HAVE_FORTRAN>;
+    using mdspan_type         = mdspan<element_type, mdspan_extents_type, layout_stride, index_accessor<element_type,ATLAS_HAVE_FORTRAN>>;
+    using const_mdspan_type   = mdspan<const element_type, mdspan_extents_type, layout_stride, index_accessor<const element_type,ATLAS_HAVE_FORTRAN>>;
 
 public:
 #ifndef DOXYGEN_SHOULD_SKIP_THIS
-    IndexView(Value* data, const idx_t shape[Rank]);
+    IndexView(element_type* data, const idx_t shape[Rank]);
 
-    IndexView(Value* data, const idx_t shape[Rank], const idx_t strides[Rank]);
+    IndexView(element_type* data, const idx_t shape[Rank], const idx_t strides[Rank]);
 #endif
 
-    template <typename T, typename E, typename L, typename A, typename = std::enable_if_t<std::is_convertible_v<typename A::data_handle_type, Value*> && E::rank() == Rank>>
+    template <typename T, typename E, typename L, typename A, typename = std::enable_if_t<std::is_convertible_v<typename A::data_handle_type, element_type*> && E::rank() == Rank>>
     IndexView(mdspan<T,E,L,A>& other) :
         data_(other.data_handle()) {
         for (int j = 0; j < Rank; ++j) {
@@ -120,7 +122,7 @@ public:
     }
 
     template <typename... Idx>
-    value_type operator()(Idx... idx) const {
+    element_type operator()(Idx... idx) const {
         check_bounds(idx...);
         return data_[index(idx...)] FROM_FORTRAN;
     }
@@ -147,9 +149,11 @@ public:
 
     const idx_t* strides() const { return strides_; }
 
-    Value const* data() const { return data_; }
+    element_type const* data() const { return data_; }
 
-    Value* data() { return data_; }
+    element_type* data() { return data_; }
+
+    constexpr data_handle_type data_handle() const { return data_; }
 
     static constexpr idx_t rank() { return Rank; }
 
@@ -234,15 +238,15 @@ private:
     }
 
 private:
-    Value* data_;
+    data_handle_type data_;
     idx_t strides_[Rank];
     idx_t shape_[Rank];
     static constexpr accessor_type accessor_{};
 };
 
-template <typename Value, int Rank>
-class LocalIndexView : public IndexView<Value, Rank> {
-    using Base = IndexView<Value, Rank>;
+template <typename ElementType, int Rank>
+class LocalIndexView : public IndexView<ElementType, Rank> {
+    using Base = IndexView<ElementType, Rank>;
 
 public:
     using Base::Base;
