@@ -46,6 +46,7 @@ using ::STD_MDSPAN_NAMESPACE::mdspan;
 } // namespace pluto
 #pragma pop_macro("STD_MDSPAN_NAMESPACE")
 #define PLUTO_MDSPAN_USE_BRACKET_OPERATOR 1
+#define PLUTO_MDSPAN_HOST_DEVICE
 
 #else
 
@@ -55,6 +56,7 @@ using ::STD_MDSPAN_NAMESPACE::mdspan;
 #include "pluto/detail/mdspan/mdspan.hpp"
 #pragma pop_macro("MDSPAN_IMPL_STANDARD_NAMESPACE")
 #define PLUTO_MDSPAN_USE_BRACKET_OPERATOR MDSPAN_USE_BRACKET_OPERATOR
+#define PLUTO_MDSPAN_HOST_DEVICE MDSPAN_IMPL_HOST_DEVICE
 #endif
 
 namespace pluto {
@@ -84,6 +86,7 @@ namespace pluto {
 
         static constexpr std::size_t byte_alignment = ByteAlignment;
 
+        PLUTO_MDSPAN_HOST_DEVICE
         constexpr aligned_accessor() noexcept = default;
 
         template<
@@ -92,29 +95,35 @@ namespace pluto {
             typename = std::enable_if_t<
                 std::is_convertible<OtherElementType(*)[], element_type(*)[]>::value &&
                 (OtherByteAlignment >= byte_alignment)> >
+        PLUTO_MDSPAN_HOST_DEVICE
         constexpr aligned_accessor(aligned_accessor<OtherElementType, OtherByteAlignment>) noexcept {}
 
         template<
             class OtherElementType,
             typename = std::enable_if_t<std::is_convertible<OtherElementType(*)[], element_type(*)[]>::value> >
+        PLUTO_MDSPAN_HOST_DEVICE
         explicit constexpr aligned_accessor(default_accessor<OtherElementType>) noexcept {}
 
         template<
             class OtherElementType,
             typename = std::enable_if_t<std::is_convertible<element_type(*)[], OtherElementType(*)[]>::value> >
+        PLUTO_MDSPAN_HOST_DEVICE
         constexpr operator default_accessor<OtherElementType>() const noexcept {
             return {};
         }
 
+        PLUTO_MDSPAN_HOST_DEVICE
         constexpr reference access(data_handle_type ptr, std::size_t index) const noexcept {
             return assume_aligned(ptr)[index];
         }
 
+        PLUTO_MDSPAN_HOST_DEVICE
         constexpr typename offset_policy::data_handle_type offset(data_handle_type ptr, std::size_t index) const noexcept {
             return assume_aligned(ptr) + index;
         }
 
     private:
+        PLUTO_MDSPAN_HOST_DEVICE
         static inline constexpr auto assume_aligned(data_handle_type ptr) noexcept {
         #if defined(__cpp_lib_assume_aligned)
             return std::assume_aligned<byte_alignment>(ptr);
@@ -145,23 +154,29 @@ namespace pluto {
         using data_handle_type = ElementType* PLUTO_MDSPAN_RESTRICT;
         using offset_policy    = default_accessor<ElementType>;
 
+        PLUTO_MDSPAN_HOST_DEVICE
         constexpr restrict_accessor() noexcept = default;
 
         template<class OtherElementType, typename = std::enable_if_t<std::is_convertible<OtherElementType(*)[], ElementType(*)[]>::value> >
+        PLUTO_MDSPAN_HOST_DEVICE
         constexpr restrict_accessor(restrict_accessor<OtherElementType>) noexcept {}
 
         template<class OtherElementType, typename = std::enable_if_t<std::is_convertible<OtherElementType(*)[], ElementType(*)[]>::value> >
+        PLUTO_MDSPAN_HOST_DEVICE
         constexpr restrict_accessor(default_accessor<OtherElementType>) noexcept {}
 
         template<class OtherElementType, typename = std::enable_if_t<std::is_convertible<ElementType(*)[], OtherElementType(*)[]>::value> >
+        PLUTO_MDSPAN_HOST_DEVICE
         constexpr operator default_accessor<OtherElementType>() const noexcept {
             return {};
         }
 
+        PLUTO_MDSPAN_HOST_DEVICE
         constexpr reference access(data_handle_type ptr, std::size_t index) const noexcept {
             return ptr[index];
         }
 
+        PLUTO_MDSPAN_HOST_DEVICE
         constexpr typename offset_policy::data_handle_type offset(data_handle_type ptr, std::size_t index) const noexcept {
             return ptr + index;
         }
@@ -182,6 +197,7 @@ namespace pluto {
 
         static constexpr std::size_t byte_alignment = ByteAlignment;
 
+        PLUTO_MDSPAN_HOST_DEVICE
         constexpr restrict_aligned_accessor() noexcept = default;
 
         template<
@@ -190,11 +206,13 @@ namespace pluto {
             typename = std::enable_if_t<
                 std::is_convertible<OtherElementType(*)[], ElementType(*)[]>::value &&
                 (OtherByteAlignment >= byte_alignment)> >
+        PLUTO_MDSPAN_HOST_DEVICE
         constexpr restrict_aligned_accessor(restrict_aligned_accessor<OtherElementType, OtherByteAlignment>) noexcept {}
 
         template<
             class OtherElementType,
             typename = std::enable_if_t<std::is_convertible<OtherElementType(*)[], ElementType(*)[]>::value> >
+        PLUTO_MDSPAN_HOST_DEVICE
         constexpr restrict_aligned_accessor(restrict_accessor<OtherElementType>) noexcept {}
 
         template<
@@ -203,16 +221,19 @@ namespace pluto {
             typename = std::enable_if_t<
                 std::is_convertible<OtherElementType(*)[], ElementType(*)[]>::value &&
                 (OtherByteAlignment >= byte_alignment)> >
+        PLUTO_MDSPAN_HOST_DEVICE
         constexpr restrict_aligned_accessor(aligned_accessor<OtherElementType, OtherByteAlignment>) noexcept {}
 
         template<
             class OtherElementType,
             typename = std::enable_if_t<std::is_convertible<OtherElementType(*)[], ElementType(*)[]>::value> >
+        PLUTO_MDSPAN_HOST_DEVICE
         constexpr restrict_aligned_accessor(default_accessor<OtherElementType>) noexcept {}
 
         template<
             class OtherElementType,
             typename = std::enable_if_t<std::is_convertible<element_type(*)[], OtherElementType(*)[]>::value> >
+        PLUTO_MDSPAN_HOST_DEVICE
         constexpr operator default_accessor<OtherElementType>() const noexcept {
             return {};
         }
@@ -220,6 +241,7 @@ namespace pluto {
         template<
             class OtherElementType,
             typename = std::enable_if_t<std::is_convertible<element_type(*)[], OtherElementType(*)[]>::value> >
+        PLUTO_MDSPAN_HOST_DEVICE
         constexpr operator restrict_accessor<OtherElementType>() const noexcept {
             return {};
         }
@@ -227,19 +249,23 @@ namespace pluto {
         template<
             class OtherElementType,
             typename = std::enable_if_t<std::is_convertible<element_type(*)[], OtherElementType(*)[]>::value> >
+        PLUTO_MDSPAN_HOST_DEVICE
         constexpr operator aligned_accessor<OtherElementType, byte_alignment>() const noexcept {
             return {};
         }
 
+        PLUTO_MDSPAN_HOST_DEVICE
         constexpr reference access(data_handle_type ptr, std::size_t index) const noexcept {
             return assume_aligned(ptr)[index];
         }
 
+        PLUTO_MDSPAN_HOST_DEVICE
         constexpr typename offset_policy::data_handle_type offset(data_handle_type ptr, std::size_t index) const noexcept {
             return assume_aligned(ptr) + index;
         }
 
     private:
+        PLUTO_MDSPAN_HOST_DEVICE
         static inline constexpr auto assume_aligned(data_handle_type ptr) noexcept {
         #if defined(__cpp_lib_assume_aligned)
             return std::assume_aligned<byte_alignment>(ptr);
