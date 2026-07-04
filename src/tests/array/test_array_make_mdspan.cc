@@ -70,6 +70,11 @@ LocalView<double, 2> make_local_view_4x3(double (&data)[12]) {
     return LocalView<double, 2>{data, shape, strides};
 }
 
+struct LayoutRightViewWithoutStrides {
+    using layout_type = layout_right;
+    static constexpr std::size_t rank() { return 2; }
+};
+
 CASE("test_make_mdspan_arrayview_layout_stride") {
     std::unique_ptr<Array> array{Array::create<double>(2, 3)};
     auto view = make_host_view<double, 2>(*array);
@@ -536,11 +541,6 @@ CASE("test_make_mdspan_native_indexview") {
 }
 
 CASE("test_make_mdspan_queries_layout_right") {
-    struct LayoutRightViewWithoutStrides {
-        using layout_type = layout_right;
-        static constexpr std::size_t rank() { return 2; }
-    };
-
     double contiguous_data[6]{};
     auto contiguous_view = make_local_view(contiguous_data);
 
