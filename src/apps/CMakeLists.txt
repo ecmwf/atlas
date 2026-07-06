@@ -122,6 +122,21 @@ if( HAVE_TESTS )
     --nlev=3 --nvar=2 --nproma=32
     --blocked-to-blocked-use-memcpy=false )
 
+  atlas_add_benchmark_relayout_smoke( atlas_test_app_benchmark_relayout_operation_b2n
+    ${ATLAS_RELAYOUT_SMOKE_COMMON_ARGS}
+    --nlev=3 --nvar=2 --nproma=32
+    --operation=b2n )
+
+  atlas_add_benchmark_relayout_smoke( atlas_test_app_benchmark_relayout_operation_n2b
+    ${ATLAS_RELAYOUT_SMOKE_COMMON_ARGS}
+    --nlev=3 --nvar=2 --nproma=32
+    --operation=n2b )
+
+  atlas_add_benchmark_relayout_smoke( atlas_test_app_benchmark_relayout_operation_b2b
+    ${ATLAS_RELAYOUT_SMOKE_COMMON_ARGS}
+    --nlev=3 --nvar=2 --nproma=32
+    --operation=b2b )
+
   ecbuild_add_test(
     TARGET      atlas_test_app_benchmark_relayout_on_device
     COMMAND     atlas-benchmark-relayout

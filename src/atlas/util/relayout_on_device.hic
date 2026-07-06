@@ -12,6 +12,7 @@
 
 #include <cstdlib>
 #include <cstring>
+#include <type_traits>
 
 /**
  * @file relayout_on_device.hic
@@ -54,26 +55,59 @@ public:
 };
 
 namespace {
-constexpr const char* relayout_use_mdspan_env = "ATLAS_RELAYOUT_USE_MDSPAN";
+constexpr const char* relayout_implementation_env = "ATLAS_RELAYOUT_IMPLEMENTATION";
 
-bool relayout_env_flag(const char* name, const bool default_value) {
-    const char* value = std::getenv(name);
-    if (value == nullptr) {
-        return default_value;
-    }
-    if (std::strcmp(value, "0") == 0 || std::strcmp(value, "false") == 0 || std::strcmp(value, "off") == 0) {
-        return false;
-    }
-    if (std::strcmp(value, "1") == 0 || std::strcmp(value, "true") == 0 || std::strcmp(value, "on") == 0) {
-        return true;
-    }
-    return default_value;
-}
+enum class RelayoutImplementation {
+    arrayview,
+    mdspan
+};
 
-bool relayout_use_mdspan() {
-    static bool cached = relayout_env_flag(relayout_use_mdspan_env, false);
+RelayoutImplementation relayout_implementation() {
+    static RelayoutImplementation cached = []() {
+         const char* impl = std::getenv(relayout_implementation_env);
+         if (impl && std::strcmp(impl, "mdspan") == 0) {
+             return RelayoutImplementation::mdspan;
+         }
+         return RelayoutImplementation::arrayview;
+    }();
     return cached;
 }
+
+constexpr const char* relayout_loop_order_env = "ATLAS_RELAYOUT_LOOP_ORDER";
+
+// Device relayout loop order, selected via ATLAS_RELAYOUT_LOOP_ORDER (shared with the host
+// relayout and the atlas-benchmark-relayout --loop-order option).
+//
+//  - nproma_outermost (device default): the flat, element-per-thread grid-stride kernels.
+//    Consecutive threads map to consecutive points, which keeps the contiguous (nproma)
+//    dimension coalesced on the blocked side. This preserves the historical device behaviour.
+//  - nproma_innermost: the per-block kernels. Each work item owns one blocked chunk and loops the
+//    contiguous nproma dimension as the innermost sequential loop, hoisting the per-element
+//    div/mod. This mirrors the host nproma_innermost loop order and is offered so the tradeoff
+//    (contiguous per-thread runs vs. cross-thread coalescing) can be measured on real hardware.
+enum class RelayoutLoopOrder {
+    nproma_innermost,
+    nproma_outermost
+};
+
+RelayoutLoopOrder relayout_loop_order() {
+    static RelayoutLoopOrder cached = []() {
+         const char* order = std::getenv(relayout_loop_order_env);
+         if (order && std::strcmp(order, "nproma_innermost") == 0) {
+             return RelayoutLoopOrder::nproma_innermost;
+         }
+         return RelayoutLoopOrder::nproma_outermost;
+    }();
+    return cached;
+}
+
+// Distinguishes the two roles a view can play in a relayout, used as an explicit dispatch tag
+// instead of a bare bool. A Blocked view has a contiguous block as its last (nproma) dimension;
+// a Nonblocked view is a plain layout_right field.
+enum class ViewType {
+    Blocked,
+    Nonblocked
+};
 
 template <typename Layout, typename View>
 auto make_relayout_mdspan(View& view) {
@@ -85,68 +119,40 @@ auto make_relayout_mdspan(View& view) {
     return make_relayout_mdspan<layout_stride>(view);
 }
 
-template <typename Layout, bool BlockedView, typename View, typename Operation>
+template <typename Layout, ViewType VType, typename View, typename Operation>
 void dispatch_relayout_view_mdspan(View& view, Operation&& operation) {
     if (is_aligned<64>(view)) {
-        if constexpr (BlockedView) {
+        if constexpr (VType == ViewType::Blocked) {
             switch (last_extent(view)) {
-                case 16:
-                    return operation(make_mdspan<extent_with_static_last_dim<16>, Layout, restrict_aligned_accessor_policy<64>>(view));
-                case 32:
-                    return operation(make_mdspan<extent_with_static_last_dim<32>, Layout, restrict_aligned_accessor_policy<64>>(view));
-                case 64:
-                    return operation(make_mdspan<extent_with_static_last_dim<64>, Layout, restrict_aligned_accessor_policy<64>>(view));
-                default:
-                    return operation(make_mdspan<Layout, restrict_aligned_accessor_policy<64>>(view));
+                case 16: return operation(make_mdspan<extent_with_static_last_dim<16>, Layout, restrict_aligned_accessor_policy<64>>(view));
+                case 32: return operation(make_mdspan<extent_with_static_last_dim<32>, Layout, restrict_aligned_accessor_policy<64>>(view));
+                case 64: return operation(make_mdspan<extent_with_static_last_dim<64>, Layout, restrict_aligned_accessor_policy<64>>(view));
+                default: return operation(make_mdspan<Layout, restrict_aligned_accessor_policy<64>>(view));
             }
         }
         return operation(make_mdspan<Layout, restrict_aligned_accessor_policy<64>>(view));
     }
 
-    if constexpr (BlockedView) {
+    if constexpr (VType == ViewType::Blocked) {
         switch (last_extent(view)) {
-            case 16:
-                return operation(make_mdspan<extent_with_static_last_dim<16>, Layout, restrict_accessor>(view));
-            case 32:
-                return operation(make_mdspan<extent_with_static_last_dim<32>, Layout, restrict_accessor>(view));
-            case 64:
-                return operation(make_mdspan<extent_with_static_last_dim<64>, Layout, restrict_accessor>(view));
-            default:
-                return operation(make_relayout_mdspan<Layout>(view));
+            case 16: return operation(make_mdspan<extent_with_static_last_dim<16>, Layout, restrict_accessor>(view));
+            case 32: return operation(make_mdspan<extent_with_static_last_dim<32>, Layout, restrict_accessor>(view));
+            case 64: return operation(make_mdspan<extent_with_static_last_dim<64>, Layout, restrict_accessor>(view));
+            default: return operation(make_relayout_mdspan<Layout>(view));
         }
     }
     return operation(make_relayout_mdspan<Layout>(view));
 }
 
-template <bool SourceBlocked, bool TargetBlocked, typename SourceView, typename TargetView, typename Operation>
+template <ViewType Source, ViewType Target, typename SourceView, typename TargetView, typename Operation>
 void dispatch_relayout_mdspan(SourceView& source, TargetView& target, Operation&& operation) {
-    if (can_use_layout_right(source) && can_use_layout_right(target)) {
-        ATLAS_DEBUG("device relayout: using mdspan with layout_right for both views");
-        return dispatch_relayout_view_mdspan<layout_right, SourceBlocked>(source, [&](const auto& source_view) {
-            return dispatch_relayout_view_mdspan<layout_right, TargetBlocked>(target, [&](const auto& target_view) {
-                return operation(source_view, target_view);
-            });
-        });
-    }
-    if (can_use_layout_right(source)) {
-        ATLAS_DEBUG("device relayout: using mdspan with layout_right for source and layout_stride for target");
-        return dispatch_relayout_view_mdspan<layout_right, SourceBlocked>(source, [&](const auto& source_view) {
-            return dispatch_relayout_view_mdspan<layout_stride, TargetBlocked>(target, [&](const auto& target_view) {
-                return operation(source_view, target_view);
-            });
-        });
-    }
-    if (can_use_layout_right(target)) {
-        ATLAS_DEBUG("device relayout: using mdspan with layout_stride for source and layout_right for target");
-        return dispatch_relayout_view_mdspan<layout_stride, SourceBlocked>(source, [&](const auto& source_view) {
-            return dispatch_relayout_view_mdspan<layout_right, TargetBlocked>(target, [&](const auto& target_view) {
-                return operation(source_view, target_view);
-            });
-        });
-    }
-    ATLAS_DEBUG("device relayout: using mdspan with layout_stride");
-    return dispatch_relayout_view_mdspan<layout_stride, SourceBlocked>(source, [&](const auto& source_view) {
-        return dispatch_relayout_view_mdspan<layout_stride, TargetBlocked>(target, [&](const auto& target_view) {
+    // Nonblocked fields are always layout_right. Blocked fields always have a contiguous block
+    // (the last dimension), but the field as a whole may not be contiguous, so they use
+    // layout_stride. The layout for each view is therefore fixed by whether it is blocked.
+    using SourceLayout = std::conditional_t<Source == ViewType::Blocked, layout_stride, layout_right>;
+    using TargetLayout = std::conditional_t<Target == ViewType::Blocked, layout_stride, layout_right>;
+    return dispatch_relayout_view_mdspan<SourceLayout, Source>(source, [&](const auto& source_view) {
+        return dispatch_relayout_view_mdspan<TargetLayout, Target>(target, [&](const auto& target_view) {
             return operation(source_view, target_view);
         });
     });
@@ -237,6 +243,61 @@ ATLAS_GLOBAL void kernel_copy_blocked_to_nonblocked_mdspan(const Blocked blocked
     }
 }
 
+/// @brief Per-block (nproma_innermost) variant of the blocked-to-nonblocked kernel.
+///
+/// Each grid-stride work item owns one blocked chunk (jblk) for a fixed (jlev, jvar) and loops over
+/// the contiguous nproma dimension (jrof) as the innermost sequential loop. This hoists the
+/// per-element div/mod out of the inner loop and makes the blocked-side access unit-stride within a
+/// thread, mirroring the host nproma_innermost loop order.
+template <class Blocked, class Nonblocked>
+ATLAS_GLOBAL void kernel_copy_blocked_to_nonblocked_mdspan_perblock(const Blocked blocked, Nonblocked nonblocked) {
+    idx_t npts   = nonblocked.extent(0);
+    idx_t nproma = blocked.extent(blocked.rank()-1);
+    idx_t nblk   = blocked.extent(0);
+    static_assert(nonblocked.rank() == blocked.rank()-1);
+    if constexpr(blocked.rank()==4) {
+        idx_t nlev = nonblocked.extent(1);
+        idx_t nvar = nonblocked.extent(2);
+        idx_t work_units = nblk * nlev * nvar;
+        auto traversal = KernelTraversal::current();
+        for (idx_t unit = traversal.offset; unit < work_units; unit += traversal.stride) {
+            idx_t jblk  = unit % nblk;
+            idx_t entry = unit / nblk;
+            idx_t jlev  = entry % nlev;
+            idx_t jvar  = entry / nlev;
+            idx_t base  = jblk * nproma;
+            idx_t count = min(nproma, npts - base);
+            for (idx_t jrof = 0; jrof < count; ++jrof) {
+                nonblocked(base + jrof, jlev, jvar) = blocked(jblk, jvar, jlev, jrof);
+            }
+        }
+    }
+    else if constexpr (blocked.rank()==3) {
+        idx_t nlev = nonblocked.extent(1);
+        idx_t work_units = nblk * nlev;
+        auto traversal = KernelTraversal::current();
+        for (idx_t unit = traversal.offset; unit < work_units; unit += traversal.stride) {
+            idx_t jblk = unit % nblk;
+            idx_t jlev = unit / nblk;
+            idx_t base = jblk * nproma;
+            idx_t count = min(nproma, npts - base);
+            for (idx_t jrof = 0; jrof < count; ++jrof) {
+                nonblocked(base + jrof, jlev) = blocked(jblk, jlev, jrof);
+            }
+        }
+    }
+    else if constexpr (blocked.rank()==2) {
+        auto traversal = KernelTraversal::current();
+        for (idx_t jblk = traversal.offset; jblk < nblk; jblk += traversal.stride) {
+            idx_t base = jblk * nproma;
+            idx_t count = min(nproma, npts - base);
+            for (idx_t jrof = 0; jrof < count; ++jrof) {
+                nonblocked(base + jrof) = blocked(jblk, jrof);
+            }
+        }
+    }
+}
+
 template <class Nonblocked, class Blocked>
 ATLAS_GLOBAL void kernel_copy_nonblocked_to_blocked_mdspan(Nonblocked nonblocked, Blocked blocked) {
     auto npts     = nonblocked.extent(0);
@@ -279,6 +340,60 @@ ATLAS_GLOBAL void kernel_copy_nonblocked_to_blocked_mdspan(Nonblocked nonblocked
     }
 }
 
+/// @brief Per-block (nproma_innermost) variant of the nonblocked-to-blocked kernel.
+///
+/// Inverse of kernel_copy_blocked_to_nonblocked_mdspan_perblock: each work item owns one blocked
+/// chunk (jblk) for a fixed (jlev, jvar) and loops over the contiguous nproma dimension innermost,
+/// giving unit-stride writes on the blocked side and hoisting the per-element div/mod.
+template <class Nonblocked, class Blocked>
+ATLAS_GLOBAL void kernel_copy_nonblocked_to_blocked_mdspan_perblock(Nonblocked nonblocked, Blocked blocked) {
+    idx_t npts   = nonblocked.extent(0);
+    idx_t nproma = blocked.extent(blocked.rank()-1);
+    idx_t nblk   = blocked.extent(0);
+    static_assert(nonblocked.rank() == blocked.rank()-1);
+    if constexpr(blocked.rank()==4) {
+        idx_t nlev = nonblocked.extent(1);
+        idx_t nvar = nonblocked.extent(2);
+        idx_t work_units = nblk * nlev * nvar;
+        auto traversal = KernelTraversal::current();
+        for (idx_t unit = traversal.offset; unit < work_units; unit += traversal.stride) {
+            idx_t jblk  = unit % nblk;
+            idx_t entry = unit / nblk;
+            idx_t jlev  = entry % nlev;
+            idx_t jvar  = entry / nlev;
+            idx_t base  = jblk * nproma;
+            idx_t count = min(nproma, npts - base);
+            for (idx_t jrof = 0; jrof < count; ++jrof) {
+                blocked(jblk, jvar, jlev, jrof) = nonblocked(base + jrof, jlev, jvar);
+            }
+        }
+    }
+    else if constexpr (blocked.rank()==3) {
+        idx_t nlev = nonblocked.extent(1);
+        idx_t work_units = nblk * nlev;
+        auto traversal = KernelTraversal::current();
+        for (idx_t unit = traversal.offset; unit < work_units; unit += traversal.stride) {
+            idx_t jblk = unit % nblk;
+            idx_t jlev = unit / nblk;
+            idx_t base = jblk * nproma;
+            idx_t count = min(nproma, npts - base);
+            for (idx_t jrof = 0; jrof < count; ++jrof) {
+                blocked(jblk, jlev, jrof) = nonblocked(base + jrof, jlev);
+            }
+        }
+    }
+    else if constexpr (blocked.rank()==2) {
+        auto traversal = KernelTraversal::current();
+        for (idx_t jblk = traversal.offset; jblk < nblk; jblk += traversal.stride) {
+            idx_t base = jblk * nproma;
+            idx_t count = min(nproma, npts - base);
+            for (idx_t jrof = 0; jrof < count; ++jrof) {
+                blocked(jblk, jrof) = nonblocked(base + jrof);
+            }
+        }
+    }
+}
+
 template <class Nonblocked, class Blocked>
 /**
  * @brief Launch or run the device copy from a nonblocked view to a blocked view.
@@ -301,17 +416,34 @@ void device_copy_nonblocked_to_blocked_impl(Nonblocked nonblocked, Blocked block
         ATLAS_ASSERT(nonblocked.extent(1) == blocked.extent(1));
     }
     #if HIC_COMPILER
-    idx_t work_size = nonblocked.extent(0);
-    if constexpr(blocked.rank()==4) {
-        work_size *= nonblocked.extent(1) * nonblocked.extent(2);
+    if (relayout_loop_order() == RelayoutLoopOrder::nproma_innermost) {
+        idx_t work_units = blocked.extent(0);
+        if constexpr(blocked.rank()==4) {
+            work_units *= nonblocked.extent(1) * nonblocked.extent(2);
+        }
+        else if constexpr(blocked.rank()==3) {
+            work_units *= nonblocked.extent(1);
+        }
+        kernel_copy_nonblocked_to_blocked_mdspan_perblock<<<blocks_per_grid(work_units),threads_per_block()>>>(nonblocked, blocked);
     }
-    else if constexpr(blocked.rank()==3) {
-        work_size *= nonblocked.extent(1);
+    else {
+        idx_t work_size = nonblocked.extent(0);
+        if constexpr(blocked.rank()==4) {
+            work_size *= nonblocked.extent(1) * nonblocked.extent(2);
+        }
+        else if constexpr(blocked.rank()==3) {
+            work_size *= nonblocked.extent(1);
+        }
+        kernel_copy_nonblocked_to_blocked_mdspan<<<blocks_per_grid(work_size),threads_per_block()>>>(nonblocked, blocked);
     }
-    kernel_copy_nonblocked_to_blocked_mdspan<<<blocks_per_grid(work_size),threads_per_block()>>>(nonblocked, blocked);
     HIC_CHECK_KERNEL_LAUNCH();
     #else
-    kernel_copy_nonblocked_to_blocked_mdspan(nonblocked, blocked);
+    if (relayout_loop_order() == RelayoutLoopOrder::nproma_innermost) {
+        kernel_copy_nonblocked_to_blocked_mdspan_perblock(nonblocked, blocked);
+    }
+    else {
+        kernel_copy_nonblocked_to_blocked_mdspan(nonblocked, blocked);
+    }
     #endif
 }
 
@@ -343,17 +475,34 @@ void device_copy_blocked_to_nonblocked_impl(Blocked blocked, Nonblocked nonblock
         ATLAS_THROW_EXCEPTION("transposition not implemented");
     }
     #if HIC_COMPILER
-    idx_t work_size = nonblocked.extent(0);
-    if constexpr(blocked.rank()==4) {
-        work_size *= nonblocked.extent(1) * nonblocked.extent(2);
+    if (relayout_loop_order() == RelayoutLoopOrder::nproma_innermost) {
+        idx_t work_units = blocked.extent(0);
+        if constexpr(blocked.rank()==4) {
+            work_units *= nonblocked.extent(1) * nonblocked.extent(2);
+        }
+        else if constexpr(blocked.rank()==3) {
+            work_units *= nonblocked.extent(1);
+        }
+        kernel_copy_blocked_to_nonblocked_mdspan_perblock<<<blocks_per_grid(work_units),threads_per_block()>>>(blocked, nonblocked);
     }
-    else if constexpr(blocked.rank()==3) {
-        work_size *= nonblocked.extent(1);
+    else {
+        idx_t work_size = nonblocked.extent(0);
+        if constexpr(blocked.rank()==4) {
+            work_size *= nonblocked.extent(1) * nonblocked.extent(2);
+        }
+        else if constexpr(blocked.rank()==3) {
+            work_size *= nonblocked.extent(1);
+        }
+        kernel_copy_blocked_to_nonblocked_mdspan<<<blocks_per_grid(work_size),threads_per_block()>>>(blocked, nonblocked);
     }
-    kernel_copy_blocked_to_nonblocked_mdspan<<<blocks_per_grid(work_size),threads_per_block()>>>(blocked, nonblocked);
     HIC_CHECK_KERNEL_LAUNCH();
     #else
-    kernel_copy_blocked_to_nonblocked_mdspan(blocked, nonblocked);
+    if (relayout_loop_order() == RelayoutLoopOrder::nproma_innermost) {
+        kernel_copy_blocked_to_nonblocked_mdspan_perblock(blocked, nonblocked);
+    }
+    else {
+        kernel_copy_blocked_to_nonblocked_mdspan(blocked, nonblocked);
+    }
     #endif
 }
 
@@ -410,6 +559,72 @@ ATLAS_GLOBAL void kernel_copy_blocked_to_blocked_mdspan(BlockedIn blocked_in, Bl
     }
 }
 
+/// @brief Per-block (nproma_innermost) variant of the blocked-to-blocked kernel.
+///
+/// Each work item owns one output blocked chunk (jblk_out) for a fixed (jlev, jvar) and loops over
+/// the contiguous output nproma dimension innermost, giving unit-stride writes on the output side.
+/// The input indices are still computed per element because the two fields may use a different
+/// nproma, so the input side remains a general gather.
+template <class BlockedIn, class BlockedOut>
+ATLAS_GLOBAL void kernel_copy_blocked_to_blocked_mdspan_perblock(BlockedIn blocked_in, BlockedOut blocked_out) {
+    idx_t nproma_in  = blocked_in.extent(blocked_in.rank()-1);
+    idx_t nproma_out = blocked_out.extent(blocked_out.rank()-1);
+    idx_t nblks_out  = blocked_out.extent(0);
+    idx_t total_points_in  = blocked_in.extent(0) * nproma_in;
+    idx_t total_points_out = nblks_out * nproma_out;
+    idx_t total_points     = min(total_points_in, total_points_out);
+    if constexpr (blocked_in.rank()==4) {
+        idx_t nlev = blocked_in.extent(1);
+        idx_t nvar = blocked_in.extent(2);
+        idx_t work_units = nblks_out * nlev * nvar;
+        auto traversal = KernelTraversal::current();
+        for (idx_t unit = traversal.offset; unit < work_units; unit += traversal.stride) {
+            idx_t jblk_out = unit % nblks_out;
+            idx_t entry    = unit / nblks_out;
+            idx_t jlev     = entry % nlev;
+            idx_t jvar     = entry / nlev;
+            idx_t base_out = jblk_out * nproma_out;
+            for (idx_t jrof_out = 0; jrof_out < nproma_out; ++jrof_out) {
+                idx_t point = base_out + jrof_out;
+                if (point >= total_points) break;
+                idx_t jblk_in = point / nproma_in;
+                idx_t jrof_in = point - jblk_in * nproma_in;
+                blocked_out(jblk_out, jlev, jvar, jrof_out) = blocked_in(jblk_in, jlev, jvar, jrof_in);
+            }
+        }
+    }
+    else if constexpr (blocked_in.rank()==3) {
+        idx_t nlev = blocked_in.extent(1);
+        idx_t work_units = nblks_out * nlev;
+        auto traversal = KernelTraversal::current();
+        for (idx_t unit = traversal.offset; unit < work_units; unit += traversal.stride) {
+            idx_t jblk_out = unit % nblks_out;
+            idx_t jlev     = unit / nblks_out;
+            idx_t base_out = jblk_out * nproma_out;
+            for (idx_t jrof_out = 0; jrof_out < nproma_out; ++jrof_out) {
+                idx_t point = base_out + jrof_out;
+                if (point >= total_points) break;
+                idx_t jblk_in = point / nproma_in;
+                idx_t jrof_in = point - jblk_in * nproma_in;
+                blocked_out(jblk_out, jlev, jrof_out) = blocked_in(jblk_in, jlev, jrof_in);
+            }
+        }
+    }
+    else if constexpr (blocked_in.rank()==2) {
+        auto traversal = KernelTraversal::current();
+        for (idx_t jblk_out = traversal.offset; jblk_out < nblks_out; jblk_out += traversal.stride) {
+            idx_t base_out = jblk_out * nproma_out;
+            for (idx_t jrof_out = 0; jrof_out < nproma_out; ++jrof_out) {
+                idx_t point = base_out + jrof_out;
+                if (point >= total_points) break;
+                idx_t jblk_in = point / nproma_in;
+                idx_t jrof_in = point - jblk_in * nproma_in;
+                blocked_out(jblk_out, jrof_out) = blocked_in(jblk_in, jrof_in);
+            }
+        }
+    }
+}
+
 template <class BlockedIn, class BlockedOut>
 /**
  * @brief Launch or run the device copy between two blocked views.
@@ -433,52 +648,66 @@ void device_copy_blocked_to_blocked_impl(BlockedIn blocked_in, BlockedOut blocke
         ATLAS_ASSERT(blocked_in.extent(1) == blocked_out.extent(1));
     }
     #if HIC_COMPILER
-    idx_t input_points = blocked_in.extent(0) * blocked_in.extent(blocked_in.rank()-1);
-    idx_t output_points = blocked_out.extent(0) * blocked_out.extent(blocked_out.rank()-1);
-    idx_t work_size = input_points < output_points ? input_points : output_points;
-    if constexpr(blocked_in.rank()==4) {
-        work_size *= blocked_in.extent(1) * blocked_in.extent(2);
+    if (relayout_loop_order() == RelayoutLoopOrder::nproma_innermost) {
+        idx_t work_units = blocked_out.extent(0);
+        if constexpr(blocked_in.rank()==4) {
+            work_units *= blocked_in.extent(1) * blocked_in.extent(2);
+        }
+        else if constexpr(blocked_in.rank()==3) {
+            work_units *= blocked_in.extent(1);
+        }
+        kernel_copy_blocked_to_blocked_mdspan_perblock<<<blocks_per_grid(work_units),threads_per_block()>>>(blocked_in, blocked_out);
     }
-    else if constexpr(blocked_in.rank()==3) {
-        work_size *= blocked_in.extent(1);
+    else {
+        idx_t input_points = blocked_in.extent(0) * blocked_in.extent(blocked_in.rank()-1);
+        idx_t output_points = blocked_out.extent(0) * blocked_out.extent(blocked_out.rank()-1);
+        idx_t work_size = input_points < output_points ? input_points : output_points;
+        if constexpr(blocked_in.rank()==4) {
+            work_size *= blocked_in.extent(1) * blocked_in.extent(2);
+        }
+        else if constexpr(blocked_in.rank()==3) {
+            work_size *= blocked_in.extent(1);
+        }
+        kernel_copy_blocked_to_blocked_mdspan<<<blocks_per_grid(work_size),threads_per_block()>>>(blocked_in, blocked_out);
     }
-    kernel_copy_blocked_to_blocked_mdspan<<<blocks_per_grid(work_size),threads_per_block()>>>(blocked_in, blocked_out);
     HIC_CHECK_KERNEL_LAUNCH();
     #else
-    kernel_copy_blocked_to_blocked_mdspan(blocked_in, blocked_out);
+    if (relayout_loop_order() == RelayoutLoopOrder::nproma_innermost) {
+        kernel_copy_blocked_to_blocked_mdspan_perblock(blocked_in, blocked_out);
+    }
+    else {
+        kernel_copy_blocked_to_blocked_mdspan(blocked_in, blocked_out);
+    }
     #endif
 }
 
 template <class Nonblocked, class Blocked>
 void device_copy_nonblocked_to_blocked_mdspan(Nonblocked nonblocked, Blocked blocked) {
-    if (relayout_use_mdspan()) {
-        return dispatch_relayout_mdspan<false, true>(nonblocked, blocked, [&](const auto& nonblocked_view, const auto& blocked_view) {
+    if (relayout_implementation() == RelayoutImplementation::mdspan) {
+        return dispatch_relayout_mdspan<ViewType::Nonblocked, ViewType::Blocked>(nonblocked, blocked, [&](const auto& nonblocked_view, const auto& blocked_view) {
             return device_copy_nonblocked_to_blocked_impl(nonblocked_view, blocked_view);
         });
     }
-    ATLAS_DEBUG("device relayout: using arrayview");
     return device_copy_nonblocked_to_blocked_impl(nonblocked, blocked);
 }
 
 template <class Blocked, class Nonblocked>
 void device_copy_blocked_to_nonblocked_mdspan(Blocked blocked, Nonblocked nonblocked) {
-    if (relayout_use_mdspan()) {
-        return dispatch_relayout_mdspan<true, false>(blocked, nonblocked, [&](const auto& blocked_view, const auto& nonblocked_view) {
+    if (relayout_implementation() == RelayoutImplementation::mdspan) {
+        return dispatch_relayout_mdspan<ViewType::Blocked, ViewType::Nonblocked>(blocked, nonblocked, [&](const auto& blocked_view, const auto& nonblocked_view) {
             return device_copy_blocked_to_nonblocked_impl(blocked_view, nonblocked_view);
         });
     }
-    ATLAS_DEBUG("device relayout: using arrayview");
     return device_copy_blocked_to_nonblocked_impl(blocked, nonblocked);
 }
 
 template <class BlockedIn, class BlockedOut>
 void device_copy_blocked_to_blocked_mdspan(BlockedIn blocked_in, BlockedOut blocked_out) {
-    if (relayout_use_mdspan()) {
-        return dispatch_relayout_mdspan<true, true>(blocked_in, blocked_out, [&](const auto& blocked_in_view, const auto& blocked_out_view) {
+    if (relayout_implementation() == RelayoutImplementation::mdspan) {
+        return dispatch_relayout_mdspan<ViewType::Blocked, ViewType::Blocked>(blocked_in, blocked_out, [&](const auto& blocked_in_view, const auto& blocked_out_view) {
             return device_copy_blocked_to_blocked_impl(blocked_in_view, blocked_out_view);
         });
     }
-    ATLAS_DEBUG("device relayout: using arrayview");
     return device_copy_blocked_to_blocked_impl(blocked_in, blocked_out);
 }
 
@@ -489,30 +718,24 @@ void device_copy_blocked_to_blocked_mdspan(BlockedIn blocked_in, BlockedOut bloc
 // Explicit instantiation
 namespace atlas {
 
-#define EXPLICIT_TEMPLATE_INSTANTIATION_MDSPAN_TYPE_RANK_ACCESSOR(TYPE, BLOCKED_RANK, ACCESSOR) \
-    template void device_copy_blocked_to_nonblocked_mdspan<mdspan<const TYPE,dims<BLOCKED_RANK>,layout_stride,ACCESSOR<const TYPE>>,mdspan<TYPE,dims<BLOCKED_RANK-1>,layout_stride,ACCESSOR<TYPE>>>(mdspan<const TYPE,dims<BLOCKED_RANK>,layout_stride,ACCESSOR<const TYPE>>, mdspan<TYPE,dims<BLOCKED_RANK-1>,layout_stride,ACCESSOR<TYPE>>); \
-    template void device_copy_nonblocked_to_blocked_mdspan<mdspan<const TYPE,dims<BLOCKED_RANK-1>,layout_stride,ACCESSOR<const TYPE>>,mdspan<TYPE,dims<BLOCKED_RANK>,layout_stride,ACCESSOR<TYPE>>>(mdspan<const TYPE,dims<BLOCKED_RANK-1>,layout_stride,ACCESSOR<const TYPE>>, mdspan<TYPE,dims<BLOCKED_RANK>,layout_stride,ACCESSOR<TYPE>>); \
-    template void device_copy_blocked_to_blocked_mdspan<mdspan<const TYPE,dims<BLOCKED_RANK>,layout_stride,ACCESSOR<const TYPE>>,mdspan<TYPE,dims<BLOCKED_RANK>,layout_stride,ACCESSOR<TYPE>>>(mdspan<const TYPE,dims<BLOCKED_RANK>,layout_stride,ACCESSOR<const TYPE>>, mdspan<TYPE,dims<BLOCKED_RANK>,layout_stride,ACCESSOR<TYPE>>);
-
 #define EXPLICIT_TEMPLATE_INSTANTIATION_TYPE_RANK(TYPE, BLOCKED_RANK) \
     template void device_copy_blocked_to_nonblocked_mdspan<array::ArrayView<const TYPE,BLOCKED_RANK>,array::ArrayView<TYPE,BLOCKED_RANK-1>>(array::ArrayView<const TYPE,BLOCKED_RANK>, array::ArrayView<TYPE,BLOCKED_RANK-1>); \
     template void device_copy_nonblocked_to_blocked_mdspan<array::ArrayView<const TYPE,BLOCKED_RANK-1>,array::ArrayView<TYPE,BLOCKED_RANK>>(array::ArrayView<const TYPE,BLOCKED_RANK-1>, array::ArrayView<TYPE,BLOCKED_RANK>); \
     template void device_copy_blocked_to_blocked_mdspan<array::ArrayView<const TYPE,BLOCKED_RANK>,array::ArrayView<TYPE,BLOCKED_RANK>>(array::ArrayView<const TYPE,BLOCKED_RANK>, array::ArrayView<TYPE,BLOCKED_RANK>); \
     EXPLICIT_TEMPLATE_INSTANTIATION_MDSPAN_TYPE_RANK_ACCESSOR(TYPE, BLOCKED_RANK, restrict_accessor)
 
-#define EXPLICIT_TEMPLATE_INSTATIATION(RANK)                \
+#define EXPLICIT_TEMPLATE_INSTANTIATION(RANK)                \
     EXPLICIT_TEMPLATE_INSTANTIATION_TYPE_RANK(double, RANK) \
     EXPLICIT_TEMPLATE_INSTANTIATION_TYPE_RANK(float , RANK) \
     EXPLICIT_TEMPLATE_INSTANTIATION_TYPE_RANK(int   , RANK) \
     EXPLICIT_TEMPLATE_INSTANTIATION_TYPE_RANK(long  , RANK)
 
+EXPLICIT_TEMPLATE_INSTANTIATION(2)
+EXPLICIT_TEMPLATE_INSTANTIATION(3)
+EXPLICIT_TEMPLATE_INSTANTIATION(4)
 
-EXPLICIT_TEMPLATE_INSTATIATION(2)
-EXPLICIT_TEMPLATE_INSTATIATION(3)
-EXPLICIT_TEMPLATE_INSTATIATION(4)
-
-#undef EXPLICIT_TEMPLATE_INSTATIATION_TYPE_RANK
+#undef EXPLICIT_TEMPLATE_INSTANTIATION_TYPE_RANK
 #undef EXPLICIT_TEMPLATE_INSTANTIATION_MDSPAN_TYPE_RANK_ACCESSOR
-#undef EXPLICIT_TEMPLATE_INSTATIATION
+#undef EXPLICIT_TEMPLATE_INSTANTIATION
 
 }  // namespace atlas

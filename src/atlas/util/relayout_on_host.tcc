@@ -29,6 +29,13 @@
 #define ATLAS_RELAYOUT_SIMD atlas_omp_pragma(omp simd)
 // #define ATLAS_RELAYOUT_SIMD
 
+#define ATLAS_RELAYOUT_PROFILING 0
+#if ATLAS_RELAYOUT_PROFILING
+#define ATLAS_RELAYOUT_NOINLINE_IF_PROFILING_IF_PROFILING __attribute__((noinline))
+#else
+#define ATLAS_RELAYOUT_NOINLINE_IF_PROFILING
+#endif
+
 #include "atlas/util/relayout.h"
 
 #include <cstdint>
@@ -43,6 +50,8 @@
 #include "atlas/field/FieldSet.h"
 #include "atlas/mdspan.h"
 #include "atlas/runtime/Log.h"
+
+#include "atlas/runtime/Trace.h"
 
 
 #ifdef atlas_omp_parallel_for
@@ -355,6 +364,7 @@ struct CopyNonblockedToBlockedContiguousRawPointers {
 
     /// @brief Copy one logical blocked chunk into the output blocked view.
     /// @param jblk Block index in the blocked output view.
+    ATLAS_RELAYOUT_NOINLINE_IF_PROFILING 
     void operator()(idx_t jblk) const {
         const idx_t jpbegin = jblk * nproma;
 
@@ -401,6 +411,7 @@ struct CopyNonblockedToBlockedContiguousRawPointers {
 
 private:
     template <idx_t nrof_static = 0>
+    ATLAS_RELAYOUT_NOINLINE_IF_PROFILING
     void copy_nonblocked_to_blocked_rank4_block(value_type* ATLAS_RELAYOUT_RESTRICT raw_blocked_jblk,
                                                 const value_type* ATLAS_RELAYOUT_RESTRICT raw_nonblocked_jblk,
                                                 [[maybe_unused]] const idx_t nrof) const {
@@ -466,6 +477,7 @@ private:
     }
 
     template <idx_t nrof_static = 0>
+    ATLAS_RELAYOUT_NOINLINE_IF_PROFILING
     void copy_nonblocked_to_blocked_rank3_block(value_type* ATLAS_RELAYOUT_RESTRICT raw_blocked_jblk,
                                                 const value_type* ATLAS_RELAYOUT_RESTRICT raw_nonblocked_jblk,
                                                 [[maybe_unused]] const idx_t nrof) const {
@@ -516,6 +528,7 @@ private:
     }
 
     template <idx_t nrof_static = 0>
+    ATLAS_RELAYOUT_NOINLINE_IF_PROFILING
     void copy_nonblocked_to_blocked_rank2_block(value_type* ATLAS_RELAYOUT_RESTRICT raw_blocked_jblk,
                                                 const value_type* ATLAS_RELAYOUT_RESTRICT raw_nonblocked_jblk,
                                                 [[maybe_unused]] const idx_t nrof) const {
@@ -548,6 +561,7 @@ template <size_t nproma_extent, class Nonblocked, class Blocked>
 /// - `nonblocked.rank() == blocked.rank() - 1`
 /// - `blocked` is block-contiguous
 /// - `nonblocked` behaves like layout-right contiguous storage
+ATLAS_RELAYOUT_NOINLINE_IF_PROFILING
 void host_copy_nonblocked_to_blocked_contiguous_raw_pointers_nproma(const Nonblocked nonblocked, Blocked blocked) {
     ATLAS_ASSERT(is_block_contiguous(blocked));
     ATLAS_ASSERT(has_layout_right(nonblocked));
@@ -613,6 +627,7 @@ struct CopyBlockedToNonblockedContiguousRawPointers {
 
     /// @brief Copy one blocked chunk into its corresponding logical point range.
     /// @param jblk Block index in the blocked input view.
+    ATLAS_RELAYOUT_NOINLINE_IF_PROFILING
     void operator()(idx_t jblk) const {
         const idx_t jpbegin = jblk * nproma;
 
@@ -659,6 +674,7 @@ struct CopyBlockedToNonblockedContiguousRawPointers {
 
 private:
     template <idx_t nrof_static = 0>
+    ATLAS_RELAYOUT_NOINLINE_IF_PROFILING
     void copy_blocked_to_nonblocked_rank4_block(const value_type* ATLAS_RELAYOUT_RESTRICT raw_blocked_jblk,
                                                 value_type* ATLAS_RELAYOUT_RESTRICT raw_nonblocked_jblk,
                                                 [[maybe_unused]] const idx_t nrof) const {
@@ -724,6 +740,7 @@ private:
     }
 
     template <idx_t nrof_static = 0>
+    ATLAS_RELAYOUT_NOINLINE_IF_PROFILING
     void copy_blocked_to_nonblocked_rank3_block(const value_type* ATLAS_RELAYOUT_RESTRICT raw_blocked_jblk,
                                                 value_type* ATLAS_RELAYOUT_RESTRICT raw_nonblocked_jblk,
                                                 [[maybe_unused]] const idx_t nrof) const {
@@ -772,6 +789,7 @@ private:
     }
 
     template <idx_t nrof_static = 0>
+    ATLAS_RELAYOUT_NOINLINE_IF_PROFILING
     void copy_blocked_to_nonblocked_rank2_block(const value_type* ATLAS_RELAYOUT_RESTRICT raw_blocked_jblk,
                                                 value_type* ATLAS_RELAYOUT_RESTRICT raw_nonblocked_jblk,
                                                 [[maybe_unused]] const idx_t nrof) const {
@@ -804,6 +822,7 @@ template <size_t nproma_extent, class Blocked, class Nonblocked>
 /// - `nonblocked.rank() == blocked.rank() - 1`
 /// - `blocked` is block-contiguous
 /// - `nonblocked` behaves like layout-right contiguous storage
+ATLAS_RELAYOUT_NOINLINE_IF_PROFILING
 void host_copy_blocked_to_nonblocked_contiguous_raw_pointers_nproma(const Blocked blocked, Nonblocked nonblocked) {
     ATLAS_ASSERT(is_block_contiguous(blocked));
     ATLAS_ASSERT(has_layout_right(nonblocked));
@@ -1037,6 +1056,7 @@ struct CopyBlockedToNonblockedMdspan {
 
     /// @brief Copy one blocked chunk into the corresponding nonblocked chunk.
     /// @param jblk Block index in the blocked input view.
+    ATLAS_RELAYOUT_NOINLINE_IF_PROFILING
     void operator()(idx_t jblk) const {
         const idx_t jpbegin = jblk * nproma;
 
@@ -1088,6 +1108,7 @@ struct CopyBlockedToNonblockedMdspan {
 private:
 
     template <idx_t nrof_static = 0>
+    ATLAS_RELAYOUT_NOINLINE_IF_PROFILING
     void copy_blocked_to_nonblocked_rank4_block(blocked_subspan_type& block,
                                                 const nonblocked_subspan_type& nonblocked_chunk,
                                                 [[maybe_unused]] const idx_t nrof) const {
@@ -1134,6 +1155,7 @@ private:
     }
 
     template <idx_t nrof_static = 0>
+    ATLAS_RELAYOUT_NOINLINE_IF_PROFILING
     void copy_blocked_to_nonblocked_rank3_block(blocked_subspan_type& block,
                                                 const nonblocked_subspan_type& nonblocked_chunk,
                                                 [[maybe_unused]] const idx_t nrof) const {
@@ -1219,6 +1241,7 @@ struct CopyNonblockedToBlockedMdspan {
 
     /// @brief Copy one nonblocked chunk into the corresponding blocked chunk.
     /// @param jblk Block index in the blocked output view.
+    ATLAS_RELAYOUT_NOINLINE_IF_PROFILING
     void operator()(idx_t jblk) const {
         const idx_t jpbegin = jblk * nproma;
 
@@ -1270,6 +1293,7 @@ struct CopyNonblockedToBlockedMdspan {
 private:
 
     template <idx_t nrof_static = 0>
+    ATLAS_RELAYOUT_NOINLINE_IF_PROFILING
     void copy_nonblocked_to_blocked_rank4_block(const nonblocked_subspan_type& nonblocked_chunk, blocked_subspan_type& block,
                                                 [[maybe_unused]] const idx_t nrof) const {
         if constexpr (nrof_static == 0) {
@@ -1315,6 +1339,7 @@ private:
     }
 
     template <idx_t nrof_static = 0>
+    ATLAS_RELAYOUT_NOINLINE_IF_PROFILING
     void copy_nonblocked_to_blocked_rank3_block(const nonblocked_subspan_type& nonblocked_chunk, blocked_subspan_type& block,
                                                 [[maybe_unused]] const idx_t nrof) const {
         if constexpr (nrof_static == 0) {
@@ -1363,9 +1388,14 @@ template <size_t nproma_extent, class Blocked, class Nonblocked>
 ///
 /// This wrapper validates the common preconditions, chooses aligned or unaligned block access,
 /// and then launches one per-block worker over the blocked extent.
+ATLAS_RELAYOUT_NOINLINE_IF_PROFILING
 void host_copy_blocked_to_nonblocked_nproma(const Blocked blocked, Nonblocked nonblocked) {
     assert_requirements_on_blocked(blocked);
     assert_requirements_on_nonblocked(nonblocked);
+
+    // Add a harmless side-effect to force a unique assembly signature
+    volatile int linker_poison = 42; 
+    (void)linker_poison; 
 
     const idx_t nblks = blocked.extent(0);
     if (is_block_aligned(blocked)) {
@@ -1390,6 +1420,7 @@ template <size_t nproma_extent, class Nonblocked, class Blocked>
 ///
 /// This wrapper validates the common preconditions, chooses aligned or unaligned block access,
 /// and then launches one per-block worker over the blocked extent.
+ATLAS_RELAYOUT_NOINLINE_IF_PROFILING
 void host_copy_nonblocked_to_blocked_nproma(const Nonblocked nonblocked, Blocked blocked) {
     assert_requirements_on_nonblocked(nonblocked);
     assert_requirements_on_blocked(blocked);
@@ -1423,6 +1454,7 @@ template <class Nonblocked, class Blocked>
 /// - otherwise the mdspan/subspan implementation;
 /// - within each family, prefer compile-time `nproma` specialization when available, otherwise
 ///   switch over common runtime `nproma` values before using `dynamic_extent`.
+ATLAS_RELAYOUT_NOINLINE_IF_PROFILING
 void host_copy_nonblocked_to_blocked_impl(const Nonblocked nonblocked, Blocked blocked) {
     static_assert(nonblocked.rank() == blocked.rank()-1);
     const idx_t nproma = blocked.extent(blocked.rank() - 1);
@@ -1610,6 +1642,7 @@ struct CopyBlockedToBlockedBlockRawPointers {
 
     /// @brief Copy one destination block from the corresponding logical source range.
     /// @param jblk_out Block index in the blocked output view.
+    ATLAS_RELAYOUT_NOINLINE_IF_PROFILING
     void operator()(idx_t jblk_out) const {
         const idx_t jpbegin = jblk_out * nproma_out;
         if (jpbegin >= total_points) {
@@ -1634,6 +1667,7 @@ struct CopyBlockedToBlockedBlockRawPointers {
     }
 
 private:
+    ATLAS_RELAYOUT_NOINLINE_IF_PROFILING
     void copy_rank4_block(value_t* ATLAS_RELAYOUT_RESTRICT raw_blocked_out_jblk,
                           const idx_t jblk_out,
                           const idx_t jpbegin) const {
@@ -1664,6 +1698,7 @@ private:
         }
     }
 
+    ATLAS_RELAYOUT_NOINLINE_IF_PROFILING
     void copy_rank3_block(value_t* ATLAS_RELAYOUT_RESTRICT raw_blocked_out_jblk,
                           const idx_t jblk_out,
                           const idx_t jpbegin) const {
@@ -1689,6 +1724,7 @@ private:
         }
     }
 
+    ATLAS_RELAYOUT_NOINLINE_IF_PROFILING
     void copy_rank2_block(value_t* ATLAS_RELAYOUT_RESTRICT raw_blocked_out_jblk,
                           const idx_t jblk_out,
                           const idx_t jpbegin) const {
@@ -1743,6 +1779,7 @@ template <class BlockedIn, class BlockedOut>
  * equal-`nproma`, fully contiguous case. Otherwise it falls back to the per-block raw-pointer
  * kernel, which preserves logical ordering while repacking points into the destination block size.
  */
+ATLAS_RELAYOUT_NOINLINE_IF_PROFILING
 void host_copy_blocked_to_blocked_impl(const BlockedIn blocked_in, BlockedOut blocked_out) {
     static_assert(std::is_same_v<std::decay_t<typename BlockedIn::value_type>, std::decay_t<typename BlockedOut::value_type>>, "Data types of input and output views must match for blocked-to-blocked copy");
     using value_type = std::decay_t<typename BlockedOut::value_type>;
@@ -1781,16 +1818,19 @@ void host_copy_blocked_to_blocked_impl(const BlockedIn blocked_in, BlockedOut bl
 }
 
 template <class Nonblocked, class Blocked>
+ATLAS_RELAYOUT_NOINLINE_IF_PROFILING
 void host_copy_nonblocked_to_blocked_mdspan(const Nonblocked nonblocked, Blocked blocked) {
     return host_copy_nonblocked_to_blocked_impl(nonblocked, blocked);
 }
 
 template <class Blocked, class Nonblocked>
+ATLAS_RELAYOUT_NOINLINE_IF_PROFILING
 void host_copy_blocked_to_nonblocked_mdspan(const Blocked blocked, Nonblocked nonblocked) {
     return host_copy_blocked_to_nonblocked_impl(blocked, nonblocked);
 }
 
 template <class BlockedIn, class BlockedOut>
+ATLAS_RELAYOUT_NOINLINE_IF_PROFILING
 void host_copy_blocked_to_blocked_mdspan(const BlockedIn blocked_in, BlockedOut blocked_out) {
     return host_copy_blocked_to_blocked_impl(blocked_in, blocked_out);
 }

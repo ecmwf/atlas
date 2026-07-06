@@ -201,11 +201,11 @@
  *           ATLAS_RELAYOUT_BLOCKED_NONBLOCKED_USE_MEMCPY=1
  *           ATLAS_RELAYOUT_BLOCKED_NONBLOCKED_USE_MEMCPY=0
  *
- *   --implementation=raw_pointers|mdspan
+ *   --implementation=raw_pointers|mdspan|arrayview
  *       Sets ATLAS_RELAYOUT_IMPLEMENTATION.  This selects the host implementation family used by
  *       the public relayout wrapper.
  *
- *       Default: raw_pointers
+ *       Default: raw_pointers on host, arrayview on device
  *       When this benchmark is run without --implementation, it explicitly sets
  *       ATLAS_RELAYOUT_IMPLEMENTATION=raw_pointers.  In applications that do not use
  *       this benchmark, leaving ATLAS_RELAYOUT_IMPLEMENTATION unset also selects the raw-pointer
@@ -274,6 +274,11 @@ namespace {
 
 constexpr const char* implementation_raw_pointers = "raw_pointers";
 constexpr const char* implementation_mdspan = "mdspan";
+constexpr const char* implementation_arrayview = "arrayview";
+constexpr const char* benchmark_operation_all = "all";
+constexpr const char* benchmark_operation_b2n = "b2n";
+constexpr const char* benchmark_operation_n2b = "n2b";
+constexpr const char* benchmark_operation_b2b = "b2b";
 
 struct Settings {
     idx_t npts{1000000};
@@ -290,6 +295,7 @@ struct Settings {
     bool blocked_nonblocked_use_memcpy{false};
     bool index_operator{false};
     std::string implementation{implementation_raw_pointers};
+    std::string operation{benchmark_operation_all};
     std::string format{"table"};
     idx_t iterations{20};
     idx_t warmup{2};
@@ -303,10 +309,12 @@ struct Settings {
         assert_positive("iterations", iterations);
         assert_one_of("precision", {"float", "single", "double"}, precision);
         assert_one_of("format", {"table", "json"}, format);
+        assert_one_of("operation", {benchmark_operation_all, benchmark_operation_b2n,
+                          benchmark_operation_n2b, benchmark_operation_b2b}, operation);
         assert_one_of("loop-order", {"nproma_innermost", "nproma_outermost"}, loop_order);
         assert_one_of("nproma-dispatch", {"static", "dynamic"}, nproma_dispatch);
         assert_one_of("implementation", {implementation_raw_pointers,
-                                         implementation_mdspan}, implementation);
+                                         implementation_mdspan, implementation_arrayview}, implementation);
     }
 
 private:
@@ -780,6 +788,7 @@ void print_benchmark_json(const RuntimeInfo& runtime, const Settings& settings, 
     Log::info() << "    \"verbose\": " << (settings.verbose ? "true" : "false") << "," << std::endl;
     Log::info() << "    \"precision\": \"" << json_escape(settings.precision) << "\"," << std::endl;
     Log::info() << "    \"format\": \"" << json_escape(settings.format) << "\"," << std::endl;
+    Log::info() << "    \"operation\": \"" << json_escape(settings.operation) << "\"," << std::endl;
     Log::info() << "    \"iterations\": " << settings.iterations << "," << std::endl;
     Log::info() << "    \"warmup\": " << settings.warmup << std::endl;
     Log::info() << "  }," << std::endl;
@@ -860,6 +869,7 @@ int run_benchmark(const Settings& settings) {
         Log::info() << "  verbose: " << std::boolalpha << settings.verbose << std::endl;
         Log::info() << "  precision: " << settings.precision << std::endl;
         Log::info() << "  format: " << settings.format << std::endl;
+        Log::info() << "  operation: " << settings.operation << std::endl;
         Log::info() << "  iterations: " << settings.iterations << std::endl;
         Log::info() << "  warmup: " << settings.warmup << std::endl;
         Log::info() << std::endl;
@@ -891,25 +901,38 @@ int run_benchmark(const Settings& settings) {
         Log::info() << std::endl;
     }
 
-     warmup([&]() { copy_blocked_to_nonblocked(fields.blocked, fields.nonblocked, settings.on_device); }, settings.warmup,
-           settings.on_device);
-    auto b2n = measure("blocked_to_nonblocked",
-                              [&]() { copy_blocked_to_nonblocked(fields.blocked, fields.nonblocked, settings.on_device); },
-                       settings.iterations, settings.on_device, settings.verbose && settings.format == "table", bytes_moved, elements_moved);
+        const bool verbose = settings.verbose && settings.format == "table";
+        const auto should_run = [&](const char* operation) {
+         return settings.operation == benchmark_operation_all || settings.operation == operation;
+        };
 
-     warmup([&]() { copy_nonblocked_to_blocked(fields.nonblocked, fields.blocked, settings.on_device); }, settings.warmup,
-           settings.on_device);
-    auto n2b = measure("nonblocked_to_blocked",
-                              [&]() { copy_nonblocked_to_blocked(fields.nonblocked, fields.blocked, settings.on_device); },
-                       settings.iterations, settings.on_device, settings.verbose && settings.format == "table", bytes_moved, elements_moved);
+        std::vector<Measurement> results;
+        results.reserve(3);
 
-     warmup([&]() { copy_blocked_to_blocked(fields.blocked, fields.blocked_other, settings.on_device); }, settings.warmup,
-           settings.on_device);
-    auto b2b = measure("blocked_to_blocked",
-                              [&]() { copy_blocked_to_blocked(fields.blocked, fields.blocked_other, settings.on_device); },
-                       settings.iterations, settings.on_device, settings.verbose && settings.format == "table", bytes_moved, elements_moved);
+        if (should_run(benchmark_operation_b2n)) {
+         warmup([&]() { copy_blocked_to_nonblocked(fields.blocked, fields.nonblocked, settings.on_device); }, settings.warmup,
+             settings.on_device);
+         results.push_back(measure("blocked_to_nonblocked",
+                          [&]() { copy_blocked_to_nonblocked(fields.blocked, fields.nonblocked, settings.on_device); },
+                          settings.iterations, settings.on_device, verbose, bytes_moved, elements_moved));
+        }
 
-    const std::vector<Measurement> results{b2n, n2b, b2b};
+        if (should_run(benchmark_operation_n2b)) {
+         warmup([&]() { copy_nonblocked_to_blocked(fields.nonblocked, fields.blocked, settings.on_device); }, settings.warmup,
+             settings.on_device);
+         results.push_back(measure("nonblocked_to_blocked",
+                          [&]() { copy_nonblocked_to_blocked(fields.nonblocked, fields.blocked, settings.on_device); },
+                          settings.iterations, settings.on_device, verbose, bytes_moved, elements_moved));
+        }
+
+        if (should_run(benchmark_operation_b2b)) {
+         warmup([&]() { copy_blocked_to_blocked(fields.blocked, fields.blocked_other, settings.on_device); }, settings.warmup,
+             settings.on_device);
+         results.push_back(measure("blocked_to_blocked",
+                          [&]() { copy_blocked_to_blocked(fields.blocked, fields.blocked_other, settings.on_device); },
+                          settings.iterations, settings.on_device, verbose, bytes_moved, elements_moved));
+        }
+
     if (settings.format == "json") {
         print_benchmark_json(runtime, settings, fields, bytes_moved, elements_moved, block_memory, results);
     }
@@ -938,12 +961,13 @@ public:
         add_option(new SimpleOption<long>("warmup", "Warmup iterations. Default=2"));
         add_option(new SimpleOption<bool>("verbose,v", "Print per-iteration progress output. Default=false"));
         add_option(new SimpleOption<std::string>("format", "Result output format: table or json. Default=table"));
+        add_option(new SimpleOption<std::string>("operation", "Benchmark operation: all, b2n, n2b, or b2b. Default=all"));
         add_option(new Separator("Optimisation parameters"));
         add_option(new SimpleOption<std::string>("loop-order", "Host relayout loop order: nproma_innermost or nproma_outermost. Default=nproma_innermost"));
         add_option(new SimpleOption<std::string>("nproma-dispatch", "Host relayout nproma dispatch: static, runtime, or runtime_full_blocks. Default=static"));
         add_option(new SimpleOption<bool>("blocked-to-blocked-use-memcpy", "Use memcpy for host blocked-to-blocked contiguous chunks. Default=true"));
         add_option(new SimpleOption<bool>("blocked-nonblocked-use-memcpy", "Use memcpy for host rank-2 blocked/nonblocked copies. Default=false"));
-        add_option(new SimpleOption<std::string>("implementation", "Implementation mode: raw_pointers, mdspan. Default=raw_pointers"));
+        add_option(new SimpleOption<std::string>("implementation", "Implementation mode: raw_pointers, mdspan, arrayview. Default=(host:raw_pointers / device:arrayview)"));
     }
 
     std::string briefDescription() override { return "Benchmark relayout between blocked and nonblocked field layouts"; }
@@ -977,6 +1001,7 @@ public:
         args.get("verbose", settings.verbose);
         args.get("precision", settings.precision);
         args.get("format", settings.format);
+        args.get("operation", settings.operation);
         args.get("loop-order", settings.loop_order);
         args.get("nproma-dispatch", settings.nproma_dispatch);
         args.get("blocked-to-blocked-use-memcpy", settings.blocked_to_blocked_use_memcpy);
