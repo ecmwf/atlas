@@ -13,19 +13,20 @@ namespace atlas {
 namespace make_mdspan_helpers {
 
 template <typename View>
-static constexpr std::size_t view_rank_v = mdspan_introspection_detail::view_rank_v<View>;
+static constexpr std::size_t rank() {
+    return array::introspection::rank<View>();
+}
+template <typename View>
+using element_t = typename array::introspection::element_t<View>;
 
 template <typename View>
-using view_value_t = typename mdspan_introspection_detail::view_value_t<View>;
+using extents_t = typename array::introspection::extents_t<View>;
 
 template <typename View>
-using view_extents_t = typename mdspan_introspection_detail::view_extents_t<View>;
+using layout_t = typename array::introspection::layout_t<View>;
 
 template <typename View>
-using view_layout_t = typename mdspan_introspection_detail::view_layout_t<View>;
-
-template <typename View>
-using view_accessor_t = typename mdspan_introspection_detail::view_accessor_t<View>;
+using accessor_t = typename array::introspection::accessor_t<View>;
 
 
 template <typename Container, typename = std::void_t<> >
@@ -35,26 +36,26 @@ template <typename Container>
 struct is_container_like<Container, std::void_t<
     decltype(std::declval<Container&>().data()),
     decltype(std::declval<Container&>().size())>>
-    : std::integral_constant<bool, !mdspan_introspection_detail::has_view_rank_v<Container>> {};
+    : std::integral_constant<bool, !array::introspection::has_rank<Container>()> {};
 
 template <typename Container>
 static constexpr bool is_container_like_v = is_container_like<Container>::value;
 
 template <typename T, std::size_t Rank>
-struct extract_extents { using type = T; };
+struct to_extents { using type = T; };
 
 template <typename T, std::size_t N, std::size_t Rank>
-struct extract_extents<std::array<T, N>, Rank> {
+struct to_extents<std::array<T, N>, Rank> {
     using type = dextents<T, Rank>;
 };
 
 template <typename IndexType, std::size_t... ExtentsPack, std::size_t Rank>
-struct extract_extents<extents<IndexType, ExtentsPack...>, Rank> {
+struct to_extents<extents<IndexType, ExtentsPack...>, Rank> {
     using type = extents<IndexType, ExtentsPack...>;
 };
 
 template <typename T, std::size_t Rank>
-using extract_extents_t = typename extract_extents<T, Rank>::type;
+using to_extents_t = typename to_extents<T, Rank>::type;
 
 template <typename T, typename = std::void_t<>>
 struct is_extent_like : std::false_type {};
@@ -77,6 +78,7 @@ struct is_static_extent_spec<extent_with_static_last_dim<N>> : std::true_type {}
 template <typename T>
 static constexpr bool is_static_extent_spec_v = is_static_extent_spec<T>::value;
 
+namespace detail {
 template <typename T, typename = std::void_t<> >
 struct extents_rank;
 
@@ -86,8 +88,10 @@ struct extents_rank<std::array<T, N>> : std::integral_constant<std::size_t, N> {
 template <typename IndexType, std::size_t... ExtentsPack>
 struct extents_rank<extents<IndexType, ExtentsPack...>> : std::integral_constant<std::size_t, sizeof...(ExtentsPack)> {};
 
-template <typename T>
-static constexpr std::size_t extents_rank_v = extents_rank<std::remove_reference_t<T>>::value;
+}
+
+template <typename Extents>
+static constexpr std::size_t rank_from_extents() { return detail::extents_rank<std::remove_reference_t<Extents>>::value; }
 
 template <typename BaseExtents, std::size_t Dim, std::size_t N, std::size_t... I>
 auto static_extent_transform(std::index_sequence<I...>)
@@ -113,12 +117,12 @@ using static_extents_t = typename static_extents<BaseExtents, Spec>::type;
 
 template <typename View, typename Extents, std::size_t... I>
 Extents make_mdspan_extents(const View& view, std::index_sequence<I...>) {
-    return Extents{static_cast<typename Extents::index_type>(mdspan_introspection_detail::extent(view, I))...};
+    return Extents{static_cast<typename Extents::index_type>(array::introspection::extent(view, I))...};
 }
 
 template <typename View, std::size_t Rank, std::size_t... I>
 std::array<std::size_t, Rank> make_mdspan_strides(const View& view, std::index_sequence<I...>) {
-    return std::array<std::size_t, Rank>{static_cast<std::size_t>(mdspan_introspection_detail::stride(view, I))...};
+    return std::array<std::size_t, Rank>{static_cast<std::size_t>(array::introspection::stride(view, I))...};
 }
 
 template <typename Extents, std::size_t... I>
@@ -163,6 +167,13 @@ static constexpr bool is_accessor_type_v = is_accessor_type<T>::value;
 template <typename T>
 static constexpr bool is_accessor_or_policy_v = is_accessor_policy_v<T> || is_accessor_type_v<T>;
 
+// A type is treated as a layout policy when it is none of the other recognized make_mdspan
+// template categories (extents, static extent spec, accessor policy, or accessor type). This
+// covers the mdspan layout policies such as layout_right, layout_stride, and layout_left.
+template <typename T>
+static constexpr bool is_layout_like_v = !is_extent_like_v<T> && !is_static_extent_spec_v<T> &&
+                                         !is_accessor_policy_v<T> && !is_accessor_type_v<T>;
+
 template <typename AccessorOrPolicy, typename Value, bool = is_accessor_policy_v<AccessorOrPolicy>>
 struct accessor_or_policy {
     using type = AccessorOrPolicy;
@@ -189,32 +200,32 @@ auto make_mdspan_from_extents(DataHandle data, Extents extents, StridesFactory s
         return Mdspan{data, mapping, Accessor{}};
     }
     else {
-        static_assert(mdspan_introspection_detail::always_false_v<Layout>, "make_mdspan() is only implemented for layout_right and layout_stride");
+        static_assert(always_false_v<Layout>, "make_mdspan() is only implemented for layout_right and layout_stride");
         return mdspan<typename Accessor::element_type, Extents, layout_right, Accessor>{data};
     }
 }
 
 template<typename Extents, typename Layout, typename Accessor, typename View>
 auto make_mdspan_impl(View& view) {
-    constexpr std::size_t Rank = view_rank_v<View>;
-    using ActualExtents = extract_extents_t<Extents, Rank>;
+    constexpr std::size_t Rank = rank<View>();
+    using ActualExtents = to_extents_t<Extents, Rank>;
 
     auto extents = make_mdspan_extents<View, ActualExtents>(view, std::make_index_sequence<Rank>{});
     return make_mdspan_from_extents<ActualExtents, Layout, Accessor>(
-        mdspan_introspection_detail::data_handle(view), extents,
+        array::introspection::data_handle(view), extents,
         [&view]() { return make_mdspan_strides<View, Rank>(view, std::make_index_sequence<Rank>{}); });
 }
 
 template<typename Layout, typename Accessor, typename InputExtents, typename View>
 auto make_mdspan_impl(View& view, InputExtents input_shape) {
-    constexpr std::size_t Rank = view_rank_v<View>;
-    using Extents = extract_extents_t<InputExtents, Rank>;
+    constexpr std::size_t Rank = rank<View>();
+    using Extents = to_extents_t<InputExtents, Rank>;
 
     static_assert(Extents::rank() == Rank, "The passed shape rank must match the view rank.");
 
     Extents extents{input_shape};
     return make_mdspan_from_extents<Extents, Layout, Accessor>(
-        mdspan_introspection_detail::data_handle(view), extents,
+        array::introspection::data_handle(view), extents,
         [&view]() { return make_mdspan_strides<View, Rank>(view, std::make_index_sequence<Rank>{}); });
 }
 

@@ -7,20 +7,20 @@
 
 #include "atlas/mdspan/mdspan_introspection_detail.h"
 
-namespace atlas {
+namespace atlas::array::introspection {
 
 template <typename View>
 bool can_use_layout_right(const View& view) {
-    namespace detail = mdspan_introspection_detail;
-    constexpr std::size_t Rank = detail::view_rank_v<View>;
-    if constexpr (std::is_same_v<detail::view_layout_t<View>, layout_right>) {
+    namespace introspection = array::introspection;
+    constexpr std::size_t Rank = introspection::rank<View>();
+    if constexpr (std::is_same_v<introspection::layout_t<View>, layout_right>) {
         return true;
     }
     else if constexpr (Rank <= 1) {
         return true;
     }
     else {
-        return detail::has_layout_right_strides(view, std::make_index_sequence<Rank>{});
+        return introspection::has_layout_right_strides(view, std::make_index_sequence<Rank>{});
     }
 }
 
@@ -33,18 +33,18 @@ bool can_use_layout(const View& view) {
         return true;
     }
     else {
-        static_assert(mdspan_introspection_detail::always_false_v<Layout>, "can_use_layout() is only implemented for layout_right and layout_stride");
+        static_assert(always_false_v<Layout>, "can_use_layout() is only implemented for layout_right and layout_stride");
         return false;
     }
 }
 
 template <typename View>
 bool is_aligned(View& view, std::size_t alignment) {
-    namespace detail = mdspan_introspection_detail;
+    namespace introspection = array::introspection;
     if (alignment == 0) {
         return false;
     }
-    auto address = reinterpret_cast<std::uintptr_t>(detail::data_handle(view));
+    auto address = reinterpret_cast<std::uintptr_t>(introspection::data_handle(view));
     return address % alignment == 0;
 }
 
@@ -55,8 +55,8 @@ bool is_aligned(View& view) {
 
 template <std::size_t Dim, typename View>
 bool is_dimension_aligned(View& view, std::size_t alignment) {
-    namespace detail = mdspan_introspection_detail;
-    constexpr std::size_t Rank = detail::view_rank_v<View>;
+    namespace introspection = array::introspection;
+    constexpr std::size_t Rank = introspection::rank<View>();
 
     static_assert(Dim < Rank, "Dimension must be smaller than view rank.");
 
@@ -67,21 +67,16 @@ bool is_dimension_aligned(View& view, std::size_t alignment) {
         return true;
     }
     else {
-        return detail::dimension_start_strides_are_aligned<Dim>(
+        return introspection::dimension_start_strides_are_aligned<Dim>(
             view, alignment, std::make_index_sequence<Rank - 1>{});
     }
 }
 
 template <typename View>
 bool is_last_dimension_aligned(View& view, std::size_t alignment) {
-    namespace detail = mdspan_introspection_detail;
-    constexpr std::size_t Rank = detail::view_rank_v<View>;
+    constexpr std::size_t Rank = rank<View>();
     return is_dimension_aligned<Rank - 1>(view, alignment);
 }
 
-template <typename View>
-std::size_t last_extent(const View& view) {
-    return mdspan_introspection_detail::last_extent(view);
-}
 
 }  // namespace atlas

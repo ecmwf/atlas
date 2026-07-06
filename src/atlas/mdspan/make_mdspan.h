@@ -104,7 +104,7 @@ template<
 >
 auto make_mdspan(View& view) {
     using namespace make_mdspan_helpers;
-    using Value = view_value_t<View>;
+    using Value = element_t<View>;
     using Accessor = AccessorPolicy<Value>;
     return make_mdspan_impl<Extents, Layout, Accessor>(view);
 }
@@ -128,8 +128,8 @@ template<
 >
 auto make_mdspan(View& view) {
     using namespace make_mdspan_helpers;
-    using Value = view_value_t<View>;
-    using Accessor = AccessorPolicy<Value, default_accessor_alignment_v<Value>>;
+    using Element = element_t<View>;
+    using Accessor = AccessorPolicy<Element, default_accessor_alignment_v<Element>>;
     return make_mdspan_impl<Extents, Layout, Accessor>(view);
 }
 
@@ -154,8 +154,7 @@ template<
 >
 auto make_mdspan(View& view) {
     using namespace make_mdspan_helpers;
-    using Value = view_value_t<View>;
-    using Accessor = accessor_or_policy_t<AccessorOrPolicy, Value>;
+    using Accessor = accessor_or_policy_t<AccessorOrPolicy, element_t<View>>;
     return make_mdspan_impl<Extents, Layout, Accessor>(view);
 }
 
@@ -179,8 +178,7 @@ template<
 >
 auto make_mdspan(View& view, InputExtents input_shape) {
     using namespace make_mdspan_helpers;
-    using Value = view_value_t<View>;
-    using Accessor = AccessorPolicy<Value>;
+    using Accessor = AccessorPolicy<element_t<View>>;
     return make_mdspan_impl<Layout, Accessor>(view, Extents{input_shape});
 }
 
@@ -205,8 +203,8 @@ template<
 >
 auto make_mdspan(View& view, InputExtents input_shape) {
     using namespace make_mdspan_helpers;
-    using Value = view_value_t<View>;
-    using Accessor = AccessorPolicy<Value, default_accessor_alignment_v<Value>>;
+    using Element = element_t<View>;
+    using Accessor = AccessorPolicy<Element, default_accessor_alignment_v<Element>>;
     return make_mdspan_impl<Layout, Accessor>(view, Extents{input_shape});
 }
 
@@ -231,8 +229,7 @@ template<
 >
 auto make_mdspan(View& view, InputExtents input_shape) {
     using namespace make_mdspan_helpers;
-    using Value = view_value_t<View>;
-    using Accessor = accessor_or_policy_t<AccessorOrPolicy, Value>;
+    using Accessor = accessor_or_policy_t<AccessorOrPolicy, element_t<View>>;
     return make_mdspan_impl<Layout, Accessor>(view, Extents{input_shape});
 }
 
@@ -256,16 +253,15 @@ template<
 auto make_mdspan(View& view) {
     using namespace make_mdspan_helpers;
     if constexpr (is_static_extent_spec_v<Option>) {
-        using Extents = static_extents_t<view_extents_t<View>, Option>;
-        return make_mdspan<Extents, view_layout_t<View>, view_accessor_t<View>>(view);
+        using Extents = static_extents_t<extents_t<View>, Option>;
+        return make_mdspan<Extents, layout_t<View>, accessor_t<View>>(view);
     }
     else if constexpr (is_accessor_or_policy_v<Option>) {
-        using Value = view_value_t<View>;
-        using Accessor = accessor_or_policy_t<Option, Value>;
-        return make_mdspan_impl<view_extents_t<View>, view_layout_t<View>, Accessor>(view);
+        using Accessor = accessor_or_policy_t<Option, element_t<View>>;
+        return make_mdspan_impl<extents_t<View>, layout_t<View>, Accessor>(view);
     }
     else {
-        return make_mdspan_impl<view_extents_t<View>, Option, view_accessor_t<View>>(view);
+        return make_mdspan_impl<extents_t<View>, Option, accessor_t<View>>(view);
     }
 }
 
@@ -282,15 +278,13 @@ template<
     typename Layout,
     template <typename> typename AccessorPolicy,
     typename View,
-    typename std::enable_if_t<!make_mdspan_helpers::is_extent_like_v<Layout> && !make_mdspan_helpers::is_static_extent_spec_v<Layout> &&
-                              !make_mdspan_helpers::is_accessor_policy_v<Layout> && !make_mdspan_helpers::is_accessor_type_v<Layout> &&
+    typename std::enable_if_t<make_mdspan_helpers::is_layout_like_v<Layout> &&
                               !make_mdspan_helpers::is_container_like_v<View>, int> = 0
 >
 auto make_mdspan(View& view) {
     using namespace make_mdspan_helpers;
-    using Value = view_value_t<View>;
-    using Accessor = AccessorPolicy<Value>;
-    return make_mdspan_impl<view_extents_t<View>, Layout, Accessor>(view);
+    using Accessor = AccessorPolicy<element_t<View>>;
+    return make_mdspan_impl<extents_t<View>, Layout, Accessor>(view);
 }
 
 //------------------------------------------------------------------------------
@@ -306,13 +300,13 @@ template<
     typename StaticExtentsSpec,
     typename Layout,
     typename View,
-    typename std::enable_if_t<make_mdspan_helpers::is_static_extent_spec_v<StaticExtentsSpec> && !make_mdspan_helpers::is_extent_like_v<Layout> &&
-                              !make_mdspan_helpers::is_accessor_policy_v<Layout> && !make_mdspan_helpers::is_accessor_type_v<Layout>, int> = 0
+    typename std::enable_if_t<make_mdspan_helpers::is_static_extent_spec_v<StaticExtentsSpec> &&
+                              make_mdspan_helpers::is_layout_like_v<Layout>, int> = 0
 >
 auto make_mdspan(View& view) {
     using namespace make_mdspan_helpers;
-    using Extents = static_extents_t<view_extents_t<View>, StaticExtentsSpec>;
-    return make_mdspan<Extents, Layout, view_accessor_t<View>>(view);
+    using Extents = static_extents_t<extents_t<View>, StaticExtentsSpec>;
+    return make_mdspan<Extents, Layout, accessor_t<View>>(view);
 }
 
 //------------------------------------------------------------------------------
@@ -333,7 +327,7 @@ template<
 >
 auto make_mdspan(View& view) {
     using namespace make_mdspan_helpers;
-    using Extents = static_extents_t<view_extents_t<View>, StaticExtentsSpec>;
+    using Extents = static_extents_t<extents_t<View>, StaticExtentsSpec>;
     return make_mdspan<Extents, Layout, AccessorPolicy>(view);
 }
 
@@ -357,7 +351,7 @@ template<
 >
 auto make_mdspan(View& view) {
     using namespace make_mdspan_helpers;
-    using Extents = static_extents_t<view_extents_t<View>, StaticExtentsSpec>;
+    using Extents = static_extents_t<extents_t<View>, StaticExtentsSpec>;
     return make_mdspan<Extents, Layout, AccessorOrPolicy>(view);
 }
 
@@ -378,8 +372,8 @@ template<
 >
 auto make_mdspan(View& view) {
     using namespace make_mdspan_helpers;
-    using Extents = static_extents_t<view_extents_t<View>, StaticExtentsSpec>;
-    return make_mdspan<Extents, view_layout_t<View>, AccessorPolicy>(view);
+    using Extents = static_extents_t<extents_t<View>, StaticExtentsSpec>;
+    return make_mdspan<Extents, layout_t<View>, AccessorPolicy>(view);
 }
 
 //------------------------------------------------------------------------------
@@ -399,8 +393,8 @@ template<
 >
 auto make_mdspan(View& view) {
     using namespace make_mdspan_helpers;
-    using Extents = static_extents_t<view_extents_t<View>, StaticExtentsSpec>;
-    return make_mdspan<Extents, view_layout_t<View>, AccessorPolicy>(view);
+    using Extents = static_extents_t<extents_t<View>, StaticExtentsSpec>;
+    return make_mdspan<Extents, layout_t<View>, AccessorPolicy>(view);
 }
 
 //------------------------------------------------------------------------------
@@ -421,7 +415,7 @@ template<
 >
 auto make_mdspan(View& view) {
     using namespace make_mdspan_helpers;
-    using Extents = static_extents_t<view_extents_t<View>, StaticExtentsSpec>;
+    using Extents = static_extents_t<extents_t<View>, StaticExtentsSpec>;
     return make_mdspan<Extents, Layout, AccessorPolicy>(view);
 }
 
@@ -441,7 +435,7 @@ template<
 >
 auto make_mdspan(View& view) {
     using namespace make_mdspan_helpers;
-    return make_mdspan<view_extents_t<View>, view_layout_t<View>, AccessorPolicy>(view);
+    return make_mdspan<extents_t<View>, layout_t<View>, AccessorPolicy>(view);
 }
 
 //------------------------------------------------------------------------------
@@ -460,7 +454,7 @@ template<
 >
 auto make_mdspan(View& view) {
     using namespace make_mdspan_helpers;
-    return make_mdspan<view_extents_t<View>, view_layout_t<View>, AccessorPolicy>(view);
+    return make_mdspan<extents_t<View>, layout_t<View>, AccessorPolicy>(view);
 }
 
 //------------------------------------------------------------------------------
@@ -476,16 +470,14 @@ template<
     typename Layout,
     typename AccessorOrPolicy,
     typename View,
-    typename std::enable_if_t<!make_mdspan_helpers::is_extent_like_v<Layout> && !make_mdspan_helpers::is_static_extent_spec_v<Layout> &&
-                              !make_mdspan_helpers::is_accessor_policy_v<Layout> && !make_mdspan_helpers::is_accessor_type_v<Layout> &&
+    typename std::enable_if_t<make_mdspan_helpers::is_layout_like_v<Layout> &&
                               make_mdspan_helpers::is_accessor_or_policy_v<AccessorOrPolicy> &&
                               !make_mdspan_helpers::is_container_like_v<View>, int> = 0
 >
 auto make_mdspan(View& view) {
     using namespace make_mdspan_helpers;
-    using Value = view_value_t<View>;
-    using Accessor = accessor_or_policy_t<AccessorOrPolicy, Value>;
-    return make_mdspan_impl<view_extents_t<View>, Layout, Accessor>(view);
+    using Accessor = accessor_or_policy_t<AccessorOrPolicy, element_t<View>>;
+    return make_mdspan_impl<extents_t<View>, Layout, Accessor>(view);
 }
 
 //------------------------------------------------------------------------------
@@ -500,8 +492,8 @@ auto make_mdspan(View& view) {
 template<typename View, typename std::enable_if_t<!make_mdspan_helpers::is_container_like_v<View>, int> = 0>
 auto make_mdspan(View& view) {
     using namespace make_mdspan_helpers;
-    return make_mdspan_impl<view_extents_t<View>, view_layout_t<View>,
-                                    view_accessor_t<View>>(view);
+    return make_mdspan_impl<extents_t<View>, layout_t<View>,
+                                    accessor_t<View>>(view);
 }
 
 //------------------------------------------------------------------------------
@@ -518,8 +510,8 @@ template<
     typename Layout = layout_right,
     template <typename> typename AccessorPolicy = restrict_accessor,
     typename Container,
-    typename std::enable_if_t<make_mdspan_helpers::is_container_like_v<Container> && !make_mdspan_helpers::is_extent_like_v<Layout> &&
-                              !make_mdspan_helpers::is_accessor_policy_v<Layout> && !make_mdspan_helpers::is_accessor_type_v<Layout>, int> = 0
+    typename std::enable_if_t<make_mdspan_helpers::is_container_like_v<Container> &&
+                              make_mdspan_helpers::is_layout_like_v<Layout>, int> = 0
 >
 auto make_mdspan(Container& container) {
     using namespace make_mdspan_helpers;
@@ -621,8 +613,7 @@ template<
     typename Layout,
     typename AccessorOrPolicy,
     typename Container,
-    typename std::enable_if_t<!make_mdspan_helpers::is_extent_like_v<Layout> && !make_mdspan_helpers::is_accessor_policy_v<Layout> &&
-                              !make_mdspan_helpers::is_accessor_type_v<Layout> &&
+    typename std::enable_if_t<make_mdspan_helpers::is_layout_like_v<Layout> &&
                               make_mdspan_helpers::is_accessor_or_policy_v<AccessorOrPolicy> &&
                               make_mdspan_helpers::is_container_like_v<Container>, int> = 0
 >
@@ -648,15 +639,12 @@ template<
     template <typename> typename AccessorPolicy,
     typename InputExtents,
     typename View,
-    typename std::enable_if_t<!make_mdspan_helpers::is_extent_like_v<Layout> && !make_mdspan_helpers::is_static_extent_spec_v<Layout> &&
-                              !make_mdspan_helpers::is_accessor_policy_v<Layout> && !make_mdspan_helpers::is_accessor_type_v<Layout> &&
+    typename std::enable_if_t<make_mdspan_helpers::is_layout_like_v<Layout> &&
                               !make_mdspan_helpers::is_container_like_v<View>, int> = 0
 >
 auto make_mdspan(View& view, InputExtents input_shape) {
     using namespace make_mdspan_helpers;
-    using Value = view_value_t<View>;
-    using Accessor = AccessorPolicy<Value>;
-    return make_mdspan_impl<Layout, Accessor>(view, input_shape);
+    return make_mdspan_impl<Layout, AccessorPolicy<element_t<View>>>(view, input_shape);
 }
 
 //------------------------------------------------------------------------------
@@ -678,18 +666,18 @@ template<
 auto make_mdspan(View& view, InputExtents input_shape) {
     using namespace make_mdspan_helpers;
     if constexpr (is_static_extent_spec_v<Option>) {
-        constexpr std::size_t Rank = view_rank_v<View>;
-        using BaseExtents = extract_extents_t<InputExtents, Rank>;
+        constexpr std::size_t Rank = rank<View>();
+        using BaseExtents = to_extents_t<InputExtents, Rank>;
         using Extents = static_extents_t<BaseExtents, Option>;
-        return make_mdspan<Extents, view_layout_t<View>, view_accessor_t<View>>(view, Extents{input_shape});
+        return make_mdspan<Extents, layout_t<View>, accessor_t<View>>(view, Extents{input_shape});
     }
     else if constexpr (is_accessor_or_policy_v<Option>) {
-        using Value = view_value_t<View>;
-        using Accessor = accessor_or_policy_t<Option, Value>;
-        return make_mdspan_impl<view_layout_t<View>, Accessor>(view, input_shape);
+        using Element = element_t<View>;
+        using Accessor = accessor_or_policy_t<Option, Element>;
+        return make_mdspan_impl<layout_t<View>, Accessor>(view, input_shape);
     }
     else {
-        return make_mdspan_impl<Option, view_accessor_t<View>>(view, input_shape);
+        return make_mdspan_impl<Option, accessor_t<View>>(view, input_shape);
     }
 }
 
@@ -707,15 +695,15 @@ template<
     typename Layout,
     typename InputExtents,
     typename View,
-    typename std::enable_if_t<make_mdspan_helpers::is_static_extent_spec_v<StaticExtentsSpec> && !make_mdspan_helpers::is_extent_like_v<Layout> &&
-                              !make_mdspan_helpers::is_accessor_policy_v<Layout> && !make_mdspan_helpers::is_accessor_type_v<Layout>, int> = 0
+    typename std::enable_if_t<make_mdspan_helpers::is_static_extent_spec_v<StaticExtentsSpec> &&
+                              make_mdspan_helpers::is_layout_like_v<Layout>, int> = 0
 >
 auto make_mdspan(View& view, InputExtents input_shape) {
     using namespace make_mdspan_helpers;
-    constexpr std::size_t Rank = view_rank_v<View>;
-    using BaseExtents = extract_extents_t<InputExtents, Rank>;
+    constexpr std::size_t Rank = rank<View>();
+    using BaseExtents = to_extents_t<InputExtents, Rank>;
     using Extents = static_extents_t<BaseExtents, StaticExtentsSpec>;
-    return make_mdspan<Extents, Layout, view_accessor_t<View>>(view, Extents{input_shape});
+    return make_mdspan<Extents, Layout, accessor_t<View>>(view, Extents{input_shape});
 }
 
 //------------------------------------------------------------------------------
@@ -737,10 +725,10 @@ template<
 >
 auto make_mdspan(View& view, InputExtents input_shape) {
     using namespace make_mdspan_helpers;
-    constexpr std::size_t Rank = view_rank_v<View>;
-    using BaseExtents = extract_extents_t<InputExtents, Rank>;
+    constexpr std::size_t Rank = rank<View>();
+    using BaseExtents = to_extents_t<InputExtents, Rank>;
     using Extents = static_extents_t<BaseExtents, StaticExtentsSpec>;
-    return make_mdspan<Extents, Layout, AccessorPolicy>(view, Extents{input_shape});
+    return make_mdspan<Extents, Layout, AccessorPolicy<element_t<View>>>(view, Extents{input_shape});
 }
 
 //------------------------------------------------------------------------------
@@ -761,10 +749,10 @@ template<
 >
 auto make_mdspan(View& view, InputExtents input_shape) {
     using namespace make_mdspan_helpers;
-    constexpr std::size_t Rank = view_rank_v<View>;
-    using BaseExtents = extract_extents_t<InputExtents, Rank>;
+    constexpr std::size_t Rank = rank<View>();
+    using BaseExtents = to_extents_t<InputExtents, Rank>;
     using Extents = static_extents_t<BaseExtents, StaticExtentsSpec>;
-    return make_mdspan<Extents, view_layout_t<View>, AccessorPolicy>(view, Extents{input_shape});
+    return make_mdspan<Extents, layout_t<View>, AccessorPolicy>(view, Extents{input_shape});
 }
 
 //------------------------------------------------------------------------------
@@ -785,10 +773,10 @@ template<
 >
 auto make_mdspan(View& view, InputExtents input_shape) {
     using namespace make_mdspan_helpers;
-    constexpr std::size_t Rank = view_rank_v<View>;
-    using BaseExtents = extract_extents_t<InputExtents, Rank>;
+    constexpr std::size_t Rank = rank<View>();
+    using BaseExtents = to_extents_t<InputExtents, Rank>;
     using Extents = static_extents_t<BaseExtents, StaticExtentsSpec>;
-    return make_mdspan<Extents, view_layout_t<View>, AccessorPolicy>(view, Extents{input_shape});
+    return make_mdspan<Extents, layout_t<View>, AccessorPolicy>(view, Extents{input_shape});
 }
 
 //------------------------------------------------------------------------------
@@ -810,8 +798,8 @@ template<
 >
 auto make_mdspan(View& view, InputExtents input_shape) {
     using namespace make_mdspan_helpers;
-    constexpr std::size_t Rank = view_rank_v<View>;
-    using BaseExtents = extract_extents_t<InputExtents, Rank>;
+    constexpr std::size_t Rank = rank<View>();
+    using BaseExtents = to_extents_t<InputExtents, Rank>;
     using Extents = static_extents_t<BaseExtents, StaticExtentsSpec>;
     return make_mdspan<Extents, Layout, AccessorPolicy>(view, Extents{input_shape});
 }
@@ -832,7 +820,7 @@ template<
 >
 auto make_mdspan(View& view, InputExtents input_shape) {
     using namespace make_mdspan_helpers;
-    return make_mdspan_impl<view_layout_t<View>, view_accessor_t<View>>(view, input_shape);
+    return make_mdspan_impl<layout_t<View>, accessor_t<View>>(view, input_shape);
 }
 
 //------------------------------------------------------------------------------
@@ -852,7 +840,7 @@ template<
 >
 auto make_mdspan(View& view, InputExtents input_shape) {
     using namespace make_mdspan_helpers;
-    return make_mdspan<view_layout_t<View>, AccessorPolicy>(view, input_shape);
+    return make_mdspan<layout_t<View>, AccessorPolicy>(view, input_shape);
 }
 
 //------------------------------------------------------------------------------
@@ -872,7 +860,7 @@ template<
 >
 auto make_mdspan(View& view, InputExtents input_shape) {
     using namespace make_mdspan_helpers;
-    return make_mdspan<view_extents_t<View>, view_layout_t<View>, AccessorPolicy>(view, input_shape);
+    return make_mdspan<extents_t<View>, layout_t<View>, AccessorPolicy>(view, input_shape);
 }
 
 //------------------------------------------------------------------------------
@@ -889,15 +877,13 @@ template<
     typename AccessorOrPolicy,
     typename InputExtents,
     typename View,
-    typename std::enable_if_t<!make_mdspan_helpers::is_extent_like_v<Layout> && !make_mdspan_helpers::is_static_extent_spec_v<Layout> &&
-                              !make_mdspan_helpers::is_accessor_policy_v<Layout> && !make_mdspan_helpers::is_accessor_type_v<Layout> &&
+    typename std::enable_if_t<make_mdspan_helpers::is_layout_like_v<Layout> &&
                               make_mdspan_helpers::is_accessor_or_policy_v<AccessorOrPolicy> &&
                               !make_mdspan_helpers::is_container_like_v<View>, int> = 0
 >
 auto make_mdspan(View& view, InputExtents input_shape) {
     using namespace make_mdspan_helpers;
-    using Value = view_value_t<View>;
-    using Accessor = accessor_or_policy_t<AccessorOrPolicy, Value>;
+    using Accessor = accessor_or_policy_t<AccessorOrPolicy, element_t<View>>;
     return make_mdspan_impl<Layout, Accessor>(view, input_shape);
 }
 
@@ -915,14 +901,14 @@ template<
     template <typename> typename AccessorPolicy = restrict_accessor,
     typename Container,
     typename InputExtents,
-    typename std::enable_if_t<make_mdspan_helpers::is_container_like_v<Container> && !make_mdspan_helpers::is_extent_like_v<Layout> &&
-                              !make_mdspan_helpers::is_accessor_policy_v<Layout> && !make_mdspan_helpers::is_accessor_type_v<Layout>, int> = 0
+    typename std::enable_if_t<make_mdspan_helpers::is_container_like_v<Container> &&
+                              make_mdspan_helpers::is_layout_like_v<Layout>, int> = 0
 >
 auto make_mdspan(Container& container, InputExtents input_shape) {
     using namespace make_mdspan_helpers;
     using Value = std::remove_pointer_t<std::remove_reference_t<decltype(container.data())>>;
-    constexpr std::size_t Rank = extents_rank_v<InputExtents>;
-    using Extents = extract_extents_t<InputExtents, Rank>;
+    constexpr std::size_t Rank = rank_from_extents<InputExtents>();
+    using Extents = to_extents_t<InputExtents, Rank>;
     using Accessor = AccessorPolicy<Value>;
     return make_mdspan_container_impl<Extents, Layout, Accessor>(container, Extents{input_shape});
 }
@@ -964,8 +950,8 @@ template<
 auto make_mdspan(Container& container, InputExtents input_shape) {
     using namespace make_mdspan_helpers;
     using Value = std::remove_pointer_t<std::remove_reference_t<decltype(container.data())>>;
-    constexpr std::size_t Rank = extents_rank_v<InputExtents>;
-    using Extents = extract_extents_t<InputExtents, Rank>;
+    constexpr std::size_t Rank = rank_from_extents<InputExtents>();
+    using Extents = to_extents_t<InputExtents, Rank>;
     using Accessor = AccessorPolicy<Value, default_accessor_alignment_v<Value>>;
     return make_mdspan_container_impl<Extents, layout_right, Accessor>(container, Extents{input_shape});
 }
@@ -989,8 +975,8 @@ template<
 auto make_mdspan(Container& container, InputExtents input_shape) {
     using namespace make_mdspan_helpers;
     using Value = std::remove_pointer_t<std::remove_reference_t<decltype(container.data())>>;
-    constexpr std::size_t Rank = extents_rank_v<InputExtents>;
-    using Extents = extract_extents_t<InputExtents, Rank>;
+    constexpr std::size_t Rank = rank_from_extents<InputExtents>();
+    using Extents = to_extents_t<InputExtents, Rank>;
     using Accessor = accessor_or_policy_t<AccessorOrPolicy, Value>;
     return make_mdspan_container_impl<Extents, layout_right, Accessor>(container, Extents{input_shape});
 }
@@ -1009,16 +995,15 @@ template<
     typename AccessorOrPolicy,
     typename Container,
     typename InputExtents,
-    typename std::enable_if_t<!make_mdspan_helpers::is_extent_like_v<Layout> && !make_mdspan_helpers::is_accessor_policy_v<Layout> &&
-                              !make_mdspan_helpers::is_accessor_type_v<Layout> &&
+    typename std::enable_if_t<make_mdspan_helpers::is_layout_like_v<Layout> &&
                               make_mdspan_helpers::is_accessor_or_policy_v<AccessorOrPolicy> &&
                               make_mdspan_helpers::is_container_like_v<Container>, int> = 0
 >
 auto make_mdspan(Container& container, InputExtents input_shape) {
     using namespace make_mdspan_helpers;
     using Value = std::remove_pointer_t<std::remove_reference_t<decltype(container.data())>>;
-    constexpr std::size_t Rank = extents_rank_v<InputExtents>;
-    using Extents = extract_extents_t<InputExtents, Rank>;
+    constexpr std::size_t Rank = rank_from_extents<InputExtents>();
+    using Extents = to_extents_t<InputExtents, Rank>;
     using Accessor = accessor_or_policy_t<AccessorOrPolicy, Value>;
     return make_mdspan_container_impl<Extents, Layout, Accessor>(container, Extents{input_shape});
 }
@@ -1039,8 +1024,8 @@ template<
     typename Layout = layout_right,
     template <typename> typename AccessorPolicy = restrict_accessor,
     typename Value,
-    typename std::enable_if_t<make_mdspan_helpers::is_extent_like_v<Extents> && !make_mdspan_helpers::is_extent_like_v<Layout> &&
-                              !make_mdspan_helpers::is_accessor_policy_v<Layout> && !make_mdspan_helpers::is_accessor_type_v<Layout>, int> = 0
+    typename std::enable_if_t<make_mdspan_helpers::is_extent_like_v<Extents> &&
+                              make_mdspan_helpers::is_layout_like_v<Layout>, int> = 0
 >
 auto make_mdspan(Value* data, std::array<typename Extents::index_type, Extents::rank()> input_shape) {
     using Accessor = AccessorPolicy<Value>;
@@ -1062,13 +1047,12 @@ template<
     template <typename> typename AccessorPolicy = restrict_accessor,
     typename Value,
     typename InputExtents,
-    typename std::enable_if_t<!make_mdspan_helpers::is_extent_like_v<Layout> && !make_mdspan_helpers::is_accessor_policy_v<Layout> &&
-                              !make_mdspan_helpers::is_accessor_type_v<Layout>, int> = 0
+    typename std::enable_if_t<make_mdspan_helpers::is_layout_like_v<Layout>, int> = 0
 >
 auto make_mdspan(Value* data, InputExtents input_shape) {
     using namespace make_mdspan_helpers;
-    constexpr std::size_t Rank = extents_rank_v<InputExtents>;
-    using Extents = extract_extents_t<InputExtents, Rank>;
+    constexpr std::size_t Rank = rank_from_extents<InputExtents>();
+    using Extents = to_extents_t<InputExtents, Rank>;
     using Accessor = AccessorPolicy<Value>;
     return make_mdspan_pointer_impl<Extents, Layout, Accessor>(data, Extents{input_shape});
 }
@@ -1090,8 +1074,8 @@ template<
 >
 auto make_mdspan(Value* data, InputExtents input_shape) {
     using namespace make_mdspan_helpers;
-    constexpr std::size_t Rank = extents_rank_v<InputExtents>;
-    using Extents = extract_extents_t<InputExtents, Rank>;
+    constexpr std::size_t Rank = rank_from_extents<InputExtents>();
+    using Extents = to_extents_t<InputExtents, Rank>;
     using Accessor = accessor_or_policy_t<AccessorOrPolicy, Value>;
     return make_mdspan_pointer_impl<Extents, layout_right, Accessor>(data, Extents{input_shape});
 }
@@ -1110,14 +1094,13 @@ template<
     typename AccessorOrPolicy,
     typename Value,
     typename InputExtents,
-    typename std::enable_if_t<!make_mdspan_helpers::is_extent_like_v<Layout> && !make_mdspan_helpers::is_accessor_policy_v<Layout> &&
-                              !make_mdspan_helpers::is_accessor_type_v<Layout> &&
+    typename std::enable_if_t<make_mdspan_helpers::is_layout_like_v<Layout> &&
                               make_mdspan_helpers::is_accessor_or_policy_v<AccessorOrPolicy>, int> = 0
 >
 auto make_mdspan(Value* data, InputExtents input_shape) {
     using namespace make_mdspan_helpers;
-    constexpr std::size_t Rank = extents_rank_v<InputExtents>;
-    using Extents = extract_extents_t<InputExtents, Rank>;
+    constexpr std::size_t Rank = rank_from_extents<InputExtents>();
+    using Extents = to_extents_t<InputExtents, Rank>;
     using Accessor = accessor_or_policy_t<AccessorOrPolicy, Value>;
     return make_mdspan_pointer_impl<Extents, Layout, Accessor>(data, Extents{input_shape});
 }
@@ -1156,8 +1139,8 @@ template<
 >
 auto make_mdspan(Value* data, InputExtents input_shape) {
     using namespace make_mdspan_helpers;
-    constexpr std::size_t Rank = extents_rank_v<InputExtents>;
-    using Extents = extract_extents_t<InputExtents, Rank>;
+    constexpr std::size_t Rank = rank_from_extents<InputExtents>();
+    using Extents = to_extents_t<InputExtents, Rank>;
     using Accessor = AccessorPolicy<Value, default_accessor_alignment_v<Value>>;
     return make_mdspan_pointer_impl<Extents, layout_right, Accessor>(data, Extents{input_shape});
 }

@@ -86,7 +86,6 @@ namespace pluto {
 
         static constexpr std::size_t byte_alignment = ByteAlignment;
 
-        PLUTO_MDSPAN_HOST_DEVICE
         constexpr aligned_accessor() noexcept = default;
 
         template<
@@ -154,7 +153,6 @@ namespace pluto {
         using data_handle_type = ElementType* PLUTO_MDSPAN_RESTRICT;
         using offset_policy    = default_accessor<ElementType>;
 
-        PLUTO_MDSPAN_HOST_DEVICE
         constexpr restrict_accessor() noexcept = default;
 
         template<class OtherElementType, typename = std::enable_if_t<std::is_convertible<OtherElementType(*)[], ElementType(*)[]>::value> >
@@ -197,7 +195,6 @@ namespace pluto {
 
         static constexpr std::size_t byte_alignment = ByteAlignment;
 
-        PLUTO_MDSPAN_HOST_DEVICE
         constexpr restrict_aligned_accessor() noexcept = default;
 
         template<

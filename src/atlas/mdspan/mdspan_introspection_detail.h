@@ -11,119 +11,155 @@
 #endif
 
 namespace atlas {
-namespace mdspan_introspection_detail {
+template <typename>
+[[maybe_unused]] inline static constexpr bool always_false_v = false;
+}
+
+namespace atlas::array::introspection {
+
+namespace detail {
+template <typename T, typename = void>
+struct is_mdspan : std::false_type {};
+
+template <typename T>
+struct is_mdspan<T, std::void_t<
+    typename T::element_type,
+    typename T::data_handle_type,
+    typename T::mapping_type,
+    decltype(std::declval<T>().data_handle()),
+    decltype(std::declval<T>().accessor())
+>> : std::true_type {};
+}
 
 template <typename View>
-using view_type_t = std::remove_reference_t<View>;
+static constexpr bool is_mdspan() { return detail::is_mdspan<View>::value; }
 
+namespace detail {
 template <typename View, typename = std::void_t<> >
-struct has_view_rank_member : std::false_type {};
+struct has_rank : std::false_type {};
 
 template <typename View>
-struct has_view_rank_member<View, std::void_t<decltype(view_type_t<View>::RANK)>> : std::true_type {};
+struct has_rank<View, std::void_t<decltype(View::rank())>> : std::true_type {};
+}
 
+template <typename View>
+static constexpr bool has_rank() { return detail::has_rank<View>::value; }
+
+template <typename View>
+static constexpr std::size_t rank() {
+    return detail::has_rank<View>::value ? View::rank() : 1;
+}
+
+namespace detail {
 template <typename View, typename = std::void_t<> >
-struct has_view_rank_function : std::false_type {};
+struct has_data : std::false_type {};
+template <typename View>
+struct has_data<View, std::void_t<decltype(std::declval<View&>().data())>> : std::true_type {};
+}
+
 
 template <typename View>
-struct has_view_rank_function<View, std::void_t<decltype(view_type_t<View>::rank())>> : std::true_type {};
+static constexpr bool has_data() { return detail::has_data<View>::value; }
 
-template <typename View>
-static constexpr bool has_view_rank_v = has_view_rank_member<View>::value || has_view_rank_function<View>::value;
 
-template <typename View, typename = std::void_t<>>
-struct view_rank : std::integral_constant<std::size_t, view_type_t<View>::RANK> {};
-
-template <typename View>
-struct view_rank<View, std::void_t<decltype(view_type_t<View>::rank())>>
-    : std::integral_constant<std::size_t, view_type_t<View>::rank()> {};
-
-template <typename View>
-static constexpr std::size_t view_rank_v = view_rank<View>::value;
-
+namespace detail {
 template <typename View, typename = std::void_t<> >
-struct view_extents {
-    using type = dextents<std::size_t, view_rank_v<View>>;
+struct has_data_handle : std::false_type {};
+template <typename View>
+struct has_data_handle<View, std::void_t<decltype(std::declval<View&>().data_handle())>> : std::true_type {};
+
+}
+
+template <typename View>
+static constexpr bool has_data_handle() { return detail::has_data_handle<View>::value; }
+
+
+namespace detail {
+template <typename View, typename = std::void_t<> >
+struct extents {
+    using type = dextents<std::size_t, rank<View>()>;
 };
 
 template <typename View>
-struct view_extents<View, std::void_t<typename view_type_t<View>::extents_type>> {
-    using type = typename view_type_t<View>::extents_type;
+struct extents<View, std::void_t<typename View::extents_type>> {
+    using type = typename View::extents_type;
 };
+}
 
 template <typename View>
-using view_extents_t = typename view_extents<View>::type;
+using extents_t = typename detail::extents<View>::type;
 
+
+namespace detail {
 template <typename View, typename = std::void_t<>>
-struct view_value_fallback {
+struct element_type_from_data_or_data_handle {
     using type = std::remove_pointer_t<std::remove_reference_t<decltype(std::declval<View&>().data())>>;
 };
 
 template <typename View>
-struct view_value_fallback<View, std::void_t<decltype(std::declval<View&>().data_handle())>> {
+struct element_type_from_data_or_data_handle<View, std::void_t<decltype(std::declval<View&>().data_handle())>> {
     using type = std::remove_pointer_t<std::remove_reference_t<decltype(std::declval<View&>().data_handle())>>;
 };
 
 template <typename View, typename = std::void_t<>>
-struct view_value {
-    using type = typename view_value_fallback<View>::type;
+struct element_type {
+    using type = typename element_type_from_data_or_data_handle<View>::type;
 };
 
 template <typename View>
-struct view_value<View, std::void_t<typename view_type_t<View>::element_type>> {
-    using raw_type = typename view_type_t<View>::element_type;
-    using type = std::conditional_t<std::is_const_v<view_type_t<View>>, std::add_const_t<raw_type>, raw_type>;
+struct element_type<View, std::void_t<typename View::element_type>> {
+    using raw_type = typename View::element_type;
+    using type = std::conditional_t<std::is_const_v<std::remove_reference_t<View>>,
+                                     std::add_const_t<raw_type>, raw_type>;
 };
 
-template <typename View>
-using view_value_t = typename view_value<View>::type;
+}
 
+template <typename View>
+using element_t = typename detail::element_type<View>::type;
+
+namespace detail {
 template <typename View, typename = std::void_t<> >
-struct view_accessor {
-    using type = restrict_accessor<view_value_t<View>>;
+struct accessor_type {
+    using type = restrict_accessor<element_t<View>>;
 };
 
 template <typename View>
-struct view_accessor<View, std::void_t<typename view_type_t<View>::accessor_type>> {
-    using type = typename view_type_t<View>::accessor_type;
+struct accessor_type<View, std::void_t<typename View::accessor_type>> {
+    using type = typename View::accessor_type;
 };
 
+}
 template <typename View>
-using view_accessor_t = typename view_accessor<View>::type;
+using accessor_t = typename detail::accessor_type<View>::type;
 
+namespace detail {
 template <typename View, typename = std::void_t<> >
-struct view_layout {
+struct layout_type {
     using type = layout_stride;
 };
 
 template <typename View>
-struct view_layout<View, std::void_t<typename view_type_t<View>::layout_type>> {
-    using type = typename view_type_t<View>::layout_type;
+struct layout_type<View, std::void_t<typename View::layout_type>> {
+    using type = typename View::layout_type;
 };
 
+}
 template <typename View>
-using view_layout_t = typename view_layout<View>::type;
+using layout_t = typename detail::layout_type<View>::type;
 
-template <typename>
-[[maybe_unused]] inline static constexpr bool always_false_v = false;
 
-template <typename View, typename = std::void_t<>>
-struct has_data_handle : std::false_type {};
-
-template <typename View>
-struct has_data_handle<View, std::void_t<decltype(std::declval<View&>().data_handle())>> : std::true_type {};
-
-template <typename View, typename std::enable_if_t<has_data_handle<View>::value, int> = 0>
+template <typename View, typename std::enable_if_t<has_data_handle<View>(), int> = 0>
 auto data_handle(View& view) -> decltype(view.data_handle()) {
     return view.data_handle();
 }
 
-template <typename View, typename std::enable_if_t<!has_data_handle<View>::value, int> = 0>
+template <typename View, typename std::enable_if_t<!has_data_handle<View>(), int> = 0>
 auto data_handle(View& view) -> decltype(view.data()) {
     return view.data();
 }
 
-template <typename View, typename = std::void_t<>>
+template <typename View, typename = std::void_t<> >
 struct has_shape : std::false_type {};
 
 template <typename View>
@@ -147,14 +183,14 @@ auto stride(const View& view, std::size_t dimension) -> decltype(view.stride(dim
 
 template <typename View>
 std::size_t last_extent(const View& view) {
-    constexpr std::size_t Rank = view_rank_v<View>;
+    constexpr std::size_t Rank = rank<View>();
     static_assert(Rank > 0, "last_extent() requires rank greater than zero.");
     return static_cast<std::size_t>(extent(view, Rank - 1));
 }
 
 template <typename View, std::size_t... I>
 bool has_layout_right_strides(const View& view, std::index_sequence<I...>) {
-    constexpr std::size_t Rank = view_rank_v<View>;
+    constexpr std::size_t Rank = rank<View>();
     std::array<std::size_t, Rank> extents{static_cast<std::size_t>(extent(view, I))...};
     std::array<std::size_t, Rank> strides{static_cast<std::size_t>(stride(view, I))...};
 
@@ -174,7 +210,7 @@ bool has_layout_right_strides(const View& view, std::index_sequence<I...>) {
 
 template <typename View, std::size_t... I>
 bool dimension_start_strides_are_aligned(const View& view, std::size_t alignment, std::index_sequence<I...>) {
-    using Value = std::remove_cv_t<view_value_t<View>>;
+    using Value = std::remove_cv_t<element_t<View>>;
 
 #if DEBUG_IS_DIMENSION_ALIGNED
     std::cerr << __PRETTY_FUNCTION__ << '\n';
@@ -230,5 +266,4 @@ bool dimension_start_strides_are_aligned(const View& view, std::size_t alignment
 #endif
 }
 
-}  // namespace mdspan_introspection_detail
-}  // namespace atlas
+}  // namespace atlas::array::introspection

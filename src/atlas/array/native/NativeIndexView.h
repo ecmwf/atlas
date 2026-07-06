@@ -116,13 +116,15 @@ public:
 
     /// @brief Multidimensional index operator: view(i,j,k,...)
     template <typename... Idx>
-    reference operator()(Idx... idx) {
+    inline ATLAS_HOST_DEVICE
+    reference operator()(Idx... idx) noexcept(!ATLAS_INDEXVIEW_BOUNDS_CHECKING || !ATLAS_HOST_COMPILE) {
         check_bounds(idx...);
         return accessor_.access(data_, index(idx...));
     }
 
     template <typename... Idx>
-    element_type operator()(Idx... idx) const {
+    inline ATLAS_HOST_DEVICE 
+    element_type operator()(Idx... idx) const noexcept(!ATLAS_INDEXVIEW_BOUNDS_CHECKING || !ATLAS_HOST_COMPILE) {
         check_bounds(idx...);
         return data_[index(idx...)] FROM_FORTRAN;
     }
@@ -131,31 +133,40 @@ public:
     void assign(const std::initializer_list<value_type>& list);
 
     template <typename Int>
-    idx_t shape(Int idx) const {
+    inline ATLAS_HOST_DEVICE
+    idx_t shape(Int idx) const noexcept {
         return shape_[idx];
     }
 
     template <typename Int>
-    idx_t extent(Int idx) const {
+    inline ATLAS_HOST_DEVICE
+    idx_t extent(Int idx) const noexcept {
         return shape(idx);
     }
 
     template <typename Int>
-    idx_t stride(Int idx) const {
+    inline ATLAS_HOST_DEVICE
+    idx_t stride(Int idx) const noexcept {
         return strides_[idx];
     }
 
-    const idx_t* shape() const { return shape_; }
+    inline ATLAS_HOST_DEVICE
+    const idx_t* shape() const noexcept { return shape_; }
 
-    const idx_t* strides() const { return strides_; }
+    inline ATLAS_HOST_DEVICE
+    const idx_t* strides() const noexcept { return strides_; }
 
-    element_type const* data() const { return data_; }
+    inline ATLAS_HOST_DEVICE
+    element_type const* data() const noexcept { return data_; }
 
-    element_type* data() { return data_; }
+    inline ATLAS_HOST_DEVICE
+    element_type* data() noexcept { return data_; }
 
-    constexpr data_handle_type data_handle() const { return data_; }
+    inline ATLAS_HOST_DEVICE
+    constexpr data_handle_type data_handle() const noexcept { return data_; }
 
-    static constexpr idx_t rank() { return Rank; }
+    inline ATLAS_HOST_DEVICE
+    static constexpr idx_t rank() noexcept { return Rank; }
 
     // mdspan_type as_mdspan() {
     //     return make_mdspan<mdspan_extents_type, layout_stride, mdspan_accessor_policy>(*this);
@@ -169,39 +180,49 @@ private:
     // -- Private methods
 
     template <int Dim, typename Int, typename... Ints>
+    inline ATLAS_HOST_DEVICE
     constexpr idx_t index_part(Int idx, Ints... next_idx) const {
         return idx * strides_[Dim] + index_part<Dim + 1>(next_idx...);
     }
 
     template <int Dim, typename Int>
+    inline ATLAS_HOST_DEVICE
     constexpr idx_t index_part(Int last_idx) const {
         return last_idx * strides_[Dim];
     }
 
     template <typename... Ints>
+    inline ATLAS_HOST_DEVICE
     constexpr idx_t index(Ints... idx) const {
         return index_part<0>(idx...);
     }
 
 #if ATLAS_INDEXVIEW_BOUNDS_CHECKING
     template <typename... Ints>
+    inline ATLAS_HOST_DEVICE
     void check_bounds(Ints... idx) const {
         static_assert(sizeof...(idx) == Rank, "Expected number of indices is different from rank of array");
+#if ATLAS_HOST_COMPILE
         return check_bounds_part<0>(idx...);
+#endif
     }
 #else
     template <typename... Ints>
-    void check_bounds(Ints...) const {}
+    inline ATLAS_HOST_DEVICE
+    void check_bounds(Ints...) const noexcept {}
 #endif
 
     template <typename... Ints>
+    inline ATLAS_HOST_DEVICE
     void check_bounds_force(Ints... idx) const {
         static_assert(sizeof...(idx) == Rank, "Expected number of indices is different from rank of array");
+#if ATLAS_HOST_COMPILE
         return check_bounds_part<0>(idx...);
+#endif
     }
 
     template <int Dim, typename Int, typename... Ints>
-    void check_bounds_part(Int idx, Ints... next_idx) const {
+    inline void check_bounds_part(Int idx, Ints... next_idx) const {
         if (idx_t(idx) >= shape_[Dim]) {
             throw_OutOfRange("IndexView", array_dim<Dim>(), idx, shape_[Dim]);
         }
@@ -209,30 +230,35 @@ private:
     }
 
     template <int Dim, typename Int>
-    void check_bounds_part(Int last_idx) const {
+    inline void check_bounds_part(Int last_idx) const {
         if (idx_t(last_idx) >= shape_[Dim]) {
             throw_OutOfRange("IndexView", array_dim<Dim>(), last_idx, shape_[Dim]);
         }
     }
 
-    idx_t size() const { return shape_[0]; }
+    inline ATLAS_HOST_DEVICE
+    idx_t size() const noexcept { return shape_[0]; }
 
     void dump(std::ostream& os) const;
 
     template<int... i>
+    inline ATLAS_HOST_DEVICE
     mdspan_extents_type _get_mdspan_extents(std::integer_sequence<int, i...> = {}) const {
         return mdspan_extents_type{(shape_[i])...};
     }
 
+    inline ATLAS_HOST_DEVICE
     mdspan_extents_type mdspan_extents() const {
         return _get_mdspan_extents(std::make_integer_sequence<int,Rank>{});
     }
 
     template<int... i>
+    inline ATLAS_HOST_DEVICE
     mdspan_strides_type _get_mdspan_strides(std::integer_sequence<int, i...> = {}) const {
         return mdspan_strides_type{(static_cast<typename mdspan_strides_type::value_type>(strides_[i]))...};
     }
 
+    inline ATLAS_HOST_DEVICE
     mdspan_strides_type mdspan_strides() const {
         return _get_mdspan_strides(std::make_integer_sequence<int,Rank>{});
     }

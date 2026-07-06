@@ -721,8 +721,7 @@ namespace atlas {
 #define EXPLICIT_TEMPLATE_INSTANTIATION_TYPE_RANK(TYPE, BLOCKED_RANK) \
     template void device_copy_blocked_to_nonblocked_mdspan<array::ArrayView<const TYPE,BLOCKED_RANK>,array::ArrayView<TYPE,BLOCKED_RANK-1>>(array::ArrayView<const TYPE,BLOCKED_RANK>, array::ArrayView<TYPE,BLOCKED_RANK-1>); \
     template void device_copy_nonblocked_to_blocked_mdspan<array::ArrayView<const TYPE,BLOCKED_RANK-1>,array::ArrayView<TYPE,BLOCKED_RANK>>(array::ArrayView<const TYPE,BLOCKED_RANK-1>, array::ArrayView<TYPE,BLOCKED_RANK>); \
-    template void device_copy_blocked_to_blocked_mdspan<array::ArrayView<const TYPE,BLOCKED_RANK>,array::ArrayView<TYPE,BLOCKED_RANK>>(array::ArrayView<const TYPE,BLOCKED_RANK>, array::ArrayView<TYPE,BLOCKED_RANK>); \
-    EXPLICIT_TEMPLATE_INSTANTIATION_MDSPAN_TYPE_RANK_ACCESSOR(TYPE, BLOCKED_RANK, restrict_accessor)
+    template void device_copy_blocked_to_blocked_mdspan<array::ArrayView<const TYPE,BLOCKED_RANK>,array::ArrayView<TYPE,BLOCKED_RANK>>(array::ArrayView<const TYPE,BLOCKED_RANK>, array::ArrayView<TYPE,BLOCKED_RANK>);
 
 #define EXPLICIT_TEMPLATE_INSTANTIATION(RANK)                \
     EXPLICIT_TEMPLATE_INSTANTIATION_TYPE_RANK(double, RANK) \
@@ -735,7 +734,6 @@ EXPLICIT_TEMPLATE_INSTANTIATION(3)
 EXPLICIT_TEMPLATE_INSTANTIATION(4)
 
 #undef EXPLICIT_TEMPLATE_INSTANTIATION_TYPE_RANK
-#undef EXPLICIT_TEMPLATE_INSTANTIATION_MDSPAN_TYPE_RANK_ACCESSOR
 #undef EXPLICIT_TEMPLATE_INSTANTIATION
 
 }  // namespace atlas

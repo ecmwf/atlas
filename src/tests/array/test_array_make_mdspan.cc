@@ -13,6 +13,7 @@
 #include "tests/AtlasTestEnvironment.h"
 
 using namespace atlas::array;
+using namespace atlas::array::introspection;
 
 namespace atlas {
 namespace test {

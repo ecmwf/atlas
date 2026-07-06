@@ -418,7 +418,7 @@ private:
         return mdspan_extents_type{(shape_[i])...};
     }
 
-    ATLAS_HOST_DEVICE
+    inline ATLAS_HOST_DEVICE
     mdspan_extents_type mdspan_extents() const {
         return _get_mdspan_extents(std::make_integer_sequence<int,RANK>{});
     }
@@ -429,7 +429,7 @@ private:
         return mdspan_strides_type{(static_cast<typename mdspan_strides_type::value_type>(strides_[i]))...};
     }
 
-    ATLAS_HOST_DEVICE
+    inline ATLAS_HOST_DEVICE
     mdspan_strides_type mdspan_strides() const {
         return _get_mdspan_strides(std::make_integer_sequence<int,RANK>{});
     }

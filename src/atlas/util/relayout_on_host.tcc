@@ -53,6 +53,7 @@
 
 #include "atlas/runtime/Trace.h"
 
+using namespace atlas::array::introspection;
 
 #ifdef atlas_omp_parallel_for
 #undef atlas_omp_parallel_for
@@ -176,95 +177,6 @@ enum class RelayoutImplementation {
     return cached;
 }
 
-enum class ViewType { Blocked, NonBlocked };
-
-// C++17 SFINAE detector to check if a type is a std::mdspan 
-template <typename T, typename = void>
-struct is_mdspan : std::false_type {};
-
-template <typename T>
-struct is_mdspan<T, std::void_t<
-    typename T::element_type,
-    typename T::data_handle_type,
-    typename T::mapping_type,
-    decltype(std::declval<T>().data_handle()),
-    decltype(std::declval<T>().accessor())
->> : std::true_type {};
-
-// Detects if an instance exposes a .contiguous() member function (like atlas::ArrayView or atlas::LocalView)
-template <typename T, typename = std::void_t<>>
-struct has_contiguous_member : std::false_type {};
-
-template <typename T>
-struct has_contiguous_member<T, std::void_t<
-    decltype(std::declval<const T&>().contiguous())
->> : std::is_convertible<decltype(std::declval<const T&>().contiguous()), bool> {};
-
-// Detects if a type has mdspan-style type definitions
-template <typename ViewType>
-[[nodiscard]] constexpr bool is_layout_always_contiguous() noexcept {
-    if constexpr (is_mdspan<ViewType>::value) {
-        using mapping_type = typename ViewType::mapping_type;
-        return mapping_type::is_always_unique() && mapping_type::is_always_exhaustive();
-    } else {
-        // Types like atlas::ArrayView resolve contiguity at runtime, 
-        // so they do not offer a strict static type guarantee.
-        return false;
-    }
-}
-
-template <typename>
-[[maybe_unused]] inline constexpr bool always_false_v = false;
-
-template <typename ViewType,
-          typename = std::enable_if_t<is_mdspan<ViewType>::value || 
-                                      has_contiguous_member<ViewType>::value>>
-[[nodiscard]] constexpr bool is_contiguous(const ViewType& view) noexcept {
-    // Branch A: If the type is statically proven contiguous, compile out the rest.
-    if constexpr (is_layout_always_contiguous<ViewType>()) {
-        return true;
-    } 
-    // Branch B: Handle standard mdspan implementations (dynamic/strided layouts)
-    else if constexpr (is_mdspan<ViewType>::value) {
-        return view.is_unique() && view.is_exhaustive();
-    } 
-    // Branch C: Duck-type handle for atlas::ArrayView or identical APIs
-    else if constexpr (has_contiguous_member<ViewType>::value) {
-        return view.contiguous();
-    }
-    else {
-        static_assert(always_false_v<ViewType>, "Unsupported view type for is_contiguous");
-    }
-    return false;
-}
-
-// C++17 SFINAE detector to check for .data() member function returning a pointer
-template <typename T, typename = void>
-struct has_member_data : std::false_type {};
-
-template <typename T>
-struct is_pointer_type : std::is_pointer<decltype(std::declval<T>().data())> {};
-
-template <typename T>
-struct has_member_data<T, std::void_t<decltype(std::declval<T>().data())>> 
-    : is_pointer_type<T> {};
-
-
-// Access raw data pointer for std::mdspan types and types with .data() member function
-// Pathway A: For std::mdspan types
-template <typename T, typename std::enable_if_t<is_mdspan<std::decay_t<T>>::value, int> = 0>
-constexpr auto* get_raw_data(T&& view) {
-    auto handle = view.data_handle();
-    auto accessor = view.accessor();
-    return &accessor.access(handle, 0);
-}
-
-// Pathway B: For array::ArrayView types (or any type offering .data())
-template <typename T, typename std::enable_if_t<has_member_data<std::decay_t<T>>::value, int> = 0>
-constexpr auto* get_raw_data(T&& view) {
-    return view.data();
-}
-
 // Check that each block slice [dim1..last] is tightly packed, regardless of spacing between blocks.
 template <typename Blocked>
 [[nodiscard]] bool is_block_contiguous(const Blocked& blocked) {
@@ -281,34 +193,18 @@ template <typename Blocked>
     return true;
 }
 
-// Helper to detect if a view has stride-1 in the last dimension
-// This allows it to be treated as layout_right for better performance
-template <typename ViewType>
-[[nodiscard]] bool has_stride_one_last_dimension(const ViewType& view) {
-    const idx_t rank = view.rank();
-    if (rank == 0) return true;  // scalar edge case
-    return view.stride(rank - 1) == 1;
-}
-
-// Check if a view has layout_right-like properties: contiguous and stride-1 in last dimension
-// Works for both ArrayView and mdspan types
-template <typename ViewType>
-[[nodiscard]] bool has_layout_right(const ViewType& view) {
-    return is_contiguous(view) && has_stride_one_last_dimension(view);
-}
-
 template <typename View, typename = void>
 struct get_nproma_extent {
     static constexpr std::size_t value = dynamic_extent;
 };
 
 template <typename View>
-struct get_nproma_extent<View, std::enable_if_t<is_mdspan<View>::value>> {
+struct get_nproma_extent<View, std::enable_if_t<array::introspection::is_mdspan<View>()>> {
     static constexpr std::size_t value = View::static_extent(View::rank() - 1);
 };
 
 template <typename View>
-inline constexpr std::size_t nproma_extent_v = get_nproma_extent<View>::value;
+static inline constexpr std::size_t nproma_extent_v = get_nproma_extent<View>::value;
 
 
 
@@ -324,8 +220,8 @@ template <size_t nproma_extent, class Nonblocked, class Blocked>
 /// `operator()(jblk)` copies exactly one blocked chunk, using the full `nproma`
 /// width for interior blocks and a shortened width for the final partial block.
 struct CopyNonblockedToBlockedContiguousRawPointers {
-    using blocked_element_type = mdspan_introspection_detail::view_value_t<Blocked>;
-    using nonblocked_element_type = mdspan_introspection_detail::view_value_t<Nonblocked>;
+    using blocked_element_type = array::introspection::element_t<Blocked>;
+    using nonblocked_element_type = array::introspection::element_t<Nonblocked>;
     using value_type = std::remove_cv_t<blocked_element_type>;
 
     static constexpr idx_t static_nrof() {
@@ -564,7 +460,7 @@ template <size_t nproma_extent, class Nonblocked, class Blocked>
 ATLAS_RELAYOUT_NOINLINE_IF_PROFILING
 void host_copy_nonblocked_to_blocked_contiguous_raw_pointers_nproma(const Nonblocked nonblocked, Blocked blocked) {
     ATLAS_ASSERT(is_block_contiguous(blocked));
-    ATLAS_ASSERT(has_layout_right(nonblocked));
+    ATLAS_ASSERT(array::introspection::can_use_layout_right(nonblocked));
 
     const idx_t nblks  = blocked.extent(0);
     const idx_t nproma = last_extent(blocked);
@@ -587,8 +483,8 @@ template <size_t nproma_extent, class Blocked, class Nonblocked>
 /// when the blocked input is block-contiguous and the nonblocked output is layout-right,
 /// so the copy can be expressed in terms of restricted raw pointers and simple strides.
 struct CopyBlockedToNonblockedContiguousRawPointers {
-    using blocked_element_type = mdspan_introspection_detail::view_value_t<Blocked>;
-    using nonblocked_element_type = mdspan_introspection_detail::view_value_t<Nonblocked>;
+    using blocked_element_type = array::introspection::element_t<Blocked>;
+    using nonblocked_element_type = array::introspection::element_t<Nonblocked>;
     using value_type = std::remove_cv_t<nonblocked_element_type>;
 
     static constexpr idx_t static_nrof() {
@@ -825,7 +721,7 @@ template <size_t nproma_extent, class Blocked, class Nonblocked>
 ATLAS_RELAYOUT_NOINLINE_IF_PROFILING
 void host_copy_blocked_to_nonblocked_contiguous_raw_pointers_nproma(const Blocked blocked, Nonblocked nonblocked) {
     ATLAS_ASSERT(is_block_contiguous(blocked));
-    ATLAS_ASSERT(has_layout_right(nonblocked));
+    ATLAS_ASSERT(array::introspection::can_use_layout_right(nonblocked));
 
     const idx_t nblks = blocked.extent(0);
     const idx_t nproma = last_extent(blocked);
@@ -854,7 +750,7 @@ struct BlockedSubspanTraits;
 template <typename Blocked, size_t nproma, BlockAlignment block_alignment>
 struct BlockedSubspanTraits<Blocked, nproma, block_alignment, 4> {
     static constexpr bool is_aligned = (block_alignment == BlockAlignment::aligned);
-    using value_t = mdspan_introspection_detail::view_value_t<Blocked>;
+    using value_t = array::introspection::element_t<Blocked>;
     static constexpr std::size_t alignment = (not is_aligned) ? alignof(value_t) : ::atlas::alignment;
     using layout_t = layout_right;
     using accessor_t = restrict_aligned_accessor<value_t, alignment>;
@@ -865,7 +761,7 @@ struct BlockedSubspanTraits<Blocked, nproma, block_alignment, 4> {
 template <typename Blocked, size_t nproma, BlockAlignment block_alignment>
 struct BlockedSubspanTraits<Blocked, nproma, block_alignment, 3> {
     static constexpr bool is_aligned = (block_alignment == BlockAlignment::aligned);
-    using value_t = mdspan_introspection_detail::view_value_t<Blocked>;
+    using value_t = array::introspection::element_t<Blocked>;
     static constexpr std::size_t alignment = (not is_aligned) ? alignof(value_t) : ::atlas::alignment;
     using layout_t = layout_right;
     using accessor_t = restrict_aligned_accessor<value_t, alignment>;
@@ -876,7 +772,7 @@ struct BlockedSubspanTraits<Blocked, nproma, block_alignment, 3> {
 template <typename Blocked, size_t nproma, BlockAlignment block_alignment>
 struct BlockedSubspanTraits<Blocked, nproma, block_alignment, 2> {
     static constexpr bool is_aligned = (block_alignment == BlockAlignment::aligned);
-    using value_t = mdspan_introspection_detail::view_value_t<Blocked>;
+    using value_t = array::introspection::element_t<Blocked>;
     static constexpr std::size_t alignment = (nproma == dynamic_extent || not is_aligned) ? alignof(value_t) : blocked_subspan_alignment_v<nproma, value_t>;
     using layout_t = layout_right;
     using accessor_t = restrict_aligned_accessor<value_t, alignment>;
@@ -894,7 +790,7 @@ struct NonblockedSubspanTraits;
 
 template <typename Nonblocked, size_t nproma>
 struct NonblockedSubspanTraits<Nonblocked, nproma, 3> {
-    using value_t = mdspan_introspection_detail::view_value_t<Nonblocked>;
+    using value_t = array::introspection::element_t<Nonblocked>;
     using layout_t = layout_right;
     using accessor_t = restrict_aligned_accessor<value_t,64>;
     using extents_t = extents<idx_t, nproma, dynamic_extent, dynamic_extent>;
@@ -903,7 +799,7 @@ struct NonblockedSubspanTraits<Nonblocked, nproma, 3> {
 
 template <typename Nonblocked, size_t nproma>
 struct NonblockedSubspanTraits<Nonblocked, nproma, 2> {
-    using value_t = mdspan_introspection_detail::view_value_t<Nonblocked>;
+    using value_t = array::introspection::element_t<Nonblocked>;
     using layout_t = layout_right;
     using accessor_t = restrict_aligned_accessor<value_t,64>;
     using extents_t = extents<idx_t, nproma, dynamic_extent>;
@@ -912,7 +808,7 @@ struct NonblockedSubspanTraits<Nonblocked, nproma, 2> {
 
 template <typename Nonblocked, size_t nproma>
 struct NonblockedSubspanTraits<Nonblocked, nproma, 1> {
-    using value_t = mdspan_introspection_detail::view_value_t<Nonblocked>;
+    using value_t = array::introspection::element_t<Nonblocked>;
     using layout_t = layout_right;
     using accessor_t = restrict_aligned_accessor<value_t,64>;
     using extents_t = extents<idx_t, nproma>;
@@ -996,7 +892,7 @@ template<typename Blocked>
 /// The mdspan implementation distinguishes aligned and unaligned block accessors. This test
 /// checks both the data pointer alignment and the stride between consecutive inner slices.
 bool is_block_aligned(const Blocked& blocked) {
-    using value_type = mdspan_introspection_detail::view_value_t<decltype(blocked)>;
+    using value_type = array::introspection::element_t<decltype(blocked)>;
     return is_aligned(blocked,alignment) &&
            (static_cast<std::size_t>(blocked.stride(1)) * sizeof(value_type) % alignment == 0);
 }
@@ -1011,7 +907,7 @@ template<typename Nonblocked>
 void assert_requirements_on_nonblocked(const Nonblocked& nonblocked) {
     bool nonblocked_is_aligned = is_aligned(nonblocked,alignment);
     ATLAS_ASSERT(nonblocked_is_aligned);
-    ATLAS_ASSERT(is_contiguous(nonblocked));
+    ATLAS_ASSERT(array::introspection::can_use_layout_right(nonblocked));
 }
 
 template <size_t nproma_extent, BlockAlignment block_alignment, class Blocked, class Nonblocked>
@@ -1464,7 +1360,7 @@ void host_copy_nonblocked_to_blocked_impl(const Nonblocked nonblocked, Blocked b
     // skip the runtime switch dispatch below, avoiding the unused template instantiations.
     constexpr std::size_t nproma_extent = nproma_extent_v<Blocked>;
 
-    ATLAS_ASSERT(has_layout_right(nonblocked));
+    ATLAS_ASSERT(array::introspection::can_use_layout_right(nonblocked));
     ATLAS_ASSERT(is_block_contiguous(blocked));
 
 #if DISABLE_RAW_POINTERS == 0
@@ -1545,7 +1441,7 @@ void host_copy_blocked_to_nonblocked_impl(const Blocked blocked, Nonblocked nonb
     // skip the runtime switch dispatch below, avoiding the unused template instantiations.
     constexpr std::size_t nproma_extent = nproma_extent_v<Blocked>;
 
-    ATLAS_ASSERT(has_layout_right(nonblocked));
+    ATLAS_ASSERT(array::introspection::can_use_layout_right(nonblocked));
     ATLAS_ASSERT(is_block_contiguous(blocked));
 
 #if DISABLE_RAW_POINTERS == 0
@@ -1796,20 +1692,20 @@ void host_copy_blocked_to_blocked_impl(const BlockedIn blocked_in, BlockedOut bl
         return;
     }
 
+    // At the moment we implement only contiguous block copies for optimizations
+    ATLAS_ASSERT(array::introspection::can_use_layout_right(blocked_in));
+    ATLAS_ASSERT(array::introspection::can_use_layout_right(blocked_out));
+
     const bool use_memcpy = relayout_blocked_to_blocked_use_memcpy();
 
     if (use_memcpy) {
-        if (nproma_in == nproma_out && blocked_in.size() == blocked_out.size() && is_contiguous(blocked_in) && is_contiguous(blocked_out)) {
-            const value_type* raw_in = get_raw_data(blocked_in);
-            value_type* raw_out = get_raw_data(blocked_out);
+        if (nproma_in == nproma_out && blocked_in.size() == blocked_out.size()) {
+            const value_type* raw_in = array::introspection::data_handle(blocked_in);
+            value_type* raw_out = array::introspection::data_handle(blocked_out);
             std::memcpy(raw_out, raw_in, blocked_out.size() * sizeof(value_type));
             return;
         }
     }
-
-    // At the moment we implement only contiguous block copies for optimizations
-    ATLAS_ASSERT(is_block_contiguous(blocked_in));
-    ATLAS_ASSERT(is_block_contiguous(blocked_out));
 
     auto copy_blocked_to_blocked_block = make_copy_blocked_to_blocked(blocked_in, blocked_out);
     atlas_omp_parallel_for(idx_t jblk_out = 0; jblk_out < nblks_out; ++jblk_out) {
