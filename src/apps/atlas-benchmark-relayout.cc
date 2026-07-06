@@ -116,7 +116,7 @@
  * not involved.  This is useful for testing or temporarily selecting an optimisation strategy in a
  * larger program without recompiling Atlas.
  *
- *   --loop-order=nproma_innermost|nproma_outermost
+ *   --loop-order=nproma_innermost|nproma_outermost|nonblocked_coalesced|coalesced_write|coalesced_read
  *       Sets ATLAS_RELAYOUT_LOOP_ORDER.  This controls the order of loops in optimized host
  *       blocked/nonblocked copies for rank-3 and rank-4 field shapes.
  *
@@ -134,10 +134,30 @@
  *       useful for testing whether the nonblocked side, cache reuse, or compiler vectorization is
  *       more favorable for a particular rank, shape, compiler, and processor.
  *
+ *       nonblocked_coalesced is a device-only variant that applies to the blocked-to-nonblocked and
+ *       nonblocked-to-blocked directions (--on-device). It maps consecutive GPU threads to the
+ *       innermost (unit-stride) dimension of the nonblocked view so the nonblocked side coalesces,
+ *       at the cost of uncoalescing the blocked side; the resulting blocked accesses stride by
+ *       nproma (a small stride) rather than by nlev. For blocked-to-nonblocked it coalesces the
+ *       nonblocked writes, for nonblocked-to-blocked it coalesces the nonblocked reads. The
+ *       blocked-to-blocked direction has no nonblocked view and behaves like nproma_outermost; on
+ *       the host it also maps to nproma_outermost.
+ *
+ *       coalesced_write and coalesced_read are device-only meta-orders that select, per copy
+ *       direction, whichever concrete kernel coalesces the write (respectively the read) side.
+ *       Because the blocked side is a write for nonblocked-to-blocked but a read for
+ *       blocked-to-nonblocked, no single fixed kernel is "the coalesced-write kernel" for both
+ *       directions, so these meta-orders resolve to the right kernel for each direction.
+ *       Empirically, coalescing the write side is the better default. On the host they map to
+ *       nproma_outermost.
+ *
  *       Equivalent environment variable use outside this benchmark:
  *
  *           ATLAS_RELAYOUT_LOOP_ORDER=nproma_innermost
  *           ATLAS_RELAYOUT_LOOP_ORDER=nproma_outermost
+ *           ATLAS_RELAYOUT_LOOP_ORDER=nonblocked_coalesced
+ *           ATLAS_RELAYOUT_LOOP_ORDER=coalesced_write
+ *           ATLAS_RELAYOUT_LOOP_ORDER=coalesced_read
  *
  *   --nproma-dispatch=static|dynamic
  *       Sets ATLAS_RELAYOUT_NPROMA_DISPATCH.  This controls how the public host relayout wrapper
@@ -311,7 +331,7 @@ struct Settings {
         assert_one_of("format", {"table", "json"}, format);
         assert_one_of("operation", {benchmark_operation_all, benchmark_operation_b2n,
                           benchmark_operation_n2b, benchmark_operation_b2b}, operation);
-        assert_one_of("loop-order", {"nproma_innermost", "nproma_outermost"}, loop_order);
+        assert_one_of("loop-order", {"nproma_innermost", "nproma_outermost", "nonblocked_coalesced", "coalesced_write", "coalesced_read"}, loop_order);
         assert_one_of("nproma-dispatch", {"static", "dynamic"}, nproma_dispatch);
         assert_one_of("implementation", {implementation_raw_pointers,
                                          implementation_mdspan, implementation_arrayview}, implementation);
@@ -963,7 +983,7 @@ public:
         add_option(new SimpleOption<std::string>("format", "Result output format: table or json. Default=table"));
         add_option(new SimpleOption<std::string>("operation", "Benchmark operation: all, b2n, n2b, or b2b. Default=all"));
         add_option(new Separator("Optimisation parameters"));
-        add_option(new SimpleOption<std::string>("loop-order", "Host relayout loop order: nproma_innermost or nproma_outermost. Default=nproma_innermost"));
+        add_option(new SimpleOption<std::string>("loop-order", "Relayout loop order: nproma_innermost, nproma_outermost, nonblocked_coalesced, coalesced_write, or coalesced_read (coalesced_* are device meta-orders). Default=nproma_innermost"));
         add_option(new SimpleOption<std::string>("nproma-dispatch", "Host relayout nproma dispatch: static, runtime, or runtime_full_blocks. Default=static"));
         add_option(new SimpleOption<bool>("blocked-to-blocked-use-memcpy", "Use memcpy for host blocked-to-blocked contiguous chunks. Default=true"));
         add_option(new SimpleOption<bool>("blocked-nonblocked-use-memcpy", "Use memcpy for host rank-2 blocked/nonblocked copies. Default=false"));

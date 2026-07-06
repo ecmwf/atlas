@@ -107,12 +107,40 @@ private:
 public:
     // -- Constructors
 
+    LocalView(const LocalView& other): data_(other.data_), size_(other.size_) {
+        init_metadata_pointers();
+        copy_metadata(other.shape_, other.strides_);
+    }
+
 
     template <typename ElementTypeTp, typename = std::enable_if_t<std::is_convertible_v<ElementTypeTp*, ElementType*>>>
-    LocalView(const LocalView<ElementTypeTp,Rank>& other): data_(other.data_), size_(other.size_), shape_(other.shape_), strides_(other.strides_) {}
+    LocalView(const LocalView<ElementTypeTp,Rank>& other): data_(other.data_), size_(other.size_) {
+        init_metadata_pointers();
+        copy_metadata(other.shape_, other.strides_);
+    }
+
+    LocalView& operator=(const LocalView& other) {
+        if (this != &other) {
+            data_ = other.data_;
+            size_ = other.size_;
+            init_metadata_pointers();
+            copy_metadata(other.shape_, other.strides_);
+        }
+        return *this;
+    }
+
+    template <typename ElementTypeTp, typename = std::enable_if_t<std::is_convertible_v<ElementTypeTp*, ElementType*>>>
+    LocalView& operator=(const LocalView<ElementTypeTp,Rank>& other) {
+        data_ = other.data_;
+        size_ = other.size_;
+        init_metadata_pointers();
+        copy_metadata(other.shape_, other.strides_);
+        return *this;
+    }
 
     template <typename ElementTypeTp, typename Int1, typename Int2, typename = std::enable_if_t<std::is_convertible_v<ElementTypeTp*, ElementType*> && std::is_integral_v<Int1> && std::is_integral_v<Int2>>>
     LocalView(ElementTypeTp* data, const Int1 shape[], const Int2 strides[]): data_(data) {
+        init_metadata_pointers();
         size_ = 1;
         for (idx_t j = 0; j < Rank; ++j) {
             shape_[j]   = shape[j];
@@ -123,6 +151,7 @@ public:
 
     template <typename ElementTypeTp, typename Int, typename = std::enable_if_t<std::is_convertible_v<ElementTypeTp*, ElementType*> && std::is_integral_v<Int>>>
     LocalView(ElementTypeTp* data, const Int shape[]): data_(data) {
+        init_metadata_pointers();
         size_ = 1;
         for (int j = Rank - 1; j >= 0; --j) {
             shape_[j]   = shape[j];
@@ -138,6 +167,7 @@ public:
     template <typename T, typename E, typename L, typename A, typename = std::enable_if_t<std::is_convertible_v<typename A::data_handle_type, ElementType*> && E::rank() == Rank>>
     LocalView(mdspan<T,E,L,A>& other) :
         data_(other.data_handle()), size_(other.size()) {
+        init_metadata_pointers();
         for (int j = 0; j < Rank; ++j) {
             shape_[j] = other.extent(j);
             strides_[j] = other.stride(j);
@@ -205,10 +235,10 @@ public:
     }
 
     inline ATLAS_HOST_DEVICE
-    const idx_t* shape() const noexcept { return shape_.data(); }
+    const idx_t* shape() const noexcept { return shape_; }
 
     inline ATLAS_HOST_DEVICE
-    const idx_t* strides() const noexcept { return strides_.data(); }
+    const idx_t* strides() const noexcept { return strides_; }
 
     inline ATLAS_HOST_DEVICE
     element_type const* data() const noexcept { return data_; }
@@ -245,20 +275,39 @@ public:
     }
 
 private:
+
+    inline ATLAS_HOST_DEVICE 
+    void init_metadata_pointers() noexcept {
+        shape_ = shape_data_;
+        strides_ = strides_data_;
+    }
+
+    template <typename Shape, typename Strides>
+    inline ATLAS_HOST_DEVICE
+    void copy_metadata(const Shape& shape, const Strides& strides) noexcept {
+        for (int j = 0; j < Rank; ++j) {
+            shape_[j] = shape[j];
+            strides_[j] = strides[j];
+        }
+    }
+
     // -- Private methods
 
     template <int Dim, typename Int, typename... Ints>
-    inline constexpr idx_t index_part(Int idx, Ints... next_idx) const {
+    inline ATLAS_HOST_DEVICE
+    constexpr idx_t index_part(Int idx, Ints... next_idx) const {
         return idx * strides_[Dim] + index_part<Dim + 1>(next_idx...);
     }
 
     template <int Dim, typename Int>
-    inline constexpr idx_t index_part(Int last_idx) const {
+    inline ATLAS_HOST_DEVICE
+    constexpr idx_t index_part(Int last_idx) const {
         return last_idx * strides_[Dim];
     }
 
     template <typename... Ints>
-    inline constexpr idx_t index(Ints... idx) const {
+    inline ATLAS_HOST_DEVICE
+    constexpr idx_t index(Ints... idx) const {
         return index_part<0>(idx...);
     }
 
@@ -331,8 +380,10 @@ private:
 
     element_type* data_;
     idx_t size_;
-    std::array<idx_t,Rank> shape_;
-    std::array<idx_t,Rank> strides_;
+    idx_t* shape_;
+    idx_t* strides_;
+    idx_t shape_data_[Rank];
+    idx_t strides_data_[Rank];
 
 #undef ENABLE_IF_NON_CONST
 #undef ENABLE_IF_CONST_WITH_NON_CONST

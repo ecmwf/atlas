@@ -267,7 +267,7 @@ private:
     data_handle_type data_;
     idx_t strides_[Rank];
     idx_t shape_[Rank];
-    static constexpr accessor_type accessor_{};
+    accessor_type accessor_{};
 };
 
 template <typename ElementType, int Rank>

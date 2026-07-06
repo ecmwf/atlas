@@ -15,7 +15,7 @@
 #include <type_traits>
 
 /**
- * @file relayout_on_device.hic
+ * @file relayout_on_device.tcc
  * @brief Device implementations for copying Atlas data between blocked and nonblocked layouts.
  *
  * Device relayout expects device-accessible Atlas views (`atlas::View`/`atlas::ArrayView`) or
@@ -85,9 +85,26 @@ constexpr const char* relayout_loop_order_env = "ATLAS_RELAYOUT_LOOP_ORDER";
 //    contiguous nproma dimension as the innermost sequential loop, hoisting the per-element
 //    div/mod. This mirrors the host nproma_innermost loop order and is offered so the tradeoff
 //    (contiguous per-thread runs vs. cross-thread coalescing) can be measured on real hardware.
+//  - nonblocked_coalesced: maps consecutive threads to the innermost (unit-stride) dimension of the
+//    nonblocked view instead of to the horizontal point index, so the nonblocked side is coalesced
+//    and the blocked side becomes the scattered side (striding by nproma, a small stride, rather
+//    than by nlev). For blocked->nonblocked this coalesces the nonblocked writes; for
+//    nonblocked->blocked it coalesces the nonblocked reads. Both directions keep the scattered
+//    blocked accesses tight (nproma-strided), which can outperform nproma_outermost. The
+//    blocked->blocked direction has no nonblocked view and behaves like nproma_outermost.
+//  - coalesced_write / coalesced_read: direction-aware meta-orders that select, per direction,
+//    whichever concrete kernel above coalesces the write (respectively the read) side. Because the
+//    blocked side is a write for nonblocked->blocked but a read for blocked->nonblocked, a fixed
+//    kernel cannot be "the coalesced-write kernel" for both directions; these meta-orders resolve
+//    to the right kernel for each direction (see resolve_loop_order). Empirically, coalescing the
+//    write side is the better default, so coalesced_write resolves to the fastest kernel measured
+//    for each direction.
 enum class RelayoutLoopOrder {
     nproma_innermost,
-    nproma_outermost
+    nproma_outermost,
+    nonblocked_coalesced,
+    coalesced_write,
+    coalesced_read
 };
 
 RelayoutLoopOrder relayout_loop_order() {
@@ -96,9 +113,53 @@ RelayoutLoopOrder relayout_loop_order() {
          if (order && std::strcmp(order, "nproma_innermost") == 0) {
              return RelayoutLoopOrder::nproma_innermost;
          }
+         if (order && std::strcmp(order, "nonblocked_coalesced") == 0) {
+             return RelayoutLoopOrder::nonblocked_coalesced;
+         }
+         if (order && std::strcmp(order, "coalesced_write") == 0) {
+             return RelayoutLoopOrder::coalesced_write;
+         }
+         if (order && std::strcmp(order, "coalesced_read") == 0) {
+             return RelayoutLoopOrder::coalesced_read;
+         }
          return RelayoutLoopOrder::nproma_outermost;
     }();
     return cached;
+}
+
+// The copy direction a kernel implements, used to resolve the direction-aware coalesced_write /
+// coalesced_read meta-orders to a concrete kernel choice. The blocked side is the write for
+// nonblocked->blocked and the read for blocked->nonblocked, so the same "coalesce the write"
+// request maps to different kernels per direction.
+enum class CopyDirection {
+    nonblocked_to_blocked,
+    blocked_to_nonblocked,
+    blocked_to_blocked
+};
+
+// Resolve coalesced_write / coalesced_read into one of the concrete kernel-selecting loop orders
+// (nproma_outermost coalesces the blocked side; nonblocked_coalesced coalesces the nonblocked
+// side). Non-meta orders are returned unchanged.
+RelayoutLoopOrder resolve_loop_order(RelayoutLoopOrder order, CopyDirection direction) {
+    const bool want_write = (order == RelayoutLoopOrder::coalesced_write);
+    const bool want_read  = (order == RelayoutLoopOrder::coalesced_read);
+    if (!want_write && !want_read) {
+        return order;
+    }
+    switch (direction) {
+        case CopyDirection::nonblocked_to_blocked:
+            // blocked side = write, nonblocked side = read.
+            return want_write ? RelayoutLoopOrder::nproma_outermost      // coalesce blocked write
+                              : RelayoutLoopOrder::nonblocked_coalesced; // coalesce nonblocked read
+        case CopyDirection::blocked_to_nonblocked:
+            // blocked side = read, nonblocked side = write.
+            return want_write ? RelayoutLoopOrder::nonblocked_coalesced  // coalesce nonblocked write
+                              : RelayoutLoopOrder::nproma_outermost;     // coalesce blocked read
+        case CopyDirection::blocked_to_blocked:
+            // No nonblocked view; the flat kernel coalesces both blocked read and write.
+            return RelayoutLoopOrder::nproma_outermost;
+    }
+    return RelayoutLoopOrder::nproma_outermost;
 }
 
 // Distinguishes the two roles a view can play in a relayout, used as an explicit dispatch tag
@@ -121,6 +182,7 @@ auto make_relayout_mdspan(View& view) {
 
 template <typename Layout, ViewType VType, typename View, typename Operation>
 void dispatch_relayout_view_mdspan(View& view, Operation&& operation) {
+    using namespace array::introspection;
     if (is_aligned<64>(view)) {
         if constexpr (VType == ViewType::Blocked) {
             switch (last_extent(view)) {
@@ -298,6 +360,55 @@ ATLAS_GLOBAL void kernel_copy_blocked_to_nonblocked_mdspan_perblock(const Blocke
     }
 }
 
+/// @brief Nonblocked-coalesced variant of the blocked-to-nonblocked kernel.
+///
+/// Maps consecutive threads to the innermost (unit-stride) dimension of the nonblocked target
+/// instead of to the horizontal point index. This coalesces the nonblocked writes at the cost of
+/// uncoalescing the blocked reads. For blocked->nonblocked the write side is the expensive side, so
+/// trading coalesced reads for coalesced writes can be a net win. For rank 2 there is no interior
+/// dimension, so this reduces to the flat mapping.
+template <class Blocked, class Nonblocked>
+ATLAS_GLOBAL void kernel_copy_blocked_to_nonblocked_mdspan_coalesced(const Blocked blocked, Nonblocked nonblocked) {
+    idx_t npts   = nonblocked.extent(0);
+    idx_t nproma = blocked.extent(blocked.rank()-1);
+    static_assert(nonblocked.rank() == blocked.rank()-1);
+    if constexpr(blocked.rank()==4) {
+        idx_t nlev = nonblocked.extent(1);
+        idx_t nvar = nonblocked.extent(2);
+        idx_t work_size = npts * nlev * nvar;
+        auto traversal = KernelTraversal::current();
+        for (idx_t offset = traversal.offset; offset < work_size; offset += traversal.stride) {
+            idx_t jvar  = offset % nvar;
+            idx_t rem   = offset / nvar;
+            idx_t jlev  = rem % nlev;
+            idx_t point = rem / nlev;
+            idx_t jblk  = point / nproma;
+            idx_t jrof  = point - jblk * nproma;
+            nonblocked(point, jlev, jvar) = blocked(jblk, jvar, jlev, jrof);
+        }
+    }
+    else if constexpr (blocked.rank()==3) {
+        idx_t nlev = nonblocked.extent(1);
+        idx_t work_size = npts * nlev;
+        auto traversal = KernelTraversal::current();
+        for (idx_t offset = traversal.offset; offset < work_size; offset += traversal.stride) {
+            idx_t jlev  = offset % nlev;
+            idx_t point = offset / nlev;
+            idx_t jblk  = point / nproma;
+            idx_t jrof  = point - jblk * nproma;
+            nonblocked(point, jlev) = blocked(jblk, jlev, jrof);
+        }
+    }
+    else if constexpr (blocked.rank()==2) {
+        auto traversal = KernelTraversal::current();
+        for (idx_t point = traversal.offset; point < npts; point += traversal.stride) {
+            idx_t jblk = point / nproma;
+            idx_t jrof = point - jblk * nproma;
+            nonblocked(point) = blocked(jblk, jrof);
+        }
+    }
+}
+
 template <class Nonblocked, class Blocked>
 ATLAS_GLOBAL void kernel_copy_nonblocked_to_blocked_mdspan(Nonblocked nonblocked, Blocked blocked) {
     auto npts     = nonblocked.extent(0);
@@ -325,6 +436,56 @@ ATLAS_GLOBAL void kernel_copy_nonblocked_to_blocked_mdspan(Nonblocked nonblocked
         for (idx_t offset = traversal.offset; offset < work_size; offset += traversal.stride) {
             idx_t point = offset % npts;
             idx_t jlev  = offset / npts;
+            idx_t jblk  = point / nproma;
+            idx_t jrof  = point - jblk * nproma;
+            blocked(jblk, jlev, jrof) = nonblocked(point, jlev);
+        }
+    }
+    else if constexpr (blocked.rank()==2) {
+        auto traversal = KernelTraversal::current();
+        for (idx_t point = traversal.offset; point < npts; point += traversal.stride) {
+            idx_t jblk = point / nproma;
+            idx_t jrof = point - jblk * nproma;
+            blocked(jblk, jrof) = nonblocked(point);
+        }
+    }
+}
+
+/// @brief Nonblocked-coalesced variant of the nonblocked-to-blocked kernel.
+///
+/// Mirror of kernel_copy_blocked_to_nonblocked_mdspan_coalesced: maps consecutive threads to the
+/// innermost (unit-stride) dimension of the nonblocked source instead of to the horizontal point
+/// index. This coalesces the nonblocked reads at the cost of uncoalescing the blocked writes, but
+/// the resulting blocked writes stride by nproma (a small stride) rather than by nlev, so the
+/// scattered side is much tighter than in the flat nproma_outermost kernel. For rank 2 there is no
+/// interior dimension, so this reduces to the flat mapping.
+template <class Nonblocked, class Blocked>
+ATLAS_GLOBAL void kernel_copy_nonblocked_to_blocked_mdspan_coalesced(Nonblocked nonblocked, Blocked blocked) {
+    idx_t npts   = nonblocked.extent(0);
+    idx_t nproma = blocked.extent(blocked.rank()-1);
+    static_assert(nonblocked.rank() == blocked.rank()-1);
+    if constexpr(blocked.rank()==4) {
+        idx_t nlev = nonblocked.extent(1);
+        idx_t nvar = nonblocked.extent(2);
+        idx_t work_size = npts * nlev * nvar;
+        auto traversal = KernelTraversal::current();
+        for (idx_t offset = traversal.offset; offset < work_size; offset += traversal.stride) {
+            idx_t jvar  = offset % nvar;
+            idx_t rem   = offset / nvar;
+            idx_t jlev  = rem % nlev;
+            idx_t point = rem / nlev;
+            idx_t jblk  = point / nproma;
+            idx_t jrof  = point - jblk * nproma;
+            blocked(jblk, jvar, jlev, jrof) = nonblocked(point, jlev, jvar);
+        }
+    }
+    else if constexpr (blocked.rank()==3) {
+        idx_t nlev = nonblocked.extent(1);
+        idx_t work_size = npts * nlev;
+        auto traversal = KernelTraversal::current();
+        for (idx_t offset = traversal.offset; offset < work_size; offset += traversal.stride) {
+            idx_t jlev  = offset % nlev;
+            idx_t point = offset / nlev;
             idx_t jblk  = point / nproma;
             idx_t jrof  = point - jblk * nproma;
             blocked(jblk, jlev, jrof) = nonblocked(point, jlev);
@@ -415,8 +576,9 @@ void device_copy_nonblocked_to_blocked_impl(Nonblocked nonblocked, Blocked block
     else if constexpr (blocked.rank()==3) {
         ATLAS_ASSERT(nonblocked.extent(1) == blocked.extent(1));
     }
+    const RelayoutLoopOrder order = resolve_loop_order(relayout_loop_order(), CopyDirection::nonblocked_to_blocked);
     #if HIC_COMPILER
-    if (relayout_loop_order() == RelayoutLoopOrder::nproma_innermost) {
+    if (order == RelayoutLoopOrder::nproma_innermost) {
         idx_t work_units = blocked.extent(0);
         if constexpr(blocked.rank()==4) {
             work_units *= nonblocked.extent(1) * nonblocked.extent(2);
@@ -425,6 +587,16 @@ void device_copy_nonblocked_to_blocked_impl(Nonblocked nonblocked, Blocked block
             work_units *= nonblocked.extent(1);
         }
         kernel_copy_nonblocked_to_blocked_mdspan_perblock<<<blocks_per_grid(work_units),threads_per_block()>>>(nonblocked, blocked);
+    }
+    else if (order == RelayoutLoopOrder::nonblocked_coalesced) {
+        idx_t work_size = nonblocked.extent(0);
+        if constexpr(blocked.rank()==4) {
+            work_size *= nonblocked.extent(1) * nonblocked.extent(2);
+        }
+        else if constexpr(blocked.rank()==3) {
+            work_size *= nonblocked.extent(1);
+        }
+        kernel_copy_nonblocked_to_blocked_mdspan_coalesced<<<blocks_per_grid(work_size),threads_per_block()>>>(nonblocked, blocked);
     }
     else {
         idx_t work_size = nonblocked.extent(0);
@@ -438,8 +610,11 @@ void device_copy_nonblocked_to_blocked_impl(Nonblocked nonblocked, Blocked block
     }
     HIC_CHECK_KERNEL_LAUNCH();
     #else
-    if (relayout_loop_order() == RelayoutLoopOrder::nproma_innermost) {
+    if (order == RelayoutLoopOrder::nproma_innermost) {
         kernel_copy_nonblocked_to_blocked_mdspan_perblock(nonblocked, blocked);
+    }
+    else if (order == RelayoutLoopOrder::nonblocked_coalesced) {
+        kernel_copy_nonblocked_to_blocked_mdspan_coalesced(nonblocked, blocked);
     }
     else {
         kernel_copy_nonblocked_to_blocked_mdspan(nonblocked, blocked);
@@ -474,8 +649,9 @@ void device_copy_blocked_to_nonblocked_impl(Blocked blocked, Nonblocked nonblock
     else {
         ATLAS_THROW_EXCEPTION("transposition not implemented");
     }
+    const RelayoutLoopOrder order = resolve_loop_order(relayout_loop_order(), CopyDirection::blocked_to_nonblocked);
     #if HIC_COMPILER
-    if (relayout_loop_order() == RelayoutLoopOrder::nproma_innermost) {
+    if (order == RelayoutLoopOrder::nproma_innermost) {
         idx_t work_units = blocked.extent(0);
         if constexpr(blocked.rank()==4) {
             work_units *= nonblocked.extent(1) * nonblocked.extent(2);
@@ -484,6 +660,16 @@ void device_copy_blocked_to_nonblocked_impl(Blocked blocked, Nonblocked nonblock
             work_units *= nonblocked.extent(1);
         }
         kernel_copy_blocked_to_nonblocked_mdspan_perblock<<<blocks_per_grid(work_units),threads_per_block()>>>(blocked, nonblocked);
+    }
+    else if (order == RelayoutLoopOrder::nonblocked_coalesced) {
+        idx_t work_size = nonblocked.extent(0);
+        if constexpr(blocked.rank()==4) {
+            work_size *= nonblocked.extent(1) * nonblocked.extent(2);
+        }
+        else if constexpr(blocked.rank()==3) {
+            work_size *= nonblocked.extent(1);
+        }
+        kernel_copy_blocked_to_nonblocked_mdspan_coalesced<<<blocks_per_grid(work_size),threads_per_block()>>>(blocked, nonblocked);
     }
     else {
         idx_t work_size = nonblocked.extent(0);
@@ -497,8 +683,11 @@ void device_copy_blocked_to_nonblocked_impl(Blocked blocked, Nonblocked nonblock
     }
     HIC_CHECK_KERNEL_LAUNCH();
     #else
-    if (relayout_loop_order() == RelayoutLoopOrder::nproma_innermost) {
+    if (order == RelayoutLoopOrder::nproma_innermost) {
         kernel_copy_blocked_to_nonblocked_mdspan_perblock(blocked, nonblocked);
+    }
+    else if (order == RelayoutLoopOrder::nonblocked_coalesced) {
+        kernel_copy_blocked_to_nonblocked_mdspan_coalesced(blocked, nonblocked);
     }
     else {
         kernel_copy_blocked_to_nonblocked_mdspan(blocked, nonblocked);
@@ -716,24 +905,13 @@ void device_copy_blocked_to_blocked_mdspan(BlockedIn blocked_in, BlockedOut bloc
 
 //-----------------------------------------------------------------------
 // Explicit instantiation
-namespace atlas {
+//
+// The actual instantiations live in the per-type translation units
+// relayout_on_device_{int,float,long,double}.hic, which include this file and
+// expand ATLAS_RELAYOUT_DEVICE_EXPLICIT_TEMPLATE_INSTANTIATION_TYPE_RANK for a
+// single type. This mirrors the host split (relayout_on_host_{int,...}.cc).
 
-#define EXPLICIT_TEMPLATE_INSTANTIATION_TYPE_RANK(TYPE, BLOCKED_RANK) \
-    template void device_copy_blocked_to_nonblocked_mdspan<array::ArrayView<const TYPE,BLOCKED_RANK>,array::ArrayView<TYPE,BLOCKED_RANK-1>>(array::ArrayView<const TYPE,BLOCKED_RANK>, array::ArrayView<TYPE,BLOCKED_RANK-1>); \
-    template void device_copy_nonblocked_to_blocked_mdspan<array::ArrayView<const TYPE,BLOCKED_RANK-1>,array::ArrayView<TYPE,BLOCKED_RANK>>(array::ArrayView<const TYPE,BLOCKED_RANK-1>, array::ArrayView<TYPE,BLOCKED_RANK>); \
-    template void device_copy_blocked_to_blocked_mdspan<array::ArrayView<const TYPE,BLOCKED_RANK>,array::ArrayView<TYPE,BLOCKED_RANK>>(array::ArrayView<const TYPE,BLOCKED_RANK>, array::ArrayView<TYPE,BLOCKED_RANK>);
-
-#define EXPLICIT_TEMPLATE_INSTANTIATION(RANK)                \
-    EXPLICIT_TEMPLATE_INSTANTIATION_TYPE_RANK(double, RANK) \
-    EXPLICIT_TEMPLATE_INSTANTIATION_TYPE_RANK(float , RANK) \
-    EXPLICIT_TEMPLATE_INSTANTIATION_TYPE_RANK(int   , RANK) \
-    EXPLICIT_TEMPLATE_INSTANTIATION_TYPE_RANK(long  , RANK)
-
-EXPLICIT_TEMPLATE_INSTANTIATION(2)
-EXPLICIT_TEMPLATE_INSTANTIATION(3)
-EXPLICIT_TEMPLATE_INSTANTIATION(4)
-
-#undef EXPLICIT_TEMPLATE_INSTANTIATION_TYPE_RANK
-#undef EXPLICIT_TEMPLATE_INSTANTIATION
-
-}  // namespace atlas
+#define ATLAS_RELAYOUT_DEVICE_EXPLICIT_TEMPLATE_INSTANTIATION_TYPE_RANK(TYPE, BLOCKED_RANK) \
+    template void atlas::device_copy_blocked_to_nonblocked_mdspan<atlas::array::ArrayView<const TYPE,BLOCKED_RANK>,atlas::array::ArrayView<TYPE,BLOCKED_RANK-1>>(atlas::array::ArrayView<const TYPE,BLOCKED_RANK>, atlas::array::ArrayView<TYPE,BLOCKED_RANK-1>); \
+    template void atlas::device_copy_nonblocked_to_blocked_mdspan<atlas::array::ArrayView<const TYPE,BLOCKED_RANK-1>,atlas::array::ArrayView<TYPE,BLOCKED_RANK>>(atlas::array::ArrayView<const TYPE,BLOCKED_RANK-1>, atlas::array::ArrayView<TYPE,BLOCKED_RANK>); \
+    template void atlas::device_copy_blocked_to_blocked_mdspan<atlas::array::ArrayView<const TYPE,BLOCKED_RANK>,atlas::array::ArrayView<TYPE,BLOCKED_RANK>>(atlas::array::ArrayView<const TYPE,BLOCKED_RANK>, atlas::array::ArrayView<TYPE,BLOCKED_RANK>);

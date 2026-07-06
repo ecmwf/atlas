@@ -38,37 +38,57 @@ template <typename T, size_t Base>
 class index_reference {
 public:
     using value_type = T;
+
+    inline PLUTO_MDSPAN_HOST_DEVICE
     constexpr index_reference(value_type& idx): idx_(idx) {
     }
+
+    inline PLUTO_MDSPAN_HOST_DEVICE
     constexpr void set(const value_type& value) {
         idx_ = value + base_;
     }
+
+    inline PLUTO_MDSPAN_HOST_DEVICE
     constexpr value_type get() const {
         return idx_ - base_;
     }
+
+    inline PLUTO_MDSPAN_HOST_DEVICE
     constexpr void operator =(const value_type& value) {
         set(value);
     }
+
+    inline PLUTO_MDSPAN_HOST_DEVICE
     constexpr index_reference& operator=(const index_reference& other) noexcept {
         set(other.get());
         return *this;
     }
+
+    inline PLUTO_MDSPAN_HOST_DEVICE
     constexpr index_reference& operator--() noexcept {
         --idx_;
         return *this;
     }
+
+    inline PLUTO_MDSPAN_HOST_DEVICE
     constexpr index_reference& operator++() noexcept {
         ++idx_;
         return *this;
     }
+
+    inline PLUTO_MDSPAN_HOST_DEVICE
     constexpr index_reference& operator+=(value_type v) noexcept {
         idx_ += v;
         return *this;
     }
+
+    inline PLUTO_MDSPAN_HOST_DEVICE
     constexpr index_reference& operator-=(value_type v) noexcept {
         idx_ -= v;
         return *this;
     }
+
+    inline PLUTO_MDSPAN_HOST_DEVICE
     constexpr operator value_type() const noexcept{
         return get();
     }
@@ -89,30 +109,39 @@ struct index_accessor {
     using data_handle_type = ElementType*;
     using offset_policy    = index_accessor;
 
-    constexpr index_accessor() = default;
+    inline PLUTO_MDSPAN_HOST_DEVICE
+    constexpr index_accessor() {}
 
     template<class OtherAccessor, typename = typename std::enable_if_t<
           (!std::is_const_v<ElementType> && std::is_same_v<ElementType, std::remove_const_t<typename OtherAccessor::element_type>>)
         ||( std::is_const_v<ElementType> && std::is_same_v<ElementType, std::add_const_t<typename OtherAccessor::element_type>>)>>
+    inline PLUTO_MDSPAN_HOST_DEVICE
     constexpr index_accessor(const OtherAccessor&) {}
 
     template<size_t B=Base, typename = std::enable_if_t<B == 0>>
+    inline PLUTO_MDSPAN_HOST_DEVICE
     constexpr ElementType& access(data_handle_type p, size_t i) const noexcept {
         return p[i];
     }
+
     template<size_t B=Base, typename = std::enable_if_t<B != 0 && !std::is_const_v<ElementType>>>
+    inline PLUTO_MDSPAN_HOST_DEVICE
     constexpr index_reference<ElementType,Base> access(data_handle_type p, size_t i) const noexcept {
         return p[i];
     }
+
     template<size_t B=Base, typename = std::enable_if_t<B != 0 && std::is_const_v<ElementType>>>
+    inline PLUTO_MDSPAN_HOST_DEVICE
     constexpr ElementType access(data_handle_type p, size_t i) const noexcept {
         return p[i] - base_;
     }
 
+    inline PLUTO_MDSPAN_HOST_DEVICE
     constexpr data_handle_type offset(data_handle_type p, size_t i) const noexcept {
         return p + i;
     }
 
+    inline PLUTO_MDSPAN_HOST_DEVICE
     constexpr operator default_accessor<element_type>() const noexcept {
         return default_accessor<element_type>();
     }

@@ -117,6 +117,16 @@ enum class RelayoutImplementation {
          if (loop_order && std::strcmp(loop_order, "nproma_outermost") == 0) {
              return RelayoutLoopOrder::nproma_outermost;
          }
+         // nonblocked_coalesced is a device-only variant; on the host it maps to nproma_outermost.
+         if (loop_order && std::strcmp(loop_order, "nonblocked_coalesced") == 0) {
+             return RelayoutLoopOrder::nproma_outermost;
+         }
+         // coalesced_write / coalesced_read are device-only meta-orders; on the host, where there
+         // is no memory coalescing, they map to nproma_outermost.
+         if (loop_order && (std::strcmp(loop_order, "coalesced_write") == 0 ||
+                            std::strcmp(loop_order, "coalesced_read") == 0)) {
+             return RelayoutLoopOrder::nproma_outermost;
+         }
          return RelayoutLoopOrder::nproma_innermost;
     }();
     return cached_loop_order;
