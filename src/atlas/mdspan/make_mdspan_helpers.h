@@ -117,12 +117,12 @@ using static_extents_t = typename static_extents<BaseExtents, Spec>::type;
 
 template <typename View, typename Extents, std::size_t... I>
 Extents make_mdspan_extents(const View& view, std::index_sequence<I...>) {
-    return Extents{static_cast<typename Extents::index_type>(array::introspection::extent(view, I))...};
+    return Extents{static_cast<typename Extents::index_type>(array::extent<I>(view))...};
 }
 
 template <typename View, std::size_t Rank, std::size_t... I>
 std::array<std::size_t, Rank> make_mdspan_strides(const View& view, std::index_sequence<I...>) {
-    return std::array<std::size_t, Rank>{static_cast<std::size_t>(array::introspection::stride(view, I))...};
+    return std::array<std::size_t, Rank>{static_cast<std::size_t>(array::stride<I>(view))...};
 }
 
 template <typename Extents, std::size_t... I>
@@ -212,7 +212,7 @@ auto make_mdspan_impl(View& view) {
 
     auto extents = make_mdspan_extents<View, ActualExtents>(view, std::make_index_sequence<Rank>{});
     return make_mdspan_from_extents<ActualExtents, Layout, Accessor>(
-        array::introspection::data_handle(view), extents,
+        array::data_handle(view), extents,
         [&view]() { return make_mdspan_strides<View, Rank>(view, std::make_index_sequence<Rank>{}); });
 }
 
@@ -225,7 +225,7 @@ auto make_mdspan_impl(View& view, InputExtents input_shape) {
 
     Extents extents{input_shape};
     return make_mdspan_from_extents<Extents, Layout, Accessor>(
-        array::introspection::data_handle(view), extents,
+        array::data_handle(view), extents,
         [&view]() { return make_mdspan_strides<View, Rank>(view, std::make_index_sequence<Rank>{}); });
 }
 

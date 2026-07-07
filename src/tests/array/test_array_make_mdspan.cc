@@ -13,6 +13,7 @@
 #include "tests/AtlasTestEnvironment.h"
 
 using namespace atlas::array;
+
 using namespace atlas::array::introspection;
 
 namespace atlas {
@@ -110,6 +111,17 @@ CASE("test_make_mdspan_arrayview_free_function") {
 
     expect_same_data(span, view);
     EXPECT(span(1, 1) == 7.);
+}
+
+CASE("test_array_is_mdspan") {
+    std::unique_ptr<Array> array{Array::create<double>(2, 3)};
+    auto view = make_host_view<double, 2>(*array);
+    auto span = make_mdspan<layout_stride>(view);
+
+    static_assert(!array::is_mdspan<decltype(view)>());
+    static_assert(array::is_mdspan<decltype(span)>());
+    static_assert(!array::is_mdspan(view));
+    static_assert(array::is_mdspan(span));
 }
 
 CASE("test_make_mdspan_const_arrayview") {
@@ -218,8 +230,8 @@ CASE("test_make_mdspan_static_last_extent_layout_right_restrict_aligned_policy")
 
     view(1, 3, 31) = 71.;
 
-    EXPECT(last_extent(view) == nproma);
-    EXPECT(can_use_layout<layout_right>(view));
+    EXPECT(array::last_extent(view) == nproma);
+    EXPECT(array::conforms_layout_right(view));
     EXPECT(is_last_dimension_aligned(view, 64));
 
     auto span = make_mdspan<extent_with_static_last_dim<nproma>, layout_right,
@@ -248,7 +260,7 @@ CASE("test_make_mdspan_documented_simd_fast_path_example_compiles") {
     };
 
     auto result = [&]() {
-        if (can_use_layout<layout_right>(view) && is_last_dimension_aligned(view, 64)) {
+        if (array::conforms_layout<layout_right>(view) && is_last_dimension_aligned(view, 64)) {
             using layout = layout_right;
             using accessor_policy = restrict_aligned_accessor_policy<64>;
             using Span32 = decltype(make_mdspan<extent_with_static_last_dim<32>, layout, accessor_policy>(view));
@@ -256,7 +268,7 @@ CASE("test_make_mdspan_documented_simd_fast_path_example_compiles") {
             static_assert(std::is_same_v<typename Span32::layout_type, layout_right>);
             static_assert(std::is_same_v<typename Span32::accessor_type,
                                          restrict_aligned_accessor<double, 64>>);
-            switch (last_extent(view)) {
+            switch (array::last_extent(view)) {
                 case 16:
                     return kernel(make_mdspan<extent_with_static_last_dim<16>, layout, accessor_policy>(view));
                 case 32:
@@ -558,15 +570,15 @@ CASE("test_make_mdspan_queries_layout_right") {
     auto stride_span = make_mdspan<layout_stride>(contiguous_view);
     auto right_span = make_mdspan<layout_right>(contiguous_view);
 
-    EXPECT(can_use_layout_right(LayoutRightViewWithoutStrides{}));
-    EXPECT(can_use_layout_right(contiguous_view));
-    EXPECT(can_use_layout_right(stride_span));
-    EXPECT(can_use_layout_right(right_span));
-    EXPECT(can_use_layout_right(index_view));
-    EXPECT(not can_use_layout_right(padded_view));
-    EXPECT(last_extent(contiguous_view) == 3);
-    EXPECT(last_extent(stride_span) == 3);
-    EXPECT(last_extent(contiguous_view) != 4);
+    EXPECT(conforms_layout_right(LayoutRightViewWithoutStrides{}));
+    EXPECT(conforms_layout_right(contiguous_view));
+    EXPECT(conforms_layout_right(stride_span));
+    EXPECT(conforms_layout_right(right_span));
+    EXPECT(conforms_layout_right(index_view));
+    EXPECT(not conforms_layout_right(padded_view));
+    EXPECT(array::last_extent(contiguous_view) == 3);
+    EXPECT(array::last_extent(stride_span) == 3);
+    EXPECT(array::last_extent(contiguous_view) != 4);
 }
 
 CASE("test_make_mdspan_queries_alignment") {

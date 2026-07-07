@@ -62,7 +62,7 @@ namespace atlas {
 /// dimension have a fixed trip count and aligned non-aliased accesses.
 ///
 /// @code
-/// if (can_use_layout<layout_right>(view) && is_last_dimension_aligned(view, 64)) {
+/// if (conforms_layout<layout_right>(view) && is_last_dimension_aligned(view, 64)) {
 ///     using layout = layout_right;
 ///     using accessor_policy = restrict_aligned_accessor_policy<64>;
 ///     switch(last_extent(view)) {

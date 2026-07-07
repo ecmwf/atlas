@@ -65,7 +65,7 @@
 
 #include "atlas/runtime/Trace.h"
 
-using namespace atlas::array::introspection;
+// using namespace atlas::array::introspection;
 
 #ifdef atlas_omp_parallel_for
 #undef atlas_omp_parallel_for
@@ -285,7 +285,7 @@ struct CopyNonblockedToBlockedContiguousRawPointers {
         blocked(blocked),
         np(nonblocked.extent(0)),
         nblks(blocked.extent(0)),
-        nproma(last_extent(blocked)),
+        nproma(array::last_extent(blocked)),
         loop_order(relayout_loop_order()),
         use_memcpy(relayout_blocked_nonblocked_use_memcpy()) {
         if constexpr (Blocked::rank() == 4) {
@@ -499,10 +499,10 @@ template <size_t nproma_extent, class Nonblocked, class Blocked>
 ATLAS_RELAYOUT_NOINLINE_IF_PROFILING
 void host_copy_nonblocked_to_blocked_contiguous_raw_pointers_nproma(const Nonblocked nonblocked, Blocked blocked) {
     ATLAS_ASSERT(is_block_contiguous(blocked));
-    ATLAS_ASSERT(array::introspection::can_use_layout_right(nonblocked));
+    ATLAS_ASSERT(array::conforms_layout_right(nonblocked));
 
     const idx_t nblks  = blocked.extent(0);
-    const idx_t nproma = last_extent(blocked);
+    const idx_t nproma = array::last_extent(blocked);
     if constexpr (nproma_extent != dynamic_extent) {
         ATLAS_ASSERT(nproma_extent == nproma);
     }
@@ -548,7 +548,7 @@ struct CopyBlockedToNonblockedContiguousRawPointers {
         nonblocked(nonblocked),
         np(nonblocked.extent(0)),
         nblks(blocked.extent(0)),
-        nproma(last_extent(blocked)),
+        nproma(array::last_extent(blocked)),
         loop_order(relayout_loop_order()),
         use_memcpy(relayout_blocked_nonblocked_use_memcpy()) {
         if constexpr (Blocked::rank() == 4) {
@@ -760,10 +760,10 @@ template <size_t nproma_extent, class Blocked, class Nonblocked>
 ATLAS_RELAYOUT_NOINLINE_IF_PROFILING
 void host_copy_blocked_to_nonblocked_contiguous_raw_pointers_nproma(const Blocked blocked, Nonblocked nonblocked) {
     ATLAS_ASSERT(is_block_contiguous(blocked));
-    ATLAS_ASSERT(array::introspection::can_use_layout_right(nonblocked));
+    ATLAS_ASSERT(array::conforms_layout_right(nonblocked));
 
     const idx_t nblks = blocked.extent(0);
-    const idx_t nproma = last_extent(blocked);
+    const idx_t nproma = array::last_extent(blocked);
     if constexpr (nproma_extent != dynamic_extent) {
         ATLAS_ASSERT(nproma_extent == nproma);
     }
@@ -935,9 +935,7 @@ template<typename Blocked>
 /// between blocks) is `stride(0)`, the stride of the block dimension -- not `stride(1)`, which for
 /// a rank-2 view is the innermost `nproma` stride (== 1) and would spuriously report unaligned.
 bool is_block_aligned(const Blocked& blocked) {
-    using value_type = array::introspection::element_t<decltype(blocked)>;
-    return is_aligned(blocked,alignment) &&
-           (static_cast<std::size_t>(blocked.stride(0)) * sizeof(value_type) % alignment == 0);
+    return array::is_dimension_aligned<1>(blocked, alignment);
 }
 
 template<typename Blocked>
@@ -950,7 +948,7 @@ template<typename Nonblocked>
 void assert_requirements_on_nonblocked(const Nonblocked& nonblocked) {
     bool nonblocked_is_aligned = is_aligned(nonblocked,alignment);
     ATLAS_ASSERT(nonblocked_is_aligned);
-    ATLAS_ASSERT(array::introspection::can_use_layout_right(nonblocked));
+    ATLAS_ASSERT(array::conforms_layout_right(nonblocked));
 }
 
 template <size_t nproma_extent, BlockAlignment block_alignment, class Blocked, class Nonblocked>
@@ -989,7 +987,7 @@ struct CopyBlockedToNonblockedMdspan {
         nonblocked(nonblocked),
         np(nonblocked.extent(0)),
         nblks(blocked.extent(0)),
-        nproma(last_extent(blocked)),
+        nproma(array::last_extent(blocked)),
         loop_order(relayout_loop_order()),
         use_memcpy(relayout_blocked_nonblocked_use_memcpy()),
         block_extents(make_blocked_subspan_extents<nproma_extent>(blocked)),
@@ -1209,7 +1207,7 @@ struct CopyNonblockedToBlockedMdspan {
         blocked(blocked),
         np(nonblocked.extent(0)),
         nblks(blocked.extent(0)),
-        nproma(last_extent(blocked)),
+        nproma(array::last_extent(blocked)),
         loop_order(relayout_loop_order()),
         use_memcpy(relayout_blocked_nonblocked_use_memcpy()),
         block_extents(make_blocked_subspan_extents<nproma_extent>(blocked)),
@@ -1473,7 +1471,7 @@ void host_copy_nonblocked_to_blocked_impl(const Nonblocked nonblocked, Blocked b
     // skip the runtime switch dispatch below, avoiding the unused template instantiations.
     constexpr std::size_t nproma_extent = nproma_extent_v<Blocked>;
 
-    ATLAS_ASSERT(array::introspection::can_use_layout_right(nonblocked));
+    ATLAS_ASSERT(array::conforms_layout_right(nonblocked));
     ATLAS_ASSERT(is_block_contiguous(blocked));
 
 #if DISABLE_RAW_POINTERS == 0
@@ -1554,7 +1552,7 @@ void host_copy_blocked_to_nonblocked_impl(const Blocked blocked, Nonblocked nonb
     // skip the runtime switch dispatch below, avoiding the unused template instantiations.
     constexpr std::size_t nproma_extent = nproma_extent_v<Blocked>;
 
-    ATLAS_ASSERT(array::introspection::can_use_layout_right(nonblocked));
+    ATLAS_ASSERT(array::conforms_layout_right(nonblocked));
     ATLAS_ASSERT(is_block_contiguous(blocked));
 
 #if DISABLE_RAW_POINTERS == 0
@@ -1568,7 +1566,7 @@ void host_copy_blocked_to_nonblocked_impl(const Blocked blocked, Nonblocked nonb
             return host_copy_blocked_to_nonblocked_contiguous_raw_pointers_nproma<nproma_extent>(blocked, nonblocked);
         }
         else {
-            auto nproma = last_extent(blocked);
+            auto nproma = array::last_extent(blocked);
             switch (nproma) {
                 case 8:   return host_copy_blocked_to_nonblocked_contiguous_raw_pointers_nproma<8  >(blocked, nonblocked);
                 case 16:  return host_copy_blocked_to_nonblocked_contiguous_raw_pointers_nproma<16 >(blocked, nonblocked);
@@ -1596,7 +1594,7 @@ void host_copy_blocked_to_nonblocked_impl(const Blocked blocked, Nonblocked nonb
         return host_copy_blocked_to_nonblocked_nproma<nproma_extent>(blocked, nonblocked);
     }
     else {
-        auto nproma = last_extent(blocked);
+        auto nproma = array::last_extent(blocked);
         switch (nproma) {
             case 8:   return host_copy_blocked_to_nonblocked_nproma<8  >(blocked, nonblocked);
             case 16:  return host_copy_blocked_to_nonblocked_nproma<16 >(blocked, nonblocked);
@@ -1806,15 +1804,15 @@ void host_copy_blocked_to_blocked_impl(const BlockedIn blocked_in, BlockedOut bl
     }
 
     // At the moment we implement only contiguous block copies for optimizations
-    ATLAS_ASSERT(array::introspection::can_use_layout_right(blocked_in));
-    ATLAS_ASSERT(array::introspection::can_use_layout_right(blocked_out));
+    ATLAS_ASSERT(array::conforms_layout_right(blocked_in));
+    ATLAS_ASSERT(array::conforms_layout_right(blocked_out));
 
     const bool use_memcpy = relayout_blocked_to_blocked_use_memcpy();
 
     if (use_memcpy) {
         if (nproma_in == nproma_out && blocked_in.size() == blocked_out.size()) {
-            const value_type* raw_in = array::introspection::data_handle(blocked_in);
-            value_type* raw_out = array::introspection::data_handle(blocked_out);
+            const value_type* raw_in = array::data_handle(blocked_in);
+            value_type* raw_out = array::data_handle(blocked_out);
             std::memcpy(raw_out, raw_in, blocked_out.size() * sizeof(value_type));
             return;
         }
