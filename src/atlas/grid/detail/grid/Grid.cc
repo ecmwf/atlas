@@ -152,6 +152,14 @@ Grid::Config Grid::partitioner() const {
     ATLAS_NOTIMPLEMENTED;
 }
 
+const Grid* atlas__grid__Grid(const char* identifier) {
+    return Grid::create(std::string(identifier));
+}
+
+const Grid* atlas__grid__Grid__config(util::Config* conf){
+    return Grid::create(*conf);
+}
+
 idx_t atlas__grid__Grid__size(Grid* This) {
     ATLAS_ASSERT(This != nullptr, "Cannot access uninitialised atlas_Grid");
     return This->size();

@@ -183,6 +183,9 @@ public:
 //----------------------------------------------------------------------------------------------------------------------
 
 extern "C" {
+const Grid* atlas__grid__Grid(const char* identifier);
+const Grid* atlas__grid__Grid__config(util::Config* conf);
+void atlas__grid__Grid__delete(Grid* This);
 void atlas__grid__Grid__name(const Grid* This, char*& uid, int& size);
 idx_t atlas__grid__Grid__size(Grid* This);
 Grid::Spec* atlas__grid__Grid__spec(Grid* This);

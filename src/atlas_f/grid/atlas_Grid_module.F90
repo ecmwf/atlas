@@ -506,24 +506,23 @@ end subroutine
 
 function atlas_Grid__ctor_id(identifier) result(this)
   use fckit_c_interop_module, only: c_str
-  use atlas_grid_Structured_c_binding
+  use atlas_grid_Grid_c_binding
   type(atlas_Grid) :: this
   character(len=*), intent(in) :: identifier
-  call this%reset_c_ptr( atlas__grid__Structured(c_str(identifier)) )
+  call this%reset_c_ptr( atlas__grid__Grid(c_str(identifier)) )
   call this%return()
 end function
 
 function atlas_Grid__ctor_config(config) result(this)
-  use atlas_grid_Structured_c_binding
+  use atlas_grid_Grid_c_binding
   type(atlas_Grid) :: this
   type(atlas_Config), intent(in) :: config
-  call this%reset_c_ptr( atlas__grid__Structured__config(config%c_ptr()) )
+  call this%reset_c_ptr( atlas__grid__Grid__config(config%c_ptr()) )
   call this%return()
 end function
 
 function atlas_Grid__ctor_cptr(cptr) result(this)
   use fckit_c_interop_module, only: c_str
-  use atlas_grid_Structured_c_binding
   type(atlas_Grid) :: this
   type(c_ptr), intent(in) :: cptr
   call this%reset_c_ptr( cptr )
