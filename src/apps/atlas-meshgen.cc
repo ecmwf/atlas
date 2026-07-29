@@ -20,6 +20,7 @@
 #include "atlas/functionspace/EdgeColumns.h"
 #include "atlas/functionspace/NodeColumns.h"
 #include "atlas/grid.h"
+#include "atlas/grid/detail/partitioner/SpaceFillingCurvePartitioner.h"  // for the --weighted demonstration
 #include "atlas/library.h"
 #include "atlas/mesh/Mesh.h"
 #include "atlas/mesh/Nodes.h"
@@ -106,6 +107,33 @@ Partitioner make_partitioner(const Grid& grid, const AtlasTool::Args& args) {
     if (args.has("partitions")) {
         config.set("partitions", args.getInt("partitions"));
     }
+
+    // ---------------------------------------------------------------------
+    // Demonstration of the Hilbert partitioner's opt-in weighting. The weight
+    // interface is deliberately not part of the string/config factory (real
+    // weights come from data, e.g. observation density), so we build the concrete
+    // partitioner here, set an illustrative weight, and wrap it in a Partitioner
+    // handle (which takes ownership). This lets users explore how weighting
+    // reshapes the partition without wiring up a data source.
+    if (args.getBool("weighted", false)) {
+        using grid::detail::partitioner::SpaceFillingCurvePartitioner;
+        std::string type;
+        config.get("type", type);
+        if (type == "hilbert") {
+            const double heavy = args.getDouble("weight-factor", 8.0);
+            auto* concrete     = new SpaceFillingCurvePartitioner(config);
+            // Northern-hemisphere-heavy demo weight (proxy for observation
+            // density): northern points cost `heavy` x southern points, so the
+            // curve is cut into segments of equal total weight, giving northern
+            // partitions proportionally fewer points.
+            concrete->set_weight_function(
+                [heavy](gidx_t, const PointXY& p) { return p.y() > 0. ? heavy : 1.0; });
+            return Partitioner{concrete};
+        }
+        Log::warning() << "--weighted ignored: only supported for --partitioner=hilbert" << std::endl;
+    }
+    // ---------------------------------------------------------------------
+
     return Partitioner{config};
 }
 
@@ -172,6 +200,16 @@ Meshgen2Gmsh::Meshgen2Gmsh(int argc, char** argv): AtlasTool(argc, argv) {
 
     add_option(new Separator("Options for `--partitioner=checkerboard`"));
     add_option(new SimpleOption<bool>("regular", "regular checkerboard partitioner"));
+
+    add_option(new Separator("Options for `--partitioner=hilbert` (visualisation / weighting demo)"));
+    add_option(new SimpleOption<bool>("weighted",
+                                      "Apply a demo northern-hemisphere-heavy weight to the hilbert partitioner"));
+    add_option(new SimpleOption<double>("weight-factor",
+                                        "Weight of northern vs southern points for --weighted (default = 8)"));
+    add_option(new SimpleOption<bool>(
+        "partition-points",
+        "Write a single-process python scatter plot (partition_points.py) of the whole-grid partition assignment. "
+        "Needs no MPI; use --partitions to set the number of partitions."));
 
     add_option(new Separator("Advanced"));
     add_option(new SimpleOption<long>("halo", "Halo size"));
@@ -286,6 +324,65 @@ int Meshgen2Gmsh::execute(const Args& args) {
 
     auto meshgenerator = make_meshgenerator(grid, args);
     auto partitioner   = make_partitioner(grid, args);
+
+    // ---------------------------------------------------------------------
+    // Write a python scatter plot of the whole-grid partition assignment. Unlike
+    // --partition-polygons, this needs no MPI and does not rely on partition-boundary
+    // polygon merging, so it works for any partitioner, including space-filling-curve
+    // partitions (whose 2D footprint need not be a single connected polygon).
+    // Runs single-process; set the partition count with --partitions.
+    if (args.getBool("partition-points", false)) {
+        const idx_t npts = grid.size();
+        std::vector<int> part(npts);
+        partitioner.partition(grid, part.data());
+
+        const bool weighted = args.getBool("weighted", false);
+        const double heavy  = args.getDouble("weight-factor", 8.0);
+
+        const std::string fname = "partition_points.py";
+        std::ofstream f(fname.c_str());
+        f << "import matplotlib\nmatplotlib.use('Agg')\nimport matplotlib.pyplot as plt\n";
+        f << "lon = [";
+        for (const auto& ll : grid.lonlat()) {
+            f << ll[0] << ",";
+        }
+        f << "]\nlat = [";
+        for (const auto& ll : grid.lonlat()) {
+            f << ll[1] << ",";
+        }
+        f << "]\npart = [";
+        for (idx_t i = 0; i < npts; ++i) {
+            f << part[i] << ",";
+        }
+        f << "]\n";
+        if (weighted) {
+            f << "weight = [";
+            for (const auto& ll : grid.lonlat()) {
+                f << (ll[1] > 0. ? heavy : 1.0) << ",";
+            }
+            f << "]\nsizes = [4.0 * w for w in weight]\n";
+        }
+        else {
+            f << "sizes = 6\n";
+        }
+        f << "from matplotlib.colors import BoundaryNorm\n";
+        f << "nparts = max(part) + 1\n";
+        f << "cmap = plt.get_cmap('tab20', nparts)\n";
+        f << "norm = BoundaryNorm(range(nparts + 1), nparts)\n";
+        f << "plt.figure(figsize=(12, 6))\n";
+        f << "sc = plt.scatter(lon, lat, c=part, s=sizes, cmap=cmap, norm=norm, linewidths=0)\n";
+        f << "cbar = plt.colorbar(sc, label='partition', ticks=[i + 0.5 for i in range(nparts)])\n";
+        f << "cbar.ax.set_yticklabels([str(i) for i in range(nparts)])\n";
+        f << "plt.xlabel('longitude'); plt.ylabel('latitude')\n";
+        f << "plt.title('" << partitioner.type() << " partition, nb_parts=" << partitioner.nb_partitions()
+          << (weighted ? " (weighted)" : "") << "')\n";
+        f << "plt.tight_layout()\nplt.savefig('partition_points.png', dpi=150)\n";
+        f << "print('wrote partition_points.png')\n";
+        f.close();
+        Log::info() << "Wrote " << fname << "  (render with: python3 " << fname << ")" << std::endl;
+        return success();
+    }
+    // ---------------------------------------------------------------------
 
     Mesh mesh;
     try {
