@@ -19,9 +19,9 @@ atlas-sys = { path = "crates/atlas-sys" }
 eckit-sys = { git = "ssh://git@github.com/ecmwf/eckit.git", branch = "rust-bindings", default-features = false }
 
 # Build tools
-bindman = { git = "ssh://git@github.com/ecmwf/bindman.git", branch = "generate_exception_bridge" }
-bindman-build = { git = "ssh://git@github.com/ecmwf/bindman.git", branch = "generate_exception_bridge" }
-bindman-utils = { git = "ssh://git@github.com/ecmwf/bindman.git", branch = "generate_exception_bridge" }
+bindman = { git = "ssh://git@github.com/ecmwf/bindman.git", rev = "47edf68" }
+bindman-build = { git = "ssh://git@github.com/ecmwf/bindman.git", rev = "47edf68" }
+bindman-utils = { git = "ssh://git@github.com/ecmwf/bindman.git", rev = "47edf68" }
 
 # External
 cxx = "1.0"
