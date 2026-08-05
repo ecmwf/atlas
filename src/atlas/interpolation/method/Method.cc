@@ -310,16 +310,77 @@ void Method::interpolate_field_rank3(const Field& src, Field& tgt, const Matrix&
         backend = sparse::backend::openmp();
     }
 
-    auto W_v = make_host_view<eckit::linalg::Scalar, eckit::linalg::Index>(W);
-    auto src_v = make_host_view_r<Value, 3>(src);
-    auto tgt_v = make_host_view_w<Value, 3>(tgt);
     if (not W.empty() && nonLinear_(src)) {
-        ATLAS_ASSERT(false, "nonLinear interpolation not supported for rank-3 fields.");
-    }
-    sparse_matrix_multiply(W_v, src_v, tgt_v, backend);
+        // As for rank-2 (see interpolate_field_rank2), a non-linear update cannot be applied to whole columns at once
+        // because missing values may be present in only part of a column. A rank-3 source is laid out as
+        // (source, dim1, dim2), so we decompose it into rank-1 slices over the two trailing dimensions and interpolate
+        // each slice independently. Only the source rows referenced by the weights `W` are ever read (by both the
+        // non-linear redistribution and the matmul), so we gather only those rows into the per-slice temporary; see
+        // interpolate_field_rank2 for the full rationale and the regridding fall-back.
 
-    tgt.setHostNeedsUpdate(false);
-    tgt.setDeviceNeedsUpdate(true);
+        // Allocate temporary rank-1 fields corresponding to one slice over the trailing dimensions
+        auto src_slice = Field("s", array::make_datatype<Value>(), {src.shape(0)});
+        auto tgt_slice = Field("t", array::make_datatype<Value>(), {tgt.shape(0)});
+
+        // Copy metadata to the source rank-1 field (needed e.g. for the missing value)
+        src_slice.metadata() = src.metadata();
+
+        auto src_v = make_host_view_r<Value, 3>(src);
+        auto tgt_v = make_host_view_w<Value, 3>(tgt);
+
+        auto src_slice_v = array::make_host_view<Value, 1>(src_slice);
+        auto tgt_slice_v = array::make_host_view<Value, 1>(tgt_slice);
+
+        // Fall back to the full-column copy when most of the source is referenced (regridding-like); see rank-2.
+        auto W_v = make_host_view_r<eckit::linalg::Scalar, eckit::linalg::Index>(W);
+        const bool gather_referenced = static_cast<idx_t>(W_v.nnz()) < src.shape(0);
+
+        // Unique set of source rows (= matrix columns) referenced by the weights; only built on the gather path.
+        std::vector<eckit::linalg::Index> referenced_rows;
+        if (gather_referenced) {
+            referenced_rows.assign(W_v.inner(), W_v.inner() + W_v.nnz());
+            std::sort(referenced_rows.begin(), referenced_rows.end());
+            referenced_rows.erase(std::unique(referenced_rows.begin(), referenced_rows.end()), referenced_rows.end());
+        }
+
+        for (idx_t j = 0; j < src_v.shape(1); ++j) {
+            for (idx_t k = 0; k < src_v.shape(2); ++k) {
+                // Copy this slice to the temporary rank-1 field: only the referenced source rows when gathering,
+                // otherwise the full source column.
+                if (gather_referenced) {
+                    for (const auto row : referenced_rows) {
+                        src_slice_v(row) = src_v(row, j, k);
+                    }
+                }
+                else {
+                    for (idx_t i = 0; i < src.shape(0); ++i) {
+                        src_slice_v(i) = src_v(i, j, k);
+                    }
+                }
+
+                // Interpolate between rank-1 fields
+                interpolate_field_rank1<Value>(src_slice, tgt_slice, W);
+
+                // Copy rank-1 field back to this slice in the rank-3 field
+                tgt_slice.syncHost();
+                for (idx_t i = 0; i < tgt.shape(0); ++i) {
+                    tgt_v(i, j, k) = tgt_slice_v(i);
+                }
+            }
+        }
+        tgt.setDeviceNeedsUpdate(true);
+        tgt.setHostNeedsUpdate(false);
+    }
+    else {
+        auto W_v = make_host_view<eckit::linalg::Scalar, eckit::linalg::Index>(W);
+        auto src_v = make_host_view_r<Value, 3>(src);
+        auto tgt_v = make_host_view_w<Value, 3>(tgt);
+
+        sparse_matrix_multiply(W_v, src_v, tgt_v, backend);
+
+        tgt.setHostNeedsUpdate(false);
+        tgt.setDeviceNeedsUpdate(true);
+    }
 }
 
 template <typename Value>
