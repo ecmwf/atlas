@@ -225,25 +225,6 @@ void Method::interpolate_field_rank2(const Field& src, Field& tgt, const Matrix&
         // entire source column. This turns the per-call copy from O(source_size * levels) into O(nnz * levels) ==
         // O(target_size * stencil * levels); for target sizes much smaller than the source (e.g. observation operators)
         // this eliminates the dominant, obs-independent apply cost.
-        //
-        // NOTE (possible future optimisation - caching W_nl): when the source missing-value *pattern* is static across
-        // successive applies (e.g. a fixed land-sea / bathymetry mask), the per-level corrected matrices W_nl[lev]
-        // produced by nonLinear_->execute() are constant and could be precomputed once at setup and cached. Apply could
-        // then take the plain rank-2 sparse_matrix_multiply path (the `else` branch below) with no per-call
-        // redistribution, no per-level matrix copy and no source copy at all - a further ~2-3x on the residual
-        // obs-bound cost. That would need an opt-in flag (e.g. `non_linear_cache`) since atlas cannot assume every field
-        // pushed through an interpolator shares one mask, plus storage for the per-level matrices (mitigable by
-        // de-duplicating levels that share a mask). Left out here to keep this change assumption-free and local.
-        //
-        // NOTE (possible future optimisation - matmul source-read locality via compaction at construction): the gather
-        // below only removes the *copy* cost; the subsequent matmul still reads `src_slice` scattered across a full
-        // source-sized array (src_slice is allocated at src.shape(0) and W's column indices index the full source), so
-        // it touches few useful entries per cache line. When target_size << source_size (observation operators), the
-        // referenced-column set is small, so at setup one could build a compacted matrix W' whose columns are remapped
-        // to a dense [0, |referenced|) space and cache it alongside the referenced-row list. Apply would then gather the
-        // source into a small *dense* buffer of size |referenced| and matmul over W', shrinking the matmul working set
-        // from source_size to |referenced| (fits in cache, full cache-line use). This needs nothing new at construction
-        // (it is a pure structural remap of W, which is fully assembled in do_setup); it is static and cacheable.
 
         // Allocate temporary rank-1 fields corresponding to one horizontal level
         auto src_slice = Field("s", array::make_datatype<Value>(), {src.shape(0)});
@@ -261,7 +242,7 @@ void Method::interpolate_field_rank2(const Field& src, Field& tgt, const Matrix&
         // For observation-operator-like interpolations (target << source) most source rows are unreferenced, so
         // gathering only the referenced rows per level avoids copying the full source column. For regridding-like
         // interpolations (target ~ source, nearly every source row referenced) the referenced set approaches the full
-        // source and the extra sort/dedup below would be pure overhead. Use nnz vs source size as a cheap proxy (an
+        // source and the extra sort/deduplicate below would be pure overhead. Use nnz vs source size as a cheap proxy (an
         // average of >= 1 nonzero per source row means most of the source is referenced) to fall back to the plain
         // full-column copy in that regime, keeping the regridding path free of the O(nnz log nnz) set construction.
         auto W_v = make_host_view_r<eckit::linalg::Scalar, eckit::linalg::Index>(W);
