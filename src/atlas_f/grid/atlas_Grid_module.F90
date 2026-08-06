@@ -96,6 +96,7 @@ END TYPE atlas_UnstructuredGrid
 
 interface atlas_UnstructuredGrid
   module procedure atlas_UnstructuredGrid__ctor_points
+  module procedure atlas_UnstructuredGrid__ctor_xy
   module procedure atlas_UnstructuredGrid__ctor_config
   module procedure atlas_UnstructuredGrid__ctor_cptr
 end interface
@@ -563,6 +564,28 @@ function atlas_UnstructuredGrid__ctor_points( xy ) result(this)
   shapef = shape(xy)
   stridesf = array_strides(xy)
   call this%reset_c_ptr( atlas__grid__Unstructured__points( xy1d, shapef, stridesf ) )
+  call this%return()
+end function
+
+function atlas_UnstructuredGrid__ctor_xy(x, y) result(this)
+  use, intrinsic :: iso_c_binding, only : c_double, c_size_t
+  use atlas_grid_unstructured_c_binding
+  type(atlas_UnstructuredGrid) :: this
+  real(c_double), intent(in) :: x(:)
+  real(c_double), intent(in) :: y(:)
+  integer(c_size_t) :: xstride
+  integer(c_size_t) :: ystride
+
+  integer(c_size_t) :: n
+  n = size(x, kind=c_size_t)
+  if (n /= size(y, kind=c_size_t)) then
+    error stop 'atlas_UnstructuredGrid(x,y): x and y must have the same size'
+  end if
+
+  xstride = 1_c_size_t
+  ystride = 1_c_size_t
+
+  call this%reset_c_ptr( atlas__grid__Unstructured__x_y(n, x, y, xstride, ystride) )
   call this%return()
 end function
 
