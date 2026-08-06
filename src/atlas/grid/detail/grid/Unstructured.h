@@ -239,6 +239,7 @@ protected:
 
 extern "C" {
 const Unstructured* atlas__grid__Unstructured__points(const double lonlat[], int shapef[], int stridesf[]);
+const Unstructured* atlas__grid__Unstructured__x_y(size_t size, const double x[], const double y[], size_t xstride, size_t ystride);
 const Unstructured* atlas__grid__Unstructured__config(util::Config* conf);
 }
 

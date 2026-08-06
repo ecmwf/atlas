@@ -283,6 +283,10 @@ const Unstructured* atlas__grid__Unstructured__points(const double xy[], int sha
     return new Unstructured(std::move(points));
 }
 
+const Unstructured* atlas__grid__Unstructured__x_y(size_t size, const double x[], const double y[], size_t xstride, size_t ystride) {
+    return new Unstructured(size, x, y, xstride, ystride);
+}
+
 const Unstructured* atlas__grid__Unstructured__config(util::Config* conf) {
     ATLAS_ASSERT(conf != nullptr);
     const Unstructured* grid = dynamic_cast<const Unstructured*>(Grid::create(*conf));
