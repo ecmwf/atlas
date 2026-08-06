@@ -8,6 +8,8 @@
  * nor does it submit to any jurisdiction.
  */
 
+#include "atlas/grid/Grid.h"
+#include "atlas/grid/detail/grid/Grid.h"
 #include "atlas/mesh/detail/MeshIntf.h"
 #include "atlas/mesh/Nodes.h"
 #include "atlas/runtime/Exception.h"
@@ -20,6 +22,18 @@ namespace mesh {
 
 Mesh::Implementation* atlas__Mesh__new() {
     return new Mesh::Implementation();
+}
+
+Mesh::Implementation* atlas__Mesh__new_grid(Grid::Implementation* grid) {
+    Mesh::Implementation* mesh;
+    {
+        Grid g(grid);
+        Mesh m{Grid{grid}};
+        mesh = m.get();
+        mesh->attach();
+    }
+    mesh->detach();
+    return mesh;
 }
 
 void atlas__Mesh__delete(Mesh::Implementation* This) {

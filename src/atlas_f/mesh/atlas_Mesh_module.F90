@@ -14,6 +14,7 @@ use fckit_owned_object_module, only: fckit_owned_object
 use atlas_mesh_Cells_module, only: atlas_mesh_Cells
 use atlas_mesh_Nodes_module, only: atlas_mesh_Nodes
 use atlas_mesh_Edges_module, only: atlas_mesh_Edges
+use atlas_Grid_module, only: atlas_Grid
 use, intrinsic :: iso_c_binding, only : c_size_t, c_ptr
 
 implicit none
@@ -66,6 +67,7 @@ END TYPE atlas_Mesh
 interface atlas_Mesh
   module procedure atlas_Mesh__cptr
   module procedure atlas_Mesh__ctor
+  module procedure atlas_Mesh__ctor_grid
 end interface
 
 !========================================================
@@ -88,6 +90,16 @@ function atlas_Mesh__ctor() result(this)
   call this%reset_c_ptr( atlas__Mesh__new() )
   call this%return()
 end function atlas_Mesh__ctor
+
+!-------------------------------------------------------------------------------
+
+function atlas_Mesh__ctor_grid(grid) result(this)
+  use atlas_mesh_c_binding
+  type(atlas_Mesh) :: this
+  class(atlas_Grid), intent(in) :: grid
+  call this%reset_c_ptr( atlas__Mesh__new_grid(grid%c_ptr()) )
+  call this%return()
+end function atlas_Mesh__ctor_grid
 
 !-------------------------------------------------------------------------------
 
