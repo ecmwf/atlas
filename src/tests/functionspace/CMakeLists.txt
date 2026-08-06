@@ -56,6 +56,20 @@ ecbuild_add_test( TARGET atlas_test_functionspace_splitcomm
   ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
 )
 
+ecbuild_add_test( TARGET atlas_test_spectral_functionspace
+  MPI         4
+  CONDITION   atlas_HAVE_ECTRANS AND eckit_HAVE_MPI AND ( transi_HAVE_MPI OR ectrans_HAVE_MPI ) AND MPI_SLOTS GREATER_EQUAL 4
+  SOURCES     test_spectral_functionspace.cc
+  LIBS        atlas
+  ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
+)
+
+ecbuild_add_test( TARGET atlas_test_spectral_functionspace_serial
+   SOURCES     test_spectral_functionspace.cc
+   LIBS        atlas
+   ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
+ )
+
 
 ecbuild_add_test( TARGET atlas_test_cellcolumns
   SOURCES  test_cellcolumns.cc
