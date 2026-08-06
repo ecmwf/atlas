@@ -51,11 +51,41 @@ class Spectral : public functionspace::FunctionSpaceImpl {
   idx_t jc=0;
   for( int jm=0; jm<zonal_wavenumbers.size(); ++jm ) {
     int m = zonal_wavenumbers(jm);
-    for( int n=m; m<=truncation; ++n ) {
-      data( jc++, jfld ) = func_real_part(m,n);
-      data( jc++, jfld ) = func_imag_part(m,n);
+    for( int n=m; n<=truncation; ++n ) {
+      data( jc++, jfld ) = func_real_part(n,m);
+      data( jc++, jfld ) = func_imag_part(n,m);
     }
   }
+
+    Alternatively, nasm0 can be used as the base offset for each zonal
+    wavenumber. nasm0 stores Fortran-style 1-based offsets, so subtract one
+    before indexing C++ arrays:
+
+    const auto zonal_wavenumbers = Spectral::zonal_wavenumbers();
+    const auto nasm0 = Spectral::nasm0();
+    const int truncation = Spectral::truncation();
+    for( int jm=0; jm<zonal_wavenumbers.size(); ++jm ) {
+        int m = zonal_wavenumbers(jm);
+        for( int n=m; n<=truncation; ++n ) {
+            idx_t jc = nasm0(m) - 1 + 2 * (n - m);
+            data( jc,   jfld ) = func_real_part(n,m);
+            data( jc+1, jfld ) = func_imag_part(n,m);
+        }
+    }
+
+    Or inverting the loop order, less efficient.
+
+    for( int n=0; n<=truncation; ++n ) {
+        for( int jm=0; jm<zonal_wavenumbers.size(); ++jm ) {
+            int m = zonal_wavenumbers(jm);
+            if( m > n ) {
+                continue;
+            }
+            idx_t jc = nasm0(m) - 1 + 2 * (n - m);
+            data( jc,   jfld ) = func_real_part(n,m);
+            data( jc+1, jfld ) = func_imag_part(n,m);
+        }
+    }
   
 */
 
@@ -198,10 +228,10 @@ private:  // methods
 
 private:  // Fortran access
     friend struct SpectralFortranAccess;
-    int nump() const;                               // equivalent to nmyms().size()
+    int nump() const;                               // Number of zonal wave numbers m on THIS rank, equivalent to nmyms().size()
     array::LocalView<const int, 1> nvalue() const;  // Return wave number n for a given index
-    array::LocalView<const int, 1> nmyms() const;   // Return list of local zonal wavenumbers "m"
-    array::LocalView<const int, 1> nasm0() const;
+    array::LocalView<const int, 1> nmyms() const;   // Array of actual m values (zonal wave numbers) on this rank (size nump)
+    array::LocalView<const int, 1> nasm0() const;   // Base offset in memory for this zonal wave number
 
 private:  // data
     idx_t nb_levels_;
