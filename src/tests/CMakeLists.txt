@@ -98,11 +98,13 @@ if (atlas_HAVE_ATLAS_FUNCTIONSPACE)
   add_subdirectory( io )
   add_subdirectory( output )
   add_subdirectory( redistribution )
+  add_subdirectory( algorithms )
 endif()
 
 if (atlas_HAVE_ATLAS_TRANS)
   add_subdirectory( trans )
 endif()
+
 
 if (atlas_HAVE_ATLAS_INTERPOLATION)
   add_subdirectory( interpolation )

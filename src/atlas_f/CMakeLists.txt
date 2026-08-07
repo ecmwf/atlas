@@ -137,6 +137,12 @@ generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/functionspace/EdgeColumns.h
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/functionspace/detail/PointCloudInterface.h
     MODULE    atlas_functionspace_PointCloud_c_binding
     OUTPUT    functionspace_PointCloud_c_binding.f90)
+generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/algorithms/spectral/power_spectrum.h
+    MODULE    atlas_algorithms_spectral_power_spectrum_c_binding
+    OUTPUT    algorithms_spectral_power_spectrum_c_binding.f90)
+generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/algorithms/spectral/filter_cutoff.h
+    MODULE    atlas_algorithms_spectral_filter_cutoff_c_binding
+    OUTPUT    algorithms_spectral_filter_cutoff_c_binding.f90)
 generate_fortran_bindings(FORTRAN_BINDINGS ../atlas/redistribution/detail/RedistributionInterface.h
     MODULE    atlas_redistribution_c_binding
     OUTPUT    redistribution_c_binding.f90)
@@ -213,6 +219,7 @@ ecbuild_add_library( TARGET atlas_f
     SOURCES
         ${FORTRAN_BINDINGS}
         atlas_module.F90
+        algorithms/spectral/atlas_algorithms_spectral_module.F90
         util/atlas_functions_module.F90
         util/atlas_kinds_module.F90
         util/atlas_JSON_module.F90

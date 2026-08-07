@@ -584,6 +584,10 @@ interpolation/method/PointSet.h
 )
 
 list( APPEND atlas_numerics_srcs
+algorithms/spectral/filter_cutoff.h
+algorithms/spectral/filter_cutoff.cc
+algorithms/spectral/power_spectrum.h
+algorithms/spectral/power_spectrum.cc
 numerics/Method.h
 numerics/Method.cc
 numerics/Nabla.h
