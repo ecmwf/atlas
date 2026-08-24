@@ -8,18 +8,19 @@
  * nor does it submit to any jurisdiction.
  */
 
-#include <algorithm>
-#include <iomanip>
+#include <ostream>
+#include <string>
+#include <utility>
+#include <vector>
 
+#include "eckit/filesystem/PathName.h"
 #include "eckit/utils/MD5.h"
 
 #include "atlas/grid.h"
 #include "atlas/option.h"
-#include "atlas/parallel/mpi/mpi.h"
 #include "atlas/runtime/Trace.h"
 #include "atlas/trans/LegendreCacheCreator.h"
 #include "atlas/trans/Trans.h"
-#include "atlas/util/Constants.h"
 
 #include "tests/AtlasTestEnvironment.h"
 
