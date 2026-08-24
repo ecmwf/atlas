@@ -35,6 +35,11 @@ int atlas_omp_get_nested(void);
 #define atlas_omp_for atlas_omp_pragma(omp for) for
 #define atlas_omp_parallel atlas_omp_pragma(omp parallel)
 #define atlas_omp_critical atlas_omp_pragma(omp critical)
+#define atlas_omp_atomic atlas_omp_pragma(omp atomic)
+#define atlas_omp_atomic_update atlas_omp_pragma(omp atomic update)
+#define atlas_omp_atomic_write atlas_omp_pragma(omp atomic write)
+#define atlas_omp_atomic_read atlas_omp_pragma(omp atomic read)
+#define atlas_omp_atomic_capture atlas_omp_pragma(omp atomic capture)
 
 #ifndef DOXYGEN_SHOULD_SKIP_THIS
 template <typename T>
