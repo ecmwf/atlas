@@ -206,6 +206,12 @@ bool approx_eq(const float& v1, const float& v2) {
 bool approx_eq(const float& v1, const float& v2, const float& t) {
     return is_approximately_equal(v1, v2, t);
 }
+bool approx_eq(const float& v1, const float& v2, const double& t) {
+    if (t != 0. && t < std::numeric_limits<float>::denorm_min()) {
+        throw std::underflow_error("Tolerance underflows float precision and will become 0.0");
+    }
+    return is_approximately_equal(v1, v2, static_cast<float>(t));
+}
 bool approx_eq(const double& v1, const double& v2) {
     return is_approximately_equal(v1, v2);
 }
