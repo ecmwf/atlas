@@ -16,7 +16,7 @@ categories = ["science"]
 atlas-sys = { path = "crates/atlas-sys" }
 
 # Foundation crates
-eckit-sys = { git = "ssh://git@github.com/ecmwf/eckit.git", branch = "rust-bindings", default-features = false }
+eckit-sys = { git = "ssh://git@github.com/ecmwf/eckit.git", branch = "develop", default-features = false }
 
 # Build tools
 bindman = { git = "ssh://git@github.com/ecmwf/bindman.git", rev = "47edf68" }
