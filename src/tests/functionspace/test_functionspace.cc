@@ -470,6 +470,81 @@ CASE("test_functionspace_NodeColumns") {
         // sum_per_level.dump(Log::info());
     }
 
+    {
+        Log::info() << "Testing that NodeColumns statistics exclude ghost nodes" << std::endl;
+        const auto ghost = array::make_view<int, 1>(mesh.nodes().ghost());
+        double minimum;
+        double maximum;
+        double mean;
+        double stddev;
+        idx_t count;
+        gidx_t global_index;
+
+        surface_scalar.assign(2.);
+        for (idx_t node = 0; node < nodes_fs.nb_nodes(); ++node) {
+            if (ghost(node)) {
+                surface_scalar(node) = -100.;
+            }
+        }
+        nodes_fs.minimum(surface_scalar_field, minimum);
+        EXPECT(minimum == 2.);
+        nodes_fs.minimumAndLocation(surface_scalar_field, minimum, global_index);
+        EXPECT(minimum == 2.);
+
+        for (idx_t node = 0; node < nodes_fs.nb_nodes(); ++node) {
+            if (ghost(node)) {
+                surface_scalar(node) = 100.;
+            }
+        }
+        nodes_fs.maximum(surface_scalar_field, maximum);
+        EXPECT(maximum == 2.);
+        nodes_fs.maximumAndLocation(surface_scalar_field, maximum, global_index);
+        EXPECT(maximum == 2.);
+        nodes_fs.meanAndStandardDeviation(surface_scalar_field, mean, stddev, count);
+        EXPECT(mean == 2.);
+        EXPECT(stddev == 0.);
+
+        Field min_per_level("min", array::make_datatype<double>(), array::make_shape(nb_levels));
+        Field max_per_level("max", array::make_datatype<double>(), array::make_shape(nb_levels));
+        Field mean_per_level("mean", array::make_datatype<double>(), array::make_shape(nb_levels));
+        Field stddev_per_level("stddev", array::make_datatype<double>(), array::make_shape(nb_levels));
+        Field gidx_per_level("gidx", array::make_datatype<gidx_t>(), array::make_shape(nb_levels));
+
+        columns_scalar.assign(2.);
+        for (idx_t node = 0; node < nodes_fs.nb_nodes(); ++node) {
+            if (ghost(node)) {
+                for (idx_t level = 0; level < nb_levels; ++level) {
+                    columns_scalar(node, level) = -100.;
+                }
+            }
+        }
+        nodes_fs.minimumPerLevel(columns_scalar_field, min_per_level);
+        nodes_fs.minimumAndLocationPerLevel(columns_scalar_field, min_per_level, gidx_per_level);
+        auto minimum_levels = array::make_view<double, 1>(min_per_level);
+        for (idx_t level = 0; level < nb_levels; ++level) {
+            EXPECT(minimum_levels(level) == 2.);
+        }
+
+        for (idx_t node = 0; node < nodes_fs.nb_nodes(); ++node) {
+            if (ghost(node)) {
+                for (idx_t level = 0; level < nb_levels; ++level) {
+                    columns_scalar(node, level) = 100.;
+                }
+            }
+        }
+        nodes_fs.maximumPerLevel(columns_scalar_field, max_per_level);
+        nodes_fs.maximumAndLocationPerLevel(columns_scalar_field, max_per_level, gidx_per_level);
+        auto maximum_levels = array::make_view<double, 1>(max_per_level);
+        nodes_fs.meanAndStandardDeviationPerLevel(columns_scalar_field, mean_per_level, stddev_per_level, count);
+        auto mean_levels   = array::make_view<double, 1>(mean_per_level);
+        auto stddev_levels = array::make_view<double, 1>(stddev_per_level);
+        for (idx_t level = 0; level < nb_levels; ++level) {
+            EXPECT(maximum_levels(level) == 2.);
+            EXPECT(mean_levels(level) == 2.);
+            EXPECT(stddev_levels(level) == 0.);
+        }
+    }
+
     Field tmp = nodes_fs.createField(option::datatypeT<double>() | option::global(0) | option::levels(10) |
                                      option::name("tmp"));
 }

@@ -318,6 +318,7 @@ template <typename T>
 void dispatch_order_independent_sum(const NodeColumns& fs, const Field& field, T& result, idx_t& N) {
     if (field.levels()) {
         auto arr = make_leveled_scalar_view<const T>(field);
+        const mesh::IsGhostNode is_ghost(fs.nodes());
 
         Field surface_field = fs.createField<T>(option::name("surface") | option::levels(false));
         auto surface        = array::make_view<T, 1>(surface_field);
@@ -326,8 +327,10 @@ void dispatch_order_independent_sum(const NodeColumns& fs, const Field& field, T
         const idx_t N1 = arr.shape(1);
         for (idx_t n = 0; n < N0; ++n) {
             surface(n) = 0;
-            for (idx_t l = 0; l < N1; ++l) {
-                surface(n) += arr(n, l);
+            if (!is_ghost(n)) {
+                for (idx_t l = 0; l < N1; ++l) {
+                    surface(n) += arr(n, l);
+                }
             }
         }
         dispatch_order_independent_sum_2d(fs, surface_field, result, N);
@@ -402,6 +405,7 @@ template <typename T>
 void dispatch_order_independent_sum(const NodeColumns& fs, const Field& field, std::vector<T>& result, idx_t& N) {
     if (field.levels()) {
         const auto arr   = make_leveled_view<const T>(field);
+        const mesh::IsGhostNode is_ghost(fs.nodes());
         const idx_t npts = std::min(arr.shape(0), fs.nb_nodes());
         const idx_t nlev = arr.shape(1);
         const idx_t nvar = arr.shape(2);
@@ -417,9 +421,11 @@ void dispatch_order_independent_sum(const NodeColumns& fs, const Field& field, s
         }
 
         for (idx_t n = 0; n < npts; ++n) {
-            for (idx_t l = 0; l < nlev; ++l) {
-                for (idx_t j = 0; j < nvar; ++j) {
-                    surface(n, j) += arr(n, l, j);
+            if (!is_ghost(n)) {
+                for (idx_t l = 0; l < nlev; ++l) {
+                    for (idx_t j = 0; j < nvar; ++j) {
+                        surface(n, j) += arr(n, l, j);
+                    }
                 }
             }
         }
@@ -544,6 +550,7 @@ void order_independent_sum_per_level(const NodeColumns& fs, const Field& field, 
 template <typename T>
 void dispatch_minimum(const NodeColumns& fs, const Field& field, std::vector<T>& min) {
     auto arr         = make_leveled_view<const T>(field);
+    const mesh::IsGhostNode is_ghost(fs.nodes());
     const idx_t nvar = arr.shape(2);
     min.resize(nvar);
     std::vector<T> local_minimum(nvar, std::numeric_limits<T>::max());
@@ -551,9 +558,11 @@ void dispatch_minimum(const NodeColumns& fs, const Field& field, std::vector<T>&
         std::vector<T> local_minimum_private(nvar, std::numeric_limits<T>::max());
         const idx_t npts = std::min(arr.shape(0), fs.size());
         atlas_omp_for(idx_t n = 0; n < npts; ++n) {
-            for (idx_t l = 0; l < arr.shape(1); ++l) {
-                for (idx_t j = 0; j < arr.shape(2); ++j) {
-                    local_minimum_private[j] = std::min(arr(n, l, j), local_minimum_private[j]);
+            if (!is_ghost(n)) {
+                for (idx_t l = 0; l < arr.shape(1); ++l) {
+                    for (idx_t j = 0; j < arr.shape(2); ++j) {
+                        local_minimum_private[j] = std::min(arr(n, l, j), local_minimum_private[j]);
+                    }
                 }
             }
         }
@@ -607,6 +616,7 @@ void minimum(const NodeColumns& fs, const Field& field, std::vector<T>& min) {
 template <typename T>
 void dispatch_maximum(const NodeColumns& fs, const Field& field, std::vector<T>& max) {
     auto arr         = make_leveled_view<const T>(field);
+    const mesh::IsGhostNode is_ghost(fs.nodes());
     const idx_t nvar = arr.shape(2);
     max.resize(nvar);
     std::vector<T> local_maximum(nvar, -std::numeric_limits<T>::max());
@@ -614,9 +624,11 @@ void dispatch_maximum(const NodeColumns& fs, const Field& field, std::vector<T>&
         std::vector<T> local_maximum_private(nvar, -std::numeric_limits<T>::max());
         const idx_t npts = std::min(arr.shape(0), fs.size());
         atlas_omp_for(idx_t n = 0; n < npts; ++n) {
-            for (idx_t l = 0; l < arr.shape(1); ++l) {
-                for (idx_t j = 0; j < nvar; ++j) {
-                    local_maximum_private[j] = std::max(arr(n, l, j), local_maximum_private[j]);
+            if (!is_ghost(n)) {
+                for (idx_t l = 0; l < arr.shape(1); ++l) {
+                    for (idx_t j = 0; j < nvar; ++j) {
+                        local_maximum_private[j] = std::max(arr(n, l, j), local_maximum_private[j]);
+                    }
                 }
             }
         }
@@ -697,6 +709,7 @@ void dispatch_minimum_per_level(const NodeColumns& fs, const Field& field, Field
     }
 
     auto arr = make_leveled_view<const T>(field);
+    const mesh::IsGhostNode is_ghost(fs.nodes());
     atlas_omp_parallel {
         array::ArrayT<T> min_private(min.shape(0), min.shape(1));
         array::ArrayView<T, 2> min_private_view = array::make_view<T, 2>(min_private);
@@ -706,11 +719,13 @@ void dispatch_minimum_per_level(const NodeColumns& fs, const Field& field, Field
             }
         }
 
-        const idx_t npts = arr.shape(0);
+        const idx_t npts = std::min(arr.shape(0), fs.nb_nodes());
         atlas_omp_for(idx_t n = 0; n < npts; ++n) {
-            for (idx_t l = 0; l < arr.shape(1); ++l) {
-                for (idx_t j = 0; j < arr.shape(2); ++j) {
-                    min_private_view(l, j) = std::min(arr(n, l, j), min_private_view(l, j));
+            if (!is_ghost(n)) {
+                for (idx_t l = 0; l < arr.shape(1); ++l) {
+                    for (idx_t j = 0; j < arr.shape(2); ++j) {
+                        min_private_view(l, j) = std::min(arr(n, l, j), min_private_view(l, j));
+                    }
                 }
             }
         }
@@ -760,6 +775,7 @@ void dispatch_maximum_per_level(const NodeColumns& fs, const Field& field, Field
     }
 
     auto arr = make_leveled_view<const T>(field);
+    const mesh::IsGhostNode is_ghost(fs.nodes());
     atlas_omp_parallel {
         array::ArrayT<T> max_private(max.shape(0), max.shape(1));
         array::ArrayView<T, 2> max_private_view = array::make_view<T, 2>(max_private);
@@ -770,11 +786,13 @@ void dispatch_maximum_per_level(const NodeColumns& fs, const Field& field, Field
             }
         }
 
-        const idx_t npts = arr.shape(0);
+        const idx_t npts = std::min(arr.shape(0), fs.nb_nodes());
         atlas_omp_for(idx_t n = 0; n < npts; ++n) {
-            for (idx_t l = 0; l < arr.shape(1); ++l) {
-                for (idx_t j = 0; j < arr.shape(2); ++j) {
-                    max_private_view(l, j) = std::max(arr(n, l, j), max_private_view(l, j));
+            if (!is_ghost(n)) {
+                for (idx_t l = 0; l < arr.shape(1); ++l) {
+                    for (idx_t j = 0; j < arr.shape(2); ++j) {
+                        max_private_view(l, j) = std::max(arr(n, l, j), max_private_view(l, j));
+                    }
                 }
             }
         }
@@ -811,6 +829,7 @@ template <typename T>
 void dispatch_minimum_and_location(const NodeColumns& fs, const Field& field, std::vector<T>& min,
                                    std::vector<gidx_t>& glb_idx, std::vector<idx_t>& level) {
     auto arr   = make_leveled_view<const T>(field);
+    const mesh::IsGhostNode is_ghost(fs.nodes());
     idx_t nvar = arr.shape(2);
     min.resize(nvar);
     glb_idx.resize(nvar);
@@ -822,14 +841,16 @@ void dispatch_minimum_and_location(const NodeColumns& fs, const Field& field, st
         std::vector<T> local_minimum_private(nvar, std::numeric_limits<T>::max());
         std::vector<idx_t> loc_node_private(nvar);
         std::vector<idx_t> loc_level_private(nvar);
-        const idx_t npts = arr.shape(0);
+        const idx_t npts = std::min(arr.shape(0), fs.nb_nodes());
         atlas_omp_for(idx_t n = 0; n < npts; ++n) {
-            for (idx_t l = 0; l < arr.shape(1); ++l) {
-                for (idx_t j = 0; j < nvar; ++j) {
-                    if (arr(n, l, j) < local_minimum_private[j]) {
-                        local_minimum_private[j] = arr(n, l, j);
-                        loc_node_private[j]      = n;
-                        loc_level_private[j]     = l;
+            if (!is_ghost(n)) {
+                for (idx_t l = 0; l < arr.shape(1); ++l) {
+                    for (idx_t j = 0; j < nvar; ++j) {
+                        if (arr(n, l, j) < local_minimum_private[j]) {
+                            local_minimum_private[j] = arr(n, l, j);
+                            loc_node_private[j]      = n;
+                            loc_level_private[j]     = l;
+                        }
                     }
                 }
             }
@@ -914,6 +935,7 @@ template <typename T>
 void dispatch_maximum_and_location(const NodeColumns& fs, const Field& field, std::vector<T>& max,
                                    std::vector<gidx_t>& glb_idx, std::vector<idx_t>& level) {
     auto arr   = make_leveled_view<const T>(field);
+    const mesh::IsGhostNode is_ghost(fs.nodes());
     idx_t nvar = arr.shape(2);
     max.resize(nvar);
     glb_idx.resize(nvar);
@@ -925,14 +947,16 @@ void dispatch_maximum_and_location(const NodeColumns& fs, const Field& field, st
         std::vector<T> local_maximum_private(nvar, -std::numeric_limits<T>::max());
         std::vector<idx_t> loc_node_private(nvar);
         std::vector<idx_t> loc_level_private(nvar);
-        const idx_t npts = arr.shape(0);
+        const idx_t npts = std::min(arr.shape(0), fs.nb_nodes());
         atlas_omp_for(idx_t n = 0; n < npts; ++n) {
-            for (idx_t l = 0; l < arr.shape(1); ++l) {
-                for (idx_t j = 0; j < nvar; ++j) {
-                    if (arr(n, l, j) > local_maximum_private[j]) {
-                        local_maximum_private[j] = arr(n, l, j);
-                        loc_node_private[j]      = n;
-                        loc_level_private[j]     = l;
+            if (!is_ghost(n)) {
+                for (idx_t l = 0; l < arr.shape(1); ++l) {
+                    for (idx_t j = 0; j < nvar; ++j) {
+                        if (arr(n, l, j) > local_maximum_private[j]) {
+                            local_maximum_private[j] = arr(n, l, j);
+                            loc_node_private[j]      = n;
+                            loc_level_private[j]     = l;
+                        }
                     }
                 }
             }
@@ -1065,6 +1089,7 @@ template <typename T>
 void dispatch_minimum_and_location_per_level(const NodeColumns& fs, const Field& field, Field& min_field,
                                              Field& glb_idx_field) {
     auto arr = make_leveled_view<const T>(field);
+    const mesh::IsGhostNode is_ghost(fs.nodes());
     array::ArrayShape shape;
     shape.reserve(field.rank() - 1);
     for (idx_t j = 1; j < field.rank(); ++j) {
@@ -1094,13 +1119,15 @@ void dispatch_minimum_and_location_per_level(const NodeColumns& fs, const Field&
 
         array::ArrayT<gidx_t> glb_idx_private(glb_idx.shape(0), glb_idx.shape(1));
         array::ArrayView<gidx_t, 2> glb_idx_private_view = array::make_view<gidx_t, 2>(glb_idx_private);
-        const idx_t npts                                 = arr.shape(0);
+        const idx_t npts = std::min(arr.shape(0), fs.nb_nodes());
         atlas_omp_for(idx_t n = 0; n < npts; ++n) {
-            for (idx_t l = 0; l < arr.shape(1); ++l) {
-                for (idx_t j = 0; j < nvar; ++j) {
-                    if (arr(n, l, j) < min(l, j)) {
-                        min_private_view(l, j)     = arr(n, l, j);
-                        glb_idx_private_view(l, j) = n;
+            if (!is_ghost(n)) {
+                for (idx_t l = 0; l < arr.shape(1); ++l) {
+                    for (idx_t j = 0; j < nvar; ++j) {
+                        if (arr(n, l, j) < min_private_view(l, j)) {
+                            min_private_view(l, j)     = arr(n, l, j);
+                            glb_idx_private_view(l, j) = n;
+                        }
                     }
                 }
             }
@@ -1165,6 +1192,7 @@ template <typename T>
 void dispatch_maximum_and_location_per_level(const NodeColumns& fs, const Field& field, Field& max_field,
                                              Field& glb_idx_field) {
     auto arr = make_leveled_view<const T>(field);
+    const mesh::IsGhostNode is_ghost(fs.nodes());
     array::ArrayShape shape;
     shape.reserve(field.rank() - 1);
     for (idx_t j = 1; j < field.rank(); ++j) {
@@ -1194,13 +1222,15 @@ void dispatch_maximum_and_location_per_level(const NodeColumns& fs, const Field&
 
         array::ArrayT<gidx_t> glb_idx_private(glb_idx.shape(0), glb_idx.shape(1));
         array::ArrayView<gidx_t, 2> glb_idx_private_view = array::make_view<gidx_t, 2>(glb_idx_private);
-        const idx_t npts                                 = arr.shape(0);
+        const idx_t npts = std::min(arr.shape(0), fs.nb_nodes());
         atlas_omp_for(idx_t n = 0; n < npts; ++n) {
-            for (idx_t l = 0; l < arr.shape(1); ++l) {
-                for (idx_t j = 0; j < nvar; ++j) {
-                    if (arr(n, l, j) > max(l, j)) {
-                        max_private_view(l, j)     = arr(n, l, j);
-                        glb_idx_private_view(l, j) = n;
+            if (!is_ghost(n)) {
+                for (idx_t l = 0; l < arr.shape(1); ++l) {
+                    for (idx_t j = 0; j < nvar; ++j) {
+                        if (arr(n, l, j) > max_private_view(l, j)) {
+                            max_private_view(l, j)     = arr(n, l, j);
+                            glb_idx_private_view(l, j) = n;
+                        }
                     }
                 }
             }
@@ -1308,6 +1338,7 @@ void mean_per_level(const NodeColumns& fs, const Field& field, Field& mean, idx_
 template <typename T>
 void mean_and_standard_deviation(const NodeColumns& fs, const Field& field, T& mu, T& sigma, idx_t& N) {
     mean(fs, field, mu, N);
+    const mesh::IsGhostNode is_ghost(fs.nodes());
     Field squared_diff_field =
         fs.createField(option::name("sqr_diff") | option::datatype(field.datatype()) | option::levels(field.levels()));
 
@@ -1316,8 +1347,10 @@ void mean_and_standard_deviation(const NodeColumns& fs, const Field& field, T& m
 
     const idx_t npts = std::min<idx_t>(values.shape(0), fs.nb_nodes());
     atlas_omp_parallel_for(idx_t n = 0; n < npts; ++n) {
-        for (idx_t l = 0; l < values.shape(1); ++l) {
-            squared_diff(n, l) = sqr(values(n, l) - mu);
+        if (!is_ghost(n)) {
+            for (idx_t l = 0; l < values.shape(1); ++l) {
+                squared_diff(n, l) = sqr(values(n, l) - mu);
+            }
         }
     }
     mean(fs, squared_diff_field, sigma, N);
@@ -1328,6 +1361,7 @@ template <typename T>
 void mean_and_standard_deviation(const NodeColumns& fs, const Field& field, std::vector<T>& mu, std::vector<T>& sigma,
                                  idx_t& N) {
     mean(fs, field, mu, N);
+    const mesh::IsGhostNode is_ghost(fs.nodes());
     Field squared_diff_field = fs.createField<T>(option::name("sqr_diff") | option::levels(field.levels()) |
                                                  option::variables(field.variables()));
     auto squared_diff        = make_leveled_view<T>(squared_diff_field);
@@ -1335,9 +1369,11 @@ void mean_and_standard_deviation(const NodeColumns& fs, const Field& field, std:
 
     const idx_t npts = std::min<idx_t>(values.shape(0), fs.nb_nodes());
     atlas_omp_parallel_for(idx_t n = 0; n < npts; ++n) {
-        for (idx_t l = 0; l < values.shape(1); ++l) {
-            for (idx_t j = 0; j < values.shape(2); ++j) {
-                squared_diff(n, l, j) = sqr(values(n, l, j) - mu[j]);
+        if (!is_ghost(n)) {
+            for (idx_t l = 0; l < values.shape(1); ++l) {
+                for (idx_t j = 0; j < values.shape(2); ++j) {
+                    squared_diff(n, l, j) = sqr(values(n, l, j) - mu[j]);
+                }
             }
         }
     }
@@ -1351,6 +1387,7 @@ template <typename T>
 void dispatch_mean_and_standard_deviation_per_level(const NodeColumns& fs, const Field& field, Field& mean,
                                                     Field& stddev, idx_t& N) {
     dispatch_mean_per_level<T>(fs, field, mean, N);
+    const mesh::IsGhostNode is_ghost(fs.nodes());
     Field squared_diff_field = fs.createField<T>(option::name("sqr_diff") | option::levels(field.levels()) |
                                                  option::variables(field.variables()));
     auto squared_diff        = make_leveled_view<T>(squared_diff_field);
@@ -1359,9 +1396,11 @@ void dispatch_mean_and_standard_deviation_per_level(const NodeColumns& fs, const
 
     const idx_t npts = std::min<idx_t>(values.shape(0), fs.nb_nodes());
     atlas_omp_parallel_for(idx_t n = 0; n < npts; ++n) {
-        for (idx_t l = 0; l < values.shape(1); ++l) {
-            for (idx_t j = 0; j < values.shape(2); ++j) {
-                squared_diff(n, l, j) = sqr(values(n, l, j) - mu(l, j));
+        if (!is_ghost(n)) {
+            for (idx_t l = 0; l < values.shape(1); ++l) {
+                for (idx_t j = 0; j < values.shape(2); ++j) {
+                    squared_diff(n, l, j) = sqr(values(n, l, j) - mu(l, j));
+                }
             }
         }
     }
