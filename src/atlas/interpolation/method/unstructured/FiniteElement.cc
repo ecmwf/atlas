@@ -58,7 +58,7 @@ static const double parametricEpsilon = 1e-15;
 
 
 void FiniteElement::do_setup(const Grid& source, const Grid& target, const Cache& cache) {
-    allow_halo_exchange_ = false;
+    perform_halo_exchange_ = false;
     //  no halo_exchange because we don't have any halo with delaunay or 3d structured meshgenerator
 
     if (interpolation::MatrixCache(cache)) {
