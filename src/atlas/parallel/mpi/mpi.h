@@ -11,6 +11,7 @@
 #pragma once
 
 #include <string_view>
+#include <type_traits>
 
 #include "eckit/mpi/Comm.h"
 #include "atlas/parallel/mpi/Statistics.h"
@@ -63,7 +64,8 @@ namespace scope {
 struct Scope {
     Scope() { scope::push(); }
     Scope(std::string_view name) { scope::push(name); }
-    Scope(const Comm& comm) { scope::push(comm); };
+    template <typename CommT, std::enable_if_t<std::is_same_v<std::decay_t<CommT>, Comm>, int> = 0>
+    Scope(CommT&& comm) { scope::push(comm); };
     /// @brief Constructor using integer value. If the given communicator is not already registered, it will be registered with a generated name "int.<communicator>" for the duration of the scope, and unregistered when the scope is destructed.
     /// @param communicator The integer value of the MPI communicator to use for the scope
     Scope(int communicator) { scope::push(communicator); }
