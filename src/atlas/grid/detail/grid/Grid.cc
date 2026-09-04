@@ -188,6 +188,14 @@ void atlas__grid__Grid__name(const Grid* This, char*& name, int& size) {
     std::strncpy(name, s.c_str(), size + 1);
 }
 
+void atlas__grid__Grid__type(const Grid* This, char*& type, int& size) {
+    ATLAS_ASSERT(This != nullptr, "Cannot access uninitialised atlas_Grid");
+    std::string s = This->type();
+    size          = static_cast<int>(s.size());
+    type          = new char[size + 1];
+    std::strncpy(type, s.c_str(), size + 1);
+}
+
 Grid::Domain::Implementation* atlas__grid__Grid__lonlat_bounding_box(const Grid* This) {
     Grid::Domain::Implementation* lonlatboundingbox;
     {

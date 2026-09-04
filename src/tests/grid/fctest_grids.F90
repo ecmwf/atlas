@@ -59,6 +59,7 @@ TEST( test_spec )
   character(:), allocatable :: json_sorted, json_ordered, json
 
   grid = atlas_Grid ("O32")
+  FCTEST_CHECK_EQUAL( grid%type(), "structured" )
   spec = grid%spec()
 
   FCTEST_CHECK_EQUAL( spec%owners(), 1 )
