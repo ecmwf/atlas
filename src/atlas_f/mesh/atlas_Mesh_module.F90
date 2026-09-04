@@ -101,11 +101,19 @@ end function atlas_Mesh__ctor
 
 !-------------------------------------------------------------------------------
 
-function atlas_Mesh__ctor_grid(grid) result(this)
+function atlas_Mesh__ctor_grid(grid, config) result(this)
   use atlas_mesh_c_binding
   type(atlas_Mesh) :: this
   class(atlas_Grid), intent(in) :: grid
-  call this%reset_c_ptr( atlas__Mesh__new_grid(grid%c_ptr()) )
+  type(atlas_Config), intent(in), optional :: config
+  type(atlas_Config) :: opt_config
+  if (present(config)) then
+    call this%reset_c_ptr( atlas__Mesh__new_grid(grid%c_ptr(), config%c_ptr()) )
+  else
+    opt_config = atlas_Config()
+    call this%reset_c_ptr( atlas__Mesh__new_grid(grid%c_ptr(), opt_config%c_ptr()) )
+    call opt_config%final()
+  endif
   call this%return()
 end function atlas_Mesh__ctor_grid
 

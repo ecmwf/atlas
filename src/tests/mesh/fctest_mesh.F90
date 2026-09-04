@@ -64,6 +64,41 @@ implicit none
   call nodes%final()
 END_TEST
 
+TEST( test_mesh_grid_config )
+implicit none
+
+  type(atlas_Grid) :: grid
+  type(atlas_Config) :: config
+  type(atlas_Mesh) :: mesh
+  type(atlas_mesh_Nodes) :: nodes
+  type(atlas_mesh_Cells) :: cells
+  type(atlas_Elements) :: quads, triangles
+
+  call atlas_log%info( "--- test_mesh_grid_config" )
+
+  grid = atlas_Grid("N16")
+  config = atlas_Config()
+  call config%set("triangulate", .true.)
+
+  mesh = atlas_Mesh(grid, config)
+
+  nodes = mesh%nodes()
+  cells = mesh%cells()
+  quads = cells%elements(1)
+  triangles = cells%elements(2)
+  FCTEST_CHECK_EQUAL( nodes%size(), 1720 )
+  FCTEST_CHECK_EQUAL( quads%size(), 0 )
+  FCTEST_CHECK_EQUAL( triangles%size(), 3372 )
+
+  call triangles%final()
+  call quads%final()
+  call cells%final()
+  call nodes%final()
+  call mesh%final()
+  call config%final()
+  call grid%final()
+END_TEST
+
 TEST( test_mesh_grid_distribution )
 implicit none
 

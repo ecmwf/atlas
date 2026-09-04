@@ -27,11 +27,11 @@ Mesh::Implementation* atlas__Mesh__new() {
     return new Mesh::Implementation();
 }
 
-Mesh::Implementation* atlas__Mesh__new_grid(Grid::Implementation* grid) {
+Mesh::Implementation* atlas__Mesh__new_grid(Grid::Implementation* grid, const util::Config* config) {
+    ATLAS_ASSERT(config != nullptr, "Cannot access uninitialised atlas_Config");
     Mesh::Implementation* mesh;
     {
-        Grid g(grid);
-        Mesh m{Grid{grid}};
+        Mesh m{Grid{grid}, *config};
         mesh = m.get();
         mesh->attach();
     }
