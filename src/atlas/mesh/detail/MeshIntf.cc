@@ -9,10 +9,13 @@
  */
 
 #include "atlas/grid/Grid.h"
+#include "atlas/grid/Distribution.h"
+#include "atlas/grid/Partitioner.h"
 #include "atlas/grid/detail/grid/Grid.h"
 #include "atlas/mesh/detail/MeshIntf.h"
 #include "atlas/mesh/Nodes.h"
 #include "atlas/runtime/Exception.h"
+#include "atlas/util/Config.h"
 
 namespace atlas {
 namespace mesh {
@@ -29,6 +32,34 @@ Mesh::Implementation* atlas__Mesh__new_grid(Grid::Implementation* grid) {
     {
         Grid g(grid);
         Mesh m{Grid{grid}};
+        mesh = m.get();
+        mesh->attach();
+    }
+    mesh->detach();
+    return mesh;
+}
+
+Mesh::Implementation* atlas__Mesh__new_grid_distribution(Grid::Implementation* grid,
+                                                         grid::Distribution::Implementation* distribution,
+                                                         const util::Config* config) {
+    ATLAS_ASSERT(config != nullptr, "Cannot access uninitialised atlas_Config");
+    Mesh::Implementation* mesh;
+    {
+        Mesh m{Grid{grid}, grid::Distribution{distribution}, *config};
+        mesh = m.get();
+        mesh->attach();
+    }
+    mesh->detach();
+    return mesh;
+}
+
+Mesh::Implementation* atlas__Mesh__new_grid_partitioner(Grid::Implementation* grid,
+                                                        grid::Partitioner::Implementation* partitioner,
+                                                        const util::Config* config) {
+    ATLAS_ASSERT(config != nullptr, "Cannot access uninitialised atlas_Config");
+    Mesh::Implementation* mesh;
+    {
+        Mesh m{Grid{grid}, grid::Partitioner{partitioner}, *config};
         mesh = m.get();
         mesh->attach();
     }

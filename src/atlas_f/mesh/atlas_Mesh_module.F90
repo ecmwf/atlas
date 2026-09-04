@@ -15,6 +15,9 @@ use atlas_mesh_Cells_module, only: atlas_mesh_Cells
 use atlas_mesh_Nodes_module, only: atlas_mesh_Nodes
 use atlas_mesh_Edges_module, only: atlas_mesh_Edges
 use atlas_Grid_module, only: atlas_Grid
+use atlas_GridDistribution_module, only: atlas_GridDistribution
+use atlas_Partitioner_module, only: atlas_Partitioner
+use atlas_Config_module, only: atlas_Config
 use, intrinsic :: iso_c_binding, only : c_size_t, c_ptr
 
 implicit none
@@ -23,6 +26,9 @@ private :: fckit_owned_object
 private :: atlas_mesh_Cells
 private :: atlas_mesh_Nodes
 private :: atlas_mesh_Edges
+private :: atlas_GridDistribution
+private :: atlas_Partitioner
+private :: atlas_Config
 private :: c_size_t
 private :: c_ptr
 
@@ -68,6 +74,8 @@ interface atlas_Mesh
   module procedure atlas_Mesh__cptr
   module procedure atlas_Mesh__ctor
   module procedure atlas_Mesh__ctor_grid
+  module procedure atlas_Mesh__ctor_grid_distribution
+  module procedure atlas_Mesh__ctor_grid_partitioner
 end interface
 
 !========================================================
@@ -100,6 +108,48 @@ function atlas_Mesh__ctor_grid(grid) result(this)
   call this%reset_c_ptr( atlas__Mesh__new_grid(grid%c_ptr()) )
   call this%return()
 end function atlas_Mesh__ctor_grid
+
+!-------------------------------------------------------------------------------
+
+function atlas_Mesh__ctor_grid_distribution(grid, distribution, config) result(this)
+  use atlas_mesh_c_binding
+  type(atlas_Mesh) :: this
+  class(atlas_Grid), intent(in) :: grid
+  class(atlas_GridDistribution), intent(in) :: distribution
+  type(atlas_Config), intent(in), optional :: config
+  type(atlas_Config) :: opt_config
+  if (present(config)) then
+    call this%reset_c_ptr( atlas__Mesh__new_grid_distribution( &
+      grid%c_ptr(), distribution%c_ptr(), config%c_ptr()) )
+  else
+    opt_config = atlas_Config()
+    call this%reset_c_ptr( atlas__Mesh__new_grid_distribution( &
+      grid%c_ptr(), distribution%c_ptr(), opt_config%c_ptr()) )
+    call opt_config%final()
+  endif
+  call this%return()
+end function atlas_Mesh__ctor_grid_distribution
+
+!-------------------------------------------------------------------------------
+
+function atlas_Mesh__ctor_grid_partitioner(grid, partitioner, config) result(this)
+  use atlas_mesh_c_binding
+  type(atlas_Mesh) :: this
+  class(atlas_Grid), intent(in) :: grid
+  class(atlas_Partitioner), intent(in) :: partitioner
+  type(atlas_Config), intent(in), optional :: config
+  type(atlas_Config) :: opt_config
+  if (present(config)) then
+    call this%reset_c_ptr( atlas__Mesh__new_grid_partitioner( &
+      grid%c_ptr(), partitioner%c_ptr(), config%c_ptr()) )
+  else
+    opt_config = atlas_Config()
+    call this%reset_c_ptr( atlas__Mesh__new_grid_partitioner( &
+      grid%c_ptr(), partitioner%c_ptr(), opt_config%c_ptr()) )
+    call opt_config%final()
+  endif
+  call this%return()
+end function atlas_Mesh__ctor_grid_partitioner
 
 !-------------------------------------------------------------------------------
 

@@ -59,12 +59,11 @@ interface atlas_Partitioner
 end interface
 
 interface atlas_MatchingPartitioner
-  module procedure atlas_MatchingMeshPartitioner__ctor
-  module procedure atlas_MatchingFunctionSpacePartitioner__ctor
+  module procedure atlas_MatchingPartitioner__ctor
 end interface
 
 interface atlas_MatchingMeshPartitioner
-  module procedure atlas_MatchingMeshPartitioner__ctor
+  module procedure atlas_MatchingPartitioner__ctor
 end interface
 
 !========================================================
@@ -93,46 +92,24 @@ function atlas_Partitioner__ctor_type( type ) result(this)
   call this%return()
 end function
 
-function atlas_MatchingMeshPartitioner__ctor( mesh, config ) result(this)
-  use atlas_mesh_module, only : atlas_Mesh
+function atlas_MatchingPartitioner__ctor( object, config ) result(this)
   use atlas_config_module, only : atlas_Config
   use atlas_partitioner_c_binding
   type(atlas_Partitioner) :: this
-  type(atlas_Mesh)  , intent(in) :: mesh
+  class(fckit_owned_object), intent(in) :: object
   type(atlas_Config), intent(in), optional :: config
   type(atlas_Config) :: opt_config
   if( present(config) ) then
-    call this%reset_c_ptr( atlas__grid__MatchingMeshPartitioner__new( &
-      mesh%c_ptr(), config%c_ptr() ) )
+    call this%reset_c_ptr( atlas__grid__MatchingPartitioner__new( &
+      object%c_ptr(), config%c_ptr() ) )
   else
     opt_config = atlas_Config()
-    call this%reset_c_ptr( atlas__grid__MatchingMeshPartitioner__new( &
-      mesh%c_ptr(), opt_config%c_ptr() ) )
+    call this%reset_c_ptr( atlas__grid__MatchingPartitioner__new( &
+      object%c_ptr(), opt_config%c_ptr() ) )
     call opt_config%final()
   endif
   call this%return()
-end function
-
-
-function atlas_MatchingFunctionSpacePartitioner__ctor( functionspace, config ) result(this)
-  use atlas_functionspace_module, only : atlas_FunctionSpace
-  use atlas_config_module, only : atlas_Config
-  use atlas_partitioner_c_binding
-  type(atlas_Partitioner) :: this
-  class(atlas_FunctionSpace)  , intent(in) :: functionspace
-  type(atlas_Config), intent(in), optional :: config
-  type(atlas_Config) :: opt_config
-  if( present(config) ) then
-    call this%reset_c_ptr( atlas__grid__MatchingFunctionSpacePartitioner__new( &
-      functionspace%c_ptr(), config%c_ptr() ) )
-  else
-    opt_config = atlas_Config()
-    call this%reset_c_ptr( atlas__grid__MatchingFunctionSpacePartitioner__new( &
-      functionspace%c_ptr(), opt_config%c_ptr() ) )
-    call opt_config%final()
-  endif
-  call this%return()
-end function
+end function atlas_MatchingPartitioner__ctor
 
 function partition(this,grid) result(distribution)
   use atlas_partitioner_c_binding
