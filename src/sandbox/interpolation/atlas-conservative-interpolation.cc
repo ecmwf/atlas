@@ -137,8 +137,7 @@ std::function<double(const PointLonLat&)> get_init(const eckit::LocalConfigurati
         args.get("spherical_harmonic.n", n);
         args.get("spherical_harmonic.m", m);
 
-        bool caching = true;  // true -> warning not thread-safe
-        util::function::SphericalHarmonic Y(n, m, caching);
+        util::function::SphericalHarmonic Y(n, m);
         return [Y](const PointLonLat& p) { return Y(p.lon(), p.lat()); };
     }
     else if (init == "constant") {
@@ -242,7 +241,7 @@ int AtlasParallelInterpolation::execute(const AtlasTool::Args& args) {\
         const auto lonlat = array::make_view<double, 2>(src_functionspace.lonlat());
         auto src_view     = array::make_view<double, 1>(src_field);
         auto f            = get_init(config);
-        for (idx_t n = 0; n < lonlat.shape(0); ++n) {
+        atlas_omp_parallel_for (idx_t n = 0; n < lonlat.shape(0); ++n) {
             src_view(n) = f(PointLonLat{lonlat(n, LON), lonlat(n, LAT)});
         }
         src_field.set_dirty(true);

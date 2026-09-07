@@ -11,7 +11,7 @@
 
 #pragma once
 
-#include <functional>
+#include <memory>
 
 namespace atlas {
 
@@ -35,15 +35,21 @@ public:
     ///
     /// \param n          Total wave number
     /// \param m          Zonal wave number
-    /// \param caching    When true, internally cache the results of Associated Legendre Polynomials
-    ///                   in a map. Warning: this is not thread-safe
-    SphericalHarmonic(int n, int m, bool caching = false);
+    SphericalHarmonic(int n, int m);
 
     /// \brief Evaluate the spherical harmonic function for given longitude and latitude
     double operator()(double lon, double lat) const;
 
 private:
-    std::function<double(double, double)> Y_;
+    struct Cache;
+
+    double P_cos_COLAT(double lat) const;
+
+    int n_;
+    int m_;
+    int abs_m_;
+    double Knm_{};
+    std::shared_ptr<Cache> cache_;
 };
 
 }  // namespace function

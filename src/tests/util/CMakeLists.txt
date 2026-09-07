@@ -67,6 +67,12 @@ ecbuild_add_test( TARGET atlas_test_vector
   ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
 )
 
+ecbuild_add_test( TARGET atlas_test_spherical_harmonics
+  SOURCES  test_spherical_harmonics.cc
+  LIBS     atlas
+  ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
+)
+
 ecbuild_add_test( TARGET atlas_test_metadata
   MPI        4
   CONDITION  eckit_HAVE_MPI AND MPI_SLOTS GREATER_EQUAL 4
