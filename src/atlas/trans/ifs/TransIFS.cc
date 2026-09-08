@@ -31,6 +31,8 @@
 #include "atlas/trans/detail/TransFactory.h"
 #include "atlas/trans/ifs/TransIFS.h"
 
+#include <vector>
+
 using Topology = atlas::mesh::Nodes::Topology;
 using atlas::Field;
 using atlas::FunctionSpace;
@@ -2239,12 +2241,10 @@ void TransIFS::__invtrans_vordiv2wind(const Spectral& sp, const Field& spvor, co
 
     // Count total number of fields and do sanity checks
     const int nfld = compute_nfld(spvor);
-    if (spdiv.shape(0) != spvor.shape(0)) {
+    if (spdiv.rank() != spvor.rank() || spdiv.shape() != spvor.shape()) {
         throw_Exception("invtrans: vorticity not compatible with divergence.", Here());
     }
-    if (spdiv.shape(1) != spvor.shape(1)) {
-        throw_Exception("invtrans: vorticity not compatible with divergence.", Here());
-    }
+    ATLAS_ASSERT(spvor.rank() == 1 || spvor.rank() == 2, "Only rank-1 and rank-2 spectral fields are supported");
     const int nwindfld = compute_nfld(gpwind);
     if (nwindfld != 2 * nfld && nwindfld != 3 * nfld) {
         throw_Exception("invtrans: wind field is not compatible with vorticity, divergence.", Here());
@@ -2258,8 +2258,6 @@ void TransIFS::__invtrans_vordiv2wind(const Spectral& sp, const Field& spvor, co
         throw_Exception(msg.str(), Here());
     }
 
-    ATLAS_ASSERT(spvor.rank() == 2);
-    ATLAS_ASSERT(spdiv.rank() == 2);
     if (spvor.size() == 0) {
         throw_Exception("invtrans: spectral vorticity field is empty.");
     }
@@ -2311,12 +2309,10 @@ void TransIFS::__invtrans_vordiv2wind(const Spectral& sp, const Field& spvor, co
 
     // Count total number of fields and do sanity checks
     const int nfld = compute_nfld(spvor);
-    if (spdiv.shape(0) != spvor.shape(0)) {
+    if (spdiv.rank() != spvor.rank() || spdiv.shape() != spvor.shape()) {
         throw_Exception("invtrans: vorticity not compatible with divergence.", Here());
     }
-    if (spdiv.shape(1) != spvor.shape(1)) {
-        throw_Exception("invtrans: vorticity not compatible with divergence.", Here());
-    }
+    ATLAS_ASSERT(spvor.rank() == 1 || spvor.rank() == 2, "Only rank-1 and rank-2 spectral fields are supported");
     const int nwindfld = compute_nfld(gpwind);
     if (nwindfld != 2 * nfld && nwindfld != 3 * nfld) {
         throw_Exception("invtrans: wind field is not compatible with vorticity, divergence.", Here());
@@ -2330,8 +2326,6 @@ void TransIFS::__invtrans_vordiv2wind(const Spectral& sp, const Field& spvor, co
         throw_Exception(msg.str(), Here());
     }
 
-    ATLAS_ASSERT(spvor.rank() == 2);
-    ATLAS_ASSERT(spdiv.rank() == 2);
     if (spvor.size() == 0) {
         throw_Exception("invtrans: spectral vorticity field is empty.");
     }
