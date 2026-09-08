@@ -13,7 +13,6 @@
 #include <cmath>
 #include <cstdlib>
 #include <fstream>
-#include <vector>
 
 #include "eckit/config/YAMLConfiguration.h"
 #include "eckit/eckit.h"
@@ -22,6 +21,8 @@
 #include "eckit/log/Bytes.h"
 #include "eckit/log/JSON.h"
 #include "eckit/types/FloatCompare.h"
+
+#include "pluto/pluto.h"
 
 #include "atlas/array.h"
 #include "atlas/field.h"
@@ -56,6 +57,33 @@ namespace trans {
 
 namespace {
 static TransBuilderGrid<TransLocal> builder("local", "local");
+
+template <typename Value>
+class PooledBuffer {
+public:
+    explicit PooledBuffer(const std::size_t size): size_(size), allocator_(pluto::host_pool_resource()), data_(nullptr) {
+        if (size_) {
+            data_ = allocator_.allocate(size_);
+        }
+    }
+
+    ~PooledBuffer() {
+        if (data_) {
+            allocator_.deallocate(data_, size_);
+        }
+    }
+
+    PooledBuffer(const PooledBuffer&)            = delete;
+    PooledBuffer& operator=(const PooledBuffer&) = delete;
+
+    Value* data() { return data_; }
+    Value& operator[](const std::size_t index) { return data_[index]; }
+
+private:
+    std::size_t size_;
+    pluto::allocator<Value> allocator_;
+    Value* data_{nullptr};
+};
 }  // namespace
 
 namespace {
@@ -531,8 +559,8 @@ TransLocal::TransLocal(const Cache& cache, const Grid& grid, const Domain& domai
             }
         }
         //Log::info() << "nlats=" << g.ny() << " nlatsGlobal=" << gs_global.ny() << std::endl;
-        std::vector<double> lats(nlatsLeg_);
-        std::vector<double> lons(nlonsMax);
+        PooledBuffer<double> lats(nlatsLeg_);
+        PooledBuffer<double> lons(nlonsMax);
         if (nlatsNH_ >= nlatsSH_ || useGlobalLeg) {
             for (idx_t j = 0; j < nlatsLeg_; ++j) {
                 double lat = gsLeg.y(j);
@@ -755,7 +783,7 @@ TransLocal::TransLocal(const Cache& cache, const Grid& grid, const Domain& domai
                     << "Furthermore, results may contain aliasing errors." << std::endl;
             }
 
-            std::vector<double> lats(grid_.size());
+            PooledBuffer<double> lats(grid_.size());
             alloc_aligned(legendre_, legendre_size(truncation_) * grid_.size(), "Legendre coeffs.");
             int j(0);
             for (PointLonLat p : grid_.lonlat()) {
@@ -905,7 +933,7 @@ void TransLocal::invtrans_vordiv2wind(const Field& spvor, const Field& spdiv, Fi
         const idx_t nb_grid_points = grid().size();
         const idx_t transformed_wind_stride_component = nb_vordiv_fields * nb_grid_points;
         const idx_t transformed_wind_stride_level = nb_grid_points;
-        std::vector<double> transformed_wind_data(2 * nb_vordiv_fields * nb_grid_points);
+        PooledBuffer<double> transformed_wind_data(2 * nb_vordiv_fields * nb_grid_points);
         auto transformed_wind = [&transformed_wind_stride_component, &transformed_wind_stride_level, &transformed_wind_data](idx_t component, idx_t level, idx_t point) {
             return transformed_wind_data[component * transformed_wind_stride_component + level * transformed_wind_stride_level + point];
         };
@@ -1494,7 +1522,7 @@ void TransLocal::invtrans_uv(const int truncation, const int nb_scalar_fields, c
             {
                 if (nb_vordiv_fields > 0) {
                     ATLAS_TRACE("compute u,v from U,V");
-                    std::vector<double> coslatinvs(nlats);
+                    PooledBuffer<double> coslatinvs(nlats);
                     for (idx_t j = 0; j < nlats; ++j) {
                         double lat = g.y(j);
                         if (lat > latPole) {
@@ -1579,11 +1607,11 @@ void TransLocal::invtrans(const int nb_scalar_fields, const double scalar_spectr
         ATLAS_TRACE("TransLocal::invtrans");
         int nb_vordiv_spec_ext = 2 * legendre_size(truncation_ + 1) * nb_vordiv_fields;
         int nb_scalar_ext      = 2 * legendre_size(truncation_ + 1) * nb_scalar_fields;
-        std::vector<double> U_ext(nb_vordiv_spec_ext);
-        std::vector<double> V_ext(nb_vordiv_spec_ext);
-        std::vector<double> scalar_ext(nb_scalar_ext);
-        std::vector<double> vorticity_spectra_extended(nb_vordiv_spec_ext);
-        std::vector<double> divergence_spectra_extended(nb_vordiv_spec_ext);
+        PooledBuffer<double> U_ext(nb_vordiv_spec_ext);
+        PooledBuffer<double> V_ext(nb_vordiv_spec_ext);
+        PooledBuffer<double> scalar_ext(nb_scalar_ext);
+        PooledBuffer<double> vorticity_spectra_extended(nb_vordiv_spec_ext);
+        PooledBuffer<double> divergence_spectra_extended(nb_vordiv_spec_ext);
 
         {
             ATLAS_TRACE("extend vordiv");
@@ -1605,7 +1633,7 @@ void TransLocal::invtrans(const int nb_scalar_fields, const double scalar_spectr
         }
         int nb_all_fields = 2 * nb_vordiv_fields + nb_scalar_fields;
         int nb_all_size   = 2 * legendre_size(truncation_ + 1) * nb_all_fields;
-        std::vector<double> all_spectra(nb_all_size);
+        PooledBuffer<double> all_spectra(nb_all_size);
         int k = 0, i = 0, j = 0, l = 0;
         {
             ATLAS_TRACE("merge all spectra");

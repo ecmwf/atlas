@@ -17,6 +17,8 @@
 #include "transi/trans.h"
 #endif
 
+#include "pluto/pluto.h"
+
 #include "atlas/array.h"
 #include "atlas/field/FieldSet.h"
 #include "atlas/functionspace/NodeColumns.h"
@@ -30,8 +32,6 @@
 #include "atlas/trans/Trans.h"
 #include "atlas/trans/detail/TransFactory.h"
 #include "atlas/trans/ifs/TransIFS.h"
-
-#include <vector>
 
 using Topology = atlas::mesh::Nodes::Topology;
 using atlas::Field;
@@ -51,6 +51,33 @@ namespace trans {
 namespace {
 static TransBuilderGrid<TransIFS> builder_ifs("ifs", "ifs");  // deprecated
 static TransBuilderGrid<TransIFS> builder_ectrans("ectrans", "ectrans");
+
+template <typename Value>
+class PooledBuffer {
+public:
+    explicit PooledBuffer(const std::size_t size): size_(size), allocator_(pluto::host_pool_resource()), data_(nullptr) {
+        if (size_) {
+            data_ = allocator_.allocate(size_);
+        }
+    }
+
+    ~PooledBuffer() {
+        if (data_) {
+            allocator_.deallocate(data_, size_);
+        }
+    }
+
+    PooledBuffer(const PooledBuffer&)            = delete;
+    PooledBuffer& operator=(const PooledBuffer&) = delete;
+
+    Value* data() { return data_; }
+    Value& operator[](const std::size_t index) { return data_[index]; }
+
+private:
+    std::size_t size_;
+    pluto::allocator<Value> allocator_;
+    Value* data_{nullptr};
+};
 }  // namespace
 
 class TransParameters {
@@ -1171,7 +1198,7 @@ void TransIFS::ctor(const Grid& grid, long truncation, const eckit::Configuratio
 
 void TransIFS::ctor_rgg(const long nlat, const idx_t pl[], long truncation, const eckit::Configuration& config) {
     TransParameters p(*this, config);
-    std::vector<int> nloen(nlat);
+    PooledBuffer<int> nloen(nlat);
     for (long jlat = 0; jlat < nlat; ++jlat) {
         nloen[jlat] = pl[jlat];
     }
@@ -1262,8 +1289,8 @@ void TransIFS::__dirtrans(const StructuredColumns& gp, const Field& gpfield, con
     const int nfld = compute_nfld(gpfield);
 
     // Arrays Trans expects
-    std::vector<double> rgp(nfld * ngptot());
-    std::vector<double> rsp(nspec2() * nfld);
+    PooledBuffer<double> rgp(nfld * ngptot());
+    PooledBuffer<double> rsp(nspec2() * nfld);
     auto rgpview = LocalView<double, 2>(rgp.data(), make_shape(nfld, ngptot()));
     auto rspview = LocalView<double, 2>(rsp.data(), make_shape(nspec2(), nfld));
 
@@ -1319,8 +1346,8 @@ void TransIFS::__dirtrans(const StructuredColumns& gp, const FieldSet& gpfields,
         throw_Exception("dirtrans: different number of gridpoint fields than spectral fields", Here());
     }
     // Arrays Trans expects
-    std::vector<double> rgp(nfld * ngptot());
-    std::vector<double> rsp(nspec2() * nfld);
+    PooledBuffer<double> rgp(nfld * ngptot());
+    PooledBuffer<double> rsp(nspec2() * nfld);
     auto rgpview = LocalView<double, 2>(rgp.data(), make_shape(nfld, ngptot()));
     auto rspview = LocalView<double, 2>(rsp.data(), make_shape(nspec2(), nfld));
 
@@ -1366,8 +1393,8 @@ void TransIFS::__dirtrans(const functionspace::NodeColumns& gp, const FieldSet& 
     }
 
     // Arrays Trans expects
-    std::vector<double> rgp(nfld * ngptot());
-    std::vector<double> rsp(nspec2() * nfld);
+    PooledBuffer<double> rgp(nfld * ngptot());
+    PooledBuffer<double> rsp(nspec2() * nfld);
     auto rgpview = LocalView<double, 2>(rgp.data(), make_shape(nfld, ngptot()));
     auto rspview = LocalView<double, 2>(rsp.data(), make_shape(nspec2(), nfld));
 
@@ -1433,9 +1460,9 @@ void TransIFS::__dirtrans_wind2vordiv(const functionspace::StructuredColumns& gp
     }
 
     // Arrays Trans expects
-    std::vector<double> rgp(2 * nfld * ngptot());
-    std::vector<double> rspvor(nspec2() * nfld);
-    std::vector<double> rspdiv(nspec2() * nfld);
+    PooledBuffer<double> rgp(2 * nfld * ngptot());
+    PooledBuffer<double> rspvor(nspec2() * nfld);
+    PooledBuffer<double> rspdiv(nspec2() * nfld);
     auto rgpview    = LocalView<double, 2>(rgp.data(), make_shape(2 * nfld, ngptot()));
     auto rspvorview = LocalView<double, 2>(rspvor.data(), make_shape(nspec2(), nfld));
     auto rspdivview = LocalView<double, 2>(rspdiv.data(), make_shape(nspec2(), nfld));
@@ -1502,9 +1529,9 @@ void TransIFS::__dirtrans_wind2vordiv(const functionspace::NodeColumns& gp, cons
     }
 
     // Arrays Trans expects
-    std::vector<double> rgp(2 * nfld * ngptot());
-    std::vector<double> rspvor(nspec2() * nfld);
-    std::vector<double> rspdiv(nspec2() * nfld);
+    PooledBuffer<double> rgp(2 * nfld * ngptot());
+    PooledBuffer<double> rspvor(nspec2() * nfld);
+    PooledBuffer<double> rspdiv(nspec2() * nfld);
     auto rgpview    = LocalView<double, 2>(rgp.data(), make_shape(2 * nfld, ngptot()));
     auto rspvorview = LocalView<double, 2>(rspvor.data(), make_shape(nspec2(), nfld));
     auto rspdivview = LocalView<double, 2>(rspdiv.data(), make_shape(nspec2(), nfld));
@@ -1557,8 +1584,8 @@ void TransIFS::__dirtrans_adj(const Spectral& sp, const FieldSet& spfields,
         throw_Exception("dirtrans_adj: different number of gridpoint fields than spectral fields", Here());
     }
     // Arrays Trans expects
-    std::vector<double> rgp(nfld * ngptot());
-    std::vector<double> rsp(nspec2() * nfld);
+    PooledBuffer<double> rgp(nfld * ngptot());
+    PooledBuffer<double> rsp(nspec2() * nfld);
     auto rgpview = LocalView<double, 2>(rgp.data(), make_shape(nfld, ngptot()));
     auto rspview = LocalView<double, 2>(rsp.data(), make_shape(nspec2(), nfld));
 
@@ -1612,8 +1639,8 @@ void TransIFS::__dirtrans_adj( const Spectral& sp, const Field& spfield,
     const int nfld = compute_nfld(gpfield);
 
     // Arrays Trans expects
-    std::vector<double> rgp(nfld * ngptot());
-    std::vector<double> rsp(nspec2() * nfld);
+    PooledBuffer<double> rgp(nfld * ngptot());
+    PooledBuffer<double> rsp(nspec2() * nfld);
     auto rgpview = LocalView<double, 2>(rgp.data(), make_shape(nfld, ngptot()));
     auto rspview = LocalView<double, 2>(rsp.data(), make_shape(nspec2(), nfld));
 
@@ -1662,8 +1689,8 @@ void TransIFS::__dirtrans_adj( const Spectral& sp, const Field& spfield,
     const int nfld = compute_nfld(gpfield);
 
     // Arrays Trans expects
-    std::vector<double> rgp(nfld * ngptot());
-    std::vector<double> rsp(nspec2() * nfld);
+    PooledBuffer<double> rgp(nfld * ngptot());
+    PooledBuffer<double> rsp(nspec2() * nfld);
     auto rgpview = LocalView<double, 2>(rgp.data(), make_shape(nfld, ngptot()));
     auto rspview = LocalView<double, 2>(rsp.data(), make_shape(nspec2(), nfld));
 
@@ -1714,8 +1741,8 @@ void TransIFS::__dirtrans_adj(const Spectral& sp, const FieldSet& spfields,
         throw_Exception("dirtrans_adj: different number of gridpoint fields than spectral fields", Here());
     }
     // Arrays Trans expects
-    std::vector<double> rgp(nfld * ngptot());
-    std::vector<double> rsp(nspec2() * nfld);
+    PooledBuffer<double> rgp(nfld * ngptot());
+    PooledBuffer<double> rsp(nspec2() * nfld);
     auto rgpview = LocalView<double, 2>(rgp.data(), make_shape(nfld, ngptot()));
     auto rspview = LocalView<double, 2>(rsp.data(), make_shape(nspec2(), nfld));
 
@@ -1786,9 +1813,9 @@ void TransIFS::__dirtrans_wind2vordiv_adj(const Spectral& sp, const Field& spvor
     }
 
     // Arrays Trans expects
-    std::vector<double> rgp(2 * nfld * ngptot());
-    std::vector<double> rspvor(nspec2() * nfld);
-    std::vector<double> rspdiv(nspec2() * nfld);
+    PooledBuffer<double> rgp(2 * nfld * ngptot());
+    PooledBuffer<double> rspvor(nspec2() * nfld);
+    PooledBuffer<double> rspdiv(nspec2() * nfld);
     auto rgpview    = LocalView<double, 2>(rgp.data(), make_shape(2 * nfld, ngptot()));
     auto rspvorview = LocalView<double, 2>(rspvor.data(), make_shape(nspec2(), nfld));
     auto rspdivview = LocalView<double, 2>(rspdiv.data(), make_shape(nspec2(), nfld));
@@ -1860,9 +1887,9 @@ void TransIFS::__dirtrans_wind2vordiv_adj(const Spectral& sp, const Field& spvor
     }
 
     // Arrays Trans expects
-    std::vector<double> rgp(2 * nfld * ngptot());
-    std::vector<double> rspvor(nspec2() * nfld);
-    std::vector<double> rspdiv(nspec2() * nfld);
+    PooledBuffer<double> rgp(2 * nfld * ngptot());
+    PooledBuffer<double> rspvor(nspec2() * nfld);
+    PooledBuffer<double> rspdiv(nspec2() * nfld);
     auto rgpview    = LocalView<double, 2>(rgp.data(), make_shape(2 * nfld, ngptot()));
     auto rspvorview = LocalView<double, 2>(rspvor.data(), make_shape(nspec2(), nfld));
     auto rspdivview = LocalView<double, 2>(rspdiv.data(), make_shape(nspec2(), nfld));
@@ -1917,8 +1944,8 @@ void TransIFS::__invtrans(const functionspace::Spectral& sp, const Field& spfiel
     const int nfld = compute_nfld(gpfield);
 
     // Arrays Trans expects
-    std::vector<double> rgp(nfld * ngptot());
-    std::vector<double> rsp(nspec2() * nfld);
+    PooledBuffer<double> rgp(nfld * ngptot());
+    PooledBuffer<double> rsp(nspec2() * nfld);
     auto rgpview = LocalView<double, 2>(rgp.data(), make_shape(nfld, ngptot()));
     auto rspview = LocalView<double, 2>(rsp.data(), make_shape(nspec2(), nfld));
 
@@ -1979,8 +2006,8 @@ void TransIFS::__invtrans(const functionspace::Spectral& sp, const FieldSet& spf
     }
 
     // Arrays Trans expects
-    std::vector<double> rgp(nfld * ngptot());
-    std::vector<double> rsp(nspec2() * nfld);
+    PooledBuffer<double> rgp(nfld * ngptot());
+    PooledBuffer<double> rsp(nspec2() * nfld);
     auto rgpview = LocalView<double, 2>(rgp.data(), make_shape(nfld, ngptot()));
     auto rspview = LocalView<double, 2>(rsp.data(), make_shape(nspec2(), nfld));
 
@@ -2027,8 +2054,8 @@ void TransIFS::__invtrans(const Spectral& sp, const FieldSet& spfields, const fu
     }
 
     // Arrays Trans expects
-    std::vector<double> rgp(nfld * ngptot());
-    std::vector<double> rsp(nspec2() * nfld);
+    PooledBuffer<double> rgp(nfld * ngptot());
+    PooledBuffer<double> rsp(nspec2() * nfld);
     auto rgpview = LocalView<double, 2>(rgp.data(), make_shape(nfld, ngptot()));
     auto rspview = LocalView<double, 2>(rsp.data(), make_shape(nspec2(), nfld));
 
@@ -2099,8 +2126,8 @@ void TransIFS::__invtrans_grad(const Spectral& sp, const FieldSet& spfields, con
 
     // Arrays Trans expects
     // Allocate space for
-    std::vector<double> rgp(3 * nfld * ngptot());  // (scalars) + (NS ders) + (EW ders)
-    std::vector<double> rsp(nspec2() * nfld);
+    PooledBuffer<double> rgp(3 * nfld * ngptot());  // (scalars) + (NS ders) + (EW ders)
+    PooledBuffer<double> rsp(nspec2() * nfld);
     auto rgpview = LocalView<double, 2>(rgp.data(), make_shape(3 * nfld, ngptot()));
     auto rspview = LocalView<double, 2>(rsp.data(), make_shape(nspec2(), nfld));
 
@@ -2170,8 +2197,8 @@ void TransIFS::__invtrans_grad(const Spectral& sp, const FieldSet& spfields, con
 
     // Arrays Trans expects
     // Allocate space for
-    std::vector<double> rgp(3 * nfld * ngptot());  // (scalars) + (NS ders) + (EW ders)
-    std::vector<double> rsp(nspec2() * nfld);
+    PooledBuffer<double> rgp(3 * nfld * ngptot());  // (scalars) + (NS ders) + (EW ders)
+    PooledBuffer<double> rsp(nspec2() * nfld);
     auto rgpview = LocalView<double, 2>(rgp.data(), make_shape(3 * nfld, ngptot()));
     auto rspview = LocalView<double, 2>(rsp.data(), make_shape(nspec2(), nfld));
 
@@ -2266,9 +2293,9 @@ void TransIFS::__invtrans_vordiv2wind(const Spectral& sp, const Field& spvor, co
     }
 
     // Arrays Trans expects
-    std::vector<double> rgp(2 * nfld * ngptot());
-    std::vector<double> rspvor(nspec2() * nfld);
-    std::vector<double> rspdiv(nspec2() * nfld);
+    PooledBuffer<double> rgp(2 * nfld * ngptot());
+    PooledBuffer<double> rspvor(nspec2() * nfld);
+    PooledBuffer<double> rspdiv(nspec2() * nfld);
     auto rgpview    = LocalView<double, 2>(rgp.data(), make_shape(2 * nfld, ngptot()));
     auto rspvorview = LocalView<double, 2>(rspvor.data(), make_shape(nspec2(), nfld));
     auto rspdivview = LocalView<double, 2>(rspdiv.data(), make_shape(nspec2(), nfld));
@@ -2334,9 +2361,9 @@ void TransIFS::__invtrans_vordiv2wind(const Spectral& sp, const Field& spvor, co
     }
 
     // Arrays Trans expects
-    std::vector<double> rgp(2 * nfld * ngptot());
-    std::vector<double> rspvor(nspec2() * nfld);
-    std::vector<double> rspdiv(nspec2() * nfld);
+    PooledBuffer<double> rgp(2 * nfld * ngptot());
+    PooledBuffer<double> rspvor(nspec2() * nfld);
+    PooledBuffer<double> rspdiv(nspec2() * nfld);
     auto rgpview    = LocalView<double, 2>(rgp.data(), make_shape(2 * nfld, ngptot()));
     auto rspvorview = LocalView<double, 2>(rspvor.data(), make_shape(nspec2(), nfld));
     auto rspdivview = LocalView<double, 2>(rspdiv.data(), make_shape(nspec2(), nfld));
@@ -2389,8 +2416,8 @@ void TransIFS::__invtrans_adj(const functionspace::Spectral& sp, Field& spfield,
     const int nfld = compute_nfld(gpfield);
 
     // Arrays Trans expects
-    std::vector<double> rgp(nfld * ngptot());
-    std::vector<double> rsp(nspec2() * nfld);
+    PooledBuffer<double> rgp(nfld * ngptot());
+    PooledBuffer<double> rsp(nspec2() * nfld);
     auto rgpview = LocalView<double, 2>(rgp.data(), make_shape(nfld, ngptot()));
     auto rspview = LocalView<double, 2>(rsp.data(), make_shape(nspec2(), nfld));
 
@@ -2454,8 +2481,8 @@ void TransIFS::__invtrans_adj(const functionspace::Spectral& sp, FieldSet& spfie
     }
 
     // Arrays Trans expects
-    std::vector<double> rgp(nfld * ngptot());
-    std::vector<double> rsp(nspec2() * nfld);
+    PooledBuffer<double> rgp(nfld * ngptot());
+    PooledBuffer<double> rsp(nspec2() * nfld);
     auto rgpview = LocalView<double, 2>(rgp.data(), make_shape(nfld, ngptot()));
     auto rspview = LocalView<double, 2>(rsp.data(), make_shape(nspec2(), nfld));
 
@@ -2511,8 +2538,8 @@ void TransIFS::__invtrans_adj(const Spectral& sp, FieldSet& spfields, const func
         throw_Exception("invtrans_adj: different number of gridpoint fields than spectral fields", Here());
     }
     // Arrays Trans expects
-    std::vector<double> rgp(nfld * ngptot());
-    std::vector<double> rsp(nspec2() * nfld);
+    PooledBuffer<double> rgp(nfld * ngptot());
+    PooledBuffer<double> rsp(nspec2() * nfld);
     auto rgpview = LocalView<double, 2>(rgp.data(), make_shape(nfld, ngptot()));
     auto rspview = LocalView<double, 2>(rsp.data(), make_shape(nspec2(), nfld));
 
@@ -2588,8 +2615,8 @@ void TransIFS::__invtrans_grad_adj(const Spectral& sp, FieldSet& spfields, const
         throw_Exception("__invtrans_grad_adj: different number of gridpoint fields than spectral fields", Here());
     }
     // Arrays Trans expects
-    std::vector<double> rgp(nfld * ngptot());
-    std::vector<double> rsp(nspec2() * nfld);
+    PooledBuffer<double> rgp(nfld * ngptot());
+    PooledBuffer<double> rsp(nspec2() * nfld);
     auto rgpview = LocalView<double, 2>(rgp.data(), make_shape(nfld, ngptot()));
     auto rspview = LocalView<double, 2>(rsp.data(), make_shape(nspec2(), nfld));
 
@@ -2644,8 +2671,8 @@ void TransIFS::__invtrans_grad_adj(const Spectral& sp, FieldSet& spfields, const
         throw_Exception("dirtrans: different number of gridpoint fields than spectral fields", Here());
     }
     // Arrays Trans expects
-    std::vector<double> rgp(nfld * ngptot());
-    std::vector<double> rsp(nspec2() * nfld);
+    PooledBuffer<double> rgp(nfld * ngptot());
+    PooledBuffer<double> rsp(nspec2() * nfld);
     auto rgpview = LocalView<double, 2>(rgp.data(), make_shape(nfld, ngptot()));
     auto rspview = LocalView<double, 2>(rsp.data(), make_shape(nspec2(), nfld));
 
@@ -2718,9 +2745,9 @@ void TransIFS::__invtrans_vordiv2wind_adj(const Spectral& sp, Field& spvor, Fiel
     }
 
     // Arrays Trans expects
-    std::vector<double> rgp(2 * nfld * ngptot());
-    std::vector<double> rspvor(nspec2() * nfld);
-    std::vector<double> rspdiv(nspec2() * nfld);
+    PooledBuffer<double> rgp(2 * nfld * ngptot());
+    PooledBuffer<double> rspvor(nspec2() * nfld);
+    PooledBuffer<double> rspdiv(nspec2() * nfld);
     auto rgpview    = LocalView<double, 2>(rgp.data(), make_shape(2 * nfld, ngptot()));
     auto rspvorview = LocalView<double, 2>(rspvor.data(), make_shape(nspec2(), nfld));
     auto rspdivview = LocalView<double, 2>(rspdiv.data(), make_shape(nspec2(), nfld));
@@ -2792,9 +2819,9 @@ void TransIFS::__invtrans_vordiv2wind_adj(const Spectral& sp, Field& spvor, Fiel
     }
 
     // Arrays Trans expects
-    std::vector<double> rgp(2 * nfld * ngptot());
-    std::vector<double> rspvor(nspec2() * nfld);
-    std::vector<double> rspdiv(nspec2() * nfld);
+    PooledBuffer<double> rgp(2 * nfld * ngptot());
+    PooledBuffer<double> rspvor(nspec2() * nfld);
+    PooledBuffer<double> rspdiv(nspec2() * nfld);
     auto rgpview    = LocalView<double, 2>(rgp.data(), make_shape(2 * nfld, ngptot()));
     auto rspvorview = LocalView<double, 2>(rspvor.data(), make_shape(nspec2(), nfld));
     auto rspdivview = LocalView<double, 2>(rspdiv.data(), make_shape(nspec2(), nfld));
