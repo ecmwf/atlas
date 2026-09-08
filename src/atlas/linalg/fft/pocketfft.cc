@@ -24,38 +24,40 @@ ATLAS_SUPPRESS_WARNINGS_PUSH
 ATLAS_SUPPRESS_WARNINGS_BOTH_INLINE_NOINLINE
 #define POCKETFFT_CACHE_SIZE 4000
 // POCKETFFT_CACHE_SIZE should keep O8000 grid fft's in cache
+#define POCKETFFT_NAMESPACE atlas::detail::pocketfft
 #include "pocketfft_hdronly.h"
 ATLAS_SUPPRESS_WARNINGS_PUSH
 
 namespace atlas::linalg {
+    namespace pf = POCKETFFT_NAMESPACE;
 
     void pocketfft::do_plan_inverse_c2r(size_t /*size_out*/, std::complex<double>* /*in*/, double* /*out*/) const {}
     void pocketfft::do_plan_inverse_c2r_many(size_t /*howmany*/, size_t /*size_in*/, size_t /*size_out*/, size_t /*dist_in*/, size_t /*dist_out*/, std::complex<double>* /*in*/, double* /*out*/) const {}
     void pocketfft::do_inverse_c2r(const size_t size_out, std::complex<double>* in, double* out) const {
         ATLAS_TRACE("pocketfft::inverse_c2r");
-        static const ::pocketfft::stride_t stride_in{sizeof(std::complex<double>)}; // in bytes
-        static const ::pocketfft::stride_t stride_out{sizeof(double)}; // in bytes
+        static const pf::stride_t stride_in{sizeof(std::complex<double>)}; // in bytes
+        static const pf::stride_t stride_out{sizeof(double)}; // in bytes
         constexpr size_t axis = 0;
         constexpr double fct = 1.0;
         constexpr size_t nthreads = 1;
-        constexpr bool direction = ::pocketfft::BACKWARD;
-        ::pocketfft::shape_t shape_out{size_out};
-        ::pocketfft::c2r(shape_out, stride_in, stride_out, axis, direction, in, out, fct, nthreads);
+        constexpr bool direction = pf::BACKWARD;
+        pf::shape_t shape_out{size_out};
+        pf::c2r(shape_out, stride_in, stride_out, axis, direction, in, out, fct, nthreads);
     }
     void pocketfft::do_inverse_c2r_many(size_t howmany, size_t size_in, size_t size_out, size_t dist_in, size_t dist_out, std::complex<double>* in, double* out) const {
         ATLAS_TRACE("pocketfft::inverse_c2r");
-        static const ::pocketfft::stride_t stride_in{sizeof(std::complex<double>)}; // in bytes
-        static const ::pocketfft::stride_t stride_out{sizeof(double)}; // in bytes
+        static const pf::stride_t stride_in{sizeof(std::complex<double>)}; // in bytes
+        static const pf::stride_t stride_out{sizeof(double)}; // in bytes
         const size_t idist = dist_in;
         const size_t odist = dist_out;
         constexpr size_t axis = 0;
         constexpr double fct = 1.0;
         constexpr size_t nthreads = 1;
-        constexpr bool direction = ::pocketfft::BACKWARD;
-        const ::pocketfft::shape_t shape_out{size_out};
+        constexpr bool direction = pf::BACKWARD;
+        const pf::shape_t shape_out{size_out};
 
         atlas_omp_parallel_for(size_t j=0; j<howmany; ++j) {
-            ::pocketfft::c2r(shape_out, stride_in, stride_out, axis, direction, in+j*idist, out+j*odist, fct, nthreads);
+            pf::c2r(shape_out, stride_in, stride_out, axis, direction, in+j*idist, out+j*odist, fct, nthreads);
         }
     }
 

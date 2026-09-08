@@ -58,7 +58,7 @@ implicit none
 
   metadata = atlas_Metadata()
 
-  write(0,*) "metadata%c_ptr() = ", c_ptr_to_loc(metadata%CPTR_PGIBUG_A)
+  write(0,*) "metadata%c_ptr() = ", c_ptr_to_loc(metadata%c_ptr())
 
   call metadata%set("true",.True.)
   call metadata%set("false",.False.)

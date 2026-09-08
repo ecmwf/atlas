@@ -7,7 +7,7 @@ mpi_on:
     modules:
       - ninja
     modules_package:
-      - atlas:fftw,eigen,qhull,python3/3.12,openmpi
+      - atlas:fftw,eigen/3.4.1,qhull,python3/3.12,openmpi
       - fckit:python3/3.12,openmpi
       - eckit:openmpi
     dependencies:
@@ -24,7 +24,7 @@ mpi_off:
     modules:
       - ninja
     modules_package:
-      - atlas:fftw,eigen,qhull,python3/3.12
+      - atlas:fftw,eigen/3.4.1,qhull,python3/3.12
       - fckit:python3/3.12
     dependencies:
       - ecmwf/ecbuild@develop

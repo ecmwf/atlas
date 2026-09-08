@@ -13,6 +13,7 @@
 #include <iostream>
 #include <sstream>
 #include <stdexcept>
+#include <limits>
 
 #include "eckit/log/JSON.h"
 #include "eckit/parser/JSONParser.h"
@@ -39,6 +40,14 @@ size_t Metadata::footprint() const {
     return size;
 }
 
+std::string Metadata::json(eckit::JSON::Formatting formatting) const {
+    std::stringstream json;
+    eckit::JSON js(json,formatting);
+    json.precision(std::numeric_limits<double>::max_digits10);
+    js << *this;
+    return json.str();
+}
+
 void Metadata::broadcast() {
     idx_t root = 0;
     get("owner", root);
@@ -59,11 +68,7 @@ void Metadata::broadcast(Metadata& dest, idx_t root) {
     std::string buffer;
     int buffer_size{0};
     if (mpi::rank() == root) {
-        std::stringstream s;
-        eckit::JSON json(s);
-        json.precision(17);
-        json << *this;
-        buffer      = s.str();
+        buffer      = json(eckit::JSON::Formatting::COMPACT);
         buffer_size = static_cast<int>(buffer.size());
     }
 
@@ -84,40 +89,12 @@ void Metadata::broadcast(Metadata& dest, idx_t root) {
 }
 
 void Metadata::broadcast(Metadata& dest) const {
-    idx_t root = 0;
-    get("owner", root);
-    broadcast(dest, root);
+    const_cast<Metadata*>(this)->broadcast(dest);
 }
 
 void Metadata::broadcast(Metadata& dest, idx_t root) const {
-    std::string buffer;
-    int buffer_size{0};
-    if (mpi::rank() == root) {
-        std::stringstream s;
-        eckit::JSON json(s);
-        json.precision(17);
-        json << *this;
-        buffer      = s.str();
-        buffer_size = static_cast<int>(buffer.size());
-    }
-
-    ATLAS_TRACE_MPI(BROADCAST) { mpi::comm().broadcast(buffer_size, root); }
-
-    if (mpi::rank() != root) {
-        buffer.resize(buffer_size);
-    }
-
-    ATLAS_TRACE_MPI(BROADCAST) { mpi::comm().broadcast(buffer.begin(), buffer.end(), root); }
-
-    // Fill in dest
-    {
-        std::stringstream s;
-        s << buffer;
-        eckit::JSONParser parser(s);
-        dest = Metadata(parser.parse());
-    }
+    const_cast<Metadata*>(this)->broadcast(dest, root);
 }
-
 
 Metadata& Metadata::set(const eckit::Configuration& other) {
 #if ATLAS_ECKIT_VERSION_AT_LEAST(1, 26, 0) || ATLAS_ECKIT_DEVELOP
@@ -274,11 +251,7 @@ void atlas__Metadata__print(Metadata* This, std::ostream* channel) {
 }
 
 void atlas__Metadata__json(Metadata* This, char*& json, int& size, int& allocated) {
-    std::stringstream s;
-    eckit::JSON j(s);
-    j.precision(16);
-    j << *This;
-    std::string json_str = s.str();
+    std::string json_str = This->json();
     size                 = static_cast<int>(json_str.size());
     json                 = new char[size + 1];
     allocated            = true;

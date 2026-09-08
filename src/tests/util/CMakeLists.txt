@@ -53,7 +53,7 @@ if( HAVE_FCTEST )
   )
 endif()
 
-foreach( test util earth flags polygon point )
+foreach( test util earth flags polygon point checksum )
   ecbuild_add_test( TARGET atlas_test_${test}
     SOURCES test_${test}.cc
     LIBS atlas

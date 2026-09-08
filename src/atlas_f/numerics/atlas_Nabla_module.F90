@@ -74,10 +74,10 @@ function atlas_Nabla__method_config(method,config) result(this)
   type(atlas_Config), intent(in), optional :: config
   type(atlas_Config) :: opt_config
   if( present(config) ) then
-    call this%reset_c_ptr( atlas__Nabla__create(method%CPTR_PGIBUG_A,config%CPTR_PGIBUG_B) )
+    call this%reset_c_ptr( atlas__Nabla__create(method%c_ptr(),config%c_ptr()) )
   else
     opt_config = atlas_Config()
-    call this%reset_c_ptr( atlas__Nabla__create(method%CPTR_PGIBUG_A,opt_config%CPTR_PGIBUG_B) )
+    call this%reset_c_ptr( atlas__Nabla__create(method%c_ptr(),opt_config%c_ptr()) )
     call opt_config%final()
   endif
   call this%return()
@@ -89,7 +89,7 @@ subroutine atlas_Nabla__gradient(this,scalar,grad)
   class(atlas_Nabla), intent(in) :: this
   class(atlas_Field), intent(in) :: scalar
   class(atlas_Field), intent(inout) :: grad
-  call atlas__Nabla__gradient(this%CPTR_PGIBUG_A,scalar%CPTR_PGIBUG_A,grad%CPTR_PGIBUG_A)
+  call atlas__Nabla__gradient(this%c_ptr(),scalar%c_ptr(),grad%c_ptr())
 end subroutine
 
 
@@ -99,7 +99,7 @@ subroutine atlas_Nabla__divergence(this,vector,div)
   class(atlas_Nabla), intent(in) :: this
   class(atlas_Field), intent(in) :: vector
   class(atlas_Field), intent(inout) :: div
-  call atlas__Nabla__divergence(this%CPTR_PGIBUG_A,vector%CPTR_PGIBUG_A,div%CPTR_PGIBUG_A)
+  call atlas__Nabla__divergence(this%c_ptr(),vector%c_ptr(),div%c_ptr())
 end subroutine
 
 subroutine atlas_Nabla__curl(this,vector,curl)
@@ -108,7 +108,7 @@ subroutine atlas_Nabla__curl(this,vector,curl)
   class(atlas_Nabla), intent(in) :: this
   class(atlas_Field), intent(in) :: vector
   class(atlas_Field), intent(inout) :: curl
-  call atlas__Nabla__curl(this%CPTR_PGIBUG_A,vector%CPTR_PGIBUG_A,curl%CPTR_PGIBUG_A)
+  call atlas__Nabla__curl(this%c_ptr(),vector%c_ptr(),curl%c_ptr())
 end subroutine
 
 subroutine atlas_Nabla__laplacian(this,scalar,lapl)
@@ -117,7 +117,7 @@ subroutine atlas_Nabla__laplacian(this,scalar,lapl)
   class(atlas_Nabla), intent(in) :: this
   class(atlas_Field), intent(in) :: scalar
   class(atlas_Field), intent(inout) :: lapl
-  call atlas__Nabla__laplacian(this%CPTR_PGIBUG_A,scalar%CPTR_PGIBUG_A,lapl%CPTR_PGIBUG_A)
+  call atlas__Nabla__laplacian(this%c_ptr(),scalar%c_ptr(),lapl%c_ptr())
 end subroutine
 
 function atlas_Nabla__functionspace(this) result(functionspace)
@@ -125,7 +125,7 @@ function atlas_Nabla__functionspace(this) result(functionspace)
   use atlas_Functionspace_module, only : atlas_FunctionSpace
   type(atlas_FunctionSpace) :: functionspace
   class(atlas_Nabla), intent(in) :: this
-  call functionspace%reset_c_ptr( atlas__Nabla__functionspace(this%CPTR_PGIBUG_A) )
+  call functionspace%reset_c_ptr( atlas__Nabla__functionspace(this%c_ptr()) )
   call functionspace%return()
 end function
 

@@ -11,11 +11,12 @@
 //#include <cstdarg>
 //#include <functional>
 
-#include "eckit/utils/MD5.h"
+#include "pluto/pluto.h"
 
 #include "atlas/array.h"
 #include "atlas/field/Field.h"
 #include "atlas/field/FieldSet.h"
+#include "atlas/functionspace/detail/ColumnChecksum.h"
 #include "atlas/functionspace/NodeColumns.h"
 #include "atlas/grid/Grid.h"
 #include "atlas/grid/UnstructuredGrid.h"
@@ -32,6 +33,7 @@
 #include "atlas/parallel/omp/omp.h"
 #include "atlas/runtime/Exception.h"
 #include "atlas/runtime/Trace.h"
+#include "atlas/util/Checksum.h"
 #include "atlas/util/detail/Cache.h"
 
 #if ATLAS_HAVE_FORTRAN
@@ -572,60 +574,25 @@ void NodeColumns::scatter(const Field& global, Field& local) const {
     scatter(global_fields, local_fields);
 }
 
-namespace {
-template <typename T>
-std::string checksum_3d_field(const parallel::Checksum& checksum, const Field& field) {
-    auto values = make_leveled_view<const T>(field);
-    array::ArrayT<T> surface_field(values.shape(0), values.shape(2));
-    auto surface     = array::make_view<T, 2>(surface_field);
-    const idx_t npts = values.shape(0);
-    atlas_omp_for(idx_t n = 0; n < npts; ++n) {
-        for (idx_t j = 0; j < surface.shape(1); ++j) {
-            surface(n, j) = 0.;
-            for (idx_t l = 0; l < values.shape(1); ++l) {
-                surface(n, j) += values(n, l, j);
-            }
-        }
-    }
-    return checksum.execute(surface.data(), surface_field.stride(0));
-}
-}  // namespace
-
 std::string NodeColumns::checksum(const FieldSet& fieldset) const {
-    eckit::MD5 md5;
-    for (idx_t f = 0; f < fieldset.size(); ++f) {
-        const Field& field = fieldset[f];
-        if (field.datatype() == array::DataType::kind<int>()) {
-            md5 << checksum_3d_field<int>(checksum(), field);
-        }
-        else if (field.datatype() == array::DataType::kind<long>()) {
-            md5 << checksum_3d_field<long>(checksum(), field);
-        }
-        else if (field.datatype() == array::DataType::kind<float>()) {
-            md5 << checksum_3d_field<float>(checksum(), field);
-        }
-        else if (field.datatype() == array::DataType::kind<double>()) {
-            md5 << checksum_3d_field<double>(checksum(), field);
-        }
-        else {
-            throw_Exception("datatype not supported", Here());
-        }
-    }
-    return md5;
+    return ColumnChecksum<NodeColumns>(*this, static_cast<size_t>(nb_nodes_global())).compute(fieldset);
 }
 std::string NodeColumns::checksum(const Field& field) const {
-    FieldSet fieldset;
-    fieldset.add(field);
-    return checksum(fieldset);
+    return ColumnChecksum<NodeColumns>(*this, static_cast<size_t>(nb_nodes_global())).compute(field);
 }
 
 const parallel::Checksum& NodeColumns::checksum() const {
+    return deprecated_checksum();
+}
+
+const parallel::Checksum& NodeColumns::deprecated_checksum() const {
     if (checksum_) {
         return *checksum_;
     }
     checksum_ = NodeColumnsChecksumCache::instance().get_or_create(mesh_);
     return *checksum_;
 }
+
 
 // std::string NodesFunctionSpace::checksum( const FieldSet& fieldset ) const {
 //  const parallel::Checksum& checksum = mesh_.checksum().get(checksum_name());
@@ -745,16 +712,8 @@ const parallel::HaloExchange& NodeColumns::halo_exchange() const {
     return functionspace_->halo_exchange();
 }
 
-std::string NodeColumns::checksum(const FieldSet& fieldset) const {
-    return functionspace_->checksum(fieldset);
-}
-
-std::string NodeColumns::checksum(const Field& field) const {
-    return functionspace_->checksum(field);
-}
-
 const parallel::Checksum& NodeColumns::checksum() const {
-    return functionspace_->checksum();
+    return functionspace_->deprecated_checksum();
 }
 
 }  // namespace functionspace

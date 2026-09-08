@@ -95,7 +95,7 @@ function Mesh__nodes(this) result(nodes)
   use atlas_mesh_c_binding
   class(atlas_Mesh), intent(in) :: this
   type(atlas_mesh_Nodes) :: nodes
-  nodes = atlas_mesh_Nodes( atlas__Mesh__nodes(this%CPTR_PGIBUG_A) )
+  nodes = atlas_mesh_Nodes( atlas__Mesh__nodes(this%c_ptr()) )
   call nodes%return()
 end function
 
@@ -105,7 +105,7 @@ function Mesh__cells(this) result(cells)
   use atlas_mesh_c_binding
   class(atlas_Mesh), intent(in) :: this
   type(atlas_mesh_Cells) :: cells
-  cells = atlas_mesh_Cells( atlas__Mesh__cells(this%CPTR_PGIBUG_A) )
+  cells = atlas_mesh_Cells( atlas__Mesh__cells(this%c_ptr()) )
   call cells%return()
 end function
 
@@ -115,7 +115,7 @@ function Mesh__edges(this) result(edges)
   use atlas_mesh_c_binding
   class(atlas_Mesh), intent(in) :: this
   type(atlas_mesh_Edges) :: edges
-  edges = atlas_mesh_Edges( atlas__Mesh__Edges(this%CPTR_PGIBUG_A) )
+  edges = atlas_mesh_Edges( atlas__Mesh__Edges(this%c_ptr()) )
   call edges%return()
 end function
 
@@ -125,7 +125,7 @@ function footprint(this)
   use atlas_mesh_c_binding
   integer(c_size_t) :: footprint
   class(atlas_Mesh) :: this
-  footprint = atlas__Mesh__footprint(this%CPTR_PGIBUG_A)
+  footprint = atlas__Mesh__footprint(this%c_ptr())
 end function
 
 !-------------------------------------------------------------------------------
@@ -133,7 +133,7 @@ end function
 subroutine update_device(this)
   use atlas_mesh_c_binding
   class(atlas_Mesh), intent(inout) :: this
-  call atlas__Mesh__update_device(this%CPTR_PGIBUG_A)
+  call atlas__Mesh__update_device(this%c_ptr())
 end subroutine
 
 !-------------------------------------------------------------------------------
@@ -141,7 +141,7 @@ end subroutine
 subroutine update_host(this)
   use atlas_mesh_c_binding
   class(atlas_Mesh), intent(inout) :: this
-  call atlas__Mesh__update_host(this%CPTR_PGIBUG_A)
+  call atlas__Mesh__update_host(this%c_ptr())
 end subroutine
 
 ! ----------------------------------------------------------------------------------------
@@ -149,7 +149,7 @@ end subroutine
 subroutine sync_host_device(this)
   use atlas_mesh_c_binding
   class(atlas_Mesh), intent(inout) :: this
-  call atlas__Mesh__sync_host_device(this%CPTR_PGIBUG_A)
+  call atlas__Mesh__sync_host_device(this%c_ptr())
 end subroutine
 
 !-------------------------------------------------------------------------------

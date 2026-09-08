@@ -193,6 +193,8 @@ const char* atlas__FieldSet__name(FieldSetImpl* This);
 idx_t atlas__FieldSet__size(const FieldSetImpl* This);
 FieldImpl* atlas__FieldSet__field_by_name(FieldSetImpl* This, char* name);
 FieldImpl* atlas__FieldSet__field_by_idx(FieldSetImpl* This, idx_t idx);
+void atlas__FieldSet__shapef(FieldSetImpl* This, char* name, int*& shape, int& rank);
+void atlas__FieldSet__shapef_by_idx(FieldSetImpl* This, int& idx, int*& shape, int& rank);
 void atlas__FieldSet__data_int_specf(FieldSetImpl* This, char* name, int*& field_data, int& rank, int*& field_shapef,
                                   int*& field_stridesf);
 void atlas__FieldSet__data_long_specf(FieldSetImpl* This, char* name, long*& field_data, int& rank, int*& field_shapef,
@@ -209,6 +211,49 @@ void atlas__FieldSet__data_float_specf_by_idx(FieldSetImpl* This, int& idx, floa
                                     int*& field_stridesf);
 void atlas__FieldSet__data_double_specf_by_idx(FieldSetImpl* This, int& idx, double*& field_data, int& rank, int*& field_shapef,
                                      int*& field_stridesf);
+void atlas__FieldSet__device_data_int_specf(FieldSetImpl* This, char* name, int*& field_data, int& rank,
+                                            int*& field_shapef, int*& field_stridesf);
+void atlas__FieldSet__device_data_long_specf(FieldSetImpl* This, char* name, long*& field_data, int& rank,
+                                             int*& field_shapef, int*& field_stridesf);
+void atlas__FieldSet__device_data_float_specf(FieldSetImpl* This, char* name, float*& field_data, int& rank,
+                                              int*& field_shapef, int*& field_stridesf);
+void atlas__FieldSet__device_data_double_specf(FieldSetImpl* This, char* name, double*& field_data, int& rank,
+                                               int*& field_shapef, int*& field_stridesf);
+void atlas__FieldSet__device_data_int_specf_by_idx(FieldSetImpl* This, int& idx, int*& field_data, int& rank,
+                                                   int*& field_shapef, int*& field_stridesf);
+void atlas__FieldSet__device_data_long_specf_by_idx(FieldSetImpl* This, int& idx, long*& field_data, int& rank,
+                                                    int*& field_shapef, int*& field_stridesf);
+void atlas__FieldSet__device_data_float_specf_by_idx(FieldSetImpl* This, int& idx, float*& field_data, int& rank,
+                                                     int*& field_shapef, int*& field_stridesf);
+void atlas__FieldSet__device_data_double_specf_by_idx(FieldSetImpl* This, int& idx, double*& field_data, int& rank,
+                                                      int*& field_shapef, int*& field_stridesf);
+void atlas__FieldSet__set_host_needs_update(FieldSetImpl* This, int value);
+void atlas__FieldSet__set_host_needs_update_name(FieldSetImpl* This, char* name, int value);
+void atlas__FieldSet__set_host_needs_update_by_idx(FieldSetImpl* This, int& idx, int value);
+void atlas__FieldSet__set_device_needs_update(FieldSetImpl* This, int value);
+void atlas__FieldSet__set_device_needs_update_name(FieldSetImpl* This, char* name, int value);
+void atlas__FieldSet__set_device_needs_update_by_idx(FieldSetImpl* This, int& idx, int value);
+void atlas__FieldSet__sync_host_device(FieldSetImpl* This);
+void atlas__FieldSet__sync_host_device_name(FieldSetImpl* This, char* name);
+void atlas__FieldSet__sync_host_device_by_idx(FieldSetImpl* This, int& idx);
+void atlas__FieldSet__sync_host(FieldSetImpl* This);
+void atlas__FieldSet__sync_host_name(FieldSetImpl* This, char* name);
+void atlas__FieldSet__sync_host_by_idx(FieldSetImpl* This, int& idx);
+void atlas__FieldSet__sync_device(FieldSetImpl* This);
+void atlas__FieldSet__sync_device_name(FieldSetImpl* This, char* name);
+void atlas__FieldSet__sync_device_by_idx(FieldSetImpl* This, int& idx);
+void atlas__FieldSet__allocate_device(FieldSetImpl* This);
+void atlas__FieldSet__allocate_device_name(FieldSetImpl* This, char* name);
+void atlas__FieldSet__allocate_device_by_idx(FieldSetImpl* This, int& idx);
+void atlas__FieldSet__update_device(FieldSetImpl* This);
+void atlas__FieldSet__update_device_name(FieldSetImpl* This, char* name);
+void atlas__FieldSet__update_device_by_idx(FieldSetImpl* This, int& idx);
+void atlas__FieldSet__update_host(FieldSetImpl* This);
+void atlas__FieldSet__update_host_name(FieldSetImpl* This, char* name);
+void atlas__FieldSet__update_host_by_idx(FieldSetImpl* This, int& idx);
+void atlas__FieldSet__deallocate_device(FieldSetImpl* This);
+void atlas__FieldSet__deallocate_device_name(FieldSetImpl* This, char* name);
+void atlas__FieldSet__deallocate_device_by_idx(FieldSetImpl* This, int& idx);
 void atlas__FieldSet__set_dirty(FieldSetImpl* This, int value);
 void atlas__FieldSet__halo_exchange(FieldSetImpl* This, int on_device);
 }

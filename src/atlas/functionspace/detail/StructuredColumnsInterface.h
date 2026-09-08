@@ -82,11 +82,6 @@ void atlas__functionspace__StructuredColumns__gather_fieldset(const detail::Stru
 void atlas__functionspace__StructuredColumns__scatter_fieldset(const detail::StructuredColumns* This,
                                                                const field::FieldSetImpl* global,
                                                                field::FieldSetImpl* local);
-void atlas__fs__StructuredColumns__checksum_fieldset(const detail::StructuredColumns* This,
-                                                     const field::FieldSetImpl* fieldset, char*& checksum, idx_t& size,
-                                                     int& allocated);
-void atlas__fs__StructuredColumns__checksum_field(const detail::StructuredColumns* This, const field::FieldImpl* field,
-                                                  char*& checksum, idx_t& size, int& allocated);
 void atlas__fs__StructuredColumns__index_host(const detail::StructuredColumns* This, idx_t*& data, idx_t& i_min,
                                               idx_t& i_max, idx_t& j_min, idx_t& j_max);
 idx_t atlas__fs__StructuredColumns__size(const detail::StructuredColumns* This);

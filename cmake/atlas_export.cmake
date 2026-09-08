@@ -58,7 +58,14 @@ if( target_build_type STREQUAL STATIC_LIBRARY )
   set( atlas_REQUIRES_PRIVATE_DEPENDENCIES TRUE )
 endif()
 
-include( atlas_ecbuild2_compatibility )
+# make a backup because atlas_ecbuild2_compatibility will reset FFTW_LIBRARIES and FFTW_INCLUDE_DIRS
+# todo: remove atlas_ecbuild2_compatibility and the need for this backup
+set( FFTW_LIBRARIES_backup ${FFTW_LIBRARIES} )
+set( FFTW_INCLUDE_DIRS_backup ${FFTW_INCLUDE_DIRS} )
 
+include( atlas_ecbuild2_compatibility )
 ecbuild_install_project( NAME Atlas )
 
+# Restore from backup, so it can be printed in the summary further
+set( FFTW_LIBRARIES ${FFTW_LIBRARIES_backup} )
+set( FFTW_INCLUDE_DIRS ${FFTW_INCLUDE_DIRS_backup} )

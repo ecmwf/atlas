@@ -15,6 +15,7 @@
 #include "eckit/utils/MD5.h"
 
 #include "atlas/array/MakeView.h"
+#include "atlas/functionspace/detail/ColumnChecksum.h"
 #include "atlas/functionspace/CellColumns.h"
 #include "atlas/grid/UnstructuredGrid.h"
 #include "atlas/library/config.h"
@@ -496,115 +497,18 @@ void CellColumns::scatter(const Field& global, Field& local) const {
     scatter(global_fields, local_fields);
 }
 
-namespace {
-template <typename T>
-std::string checksum_3d_field(const parallel::Checksum& checksum, const Field& field) {
-    auto values = array::make_view<const T, 3>(field);
-    array::ArrayT<T> surface_field(field.shape(0), field.shape(2));
-    auto surface = array::make_view<T, 2>(surface_field);
-    for (idx_t n = 0; n < values.shape(0); ++n) {
-        for (idx_t j = 0; j < surface.shape(1); ++j) {
-            surface(n, j) = 0.;
-            for (idx_t l = 0; l < values.shape(1); ++l) {
-                surface(n, j) += values(n, l, j);
-            }
-        }
-    }
-    return checksum.execute(surface.data(), surface_field.stride(0));
-}
-template <typename T>
-std::string checksum_2d_field(const parallel::Checksum& checksum, const Field& field) {
-    auto values = array::make_view<T, 2>(field);
-    return checksum.execute(values.data(), field.stride(0));
-}
-template <typename T>
-std::string checksum_1d_field(const parallel::Checksum& checksum, const Field& field) {
-    auto values = array::make_view<T, 1>(field);
-    return checksum.execute(values.data(), 1);
-}
-
-}  // namespace
-
 std::string CellColumns::checksum(const FieldSet& fieldset) const {
-    eckit::MD5 md5;
-    for (idx_t f = 0; f < fieldset.size(); ++f) {
-        const Field& field = fieldset[f];
-        std::string field_checksum;
-        if (field.datatype() == array::DataType::kind<int>()) {
-            if (field.rank()==3) {
-                field_checksum = checksum_3d_field<int>(checksum(), field);
-            }
-            else if (field.rank()==2) {
-                field_checksum = checksum_2d_field<int>(checksum(), field);
-            }
-            else if (field.rank()==1) {
-                field_checksum = checksum_1d_field<int>(checksum(), field);
-            }
-            else {
-                ATLAS_NOTIMPLEMENTED;
-            }
-        }
-        else if (field.datatype() == array::DataType::kind<long>()) {
-            if (field.rank()==3) {
-                field_checksum = checksum_3d_field<long>(checksum(), field);
-            }
-            else if (field.rank()==2) {
-                field_checksum = checksum_2d_field<long>(checksum(), field);
-            }
-            else if (field.rank()==1) {
-                field_checksum = checksum_1d_field<long>(checksum(), field);
-            }
-            else {
-                ATLAS_NOTIMPLEMENTED;
-            }
-        }
-        else if (field.datatype() == array::DataType::kind<float>()) {
-            if (field.rank()==3) {
-                field_checksum = checksum_3d_field<float>(checksum(), field);
-            }
-            else if (field.rank()==2) {
-                field_checksum = checksum_2d_field<float>(checksum(), field);
-            }
-            else if (field.rank()==1) {
-                field_checksum = checksum_1d_field<float>(checksum(), field);
-            }
-            else {
-                ATLAS_NOTIMPLEMENTED;
-            }
-        }
-        else if (field.datatype() == array::DataType::kind<double>()) {
-            if (field.rank()==3) {
-                field_checksum = checksum_3d_field<double>(checksum(), field);
-            }
-            else if (field.rank()==2) {
-                field_checksum = checksum_2d_field<double>(checksum(), field);
-            }
-            else if (field.rank()==1) {
-                field_checksum = checksum_1d_field<double>(checksum(), field);
-            }
-            else {
-                ATLAS_NOTIMPLEMENTED;
-            }
-        }
-        else {
-            throw_Exception("datatype not supported", Here());
-        }
-        if (fieldset.size() == 1) {
-            return field_checksum;
-        }
-        else {
-            md5 << field_checksum;
-        }
-    }
-    return md5;
+    return ColumnChecksum<CellColumns>(*this, static_cast<size_t>(nb_cells_global())).compute(fieldset);
 }
 std::string CellColumns::checksum(const Field& field) const {
-    FieldSet fieldset;
-    fieldset.add(field);
-    return checksum(fieldset);
+    return ColumnChecksum<CellColumns>(*this, static_cast<size_t>(nb_cells_global())).compute(field);
 }
 
 const parallel::Checksum& CellColumns::checksum() const {
+    return deprecated_checksum();
+}
+
+const parallel::Checksum& CellColumns::deprecated_checksum() const {
     if (checksum_) {
         return *checksum_;
     }
@@ -846,34 +750,11 @@ void atlas__fs__CellColumns__scatter_field(const CellColumns* This, const field:
 
 const parallel::Checksum* atlas__fs__CellColumns__get_checksum(const CellColumns* This) {
     ATLAS_ASSERT(This);
-    return &This->checksum();
+    return &This->deprecated_checksum();
 }
 
 // -----------------------------------------------------------------------------------
 
-void atlas__fs__CellColumns__checksum_fieldset(const CellColumns* This, const field::FieldSetImpl* fieldset,
-                                               char*& checksum, int& size, int& allocated) {
-    ATLAS_ASSERT(This);
-    ATLAS_ASSERT(fieldset);
-    std::string checksum_str(This->checksum(fieldset));
-    size      = static_cast<int>(checksum_str.size());
-    checksum  = new char[size + 1];
-    allocated = true;
-    std::strncpy(checksum, checksum_str.c_str(), size + 1);
-}
-
-// -----------------------------------------------------------------------------------
-
-void atlas__fs__CellColumns__checksum_field(const CellColumns* This, const field::FieldImpl* field, char*& checksum,
-                                            int& size, int& allocated) {
-    ATLAS_ASSERT(This);
-    ATLAS_ASSERT(field);
-    std::string checksum_str(This->checksum(field));
-    size      = static_cast<int>(checksum_str.size());
-    checksum  = new char[size + 1];
-    allocated = true;
-    std::strncpy(checksum, checksum_str.c_str(), size + 1);
-}
 }
 
 // -----------------------------------------------------------------------------------
@@ -918,16 +799,8 @@ const parallel::HaloExchange& CellColumns::halo_exchange() const {
     return functionspace_->halo_exchange();
 }
 
-std::string CellColumns::checksum(const FieldSet& fieldset) const {
-    return functionspace_->checksum(fieldset);
-}
-
-std::string CellColumns::checksum(const Field& field) const {
-    return functionspace_->checksum(field);
-}
-
 const parallel::Checksum& CellColumns::checksum() const {
-    return functionspace_->checksum();
+    return functionspace_->deprecated_checksum();
 }
 
 const mesh::Halo& CellColumns::halo() const {

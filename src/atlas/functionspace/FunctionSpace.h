@@ -75,6 +75,9 @@ public:
     void scatter(const FieldSet&, FieldSet&) const;
     void scatter(const Field&, Field&) const;
 
+    std::string checksum(const FieldSet&) const;
+    std::string checksum(const Field&) const;
+
     const util::PartitionPolygon& polygon(idx_t halo = 0) const;
 
     const util::PartitionPolygons& polygons() const;

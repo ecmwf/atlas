@@ -18,6 +18,7 @@
 #include "atlas/library/config.h"
 #include "atlas/parallel/GatherScatter.h"
 #include "atlas/parallel/mpi/mpi.h"
+#include "eckit/system/ResourceUsage.h"
 #include "eckit/utils/Translator.h"
 
 #include "tests/AtlasTestEnvironment.h"
@@ -27,6 +28,13 @@ using POD = double;
 
 namespace atlas {
 namespace test {
+
+constexpr size_t MB = 1024 * 1024;
+constexpr size_t GB = 1024 * MB;
+
+size_t peakMemory() {
+    return eckit::system::ResourceUsage().maxResidentSetSize();
+}
 
 //-----------------------------------------------------------------------------
 
@@ -73,6 +81,59 @@ struct Fixture {
         }
         gather_scatter.setup(part.data(), ridx.data(), 0, gidx.data(), Nl);
     }
+    parallel::GatherScatter gather_scatter;
+    std::vector<int> nb_nodes;
+    std::vector<int> part;
+    std::vector<idx_t> ridx;
+    std::vector<gidx_t> gidx;
+
+    int Nl;
+    int root;
+    int rank;
+    int comm_size;
+
+    int Ng() { return rank == root ? gather_scatter.glb_dof() : 0; }
+};
+
+struct SparseGlobalIndexFixture {
+    SparseGlobalIndexFixture() {
+        rank      = static_cast<int>(mpi::comm().rank());
+        comm_size = static_cast<int>(mpi::comm().size());
+        int nnodes_c[] = {4, 4, 4};
+        nb_nodes       = vec(nnodes_c);
+        Nl             = nb_nodes[rank];
+        switch (rank) {
+            case 0: {
+                int part_c[]    = {0, 0, 1, 2};
+                part            = vec(part_c);
+                idx_t ridx_c[]  = {0, 1, 0, 0};
+                ridx            = vec(ridx_c);
+                gidx_t gidx_c[] = {10, 30, 20, 40};
+                gidx            = vec(gidx_c);
+                break;
+            }
+            case 1: {
+                int part_c[]    = {1, 1, 0, 2};
+                part            = vec(part_c);
+                idx_t ridx_c[]  = {0, 1, 1, 1};
+                ridx            = vec(ridx_c);
+                gidx_t gidx_c[] = {20, 50, 30, 1439999999};
+                gidx            = vec(gidx_c);
+                break;
+            }
+            case 2: {
+                int part_c[]    = {2, 2, 0, 1};
+                part            = vec(part_c);
+                idx_t ridx_c[]  = {0, 1, 0, 1};
+                ridx            = vec(ridx_c);
+                gidx_t gidx_c[] = {40, 1439999999, 10, 50};
+                gidx            = vec(gidx_c);
+                break;
+            }
+        }
+        gather_scatter.setup(part.data(), ridx.data(), 0, gidx.data(), Nl);
+    }
+
     parallel::GatherScatter gather_scatter;
     std::vector<int> nb_nodes;
     std::vector<int> part;
@@ -680,6 +741,37 @@ CASE("test_gather") {
             }
         }
     }
+}
+
+CASE("test_gather_sparse_global_indices") {
+    SparseGlobalIndexFixture f;
+    // The fixture includes global-index 14399999990.
+    // An 64-bit-value array of this size (a global gathered field) would
+    // require more than 100GB.
+    constexpr size_t sparse_global_index_memory_limit = 10 * GB; // less than 100 GB
+
+    for (f.root = 0; f.root < f.comm_size; ++f.root) {
+        std::vector<POD> loc(f.Nl);
+        std::vector<POD> glb(f.Ng());
+
+        for (int j = 0; j < f.Nl; ++j) {
+            loc[j] = (idx_t(f.part[j]) != f.rank ? -1. : f.gidx[j] * 10.);
+        }
+
+        idx_t strides[] = {1};
+        idx_t extents[] = {1};
+        f.gather_scatter.gather(loc.data(), strides, extents, 1, glb.data(), strides, extents, 1, f.root);
+
+        EXPECT(f.gather_scatter.glb_dof() == 6);
+
+        if (f.rank == f.root) {
+            POD glb_c[] = {100, 200, 300, 400, 500, 14399999990.};
+            EXPECT(glb == eckit::testing::make_view(glb_c, glb_c + f.Ng()));
+        }
+    }
+
+    Log::warning() << "test_gather_sparse_global_indices: peak memory usage = " << peakMemory() / MB << " MB" << std::endl;
+    EXPECT(peakMemory() < sparse_global_index_memory_limit);
 }
 
 //-----------------------------------------------------------------------------

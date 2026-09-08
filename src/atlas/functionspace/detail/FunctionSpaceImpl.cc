@@ -33,63 +33,63 @@ atlas::Field FunctionSpaceImpl::createField(const atlas::Field& field) const {
 }
 
 void FunctionSpaceImpl::haloExchange(const FieldSet&, bool) const {
-    ATLAS_NOTIMPLEMENTED;
+    throw_Exception("haloExchange() not implemented in derived class ["+type()+"]", Here());
 }
 
 void FunctionSpaceImpl::haloExchange(const Field&, bool) const {
-    ATLAS_NOTIMPLEMENTED;
+    throw_Exception("haloExchange() not implemented in derived class ["+type()+"]", Here());
 }
 
 void FunctionSpaceImpl::adjointHaloExchange(const FieldSet&, bool) const {
-    ATLAS_NOTIMPLEMENTED;
+    throw_Exception("adjointHaloExchange() not implemented in derived class ["+type()+"]", Here());
 }
 
 void FunctionSpaceImpl::adjointHaloExchange(const Field&, bool) const {
-    ATLAS_NOTIMPLEMENTED;
+    throw_Exception("adjointHaloExchange() not implemented in derived class ["+type()+"]", Here());
 }
 
 Field NoFunctionSpace::createField(const eckit::Configuration&) const {
-    ATLAS_NOTIMPLEMENTED;
+    throw_Exception("createField(const eckit::Configuration&) not implemented in derived class ["+type()+"]", Here());
 }
 
 Field NoFunctionSpace::createField(const Field&, const eckit::Configuration&) const {
-    ATLAS_NOTIMPLEMENTED;
+    throw_Exception("createField(const Field&, const eckit::Configuration&) not implemented in derived class ["+type()+"]", Here());
 }
 
 const Grid& FunctionSpaceImpl::grid() const {
-    ATLAS_NOTIMPLEMENTED;
+    throw_Exception("grid() not implemented in derived class ["+type()+"]", Here());
 }
 
 Field FunctionSpaceImpl::lonlat() const {
-    ATLAS_NOTIMPLEMENTED;
+    throw_Exception("lonlat() not implemented in derived class ["+type()+"]", Here());
 }
 
 Field FunctionSpaceImpl::ghost() const {
-    ATLAS_NOTIMPLEMENTED;
+    throw_Exception("ghost() not implemented in derived class ["+type()+"]", Here());
 }
 
 Field FunctionSpaceImpl::remote_index() const {
-    ATLAS_NOTIMPLEMENTED;
+    throw_Exception("remote_index() not implemented in derived class ["+type()+"]", Here());
 }
 
 Field FunctionSpaceImpl::partition() const {
-    ATLAS_NOTIMPLEMENTED;
+    throw_Exception("partition() not implemented in derived class ["+type()+"]", Here());
 }
 
 Field FunctionSpaceImpl::global_index() const {
-    ATLAS_NOTIMPLEMENTED;
+    throw_Exception("global_index() not implemented in derived class ["+type()+"]", Here());
 }
 
 const util::PartitionPolygon& FunctionSpaceImpl::polygon(idx_t /*halo */) const {
-    throw_Exception("polygon() not implemented in derived class", Here());
+    throw_Exception("polygon() not implemented in derived class ["+type()+"]", Here());
 }
 
 const util::PartitionPolygons& FunctionSpaceImpl::polygons() const {
-    throw_Exception("polygons() not implemented in derived class", Here());
+    throw_Exception("polygons() not implemented in derived class ["+type()+"]", Here());
 }
 
 const Projection& FunctionSpaceImpl::projection() const {
-    throw_Exception("projection() not implemented in derived class", Here());
+    throw_Exception("projection() not implemented in derived class ["+type()+"]", Here());
 }
 
 template <typename DATATYPE>
@@ -103,35 +103,43 @@ Field FunctionSpaceImpl::createField() const {
 }
 
 idx_t FunctionSpaceImpl::part() const {
-    ATLAS_NOTIMPLEMENTED;
+    throw_Exception("part() not implemented in derived class ["+type()+"]", Here());
 }
 
 idx_t FunctionSpaceImpl::nb_parts() const {
-    ATLAS_NOTIMPLEMENTED;
+    throw_Exception("nb_parts() not implemented in derived class ["+type()+"]", Here());
 }
 
 void FunctionSpaceImpl::gather(const FieldSet& local, FieldSet& global) const {
-    ATLAS_NOTIMPLEMENTED;
+    throw_Exception("gather() not implemented in derived class ["+type()+"]", Here());
 }
 
 void FunctionSpaceImpl::gather(const Field& local, Field& global) const {
-    ATLAS_NOTIMPLEMENTED;
+    throw_Exception("gather() not implemented in derived class ["+type()+"]", Here());
 }
 
 void FunctionSpaceImpl::scatter(const FieldSet& global, FieldSet& local) const {
-    ATLAS_NOTIMPLEMENTED;
+    throw_Exception("scatter() not implemented in derived class ["+type()+"]", Here());
 }
 
 void FunctionSpaceImpl::scatter(const Field& global, Field& local) const {
-    ATLAS_NOTIMPLEMENTED;
+    throw_Exception("scatter() not implemented in derived class ["+type()+"]", Here());
+}
+
+std::string FunctionSpaceImpl::checksum(const FieldSet&) const {
+    throw_Exception("checksum() not implemented in derived class ["+type()+"]", Here());
+}
+
+std::string FunctionSpaceImpl::checksum(const Field&) const {
+    throw_Exception("checksum() not implemented in derived class ["+type()+"]", Here());
 }
 
 const parallel::GatherScatter& FunctionSpaceImpl::gather() const {
-    ATLAS_NOTIMPLEMENTED;
+    throw_Exception("gather() not implemented in derived class ["+type()+"]", Here());
 }
 
 const parallel::GatherScatter& FunctionSpaceImpl::scatter() const {
-    ATLAS_NOTIMPLEMENTED;
+    throw_Exception("scatter() not implemented in derived class ["+type()+"]", Here());
 }
 
 std::string FunctionSpaceImpl::mpi_comm() const {

@@ -76,8 +76,8 @@ function atlas_Interpolation__config_funcspace(config,source,target) result(this
   type(atlas_Config), intent(in) :: config
   class(atlas_FunctionSpace), intent(in) :: source
   class(atlas_FunctionSpace), intent(in) :: target
-  this = atlas_Interpolation__cptr(atlas__interpolation__new(config%CPTR_PGIBUG_B, &
-      source%CPTR_PGIBUG_A,target%CPTR_PGIBUG_A))
+  this = atlas_Interpolation__cptr(atlas__interpolation__new(config%c_ptr(), &
+      source%c_ptr(),target%c_ptr()))
   call this%return()
 end function
 
@@ -90,8 +90,8 @@ function atlas_Interpolation__config_funcspace_field(config,source,target) resul
   type(atlas_Config), intent(in) :: config
   class(atlas_FunctionSpace), intent(in) :: source
   class(atlas_Field), intent(in) :: target
-  this = atlas_Interpolation__cptr(atlas__interpolation__new_tgt_field(config%CPTR_PGIBUG_B, &
-      source%CPTR_PGIBUG_A,target%CPTR_PGIBUG_A))
+  this = atlas_Interpolation__cptr(atlas__interpolation__new_tgt_field(config%c_ptr(), &
+      source%c_ptr(),target%c_ptr()))
   call this%return()
 end function
 
@@ -104,8 +104,8 @@ function atlas_Interpolation__config_funcspace_fieldset(config,source,target) re
   type(atlas_Config), intent(in) :: config
   class(atlas_FunctionSpace), intent(in) :: source
   class(atlas_FieldSet), intent(in) :: target
-  this = atlas_Interpolation__cptr(atlas__interpolation__new_tgt_fieldset(config%CPTR_PGIBUG_B, &
-      source%CPTR_PGIBUG_A,target%CPTR_PGIBUG_A))
+  this = atlas_Interpolation__cptr(atlas__interpolation__new_tgt_fieldset(config%c_ptr(), &
+      source%c_ptr(),target%c_ptr()))
   call this%return()
 end function
 
@@ -115,7 +115,7 @@ subroutine execute_field(this,source,target)
   class(atlas_Interpolation), intent(in) :: this
   class(atlas_Field), intent(in) :: source
   class(atlas_Field), intent(inout) :: target
-  call atlas__Interpolation__execute_field(this%CPTR_PGIBUG_A,source%CPTR_PGIBUG_A,target%CPTR_PGIBUG_A)
+  call atlas__Interpolation__execute_field(this%c_ptr(),source%c_ptr(),target%c_ptr())
 end subroutine
 
 subroutine execute_fieldset(this,source,target)
@@ -124,7 +124,7 @@ subroutine execute_fieldset(this,source,target)
   class(atlas_Interpolation), intent(in) :: this
   class(atlas_FieldSet), intent(in) :: source
   class(atlas_FieldSet), intent(inout) :: target
-  call atlas__Interpolation__execute_fieldset(this%CPTR_PGIBUG_A,source%CPTR_PGIBUG_A,target%CPTR_PGIBUG_A)
+  call atlas__Interpolation__execute_fieldset(this%c_ptr(),source%c_ptr(),target%c_ptr())
 end subroutine
 
 subroutine execute_adjoint_field(this,source,target)
@@ -133,7 +133,7 @@ subroutine execute_adjoint_field(this,source,target)
   class(atlas_Interpolation), intent(in) :: this
   class(atlas_Field), intent(inout) :: source
   class(atlas_Field), intent(in) :: target
-  call atlas__Interpolation__execute_adjoint_field(this%CPTR_PGIBUG_A,source%CPTR_PGIBUG_A,target%CPTR_PGIBUG_A)
+  call atlas__Interpolation__execute_adjoint_field(this%c_ptr(),source%c_ptr(),target%c_ptr())
 end subroutine
 
 subroutine execute_adjoint_fieldset(this,source,target)
@@ -142,7 +142,7 @@ subroutine execute_adjoint_fieldset(this,source,target)
   class(atlas_Interpolation), intent(in) :: this
   class(atlas_FieldSet), intent(inout) :: source
   class(atlas_FieldSet), intent(in) :: target
-  call atlas__Interpolation__execute_adjoint_fieldset(this%CPTR_PGIBUG_A,source%CPTR_PGIBUG_A,target%CPTR_PGIBUG_A)
+  call atlas__Interpolation__execute_adjoint_fieldset(this%c_ptr(),source%c_ptr(),target%c_ptr())
 end subroutine
 
 

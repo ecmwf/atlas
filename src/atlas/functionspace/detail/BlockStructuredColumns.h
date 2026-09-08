@@ -99,6 +99,7 @@ public:
 
     const Vertical& vertical() const { return structuredcolumns_->vertical(); }
     const StructuredGrid& grid() const override { return structuredcolumns_->grid(); }
+    const Projection& projection() const override { return grid().projection(); }
 
     idx_t levels() const { return structuredcolumns_->levels(); }
     Field lonlat() const override { return structuredcolumns_->lonlat(); }
@@ -119,10 +120,12 @@ public:
     idx_t k_begin() const { return vertical().k_begin(); }
     idx_t k_end() const { return vertical().k_end(); }
 
-    std::string checksum(const FieldSet&) const;
-    std::string checksum(const Field&) const;
+    std::string checksum(const FieldSet&) const override;
+    std::string checksum(const Field&) const override;
 
     const util::PartitionPolygon& polygon(idx_t halo = 0) const override { return structuredcolumns_->polygon(halo); }
+
+    std::string mpi_comm() const override { return structuredcolumns_->mpi_comm(); }
 
 private:  // methods
     array::ArrayShape config_shape(const eckit::Configuration&) const;

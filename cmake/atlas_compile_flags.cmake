@@ -69,6 +69,18 @@ endif()
 if( CMAKE_CXX_COMPILER_ID MATCHES IntelLLVM )
   # Turn off -ffinite-math-only which gets included by some optimisation levels which assumes values can never be NaN.
   # Then results in std::isnan(value) always return false.
-  ecbuild_add_cxx_flags("-fno-finite-math-only")
+  # First we had following implementation:
+  #     ecbuild_add_cxx_flags("-fno-finite-math-only")
+  # However this gets also added to link flags and icpcx warns on unused link flag.
+  # Following prevents the flag from being added to link steps.
+  if(CMAKE_VERSION VERSION_GREATER_EQUAL "3.27")
+    # For CMake 3.27+: Fully immune to both regular link steps AND Link-Time Optimization (LTO) steps
+    # COMPILE_ONLY is only available for CMake 3.27+
+    add_compile_options($<$<COMPILE_LANGUAGE:CXX>:$<COMPILE_ONLY:-fno-finite-math-only>>)
+  else()
+    # For CMake 3.3 to 3.26: Limits flag to C++ files (will be safe for regular link steps,
+    # but could warning-leak if you manually use LTO/IPO flags elsewhere)
+    add_compile_options($<$<COMPILE_LANGUAGE:CXX>:-fno-finite-math-only>)
+  endif()
 endif()
 

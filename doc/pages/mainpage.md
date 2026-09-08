@@ -1,19 +1,18 @@
-Atlas                             {#mainpage}
-=====
+# Atlas {#mainpage}
 
-* *A library for numerical weather prediction and climate modelling*
+*A library for numerical weather prediction and climate modelling*
 
-This is a documentation for the Atlas project. To see high-level feature overview, or project goals, head over to the [project homepage](https://confluence.ecmwf.int/display/ATLAS). For different versions of this documentation see [here](http://download.ecmwf.int/test-data/atlas/docs).
+This documentation covers the Atlas project. For a high-level feature overview and project goals, visit the [project homepage](https://confluence.ecmwf.int/display/ATLAS). For different versions of this documentation, see [here](http://download.ecmwf.int/test-data/atlas/docs).
 
 @m_class{m-note m-info}
 
 @parblock
 @m_class{m-noindent}
 
-Atlas is a ECMWF library for parallel data-structures supporting unstructured
-grids and function spaces, with the aim to investigate alternative more scalable
-dynamical core options for Earth System models, and to support modern interpolation
-and product generation software
+Atlas is an ECMWF library for parallel data structures supporting unstructured
+grids and function spaces, with the aim to investigate alternative, more scalable
+dynamical core options for Earth system models, and to support modern interpolation
+and product generation software.
 @endparblock
 
 Atlas is predominantly C++ code, with main features available to Fortran codes
@@ -22,22 +21,19 @@ It is known to run on a number of systems, some of which are directly supported
 by ECMWF.
 
 
-What's new?                  {#mainpage-whats-new}
------------
+## What's New? {#mainpage-whats-new}
 
 Curious about what was added or improved recently? Check out the
 [Changelog](https://github.com/ecmwf/atlas/blob/master/CHANGELOG.md)
 
 
-Contributing                {#mainpage-contributing}
-------------
+## Contributing {#mainpage-contributing}
 
 Contributions to Atlas are welcome. In order to do so, please open an issue
 where a feature request or bug can be discussed. Then issue a pull request
 with your contribution. Pull requests must be issued against the develop branch.
 
-Citing Atlas                {#mainpage-citing-atlas}
-------------
+## Citing Atlas {#mainpage-citing-atlas}
 
 If you publish work which mentions Atlas, or Atlas has been useful in your research,
 please cite the following paper:

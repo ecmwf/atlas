@@ -14,6 +14,7 @@
 
 #include "eckit/config/LocalConfiguration.h"
 #include "eckit/config/Parametrisation.h"
+#include "eckit/log/JSON.h"
 
 #include "atlas/library/config.h"
 
@@ -60,6 +61,7 @@ public:
     void broadcast(Metadata&, idx_t root) const;
 
     size_t footprint() const;
+    std::string json(eckit::JSON::Formatting = eckit::JSON::Formatting::indent()) const;
 
 private:
     [[noreturn]] void throw_not_found(const std::string&) const;

@@ -123,6 +123,14 @@ const parallel::GatherScatter& FunctionSpace::scatter() const {
     return get()->scatter();
 }
 
+std::string FunctionSpace::checksum(const FieldSet& fieldset) const {
+    return get()->checksum(fieldset);
+}
+
+std::string FunctionSpace::checksum(const Field& field) const {
+    return get()->checksum(field);
+}
+
 std::string FunctionSpace::mpi_comm() const {
     return get()->mpi_comm();
 }

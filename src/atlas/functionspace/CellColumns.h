@@ -83,9 +83,14 @@ public:
     void scatter(const Field&, Field&) const override;
     const parallel::GatherScatter& scatter() const override;
 
-    std::string checksum(const FieldSet&) const;
-    std::string checksum(const Field&) const;
+    std::string checksum(const FieldSet&) const override;
+    std::string checksum(const Field&) const override;
+
+    [[deprecated("Use FunctionSpaceImpl::checksum(const FieldSet&) or FunctionSpaceImpl::checksum(const Field&) instead")]]
     const parallel::Checksum& checksum() const;
+
+    // Just for internal API at the moment. DO NOT USE!
+    const parallel::Checksum& deprecated_checksum() const;
 
     idx_t size() const override { return nb_cells_; }
 
@@ -155,10 +160,6 @@ void atlas__fs__CellColumns__scatter_field(const CellColumns* This, const field:
                                            field::FieldImpl* local);
 const parallel::GatherScatter* atlas__fs__CellColumns__get_scatter(const CellColumns* This);
 
-void atlas__fs__CellColumns__checksum_fieldset(const CellColumns* This, const field::FieldSetImpl* fieldset,
-                                               char*& checksum, int& size, int& allocated);
-void atlas__fs__CellColumns__checksum_field(const CellColumns* This, const field::FieldImpl* field, char*& checksum,
-                                            int& size, int& allocated);
 const parallel::Checksum* atlas__fs__CellColumns__get_checksum(const CellColumns* This);
 }
 
@@ -194,8 +195,9 @@ public:
 
     const parallel::HaloExchange& halo_exchange() const;
 
-    std::string checksum(const FieldSet&) const;
-    std::string checksum(const Field&) const;
+    using FunctionSpace::checksum;
+
+    [[deprecated("Use FunctionSpace::checksum(const FieldSet&) or FunctionSpace::checksum(const Field&) instead")]]
     const parallel::Checksum& checksum() const;
 
 private:

@@ -86,8 +86,8 @@ public:
     void scatter(const FieldSet&, FieldSet&) const override;
     void scatter(const Field&, Field&) const override;
 
-    std::string checksum(const FieldSet&) const;
-    std::string checksum(const Field&) const;
+    std::string checksum(const FieldSet&) const override;
+    std::string checksum(const Field&) const override;
 
     void norm(const Field&, double& norm, int rank = 0) const;
     void norm(const Field&, double norm_per_level[], int rank = 0) const;

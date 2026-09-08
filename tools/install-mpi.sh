@@ -35,34 +35,58 @@ while [ $# != 0 ]; do
 done
 
 os=$(uname)
-OMPIVER=4.1.1
+OMPIVER=5.0.10
 MPICHVER=3.4.2
 
 if [ ! -z ${mpi_version+x} ]; then
-  if [[ "${MPI}" =~ [Oo][Pp][Ee][Nn]\-?[Mm][Pp][Ii] ]]; then
-    OMPIVER=${mpi_version}
-  fi
-  if [[ "${MPI}" =~ [Mm][Pp][Ii][Cc][Hh] ]]; then
-    MPICHVER=${mpi_version}
-  fi
+    if [[ "${MPI}" =~ [Oo][Pp][Ee][Nn]\-?[Mm][Pp][Ii] ]]; then
+        OMPIVER=${mpi_version}
+    fi
+    if [[ "${MPI}" =~ [Mm][Pp][Ii][Cc][Hh] ]]; then
+        MPICHVER=${mpi_version}
+    fi
 fi
 
 
 mkdir -p ${PREFIX}
-touch ${PREFIX}/env.sh
 
 MPI_INSTALLED=false
+MPI_ROOT=
+
+export_env() {
+    if [ -z "${MPI_HOME+x}" ]; then
+        export MPI_HOME=${MPI_ROOT}
+    fi
+
+    case ":${PATH}:" in
+        *":${MPI_HOME}/bin:"*)
+            ;;
+        *)
+            export PATH=${MPI_HOME}/bin:${PATH}
+            ;;
+    esac
+}
+
+write_env() {
+cat > ${PREFIX}/env.sh << EOF
+export MPI_HOME=${MPI_ROOT}
+export PATH=\${MPI_HOME}/bin:\${PATH}
+EOF
+}
 
 case "$os" in
     Darwin)
         case "$MPI" in
             mpich)
                 brew ls --versions mpich || brew install mpich
+                MPI_ROOT=$(brew --prefix mpich)
                 ;;
             openmpi)
-                brew ls --versions open-mpi || brew install open-mpi
+                brew ls --versions openmpi || brew install openmpi
+                MPI_ROOT=$(brew --prefix openmpi)
                 echo "localhost slots=72" >> $(brew --prefix)/etc/openmpi-default-hostfile
                 echo "localhost slots=72" >> $(brew --prefix)/etc/prte-default-hostfile
+                echo "rmaps_default_mapping_policy=:oversubscribe" >> $(brew --prefix)/etc/prte-mca-params.conf
 
                 # workaround for open-mpi/omp#7516
                 echo "setting the mca gds to hash..."
@@ -81,67 +105,70 @@ case "$os" in
 
     Linux)
         if [ -n "${MPI_HOME}" ]; then
-          echo "MPI is already installed at MPI_HOME=${MPI_HOME}."
-          echo "Not taking any action."
-          exit 0
+            echo "MPI is already installed at MPI_HOME=${MPI_HOME}."
+            echo "Not taking any action."
+            exit 0
         fi
         if [ -n "${I_MPI_ROOT}" ]; then
-          echo "MPI is already installed at I_MPI_ROOT=${I_MPI_ROOT}."
-          echo "Not taking any action."
-          exit 0
+            echo "MPI is already installed at I_MPI_ROOT=${I_MPI_ROOT}."
+            echo "Not taking any action."
+            exit 0
         fi
+        MPI_ROOT=${PREFIX}
         case "$MPI" in
             mpich)
                 if [ -f ${PREFIX}/include/mpi.h ]; then
-                  echo "${PREFIX}/include/mpi.h found"
+                    echo "${PREFIX}/include/mpi.h found"
                 fi
                 if [ -f ${PREFIX}/lib/libmpich.so ]; then
-                  echo "${PREFIX}/lib/libmpich.so found -- nothing to build."
+                    echo "${PREFIX}/lib/libmpich.so found -- nothing to build."
                 else
-                  echo "Downloading mpich source..."
-                  wget http://www.mpich.org/static/downloads/${MPICHVER}/mpich-${MPICHVER}.tar.gz
-                  tar xfz mpich-${MPICHVER}.tar.gz
-                  rm mpich-${MPICHVER}.tar.gz
-                  echo "Configuring and building mpich..."
-                  cd mpich-${MPICHVER}
-                  unset F90
-                  unset F90FLAGS
-                  ${SCRIPTDIR}/reduce-output.sh ./configure \
-                          --prefix=${PREFIX} \
-                          --enable-static=false \
-                          --enable-alloca=true \
-                          --enable-threads=single \
-                          --enable-fortran=yes \
-                          --enable-fast=all \
-                          --enable-g=none \
-                          --enable-timing=none
-                  ${SCRIPTDIR}/reduce-output.sh make -j48
-                  ${SCRIPTDIR}/reduce-output.sh make install
-                  MPI_INSTALLED=true
-                  cd -
-                  rm -rf mpich-${MPICHVER}
+                    echo "Downloading mpich source..."
+                    wget http://www.mpich.org/static/downloads/${MPICHVER}/mpich-${MPICHVER}.tar.gz
+                    tar xfz mpich-${MPICHVER}.tar.gz
+                    rm mpich-${MPICHVER}.tar.gz
+                    echo "Configuring and building mpich..."
+                    cd mpich-${MPICHVER}
+                    unset F90
+                    unset F90FLAGS
+                    ${SCRIPTDIR}/reduce-output.sh ./configure \
+                            --prefix=${PREFIX} \
+                            --enable-static=false \
+                            --enable-alloca=true \
+                            --enable-threads=single \
+                            --enable-fortran=yes \
+                            --enable-fast=all \
+                            --enable-g=none \
+                            --enable-timing=none
+                    ${SCRIPTDIR}/reduce-output.sh make -j48
+                    ${SCRIPTDIR}/reduce-output.sh make install
+                    MPI_INSTALLED=true
+                    cd -
+                    rm -rf mpich-${MPICHVER}
                 fi
                 ;;
             openmpi)
                 if [ -f ${PREFIX}/include/mpi.h ]; then
-                  echo "openmpi/include/mpi.h found."
+                    echo "openmpi/include/mpi.h found."
                 fi
                 if [ -f ${PREFIX}/lib/libmpi.so ] || [ -f ${PREFIX}/lib64/libmpi.so ]; then
-                  echo "libmpi.so found -- nothing to build."
+                    echo "libmpi.so found -- nothing to build."
                 else
-                  echo "Downloading openmpi source..."
-                  wget --no-check-certificate https://www.open-mpi.org/software/ompi/v4.1/downloads/openmpi-$OMPIVER.tar.gz
-                  tar -zxf openmpi-$OMPIVER.tar.gz
-                  rm openmpi-$OMPIVER.tar.gz
-                  echo "Configuring and building openmpi..."
-                  cd openmpi-$OMPIVER
-                  ${SCRIPTDIR}/reduce-output.sh ./configure --prefix=${PREFIX}
-                  ${SCRIPTDIR}/reduce-output.sh make -j4
-                  ${SCRIPTDIR}/reduce-output.sh make install
-                  MPI_INSTALLED=true
-                  echo "localhost slots=72" >> ${PREFIX}/etc/openmpi-default-hostfile
-                  cd -
-                  rm -rf openmpi-$OMPIVER
+                    echo "Downloading openmpi source..."
+                    OMPI_MAJOR_MINOR=$(echo $OMPIVER | sed 's/\([0-9]*\.[0-9]*\).*/\1/')
+                    wget --no-check-certificate https://www.open-mpi.org/software/ompi/v${OMPI_MAJOR_MINOR}/downloads/openmpi-$OMPIVER.tar.gz
+                    tar -zxf openmpi-$OMPIVER.tar.gz
+                    rm openmpi-$OMPIVER.tar.gz
+                    echo "Configuring and building openmpi..."
+                    cd openmpi-$OMPIVER
+                    ${SCRIPTDIR}/reduce-output.sh ./configure --prefix=${PREFIX}
+                    ${SCRIPTDIR}/reduce-output.sh make -j4
+                    ${SCRIPTDIR}/reduce-output.sh make install
+                    MPI_INSTALLED=true
+                    echo "localhost slots=72" >> ${PREFIX}/etc/openmpi-default-hostfile
+                    echo "rmaps_default_mapping_policy=:oversubscribe" >> ${PREFIX}/etc/prte-mca-params.conf
+                    cd -
+                    rm -rf openmpi-$OMPIVER
                 fi
                 ;;
             *)
@@ -150,7 +177,6 @@ case "$os" in
                 ;;
         esac
         ;;
-
     *)
         echo "Unknown operating system: $os"
         exit 1
@@ -158,11 +184,9 @@ case "$os" in
 esac
 
 
-if ${MPI_INSTALLED} ; then
-cat > ${PREFIX}/env.sh << EOF
-export MPI_HOME=${PREFIX}
-export PATH=\${MPI_HOME}/bin:\${PATH}
-EOF
-echo "Please source ${PREFIX}/env.sh, containing:"
-cat ${PREFIX}/env.sh
+if [ -n "${MPI_ROOT}" ]; then
+    write_env
+    echo "Please source ${PREFIX}/env.sh, containing:"
+    cat ${PREFIX}/env.sh
+    export_env
 fi

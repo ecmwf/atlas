@@ -128,13 +128,13 @@ void GatherScatter::setup(const std::string& mpi_comm, const int part[], const i
     }
 
     idx_t nb_recv_nodes = glbcnt_;
-    std::vector<Node> node_sort;
+    std::vector<Node> nodes;
 
     try {
-        node_sort.resize(nb_recv_nodes);
+        nodes.resize(nb_recv_nodes);
     }
     catch (const std::bad_alloc& e) {
-        ATLAS_THROW_EXCEPTION("Could not allocate node_sort with size " << eckit::Bytes(nb_recv_nodes * sizeof(Node)));
+        ATLAS_THROW_EXCEPTION("Could not allocate nodes with size " << eckit::Bytes(nb_recv_nodes * sizeof(Node)));
     }
 
     ATLAS_TRACE_SCOPE("receive nodes global index")
@@ -152,7 +152,7 @@ void GatherScatter::setup(const std::string& mpi_comm, const int part[], const i
                               glbcounts_.data(), glbdispls_.data());
         }
         atlas_omp_parallel_for(idx_t n = 0; n < nb_recv_nodes; ++n) {
-            node_sort[n].g = recvnodes_gidx[n];
+            nodes[n].g = recvnodes_gidx[n];
         }
         sendnodes_gidx.clear();
     }
@@ -173,7 +173,7 @@ void GatherScatter::setup(const std::string& mpi_comm, const int part[], const i
                               glbcounts_.data(), glbdispls_.data());
         }
         atlas_omp_parallel_for(idx_t n = 0; n < nb_recv_nodes; ++n) {
-            node_sort[n].p = recvnodes_part[n];
+            nodes[n].p = recvnodes_part[n];
         }
         sendnodes_part.clear();
     }
@@ -193,29 +193,48 @@ void GatherScatter::setup(const std::string& mpi_comm, const int part[], const i
                               glbcounts_.data(), glbdispls_.data());
         }
         atlas_omp_parallel_for(idx_t n = 0; n < nb_recv_nodes; ++n) {
-            node_sort[n].i = recvnodes_ridx[n];
+            nodes[n].i = recvnodes_ridx[n];
         }
         sendnodes_ridx.clear();
     }
 
-    bool use_sorted_nodes = false; // `use_sorted_nodes = true` is the behaviour as it has been with atlas versions <= 0.42.0
+    auto can_use_dense_global_indices_directly = [&]() {
+        if (nb_recv_nodes == 0) {
+            return true;
+        }
 
-    if (use_sorted_nodes) {
+        std::vector<bool> dense_global_index_seen(nb_recv_nodes, false);
+        for (const auto& node : nodes) {
+            const gidx_t dense_index = node.g - glb_idx_base;
+            if (dense_index < 0 || dense_index >= nb_recv_nodes || dense_global_index_seen[dense_index]) {
+                return false;
+            }
+            dense_global_index_seen[dense_index] = true;
+        }
+        return true;
+    };
+
+    auto normalize_sparse_global_indices = [&]() {
         // Sort on "g" member, and remove duplicates
         ATLAS_TRACE_SCOPE("sorting") {
-            //        omp::sort(node_sort.begin(), node_sort.end());
-            std::sort(node_sort.begin(), node_sort.end());
+            //        omp::sort(nodes.begin(), nodes.end());
+            std::sort(nodes.begin(), nodes.end());
         }
         ATLAS_TRACE_SCOPE("remove duplicates") {
-            node_sort.erase(std::unique(node_sort.begin(), node_sort.end()), node_sort.end());
+            nodes.erase(std::unique(nodes.begin(), nodes.end()), nodes.end());
         }
+    };
+
+    const bool use_dense_global_indices_directly = can_use_dense_global_indices_directly();
+    if (!use_dense_global_indices_directly) {
+        normalize_sparse_global_indices();
     }
 
     glbcounts_.assign(nproc, 0);
     glbdispls_.assign(nproc, 0);
 
-    for (size_t n = 0; n < node_sort.size(); ++n) {
-        ++glbcounts_[node_sort[n].p];
+    for (size_t n = 0; n < nodes.size(); ++n) {
+        ++glbcounts_[nodes[n].p];
     }
 
     glbdispls_[0] = 0;
@@ -234,15 +253,28 @@ void GatherScatter::setup(const std::string& mpi_comm, const int part[], const i
     locmap_.resize(loccnt_,-1);
     std::vector<int> idx(nproc, 0);
 
-    gidx_t n{node_sort.begin()->g - 1};
-    for (const auto& node : node_sort) {
-        glbmap_[glbdispls_[node.p] + idx[node.p]] = (use_sorted_nodes ? n++ : node.g - glb_idx_base);
-
+    auto update_local_map = [&](const Node& node) {
         if (node.p == myproc) {
             locmap_[idx[node.p]] = node.i;
         }
+    };
 
-        ++idx[node.p];
+    if (use_dense_global_indices_directly) {
+        for (const auto& node : nodes) {
+            glbmap_[glbdispls_[node.p] + idx[node.p]] = node.g - glb_idx_base;
+            update_local_map(node);
+
+            ++idx[node.p];
+        }
+    }
+    else {
+        gidx_t compact_global_index{0};
+        for (const auto& node : nodes) {
+            glbmap_[glbdispls_[node.p] + idx[node.p]] = compact_global_index++;
+            update_local_map(node);
+
+            ++idx[node.p];
+        }
     }
 
     is_setup_ = true;

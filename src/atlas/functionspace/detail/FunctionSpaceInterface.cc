@@ -75,6 +75,41 @@ field::FieldImpl* atlas__FunctionSpace__create_field_template(const FunctionSpac
 
 //------------------------------------------------------------------------------
 
+field::FieldImpl* atlas__FunctionSpace__lonlat(const FunctionSpaceImpl* This) {
+    ATLAS_ASSERT(This != nullptr, "Cannot access uninitialised atlas_FunctionSpace");
+    return This->lonlat().get();
+}
+
+//------------------------------------------------------------------------------
+
+field::FieldImpl* atlas__FunctionSpace__ghost(const FunctionSpaceImpl* This) {
+    ATLAS_ASSERT(This != nullptr, "Cannot access uninitialised atlas_FunctionSpace");
+    return This->ghost().get();
+}
+
+//------------------------------------------------------------------------------
+
+field::FieldImpl* atlas__FunctionSpace__global_index(const FunctionSpaceImpl* This) {
+    ATLAS_ASSERT(This != nullptr, "Cannot access uninitialised atlas_FunctionSpace");
+    return This->global_index().get();
+}
+
+//------------------------------------------------------------------------------
+
+field::FieldImpl* atlas__FunctionSpace__remote_index(const FunctionSpaceImpl* This) {
+    ATLAS_ASSERT(This != nullptr, "Cannot access uninitialised atlas_FunctionSpace");
+    return This->remote_index().get();
+}
+
+//------------------------------------------------------------------------------
+
+field::FieldImpl* atlas__FunctionSpace__partition(const FunctionSpaceImpl* This) {
+    ATLAS_ASSERT(This != nullptr, "Cannot access uninitialised atlas_FunctionSpace");
+    return This->partition().get();
+}
+
+//------------------------------------------------------------------------------
+
 void atlas__FunctionSpace__halo_exchange_field(const FunctionSpaceImpl* This, field::FieldImpl* field) {
     ATLAS_ASSERT(This != nullptr, "Cannot access uninitialised atlas_FunctionSpace");
     ATLAS_ASSERT(field != nullptr, "Cannot access uninitialised atlas_Field");
@@ -110,6 +145,30 @@ void atlas__FunctionSpace__adjoint_halo_exchange_fieldset(const FunctionSpaceImp
     ATLAS_ASSERT(fieldset != nullptr, "Cannot access uninitialised atlas_FieldSet");
     FieldSet f(fieldset);
     This->adjointHaloExchange(f);
+}
+
+//------------------------------------------------------------------------------
+
+void atlas__FunctionSpace__checksum_field(const FunctionSpaceImpl* This, const field::FieldImpl* field,
+                                          char*& checksum, int& size) {
+    ATLAS_ASSERT(This != nullptr, "Cannot access uninitialised atlas_FunctionSpace");
+    ATLAS_ASSERT(field != nullptr, "Cannot access uninitialised atlas_Field");
+    std::string s = This->checksum(Field(field));
+    size          = static_cast<int>(s.size());
+    checksum      = new char[size + 1];
+    std::strncpy(checksum, s.c_str(), size + 1);
+}
+
+//------------------------------------------------------------------------------
+
+void atlas__FunctionSpace__checksum_fieldset(const FunctionSpaceImpl* This, const field::FieldSetImpl* fieldset,
+                                             char*& checksum, int& size) {
+    ATLAS_ASSERT(This != nullptr, "Cannot access uninitialised atlas_FunctionSpace");
+    ATLAS_ASSERT(fieldset != nullptr, "Cannot access uninitialised atlas_FieldSet");
+    std::string s = This->checksum(FieldSet(fieldset));
+    size          = static_cast<int>(s.size());
+    checksum      = new char[size + 1];
+    std::strncpy(checksum, s.c_str(), size + 1);
 }
 }
 

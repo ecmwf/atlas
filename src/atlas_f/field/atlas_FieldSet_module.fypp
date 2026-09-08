@@ -56,6 +56,12 @@ contains
   generic :: add => add_field, add_fieldset
   generic :: field => field_by_name, field_by_idx_int, field_by_idx_long
 
+  procedure, private :: shape_array_by_name
+  procedure, private :: shape_idx_by_name
+  procedure, private :: shape_array_by_idx
+  procedure, private :: shape_idx_by_idx
+  generic, public :: shape => shape_array_by_name, shape_idx_by_name, shape_array_by_idx, shape_idx_by_idx
+
   procedure, public :: set_dirty
   procedure, public :: halo_exchange
 
@@ -159,7 +165,7 @@ subroutine access_data_${dtype}$_r${rank}$_by_name(this, name, field)
   type(c_ptr) :: shape_cptr
   type(c_ptr) :: strides_cptr
   integer(c_int) :: rank
-  call atlas__FieldSet__data_${ctype}$_specf(this%CPTR_PGIBUG_A, c_str(name), field_cptr, rank, shape_cptr, strides_cptr)
+  call atlas__FieldSet__data_${ctype}$_specf(this%c_ptr(), c_str(name), field_cptr, rank, shape_cptr, strides_cptr)
   call array_c_to_f(field_cptr, rank, shape_cptr, strides_cptr, field)
 end subroutine
 subroutine access_data_${dtype}$_r${rank}$_by_idx(this, idx, field)
@@ -173,7 +179,7 @@ subroutine access_data_${dtype}$_r${rank}$_by_idx(this, idx, field)
   type(c_ptr) :: shape_cptr
   type(c_ptr) :: strides_cptr
   integer(c_int) :: rank
-  call atlas__FieldSet__data_${ctype}$_specf_by_idx(this%CPTR_PGIBUG_A, idx-1, field_cptr, rank, shape_cptr, strides_cptr)
+  call atlas__FieldSet__data_${ctype}$_specf_by_idx(this%c_ptr(), idx-1, field_cptr, rank, shape_cptr, strides_cptr)
   call array_c_to_f(field_cptr, rank, shape_cptr, strides_cptr, field)
 end subroutine
 subroutine access_data_${dtype}$_r${rank}$_slice_by_name(this, name, slice, iblk)
@@ -221,8 +227,7 @@ end subroutine
 
 subroutine access_device_data_${dtype}$_r${rank}$_by_name(this, name, field)
   use fckit_c_interop_module, only: c_str
-  use atlas_field_c_binding
-  use atlas_Field_module, only: atlas_Field
+  use atlas_fieldset_c_binding
   use, intrinsic :: iso_c_binding, only : c_ptr, c_int, c_long, c_float, c_double
   class(atlas_FieldSet), intent(in) :: this
   character(len=*), intent(in) :: name
@@ -231,18 +236,14 @@ subroutine access_device_data_${dtype}$_r${rank}$_by_name(this, name, field)
   type(c_ptr) :: shape_cptr
   type(c_ptr) :: strides_cptr
   integer(c_int) :: rank
-  type(atlas_Field) :: field_sel
-  field_sel = this%field(name)
-  call atlas__Field__device_data_${ctype}$_specf(field_sel%CPTR_PGIBUG_A, field_cptr, rank, shape_cptr, strides_cptr)
+  call atlas__FieldSet__device_data_${ctype}$_specf(this%c_ptr(), c_str(name), field_cptr, rank, shape_cptr, strides_cptr)
   call array_c_to_f(field_cptr, rank, shape_cptr, strides_cptr, field)
 end subroutine
 
 !-------------------------------------------------------------------------------
 
 subroutine access_device_data_${dtype}$_r${rank}$_by_idx(this, idx, field)
-  use fckit_c_interop_module, only: c_str
-  use atlas_field_c_binding
-  use atlas_Field_module, only: atlas_Field
+  use atlas_fieldset_c_binding
   use, intrinsic :: iso_c_binding, only : c_ptr, c_int, c_long, c_float, c_double
   class(atlas_FieldSet), intent(in) :: this
   integer, intent(in) :: idx
@@ -251,9 +252,7 @@ subroutine access_device_data_${dtype}$_r${rank}$_by_idx(this, idx, field)
   type(c_ptr) :: shape_cptr
   type(c_ptr) :: strides_cptr
   integer(c_int) :: rank
-  type(atlas_Field) :: field_loc
-  field_loc = this%field(idx)
-  call atlas__Field__device_data_${ctype}$_specf(field_loc%CPTR_PGIBUG_A, field_cptr, rank, shape_cptr, strides_cptr)
+  call atlas__FieldSet__device_data_${ctype}$_specf_by_idx(this%c_ptr(), idx-1, field_cptr, rank, shape_cptr, strides_cptr)
   call array_c_to_f(field_cptr, rank, shape_cptr, strides_cptr, field)
 end subroutine
 
@@ -296,7 +295,7 @@ function FieldSet__name(this) result(fieldset_name)
   class(atlas_FieldSet), intent(in) :: this
   character(len=:), allocatable :: fieldset_name
   type(c_ptr) :: fieldset_name_c_str
-  fieldset_name_c_str = atlas__FieldSet__name(this%CPTR_PGIBUG_A)
+  fieldset_name_c_str = atlas__FieldSet__name(this%c_ptr())
   fieldset_name = c_ptr_to_string(fieldset_name_c_str)
 end function FieldSet__name
 
@@ -305,14 +304,14 @@ subroutine add_field(this,field)
   use atlas_Field_module, only: atlas_Field
   class(atlas_FieldSet), intent(in) :: this
   type(atlas_Field), intent(in) :: field
-  call atlas__FieldSet__add_field(this%CPTR_PGIBUG_A, field%CPTR_PGIBUG_A)
+  call atlas__FieldSet__add_field(this%c_ptr(), field%c_ptr())
 end subroutine
 
 subroutine add_fieldset(this,fset)
   use atlas_fieldset_c_binding
   class(atlas_FieldSet), intent(inout) :: this
   class(atlas_FieldSet), intent(in) :: fset
-  call atlas__FieldSet__add_fieldset(this%CPTR_PGIBUG_A, fset%CPTR_PGIBUG_A)
+  call atlas__FieldSet__add_fieldset(this%c_ptr(), fset%c_ptr())
 end subroutine
 
 function has(this,name) result(flag)
@@ -323,7 +322,7 @@ function has(this,name) result(flag)
   character(len=*), intent(in) :: name
   logical :: flag
   integer(c_int) :: rc
-  rc = atlas__FieldSet__has_field(this%CPTR_PGIBUG_A, c_str(name))
+  rc = atlas__FieldSet__has_field(this%c_ptr(), c_str(name))
   if( rc == 0 ) then
     flag = .False.
   else
@@ -336,7 +335,7 @@ function FieldSet__size(this) result(nb_fields)
   use atlas_fieldset_c_binding
   class(atlas_FieldSet), intent(in) :: this
   integer(ATLAS_KIND_IDX) :: nb_fields
-  nb_fields = atlas__FieldSet__size(this%CPTR_PGIBUG_A)
+  nb_fields = atlas__FieldSet__size(this%c_ptr())
 end function
 
 function field_by_name(this,name) result(field)
@@ -346,7 +345,7 @@ function field_by_name(this,name) result(field)
   class(atlas_FieldSet), intent(in) :: this
   character(len=*), intent(in) :: name
   type(atlas_Field) :: field
-  field = atlas_Field( atlas__FieldSet__field_by_name(this%CPTR_PGIBUG_A, c_str(name) ) )
+  field = atlas_Field( atlas__FieldSet__field_by_name(this%c_ptr(), c_str(name) ) )
   call field%return()
 end function
 
@@ -357,7 +356,7 @@ function field_by_idx_long(this,idx) result(field)
   class(atlas_FieldSet), intent(in) :: this
   integer(c_long), intent(in) :: idx
   type(atlas_Field) :: field
-  field = atlas_Field( atlas__FieldSet__field_by_idx(this%CPTR_PGIBUG_A, int(idx-1_c_long,ATLAS_KIND_IDX) ) ) ! C index
+  field = atlas_Field( atlas__FieldSet__field_by_idx(this%c_ptr(), int(idx-1_c_long,ATLAS_KIND_IDX) ) ) ! C index
   call field%return()
 end function
 
@@ -368,8 +367,81 @@ function field_by_idx_int(this,idx) result(field)
   class(atlas_FieldSet), intent(in) :: this
   integer(c_int), intent(in) :: idx
   type(atlas_Field) :: field
-  field = atlas_Field( atlas__FieldSet__field_by_idx(this%CPTR_PGIBUG_A, int(idx-1_c_int,ATLAS_KIND_IDX) ) ) ! C index
+  field = atlas_Field( atlas__FieldSet__field_by_idx(this%c_ptr(), int(idx-1_c_int,ATLAS_KIND_IDX) ) ) ! C index
   call field%return()
+end function
+
+!-------------------------------------------------------------------------------
+
+function shape_array_by_name(this, name) result(shape)
+  use atlas_fieldset_c_binding
+  use fckit_c_interop_module, only: c_str
+  use, intrinsic :: iso_c_binding, only : c_ptr, c_int, c_f_pointer
+  class(atlas_FieldSet), intent(in) :: this
+  character(len=*), intent(in) :: name
+  integer, allocatable :: shape(:)
+  type(c_ptr) :: shape_c_ptr
+  integer, pointer :: shape_f_ptr(:)
+  integer(c_int) :: field_rank
+  call atlas__FieldSet__shapef(this%c_ptr(), c_str(name), shape_c_ptr, field_rank)
+  call c_f_pointer ( shape_c_ptr , shape_f_ptr , (/field_rank/) )
+  allocate( shape(field_rank) )
+  shape(:) = shape_f_ptr(:)
+end function
+
+!-------------------------------------------------------------------------------
+
+function shape_idx_by_name(this, name, dim_idx) result(shape_val)
+  use atlas_fieldset_c_binding
+  use fckit_c_interop_module, only: c_str
+  use, intrinsic :: iso_c_binding, only : c_ptr, c_int, c_f_pointer
+  @:ENABLE_ATLAS_MACROS()
+  class(atlas_FieldSet), intent(in) :: this
+  character(len=*), intent(in) :: name
+  integer, intent(in) :: dim_idx
+  integer :: shape_val
+  type(c_ptr) :: shape_c_ptr
+  integer, pointer :: shape_f_ptr(:)
+  integer(c_int) :: field_rank
+  call atlas__FieldSet__shapef(this%c_ptr(), c_str(name), shape_c_ptr, field_rank)
+  call c_f_pointer ( shape_c_ptr , shape_f_ptr , (/field_rank/) )
+  @:ATLAS_ASSERT( dim_idx <= field_rank )
+  shape_val = shape_f_ptr(dim_idx)
+end function
+
+!-------------------------------------------------------------------------------
+
+function shape_array_by_idx(this, idx) result(shape)
+  use atlas_fieldset_c_binding
+  use, intrinsic :: iso_c_binding, only : c_ptr, c_int, c_f_pointer
+  class(atlas_FieldSet), intent(in) :: this
+  integer, intent(in) :: idx
+  integer, allocatable :: shape(:)
+  type(c_ptr) :: shape_c_ptr
+  integer, pointer :: shape_f_ptr(:)
+  integer(c_int) :: field_rank
+  call atlas__FieldSet__shapef_by_idx(this%c_ptr(), idx-1, shape_c_ptr, field_rank)
+  call c_f_pointer ( shape_c_ptr , shape_f_ptr , (/field_rank/) )
+  allocate( shape(field_rank) )
+  shape(:) = shape_f_ptr(:)
+end function
+
+!-------------------------------------------------------------------------------
+
+function shape_idx_by_idx(this, idx, dim_idx) result(shape_val)
+  use atlas_fieldset_c_binding
+  use, intrinsic :: iso_c_binding, only : c_ptr, c_int, c_f_pointer
+  @:ENABLE_ATLAS_MACROS()
+  class(atlas_FieldSet), intent(in) :: this
+  integer, intent(in) :: idx, dim_idx
+  integer :: shape_val
+  type(c_ptr) :: shape_c_ptr
+  integer, pointer :: shape_f_ptr(:)
+  integer(c_int) :: field_rank
+  call atlas__FieldSet__shapef_by_idx(this%c_ptr(), idx-1, shape_c_ptr, field_rank)
+  call c_f_pointer ( shape_c_ptr , shape_f_ptr , (/field_rank/) )
+  @:ATLAS_ASSERT( dim_idx <= field_rank )
+  shape_val = shape_f_ptr(dim_idx)
 end function
 
 !-------------------------------------------------------------------------------
@@ -384,41 +456,34 @@ subroutine halo_exchange(this,on_device)
   if( present(on_device) ) then
     if( on_device ) on_device_int = 1
   endif
-  call atlas__FieldSet__halo_exchange(this%CPTR_PGIBUG_A, on_device_int)
+  call atlas__FieldSet__halo_exchange(this%c_ptr(), on_device_int)
 end subroutine
 
 !-------------------------------------------------------------------------------
 
 subroutine set_host_needs_update_value(this, value)
   use, intrinsic :: iso_c_binding, only : c_int
-  use atlas_field_c_binding
-  use atlas_Field_module, only: atlas_Field
+  use atlas_fieldset_c_binding
   class(atlas_FieldSet), intent(inout) :: this
   logical, intent(in), optional :: value
-  type(atlas_Field) :: field
-  integer(c_int) :: i, value_int
+  integer(c_int) :: value_int
   value_int = 1
   if (present(value)) then
     if (.not. value) then
       value_int = 0
     end if
   end if
-  do i = 1, this%size()
-    field = this%field(i)
-    call atlas__Field__set_host_needs_update(field%CPTR_PGIBUG_A, value_int)
-  end do
+  call atlas__FieldSet__set_host_needs_update(this%c_ptr(), value_int)
 end subroutine
 
 !-------------------------------------------------------------------------------
 
 subroutine set_host_needs_update_idx(this, field_indices, value)
   use, intrinsic :: iso_c_binding, only : c_int
-  use atlas_field_c_binding
-  use atlas_Field_module, only: atlas_Field
+  use atlas_fieldset_c_binding
   class(atlas_FieldSet), intent(inout) :: this
   integer, intent(in) :: field_indices(:)
   logical, intent(in), optional :: value
-  type(atlas_Field) :: field
   integer(c_int) :: i, value_int
   value_int = 1
   if (present(value)) then
@@ -427,8 +492,7 @@ subroutine set_host_needs_update_idx(this, field_indices, value)
     end if
   end if
   do i = 1, size(field_indices)
-    field = this%field(field_indices(i))
-    call atlas__Field__set_host_needs_update(field%CPTR_PGIBUG_A, value_int)
+    call atlas__FieldSet__set_host_needs_update_by_idx(this%c_ptr(), field_indices(i)-1, value_int)
   end do
 end subroutine
 
@@ -436,12 +500,11 @@ end subroutine
 
 subroutine set_host_needs_update_name(this, field_names, value)
   use, intrinsic :: iso_c_binding, only : c_int
-  use atlas_field_c_binding
-  use atlas_Field_module, only: atlas_Field
+  use atlas_fieldset_c_binding
+  use fckit_c_interop_module, only: c_str
   class(atlas_FieldSet), intent(inout) :: this
   character(*), intent(in) :: field_names(:)
   logical, intent(in), optional :: value
-  type(atlas_Field) :: field
   integer(c_int) :: i, value_int
   value_int = 1
   if (present(value)) then
@@ -450,8 +513,7 @@ subroutine set_host_needs_update_name(this, field_names, value)
     end if
   end if
   do i = 1, size(field_names)
-    field = this%field(field_names(i))
-    call atlas__Field__set_host_needs_update(field%CPTR_PGIBUG_A, value_int)
+    call atlas__FieldSet__set_host_needs_update_name(this%c_ptr(), c_str(field_names(i)), value_int)
   end do
 end subroutine
 
@@ -459,34 +521,27 @@ end subroutine
 
 subroutine set_device_needs_update_value(this, value)
   use, intrinsic :: iso_c_binding, only : c_int
-  use atlas_field_c_binding
-  use atlas_Field_module, only: atlas_Field
+  use atlas_fieldset_c_binding
   class(atlas_FieldSet), intent(inout) :: this
   logical, intent(in), optional :: value
-  type(atlas_Field) :: field
-  integer(c_int) :: i, value_int
+  integer(c_int) :: value_int
   value_int = 1
   if (present(value)) then
     if (.not. value) then
       value_int = 0
     end if
   end if
-  do i = 1, this%size()
-    field = this%field(i)
-    call atlas__Field__set_device_needs_update(field%CPTR_PGIBUG_A, value_int)
-  end do
+  call atlas__FieldSet__set_device_needs_update(this%c_ptr(), value_int)
 end subroutine
 
 !-------------------------------------------------------------------------------
 
 subroutine set_device_needs_update_idx(this, field_indices, value)
   use, intrinsic :: iso_c_binding, only : c_int
-  use atlas_field_c_binding
-  use atlas_Field_module, only: atlas_Field
+  use atlas_fieldset_c_binding
   class(atlas_FieldSet), intent(inout) :: this
   integer, intent(in) :: field_indices(:)
   logical, intent(in), optional :: value
-  type(atlas_Field) :: field
   integer(c_int) :: i, value_int
   value_int = 1
   if (present(value)) then
@@ -495,8 +550,7 @@ subroutine set_device_needs_update_idx(this, field_indices, value)
     end if
   end if
   do i = 1, size(field_indices)
-    field = this%field(field_indices(i))
-    call atlas__Field__set_device_needs_update(field%CPTR_PGIBUG_A, value_int)
+    call atlas__FieldSet__set_device_needs_update_by_idx(this%c_ptr(), field_indices(i)-1, value_int)
   end do
 end subroutine
 
@@ -504,12 +558,11 @@ end subroutine
 
 subroutine set_device_needs_update_name(this, field_names, value)
   use, intrinsic :: iso_c_binding, only : c_int
-  use atlas_field_c_binding
-  use atlas_Field_module, only: atlas_Field
+  use atlas_fieldset_c_binding
+  use fckit_c_interop_module, only: c_str
   class(atlas_FieldSet), intent(inout) :: this
   character(*), intent(in) :: field_names(:)
   logical, intent(in), optional :: value
-  type(atlas_Field) :: field
   integer(c_int) :: i, value_int
   value_int = 1
   if (present(value)) then
@@ -518,8 +571,7 @@ subroutine set_device_needs_update_name(this, field_names, value)
     end if
   end if
   do i = 1, size(field_names)
-    field = this%field(field_names(i))
-    call atlas__Field__set_device_needs_update(field%CPTR_PGIBUG_A, value_int)
+    call atlas__FieldSet__set_device_needs_update_name(this%c_ptr(), c_str(field_names(i)), value_int)
   end do
 end subroutine
 
@@ -527,22 +579,16 @@ end subroutine
 
 subroutine sync_host_device_idx(this, field_indices)
   use, intrinsic :: iso_c_binding, only : c_int
-  use atlas_field_c_binding
-  use atlas_Field_module, only: atlas_Field
+  use atlas_fieldset_c_binding
   class(atlas_FieldSet), intent(inout) :: this
   integer, intent(in), optional :: field_indices(:)
-  type(atlas_Field) :: field
   integer(c_int) :: i
   if (present(field_indices)) then
     do i = 1, size(field_indices)
-      field = this%field(field_indices(i))
-      call atlas__Field__sync_host_device(field%CPTR_PGIBUG_A)
+      call atlas__FieldSet__sync_host_device_by_idx(this%c_ptr(), field_indices(i)-1)
     end do
   else
-    do i = 1, this%size()
-      field = this%field(i)
-      call atlas__Field__sync_host_device(field%CPTR_PGIBUG_A)
-    end do
+    call atlas__FieldSet__sync_host_device(this%c_ptr())
   end if
 end subroutine
 
@@ -550,15 +596,13 @@ end subroutine
 
 subroutine sync_host_device_name(this, field_names)
   use, intrinsic :: iso_c_binding, only : c_int
-  use atlas_field_c_binding
-  use atlas_Field_module, only: atlas_Field
+  use atlas_fieldset_c_binding
+  use fckit_c_interop_module, only: c_str
   class(atlas_FieldSet), intent(inout) :: this
   character(*), intent(in) :: field_names(:)
-  type(atlas_Field) :: field
   integer(c_int) :: i
   do i = 1, size(field_names)
-    field = this%field(field_names(i))
-    call atlas__Field__sync_host_device(field%CPTR_PGIBUG_A)
+    call atlas__FieldSet__sync_host_device_name(this%c_ptr(), c_str(field_names(i)))
   end do
 end subroutine
 
@@ -566,22 +610,16 @@ end subroutine
 
 subroutine sync_host_idx(this, field_indices)
   use, intrinsic :: iso_c_binding, only : c_int
-  use atlas_field_c_binding
-  use atlas_Field_module, only: atlas_Field
+  use atlas_fieldset_c_binding
   class(atlas_FieldSet), intent(inout) :: this
   integer, intent(in), optional :: field_indices(:)
-  type(atlas_Field) :: field
   integer(c_int) :: i
   if (present(field_indices)) then
     do i = 1, size(field_indices)
-      field = this%field(field_indices(i))
-      call atlas__Field__sync_host(field%CPTR_PGIBUG_A)
+      call atlas__FieldSet__sync_host_by_idx(this%c_ptr(), field_indices(i)-1)
     end do
   else
-    do i = 1, this%size()
-      field = this%field(i)
-      call atlas__Field__sync_host(field%CPTR_PGIBUG_A)
-    end do
+    call atlas__FieldSet__sync_host(this%c_ptr())
   end if
 end subroutine
 
@@ -589,15 +627,13 @@ end subroutine
 
 subroutine sync_host_name(this, field_names)
   use, intrinsic :: iso_c_binding, only : c_int
-  use atlas_field_c_binding
-  use atlas_Field_module, only: atlas_Field
+  use atlas_fieldset_c_binding
+  use fckit_c_interop_module, only: c_str
   class(atlas_FieldSet), intent(inout) :: this
   character(*), intent(in) :: field_names(:)
-  type(atlas_Field) :: field
   integer(c_int) :: i
   do i = 1, size(field_names)
-    field = this%field(field_names(i))
-    call atlas__Field__sync_host(field%CPTR_PGIBUG_A)
+    call atlas__FieldSet__sync_host_name(this%c_ptr(), c_str(field_names(i)))
   end do
 end subroutine
 
@@ -605,22 +641,16 @@ end subroutine
 
 subroutine sync_device_idx(this, field_indices)
   use, intrinsic :: iso_c_binding, only : c_int
-  use atlas_field_c_binding
-  use atlas_Field_module, only: atlas_Field
+  use atlas_fieldset_c_binding
   class(atlas_FieldSet), intent(inout) :: this
   integer, intent(in), optional :: field_indices(:)
-  type(atlas_Field) :: field
   integer(c_int) :: i
   if (present(field_indices)) then
     do i = 1, size(field_indices)
-      field = this%field(field_indices(i))
-      call atlas__Field__sync_device(field%CPTR_PGIBUG_A)
+      call atlas__FieldSet__sync_device_by_idx(this%c_ptr(), field_indices(i)-1)
     end do
   else
-    do i = 1, this%size()
-      field = this%field(i)
-      call atlas__Field__sync_device(field%CPTR_PGIBUG_A)
-    end do
+    call atlas__FieldSet__sync_device(this%c_ptr())
   end if
 end subroutine
 
@@ -628,15 +658,13 @@ end subroutine
 
 subroutine sync_device_name(this, field_names)
   use, intrinsic :: iso_c_binding, only : c_int
-  use atlas_field_c_binding
-  use atlas_Field_module, only: atlas_Field
+  use atlas_fieldset_c_binding
+  use fckit_c_interop_module, only: c_str
   class(atlas_FieldSet), intent(inout) :: this
   character(*), intent(in) :: field_names(:)
-  type(atlas_Field) :: field
   integer(c_int) :: i
   do i = 1, size(field_names)
-    field = this%field(field_names(i))
-    call atlas__Field__sync_device(field%CPTR_PGIBUG_A)
+    call atlas__FieldSet__sync_device_name(this%c_ptr(), c_str(field_names(i)))
   end do
 end subroutine
 
@@ -644,22 +672,16 @@ end subroutine
 
 subroutine allocate_device_idx(this, field_indices)
   use, intrinsic :: iso_c_binding, only : c_int
-  use atlas_field_c_binding
-  use atlas_Field_module, only: atlas_Field
+  use atlas_fieldset_c_binding
   class(atlas_FieldSet), intent(inout) :: this
   integer, intent(in), optional :: field_indices(:)
-  type(atlas_Field) :: field
   integer(c_int) :: i
   if (present(field_indices)) then
     do i = 1, size(field_indices)
-      field = this%field(field_indices(i))
-      call atlas__Field__allocate_device(field%CPTR_PGIBUG_A)
+      call atlas__FieldSet__allocate_device_by_idx(this%c_ptr(), field_indices(i)-1)
     end do
   else
-    do i = 1, this%size()
-      field = this%field(i)
-      call atlas__Field__allocate_device(field%CPTR_PGIBUG_A)
-    end do
+    call atlas__FieldSet__allocate_device(this%c_ptr())
   end if
 end subroutine
 
@@ -667,15 +689,13 @@ end subroutine
 
 subroutine allocate_device_name(this, field_names)
   use, intrinsic :: iso_c_binding, only : c_int
-  use atlas_field_c_binding
-  use atlas_Field_module, only: atlas_Field
+  use atlas_fieldset_c_binding
+  use fckit_c_interop_module, only: c_str
   class(atlas_FieldSet), intent(inout) :: this
   character(*), intent(in) :: field_names(:)
-  type(atlas_Field) :: field
   integer(c_int) :: i
   do i = 1, size(field_names)
-    field = this%field(field_names(i))
-    call atlas__Field__allocate_device(field%CPTR_PGIBUG_A)
+    call atlas__FieldSet__allocate_device_name(this%c_ptr(), c_str(field_names(i)))
   end do
 end subroutine
 
@@ -683,22 +703,16 @@ end subroutine
 
 subroutine update_device_idx(this, field_indices)
   use, intrinsic :: iso_c_binding, only : c_int
-  use atlas_field_c_binding
-  use atlas_Field_module, only: atlas_Field
+  use atlas_fieldset_c_binding
   class(atlas_FieldSet), intent(inout) :: this
   integer, intent(in), optional :: field_indices(:)
-  type(atlas_Field) :: field
   integer(c_int) :: i
   if (present(field_indices)) then
     do i = 1, size(field_indices)
-      field = this%field(field_indices(i))
-      call atlas__Field__update_device(field%CPTR_PGIBUG_A)
+      call atlas__FieldSet__update_device_by_idx(this%c_ptr(), field_indices(i)-1)
     end do
   else
-    do i = 1, this%size()
-      field = this%field(i)
-      call atlas__Field__update_device(field%CPTR_PGIBUG_A)
-    end do
+    call atlas__FieldSet__update_device(this%c_ptr())
   end if
 end subroutine
 
@@ -706,15 +720,13 @@ end subroutine
 
 subroutine update_device_name(this, field_names)
   use, intrinsic :: iso_c_binding, only : c_int
-  use atlas_field_c_binding
-  use atlas_Field_module, only: atlas_Field
+  use atlas_fieldset_c_binding
+  use fckit_c_interop_module, only: c_str
   class(atlas_FieldSet), intent(inout) :: this
   character(*), intent(in) :: field_names(:)
-  type(atlas_Field) :: field
   integer(c_int) :: i
   do i = 1, size(field_names)
-    field = this%field(field_names(i))
-    call atlas__Field__update_device(field%CPTR_PGIBUG_A)
+    call atlas__FieldSet__update_device_name(this%c_ptr(), c_str(field_names(i)))
   end do
 end subroutine
 
@@ -722,22 +734,16 @@ end subroutine
 
 subroutine update_host_idx(this, field_indices)
   use, intrinsic :: iso_c_binding, only : c_int
-  use atlas_field_c_binding
-  use atlas_Field_module, only: atlas_Field
+  use atlas_fieldset_c_binding
   class(atlas_FieldSet), intent(inout) :: this
   integer, intent(in), optional :: field_indices(:)
-  type(atlas_Field) :: field
   integer(c_int) :: i
   if (present(field_indices)) then
     do i = 1, size(field_indices)
-      field = this%field(field_indices(i))
-      call atlas__Field__update_host(field%CPTR_PGIBUG_A)
+      call atlas__FieldSet__update_host_by_idx(this%c_ptr(), field_indices(i)-1)
     end do
   else
-    do i = 1, this%size()
-      field = this%field(i)
-      call atlas__Field__update_host(field%CPTR_PGIBUG_A)
-    end do
+    call atlas__FieldSet__update_host(this%c_ptr())
   end if
 end subroutine
 
@@ -745,15 +751,13 @@ end subroutine
 
 subroutine update_host_name(this, field_names)
   use, intrinsic :: iso_c_binding, only : c_int
-  use atlas_field_c_binding
-  use atlas_Field_module, only: atlas_Field
+  use atlas_fieldset_c_binding
+  use fckit_c_interop_module, only: c_str
   class(atlas_FieldSet), intent(inout) :: this
   character(*), intent(in) :: field_names(:)
-  type(atlas_Field) :: field
   integer(c_int) :: i
   do i = 1, size(field_names)
-    field = this%field(field_names(i))
-    call atlas__Field__update_host(field%CPTR_PGIBUG_A)
+    call atlas__FieldSet__update_host_name(this%c_ptr(), c_str(field_names(i)))
   end do
 end subroutine
 
@@ -761,22 +765,16 @@ end subroutine
 
 subroutine deallocate_device_idx(this, field_indices)
   use, intrinsic :: iso_c_binding, only : c_int
-  use atlas_field_c_binding
-  use atlas_Field_module, only: atlas_Field
+  use atlas_fieldset_c_binding
   class(atlas_FieldSet), intent(inout) :: this
   integer, optional :: field_indices(:)
-  type(atlas_Field) :: field
   integer(c_int) :: i
   if (present(field_indices)) then
     do i = 1, size(field_indices)
-      field = this%field(field_indices(i))
-      call atlas__Field__deallocate_device(field%CPTR_PGIBUG_A)
+      call atlas__FieldSet__deallocate_device_by_idx(this%c_ptr(), field_indices(i)-1)
     end do
   else
-    do i = 1, this%size()
-      field = this%field(i)
-      call atlas__Field__deallocate_device(field%CPTR_PGIBUG_A)
-    end do
+    call atlas__FieldSet__deallocate_device(this%c_ptr())
   end if
 end subroutine
 
@@ -784,15 +782,13 @@ end subroutine
 
 subroutine deallocate_device_name(this, field_names)
   use, intrinsic :: iso_c_binding, only : c_int
-  use atlas_field_c_binding
-  use atlas_Field_module, only: atlas_Field
+  use atlas_fieldset_c_binding
+  use fckit_c_interop_module, only: c_str
   class(atlas_FieldSet), intent(inout) :: this
   character(*), intent(in) :: field_names(:)
-  type(atlas_Field) :: field
   integer(c_int) :: i
   do i = 1, size(field_names)
-    field = this%field(field_names(i))
-    call atlas__Field__deallocate_device(field%CPTR_PGIBUG_A)
+    call atlas__FieldSet__deallocate_device_name(this%c_ptr(), c_str(field_names(i)))
   end do
 end subroutine
 
@@ -813,7 +809,7 @@ subroutine set_dirty(this,value)
   else
       value_int = 1
   endif
-  call atlas__FieldSet__set_dirty(this%CPTR_PGIBUG_A, value_int)
+  call atlas__FieldSet__set_dirty(this%c_ptr(), value_int)
 end subroutine
 
 !-------------------------------------------------------------------------------

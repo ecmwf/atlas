@@ -53,7 +53,7 @@ implicit none
 
   ! Check constructor
   geometry = atlas_Geometry("UnitSphere")
-  write(0,*) "geometry%c_ptr() = ", c_ptr_to_loc(geometry%CPTR_PGIBUG_A)
+  write(0,*) "geometry%c_ptr() = ", c_ptr_to_loc(geometry%c_ptr())
 
   ! Define points
   lonlat1 = (/-71.6_c_double, -33._c_double/)
@@ -102,7 +102,7 @@ implicit none
 
   ! Check constructor for Earth
   geometry = atlas_Geometry("Earth")
-  write(0,*) "geometry%c_ptr() = ", c_ptr_to_loc(geometry%CPTR_PGIBUG_A)
+  write(0,*) "geometry%c_ptr() = ", c_ptr_to_loc(geometry%c_ptr())
 
   ! Define points
   lonlat1 = (/-71.6_c_double, -33._c_double/)
@@ -151,7 +151,7 @@ implicit none
 
   ! Check constructor for another planet (Mars here)
   geometry = atlas_Geometry( 3389500.0_c_double )
-  write(0,*) "geometry%c_ptr() = ", c_ptr_to_loc(geometry%CPTR_PGIBUG_A)
+  write(0,*) "geometry%c_ptr() = ", c_ptr_to_loc(geometry%c_ptr())
 
   ! Define points
   lonlat1 = (/-71.6_c_double, -33._c_double/)

@@ -27,12 +27,12 @@ install(
 
 if (NOT HAVE_PMR)
   list( APPEND pmr_compat_src
-      pluto/memory_resource/compat/memory_resource
+      pluto/memory_resource/compat/memory_resource.h
       pluto/memory_resource/compat/memory_resource.cc
   )
   install(
     FILES
-      pluto/memory_resource/compat/memory_resource
+      pluto/memory_resource/compat/memory_resource.h
     DESTINATION
       ${INSTALL_INCLUDE_DIR}/pluto/memory_resource/compat
   )
