@@ -105,7 +105,8 @@ CASE("Forward interpolation") {
 }
 
 CASE("Adjoint interpolation") {
-    const auto function_spaces      = FunctionSpaces();
+    const auto function_spaces = FunctionSpaces();
+
     const auto make_and_init_fields = [&] {
         auto [source_field, target_field] = make_fields(function_spaces);
         assign_field(source_field, 0., 0.);
@@ -115,7 +116,7 @@ CASE("Adjoint interpolation") {
 
     const auto has_empty_halos = [](Field& field) {
         const auto ghost = array::make_view<int, 1>(field.functionspace().ghost());
-        const auto view = array::make_view<double, 1>(field);
+        const auto view  = array::make_view<double, 1>(field);
         for (int i = 0; i < view.size(); ++i) {
             if (ghost(i) && view(i) != 0.) {
                 return false;
@@ -140,7 +141,7 @@ CASE("Adjoint interpolation") {
     }
     SECTION("Manual halo exchange") {
         auto [source_field, target_field] = make_and_init_fields();
-        const auto interp = create_interp_object(function_spaces, false);
+        const auto interp                 = create_interp_object(function_spaces, false);
         interp.execute_adjoint(source_field, target_field);
         source_field.adjointHaloExchange();
         EXPECT(!source_field.dirty());
