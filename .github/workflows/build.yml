@@ -330,6 +330,16 @@ jobs:
         # Add mpirun to path for testing
         [ -z ${MPI_HOME+x} ] || echo "${MPI_HOME}/bin" >> $GITHUB_PATH
 
+        # Force UCX (and thus OpenMPI's UCX PML) onto TCP + shared-memory transports.
+        # The GitHub-hosted Azure runners intermittently expose a MANA (mana_0) RDMA/
+        # InfiniBand device on which UCX fails to create UD queue-pairs, causing
+        # MPI_Init to abort ("failed to create UD QP ... Operation not supported").
+        # These are single-node tests that never need RDMA, so restrict transports to
+        # loopback TCP + shared memory to make MPI startup deterministic.
+        echo "UCX_TLS=tcp,self,sm" >> $GITHUB_ENV
+        echo "UCX_NET_DEVICES=lo"  >> $GITHUB_ENV
+        echo "UCX_LOG_LEVEL=error" >> $GITHUB_ENV
+
     - name: Build & Test
       id: build-test
       uses: ecmwf/build-package@v2
