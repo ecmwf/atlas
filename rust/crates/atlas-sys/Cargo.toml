@@ -1,0 +1,31 @@
+[package]
+name = "atlas-sys"
+version = "0.46.0"
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+readme.workspace = true
+keywords.workspace = true
+categories.workspace = true
+description = "Build-only crate for ECMWF atlas (grid/mesh library)"
+links = "atlas_sys"
+build = "build.rs"
+
+[features]
+default = ["vendored"]
+
+# Build strategy (mutually exclusive)
+vendored = ["eckit-sys/vendored"]
+system = ["eckit-sys/system"]
+
+# OpenMP support
+omp = []
+
+[dependencies]
+eckit-sys = { workspace = true, default-features = false }
+
+[build-dependencies]
+bindman-utils.workspace = true
+
+[package.metadata.docs.rs]
