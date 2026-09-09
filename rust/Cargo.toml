@@ -19,11 +19,4 @@ atlas-sys = { path = "crates/atlas-sys" }
 eckit-sys = { git = "ssh://git@github.com/ecmwf/eckit.git", branch = "develop", default-features = false }
 
 # Build tools
-bindman = { git = "ssh://git@github.com/ecmwf/bindman.git", rev = "47edf68" }
-bindman-build = { git = "ssh://git@github.com/ecmwf/bindman.git", rev = "47edf68" }
 bindman-utils = { git = "ssh://git@github.com/ecmwf/bindman.git", rev = "47edf68" }
-
-# External
-cxx = "1.0"
-cxx-build = "1.0"
-thiserror = "2"
