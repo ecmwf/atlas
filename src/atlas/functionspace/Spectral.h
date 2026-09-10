@@ -106,6 +106,8 @@ public:
 
     std::string distribution() const override;
 
+    std::string mpi_comm() const override { return mpi_comm_; }
+
     idx_t part() const override;
 
     idx_t nb_parts() const override;
@@ -141,7 +143,8 @@ public:
             zonal_wavenumbers{fs.zonal_wavenumbers()},
             offsets_by_zonal_wavenumber{fs.offsets_by_zonal_wavenumber()},
             global{config.getBool("global", false)},
-            owner{config.getInt("owner", 0)} {}
+            owner{config.getInt("owner", 0)},
+            mpi_comm{fs.mpi_comm()} {}
 
     protected:
         using View = const array::LocalView<const int, 1>;
@@ -150,6 +153,7 @@ public:
         View offsets_by_zonal_wavenumber;
         bool global;
         idx_t owner;
+        std::string mpi_comm;
 
     public:
 #define FunctorArgs(...)                                                                                             \
@@ -160,7 +164,8 @@ public:
         template <typename Functor, FunctorArgs(idx_t, idx_t, int, int)>
         void operator()(const Functor& f) const {
             if (global) {
-                if (owner == mpi::rank()) {
+                const auto& comm = mpi::comm(mpi_comm);
+                if (comm.size() == 0 || owner == comm.rank()) {
                     atlas_omp_parallel_for(int m = 0; m <= truncation; ++m) {
                         idx_t index = global_offset_by_zonal_wavenumber(m);
                         for (int n = m; n <= truncation; ++n, index += 2) {
@@ -186,7 +191,8 @@ public:
         template <typename Functor, FunctorArgs(idx_t, idx_t, int)>
         void operator()(const Functor& f) const {
             if (global) {
-                if (owner == mpi::rank()) {
+                const auto& comm = mpi::comm(mpi_comm);
+                if (comm.size() == 0 || owner == comm.rank()) {
                     atlas_omp_parallel_for(int m = 0; m <= truncation; ++m) {
                         idx_t index = global_offset_by_zonal_wavenumber(m);
                         for (int n = m; n <= truncation; ++n, index += 2) {
@@ -262,6 +268,7 @@ private:  // Fortran access
     array::LocalView<const int, 1> nasm0_base1() const;   // Base offset in memory for this zonal wave number
 
 private:  // data
+    std::string mpi_comm_;
     idx_t nb_levels_;
     int truncation_;
 

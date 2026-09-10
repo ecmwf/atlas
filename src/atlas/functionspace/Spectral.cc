@@ -118,17 +118,18 @@ public:
 #if ATLAS_HAVE_TRANS
 class Parallelisation_ectrans : public Spectral::Parallelisation {
 public:
-    Parallelisation_ectrans(int truncation) {
+    Parallelisation_ectrans(int truncation, const std::string& mpi_comm) {
+        const auto& comm = mpi::comm(mpi_comm);
         trans_ = std::shared_ptr<::Trans_t>(new ::Trans_t, [](::Trans_t* p) {
             TRANS_CHECK(::trans_delete(p));
             delete p;
         });
 #if ATLAS_ECTRANS_VERSION_AT_LEAST(1, 8, 0)
-        TRANS_CHECK(::trans_set_mpi_comm(mpi::comm().communicator()));
+        TRANS_CHECK(::trans_set_mpi_comm(comm.communicator()));
 #endif
         TRANS_CHECK(::trans_new(trans_.get()));
         TRANS_CHECK(::trans_set_trunc(trans_.get(), truncation));
-        TRANS_CHECK(::trans_use_mpi(mpi::size() > 1));
+        TRANS_CHECK(::trans_use_mpi(comm.size() > 1));
         TRANS_CHECK(::trans_setup(trans_.get()));
     }
     virtual ~Parallelisation_ectrans() {}
@@ -210,7 +211,8 @@ idx_t Spectral::config_size(const eckit::Configuration& config) const {
         if (global) {
             idx_t owner(0);
             config.get("owner", owner);
-            size = (idx_t(mpi::rank()) == owner ? nb_spectral_coefficients_global() : 0);
+            const auto& comm = mpi::comm(mpi_comm_);
+            size = (comm.size() == 0 || idx_t(comm.rank()) == owner ? nb_spectral_coefficients_global() : 0);
         }
     }
     return size;
@@ -223,6 +225,10 @@ Spectral::Spectral(const eckit::Configuration& config): Spectral::Spectral(confi
 // ----------------------------------------------------------------------
 
 namespace {
+    std::string get_mpi_comm(const eckit::Configuration& config) {
+        return config.getString("mpi_comm", mpi::comm().name());
+    }
+
     [[maybe_unused]] bool is_backend_local(const eckit::Configuration& config) {
         std::string backend;
         if (config.get("backend", backend)) {
@@ -235,9 +241,9 @@ namespace {
 }
 
 Spectral::Spectral(const int truncation, const eckit::Configuration& config):
-    nb_levels_(0), truncation_(truncation),
+    mpi_comm_(get_mpi_comm(config)), nb_levels_(0), truncation_(truncation),
         #if ATLAS_HAVE_TRANS
-            parallelisation_(is_backend_local(config) ? static_cast<Parallelisation*>(new Parallelisation_local(truncation_)) : static_cast<Parallelisation*>(new Parallelisation_ectrans(truncation_)))
+            parallelisation_(is_backend_local(config) ? static_cast<Parallelisation*>(new Parallelisation_local(truncation_)) : static_cast<Parallelisation*>(new Parallelisation_ectrans(truncation_, mpi_comm_)))
         #else
             parallelisation_(new Parallelisation_local(truncation_))
         #endif
@@ -252,11 +258,11 @@ std::string Spectral::distribution() const {
 }
 
 idx_t Spectral::part() const {
-  return mpi::rank();
+    return mpi::comm(mpi_comm_).rank();
 }
 
 idx_t Spectral::nb_parts() const {
-   return mpi::size();
+     return mpi::comm(mpi_comm_).size();
 }
 
 size_t Spectral::footprint() const {
@@ -357,7 +363,7 @@ void Spectral::gather(const FieldSet& local_fieldset, FieldSet& global_fieldset)
 #if ATLAS_HAVE_TRANS
         Field& glb = global_fieldset[f];
         idx_t root = 0;
-        idx_t rank = mpi::rank();
+        idx_t rank = mpi::comm(mpi_comm_).rank();
         glb.metadata().get("owner", root);
         ATLAS_ASSERT(loc.shape(0) == nb_spectral_coefficients());
         if (rank == root) {
@@ -418,7 +424,7 @@ void Spectral::scatter(const FieldSet& global_fieldset, FieldSet& local_fieldset
 
 #if ATLAS_HAVE_TRANS
         idx_t root = 0;
-        idx_t rank = mpi::rank();
+        idx_t rank = mpi::comm(mpi_comm_).rank();
 
         glb.metadata().get("owner", root);
         ATLAS_ASSERT(loc.shape(0) == nb_spectral_coefficients());
