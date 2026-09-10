@@ -14,6 +14,7 @@
 #include "atlas/output/Gmsh.h"
 #include "tests/AtlasTestEnvironment.h"
 #include "atlas/functionspace/NodeColumns.h"
+#include "atlas/functionspace/Spectral.h"
 #include "atlas/functionspace/StructuredColumns.h"
 #include "atlas/functionspace/BlockStructuredColumns.h"
 #include "atlas/functionspace/PointCloud.h"
@@ -89,6 +90,15 @@ void field_init(Field& field) {
     }
 }
 
+template <typename FunctionSpace>
+void check_scatter_metadata(const FunctionSpace& fs, Field& local, Field& global) {
+    if (global.size()) {
+        global.metadata().set("split_color", color());
+    }
+    fs.scatter(global, local);
+    EXPECT_EQUAL(local.metadata().get<int>("split_color"), color());
+}
+
 CASE("test FunctionSpace NodeColumns") {
     Fixture fixture;
 
@@ -115,6 +125,7 @@ CASE("test FunctionSpace NodeColumns") {
             EXPECT_EQ(++g,x);
         });
     }
+    check_scatter_metadata(fs, field, fieldg);
 
     // Checksum
     auto checksum = fs.checksum(field);
@@ -126,6 +137,25 @@ CASE("test FunctionSpace NodeColumns") {
     output::Gmsh gmsh(mesh.grid().name()+".msh");
     gmsh.write(mesh);
     gmsh.write(field);
+}
+
+CASE("test FunctionSpace Spectral records communicator") {
+    Fixture fixture;
+
+    functionspace::Spectral spectral(3, util::Config("backend", "local") | util::Config("mpi_comm", "split"));
+    EXPECT_EQUAL(spectral.mpi_comm(), "split");
+    EXPECT_EQUAL(spectral.part(), mpi::comm("split").rank());
+    EXPECT_EQUAL(spectral.nb_parts(), mpi::comm("split").size());
+
+    constexpr idx_t owner = 0;
+    Field global = spectral.createField<double>(atlas::option::global() | util::Config("owner", owner));
+    const bool is_owner = mpi::comm("split").rank() == owner;
+    EXPECT_EQUAL(global.shape(0), (is_owner ? spectral.nb_spectral_coefficients_global() : 0));
+
+    idx_t iterations = 0;
+    spectral.parallel_for(atlas::option::global() | util::Config("owner", owner),
+                          [&](idx_t, idx_t, int, int) { ++iterations; });
+    EXPECT_EQUAL(iterations, (is_owner ? spectral.nb_spectral_coefficients_global() / 2 : 0));
 }
 
 
@@ -153,6 +183,7 @@ CASE("test FunctionSpace StructuredColumns") {
             EXPECT_EQ(++g,x);
         });
     }
+    check_scatter_metadata(fs, field, fieldg);
 
     // Checksum
     auto checksum = fs.checksum(field);
@@ -219,6 +250,7 @@ CASE("test FunctionSpace PointCloud") {
             EXPECT_EQ(++g,x);
         });
     }
+    check_scatter_metadata(fs, field, fieldg);
 
     // Checksum
     // auto checksum = fs.checksum(field);

@@ -474,7 +474,7 @@ void EdgeColumns::scatter(const FieldSet& global_fieldset, FieldSet& local_field
             throw_Exception("datatype not supported", Here());
         }
 
-        glb.metadata().broadcast(loc.metadata(), root);
+        glb.metadata().broadcast(loc.metadata(), root, mpi_comm());
         loc.metadata().set("global", false);
         loc.set_dirty(true);
     }

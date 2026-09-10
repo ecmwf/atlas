@@ -65,22 +65,27 @@ void Metadata::broadcast(Metadata& dest) {
 }
 
 void Metadata::broadcast(Metadata& dest, idx_t root) {
+    broadcast(dest, root, mpi::comm().name());
+}
+
+void Metadata::broadcast(Metadata& dest, idx_t root, const std::string& mpi_comm) {
+    const auto& comm = mpi::comm(mpi_comm);
     std::string buffer;
     int buffer_size{0};
-    if (mpi::rank() == root) {
+    if (comm.rank() == root) {
         buffer      = json(eckit::JSON::Formatting::COMPACT);
         buffer_size = static_cast<int>(buffer.size());
     }
 
-    ATLAS_TRACE_MPI(BROADCAST) { atlas::mpi::comm().broadcast(buffer_size, root); }
+    ATLAS_TRACE_MPI(BROADCAST) { comm.broadcast(buffer_size, root); }
 
-    if (mpi::rank() != root) {
+    if (comm.rank() != root) {
         buffer.resize(buffer_size);
     }
 
-    ATLAS_TRACE_MPI(BROADCAST) { mpi::comm().broadcast(buffer.begin(), buffer.end(), root); }
+    ATLAS_TRACE_MPI(BROADCAST) { comm.broadcast(buffer.begin(), buffer.end(), root); }
 
-    if (not(&dest == this && mpi::rank() == root)) {
+    if (not(&dest == this && comm.rank() == root)) {
         std::stringstream s;
         s << buffer;
         eckit::JSONParser parser(s);
@@ -94,6 +99,10 @@ void Metadata::broadcast(Metadata& dest) const {
 
 void Metadata::broadcast(Metadata& dest, idx_t root) const {
     const_cast<Metadata*>(this)->broadcast(dest, root);
+}
+
+void Metadata::broadcast(Metadata& dest, idx_t root, const std::string& mpi_comm) const {
+    const_cast<Metadata*>(this)->broadcast(dest, root, mpi_comm);
 }
 
 Metadata& Metadata::set(const eckit::Configuration& other) {
