@@ -322,6 +322,26 @@ Field Spectral::createField(const Field& other, const eckit::Configuration& conf
                        config);
 }
 
+namespace {
+
+// Workaround for ectrans version < 2.1 because of problem with
+// zero-sized spectral data arrays, see https://github.com/ecmwf-ifs/ectrans/pull/476
+[[maybe_unused]] double* zero_size_spectral_data() {
+    static double value = 0.;
+    return &value;
+}
+
+[[maybe_unused]] double* spectral_data(Field& field) {
+    double* data = field.array().data<double>();
+    return data == nullptr && field.shape(0) == 0 ? zero_size_spectral_data() : data;
+}
+
+[[maybe_unused]] const double* spectral_data(const Field& field) {
+    const double* data = field.array().data<double>();
+    return data == nullptr && field.shape(0) == 0 ? zero_size_spectral_data() : data;
+}
+}  // namespace
+
 void Spectral::gather(const FieldSet& local_fieldset, FieldSet& global_fieldset) const {
     ATLAS_ASSERT(local_fieldset.size() == global_fieldset.size());
 
@@ -365,7 +385,7 @@ void Spectral::gather(const FieldSet& local_fieldset, FieldSet& global_fieldset)
         args.nfld                = nto.size();
         args.rspecg              = glb.array().data<double>();
         args.nto                 = nto.data();
-        args.rspec               = loc.array().data<double>();
+        args.rspec               = spectral_data(loc);
         TRANS_CHECK(::trans_gathspec(&args));
 #else
 
@@ -428,7 +448,7 @@ void Spectral::scatter(const FieldSet& global_fieldset, FieldSet& local_fieldset
         args.nfld                = int(nfrom.size());
         args.rspecg              = glb.array().data<double>();
         args.nfrom               = nfrom.data();
-        args.rspec               = loc.array().data<double>();
+        args.rspec               = spectral_data(loc);
         TRANS_CHECK(::trans_distspec(&args));
 
         glb.metadata().broadcast(loc.metadata(), root);
@@ -469,7 +489,7 @@ void Spectral::norm(const Field& field, double& norm, int rank) const {
 
     struct ::SpecNorm_t args = new_specnorm(*parallelisation_ectrans);
     args.nfld                = 1;
-    args.rspec               = field.array().data<double>();
+    args.rspec               = spectral_data(field);
     args.rnorm               = &norm;
     args.nmaster             = rank + 1;
     TRANS_CHECK(::trans_specnorm(&args));
@@ -493,7 +513,7 @@ void Spectral::norm(const Field& field, double norm_per_level[], int rank) const
 
     struct ::SpecNorm_t args = new_specnorm(*parallelisation_ectrans);
     args.nfld                = std::max<int>(1, field.levels());
-    args.rspec               = field.array().data<double>();
+    args.rspec               = spectral_data(field);
     args.rnorm               = norm_per_level;
     args.nmaster             = rank + 1;
     TRANS_CHECK(::trans_specnorm(&args));
