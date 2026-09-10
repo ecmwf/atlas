@@ -47,12 +47,16 @@ void finalize();
 void finalise();
 
 namespace scope {
+    namespace detail {
+        void push(const Comm& comm);
+    }
     /// @brief Push a new scope for MPI communicators. The current default communicator is restored when the scope is destructed using pop()
     void push();
     /// @brief Push a new scope for MPI communicators. The given communicator is set as the default communicator for the duration of the scope. The previous default communicator is restored when the scope is destructed using pop()
     void push(std::string_view name);
     /// @brief Push a new scope for MPI communicators. The given communicator is set as the default communicator for the duration of the scope. The previous default communicator is restored when the scope is destructed using pop()
-    void push(const Comm& comm);
+    template <typename CommT, std::enable_if_t<std::is_same_v<std::decay_t<CommT>, Comm>, int> = 0>
+    void push(CommT&& comm) { detail::push(comm); }
     /// @brief Push a new scope for MPI communicators. The given communicator is set as the default communicator for the duration of the scope. The previous default communicator is restored when the scope is destructed using pop()
     /// If the given communicator is not already registered, it will be registered with a generated name "int.<communicator>" for the duration of the scope, and unregistered when the scope is destructed.
     void push(int communicator);
