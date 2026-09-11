@@ -245,7 +245,7 @@ CASE("test_build_edges") {
     Mesh mesh = generator.generate(grid);
 
     // Accumulate facets of cells ( edges in 2D )
-    mesh::actions::build_edges(mesh, option::pole_edges(false));
+    mesh::actions::build_edges(mesh, Config("pole_edges", false)("node_order", "global_index"));
 
     std::vector<idx_t> edge_nodes_check{
         0,  21, 21, 22, 22, 1,  1,  0,  22, 23, 23, 2,  2,  1,  3,  25, 25, 26, 26, 4,  4,  3,  26, 27, 27, 5,  5,
@@ -264,17 +264,19 @@ CASE("test_build_edges") {
 
     {
         const mesh::HybridElements::Connectivity& edge_node_connectivity = mesh.edges().node_connectivity();
+        const mesh::HybridElements::Connectivity& edge_cell_connectivity = mesh.edges().cell_connectivity();
+        const auto node_gidx = array::make_view<gidx_t, 1>(mesh.nodes().global_index());
         EXPECT(mesh.projection().units() == "degrees");
-        const util::UniqueLonLat compute_uid(mesh);
         EXPECT_EQ(mesh.edges().size(), edge_nodes_check.size() / 2);
         for (idx_t jedge = 0; jedge < mesh.edges().size(); ++jedge) {
-            if (compute_uid(edge_nodes_check[2 * jedge + 0]) < compute_uid(edge_nodes_check[2 * jedge + 1])) {
-                EXPECT_EQ(edge_nodes_check[2 * jedge + 0], edge_node_connectivity(jedge, 0));
-                EXPECT_EQ(edge_nodes_check[2 * jedge + 1], edge_node_connectivity(jedge, 1));
-            }
-            else {
-                EXPECT_EQ(edge_nodes_check[2 * jedge + 0], edge_node_connectivity(jedge, 1));
-                EXPECT_EQ(edge_nodes_check[2 * jedge + 1], edge_node_connectivity(jedge, 0));
+            const idx_t expected_node1 = edge_nodes_check[2 * jedge + 0];
+            const idx_t expected_node2 = edge_nodes_check[2 * jedge + 1];
+            const idx_t node1          = edge_node_connectivity(jedge, 0);
+            const idx_t node2          = edge_node_connectivity(jedge, 1);
+            EXPECT((node1 == expected_node1 && node2 == expected_node2) ||
+                   (node1 == expected_node2 && node2 == expected_node1));
+            if (edge_cell_connectivity(jedge, 1) != edge_cell_connectivity.missing_value()) {
+                EXPECT(node_gidx(node1) < node_gidx(node2));
             }
         }
     }
@@ -454,21 +456,34 @@ CASE("test_build_edges") {
     {
         const mesh::HybridElements::Connectivity& cell_node_connectivity = mesh.cells().node_connectivity();
         const mesh::HybridElements::Connectivity& edge_cell_connectivity = mesh.edges().cell_connectivity();
-        const util::UniqueLonLat compute_uid(mesh);
+        const mesh::HybridElements::Connectivity& edge_node_connectivity = mesh.edges().node_connectivity();
+        const auto node_xyz = array::make_view<double, 2>(mesh.nodes().field("xyz"));
         EXPECT_EQ(mesh.edges().size(), edge_to_cell_check.size() / 2);
         for (idx_t jedge = 0; jedge < mesh.edges().size(); ++jedge) {
-            idx_t e1 = edge_to_cell_check[2 * jedge + 0];
-            idx_t e2 = edge_to_cell_check[2 * jedge + 1];
-            if (e2 == edge_cell_connectivity.missing_value() ||
-                compute_uid(cell_node_connectivity.row(e1)) < compute_uid(cell_node_connectivity.row(e2))) {
-                EXPECT_EQ(edge_to_cell_check[2 * jedge + 0], edge_cell_connectivity(jedge, 0));
-                EXPECT_EQ(edge_to_cell_check[2 * jedge + 1], edge_cell_connectivity(jedge, 1));
+            const idx_t expected_e1 = edge_to_cell_check[2 * jedge + 0];
+            const idx_t expected_e2 = edge_to_cell_check[2 * jedge + 1];
+            const idx_t e1          = edge_cell_connectivity(jedge, 0);
+            const idx_t e2          = edge_cell_connectivity(jedge, 1);
+            EXPECT((e1 == expected_e1 && e2 == expected_e2) || (e1 == expected_e2 && e2 == expected_e1));
+
+            const idx_t node1 = edge_node_connectivity(jedge, 0);
+            const idx_t node2 = edge_node_connectivity(jedge, 1);
+            const double normal_x = node_xyz(node1, YY) * node_xyz(node2, ZZ) -
+                                    node_xyz(node1, ZZ) * node_xyz(node2, YY);
+            const double normal_y = node_xyz(node1, ZZ) * node_xyz(node2, XX) -
+                                    node_xyz(node1, XX) * node_xyz(node2, ZZ);
+            const double normal_z = node_xyz(node1, XX) * node_xyz(node2, YY) -
+                                    node_xyz(node1, YY) * node_xyz(node2, XX);
+            double centre_x = 0.;
+            double centre_y = 0.;
+            double centre_z = 0.;
+            for (idx_t jnode = 0; jnode < cell_node_connectivity.cols(e1); ++jnode) {
+                const idx_t cell_node = cell_node_connectivity(e1, jnode);
+                centre_x += node_xyz(cell_node, XX);
+                centre_y += node_xyz(cell_node, YY);
+                centre_z += node_xyz(cell_node, ZZ);
             }
-            else {
-                std::cout << "jedge " << jedge << std::endl;
-                EXPECT_EQ(edge_to_cell_check[2 * jedge + 0], edge_cell_connectivity(jedge, 1));
-                EXPECT_EQ(edge_to_cell_check[2 * jedge + 1], edge_cell_connectivity(jedge, 0));
-            }
+            EXPECT(normal_x * centre_x + normal_y * centre_y + normal_z * centre_z >= 0.);
         }
     }
 
@@ -480,6 +495,30 @@ CASE("test_build_edges") {
                 std::cout << std::setw(3) << elem_edge_connectivity(jelem, jedge) << "  ";
             }
             std::cout << std::endl;
+        }
+    }
+}
+
+CASE("test_build_edges_node_order_xy") {
+    Grid grid("O2");
+    StructuredMeshGenerator generator(Config("angle", 29.0)("triangulate", false)("ghost_at_end", false));
+    Mesh mesh = generator.generate(grid);
+
+    mesh::actions::build_edges(mesh, Config("pole_edges", false)("node_order", "xy"));
+
+    const auto& edge_nodes = mesh.edges().node_connectivity();
+    const auto& edge_cells = mesh.edges().cell_connectivity();
+    const auto& cell_nodes = mesh.cells().node_connectivity();
+    UniqueLonLat compute_uid(mesh);
+
+    for (idx_t edge = 0; edge < mesh.edges().size(); ++edge) {
+        EXPECT(compute_uid(edge_nodes(edge, 0)) <= compute_uid(edge_nodes(edge, 1)));
+
+        const idx_t cell1 = edge_cells(edge, 0);
+        const idx_t cell2 = edge_cells(edge, 1);
+        EXPECT(cell1 != edge_cells.missing_value());
+        if (cell2 != edge_cells.missing_value()) {
+            EXPECT(compute_uid(cell_nodes.row(cell1)) <= compute_uid(cell_nodes.row(cell2)));
         }
     }
 }
