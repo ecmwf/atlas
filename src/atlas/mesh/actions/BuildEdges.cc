@@ -357,6 +357,9 @@ void build_edges(Mesh& mesh, const eckit::Configuration& config) {
     std::string node_order = "xy";
     config.get("node_order", node_order);
     ATLAS_ASSERT(node_order == "xy" || node_order == "global_index");
+    std::string cell_order = "xy";
+    config.get("cell_order", cell_order);
+    ATLAS_ASSERT(cell_order == "xy" || cell_order == "left_first" || cell_order == "right_first");
 
     mesh::Nodes& nodes = mesh.nodes();
     auto node_part     = array::make_view<int, 1>(nodes.partition());
@@ -470,7 +473,7 @@ void build_edges(Mesh& mesh, const eckit::Configuration& config) {
             const idx_t e2 = edge_to_elem_data[2 * iedge + 1];
 
             ATLAS_ASSERT(e1 != cell_nodes.missing_value());
-            if (node_order == "xy") {
+            if (cell_order == "xy") {
                 if (e2 == cell_nodes.missing_value()) {
                     continue;
                 }
@@ -480,6 +483,7 @@ void build_edges(Mesh& mesh, const eckit::Configuration& config) {
                 }
             }
             else {
+                bool left_cell_first = (cell_order == "left_first");
                 const idx_t node1 = edge_nodes(edge, 0);
                 const idx_t node2 = edge_nodes(edge, 1);
                 const double edge_normal_x = node_xyz(node1, YY) * node_xyz(node2, ZZ) -
@@ -515,8 +519,8 @@ void build_edges(Mesh& mesh, const eckit::Configuration& config) {
                         edge_nodes.set(edge, swapped);
                     }
                     else {
-                        edge_to_elem_data[iedge * 2 + 0] = e2;
-                        edge_to_elem_data[iedge * 2 + 1] = e1;
+                        edge_to_elem_data[iedge * 2 + 0] = (left_cell_first ? e2 : e1);
+                        edge_to_elem_data[iedge * 2 + 1] = (left_cell_first ? e1 : e2);
                     }
                 }
             }
@@ -653,6 +657,12 @@ void atlas__build_edges(Mesh::Implementation* mesh) {
     ATLAS_ASSERT(mesh != nullptr, "Cannot access uninitialised atlas_Mesh");
     Mesh m(mesh);
     build_edges(m);
+}
+void atlas__build_edges_config(Mesh::Implementation* mesh, const eckit::Configuration* config) {
+    ATLAS_ASSERT(mesh != nullptr, "Cannot access uninitialised atlas_Mesh");
+    ATLAS_ASSERT(config != nullptr, "Cannot access uninitialised atlas_Config");
+    Mesh m(mesh);
+    build_edges(m, *config);
 }
 void atlas__build_pole_edges(Mesh::Implementation*) {
     Log::info() << "ATLAS_WARNING: Deprecation warning: atlas_build_pole_edges is no longer required.\n"
