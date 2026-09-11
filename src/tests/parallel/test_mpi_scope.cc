@@ -42,6 +42,13 @@ CASE("test_mpi_scope") {
     EXPECT_EQ( mpi::comm().name(), "comm1" );
 
     {
+        mpi::scope::push(mpi::comm("self"));
+        EXPECT_EQ( mpi::comm().name(), "self" );
+        mpi::scope::pop();
+    }
+    EXPECT_EQ( mpi::comm().name(), "comm1" );
+
+    {
         // Use RAII style scope management using atlas::mpi::Scope with Comm argument
         mpi::Scope scope(mpi::comm("self"));
         EXPECT_EQ( mpi::comm().name(), "self" );
