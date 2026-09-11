@@ -183,7 +183,7 @@ private:
     mutable std::unique_ptr<Matrix> matrix_transpose_;
 
 protected:
-    bool allow_halo_exchange_{true};
+    bool perform_halo_exchange_{true};
     std::vector<idx_t> missing_;
 };
 

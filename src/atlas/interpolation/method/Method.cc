@@ -521,6 +521,7 @@ Method::Method(const Method::Config& config) {
     }
 
     config.get("adjoint", adjoint_ = false);
+    config.get("perform_halo_exchange", perform_halo_exchange_ = true);
 }
 
 void Method::setup(const FunctionSpace& source, const FunctionSpace& target) {
@@ -746,7 +747,7 @@ void Method::haloExchange(const FieldSet& fields, bool on_device) const {
     }
 }
 void Method::haloExchange(const Field& field, bool on_device) const {
-    if (field.dirty() && allow_halo_exchange_) {
+    if (field.dirty() && perform_halo_exchange_) {
         ATLAS_TRACE("haloExchange");
         if (on_device) {
             if (field.deviceNeedsUpdate()) {
@@ -770,7 +771,7 @@ void Method::adjointHaloExchange(const FieldSet& fields, bool on_device) const {
     }
 }
 void Method::adjointHaloExchange(const Field& field, bool on_device) const {
-    if (field.dirty() && allow_halo_exchange_) {
+    if (field.dirty() && perform_halo_exchange_) {
         ATLAS_TRACE("adjointHaloExchange");
         if (on_device) {
             if (field.deviceNeedsUpdate()) {
