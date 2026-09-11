@@ -33,6 +33,7 @@
 #include "atlas/mesh/Mesh.h"
 #include "atlas/mesh/Nodes.h"
 #include "atlas/mesh/detail/AccumulateFacets.h"
+#include "atlas/mesh/actions/BuildXYZField.h"
 #include "atlas/parallel/mpi/mpi.h"
 #include "atlas/runtime/Exception.h"
 #include "atlas/runtime/Log.h"
@@ -353,6 +354,9 @@ void build_edges(Mesh& mesh, const eckit::Configuration& config) {
     bool sort_edges{false};
     config.get("sort_edges", sort_edges);
 
+    std::string node_order = "xy";
+    config.get("node_order", node_order);
+    ATLAS_ASSERT(node_order == "xy" || node_order == "global_index");
 
     mesh::Nodes& nodes = mesh.nodes();
     auto node_part     = array::make_view<int, 1>(nodes.partition());
@@ -425,6 +429,10 @@ void build_edges(Mesh& mesh, const eckit::Configuration& config) {
         const auto& cell_nodes = mesh.cells().node_connectivity();
 
         UniqueLonLat compute_uid(mesh);
+        BuildXYZField("xyz")(nodes);
+        const auto node_gidx   = array::make_view<gidx_t, 1>(nodes.global_index());
+        const auto node_lonlat = array::make_view<double, 2>(nodes.lonlat());
+        const auto node_xyz    = array::make_view<double, 2>(nodes.field("xyz"));
 
         auto edge_ridx    = array::make_indexview<idx_t, 1>(mesh.edges().remote_index());
         auto edge_part    = array::make_view<int, 1>(mesh.edges().partition());
@@ -437,9 +445,17 @@ void build_edges(Mesh& mesh, const eckit::Configuration& config) {
             const idx_t iedge = edge_halo_offsets[halo] + (edge - edge_start);
             const int ip1     = edge_nodes(edge, 0);
             const int ip2     = edge_nodes(edge, 1);
-            if (compute_uid(ip1) > compute_uid(ip2)) {
-                idx_t swapped[2] = {ip2, ip1};
-                edge_nodes.set(edge, swapped);
+            if (node_order == "global_index") {
+                if (node_gidx(ip1) > node_gidx(ip2)) {
+                    idx_t swapped[2] = {ip2, ip1};
+                    edge_nodes.set(edge, swapped);
+                }
+            }
+            else {
+                if (compute_uid(ip1) > compute_uid(ip2)) {
+                    idx_t swapped[2] = {ip2, ip1};
+                    edge_nodes.set(edge, swapped);
+                }
             }
 
             ATLAS_ASSERT(idx_t(edge_nodes(edge, 0)) < nb_nodes);
@@ -454,12 +470,55 @@ void build_edges(Mesh& mesh, const eckit::Configuration& config) {
             const idx_t e2 = edge_to_elem_data[2 * iedge + 1];
 
             ATLAS_ASSERT(e1 != cell_nodes.missing_value());
-            if (e2 == cell_nodes.missing_value()) {
-                // do nothing
+            if (node_order == "xy") {
+                if (e2 == cell_nodes.missing_value()) {
+                    continue;
+                }
+                else if (compute_uid(cell_nodes.row(e1)) > compute_uid(cell_nodes.row(e2))) {
+                    edge_to_elem_data[iedge * 2 + 0] = e2;
+                    edge_to_elem_data[iedge * 2 + 1] = e1;
+                }
             }
-            else if (compute_uid(cell_nodes.row(e1)) > compute_uid(cell_nodes.row(e2))) {
-                edge_to_elem_data[iedge * 2 + 0] = e2;
-                edge_to_elem_data[iedge * 2 + 1] = e1;
+            else {
+                const idx_t node1 = edge_nodes(edge, 0);
+                const idx_t node2 = edge_nodes(edge, 1);
+                const double edge_normal_x = node_xyz(node1, YY) * node_xyz(node2, ZZ) -
+                                            node_xyz(node1, ZZ) * node_xyz(node2, YY);
+                const double edge_normal_y = node_xyz(node1, ZZ) * node_xyz(node2, XX) -
+                                            node_xyz(node1, XX) * node_xyz(node2, ZZ);
+                const double edge_normal_z = node_xyz(node1, XX) * node_xyz(node2, YY) -
+                                            node_xyz(node1, YY) * node_xyz(node2, XX);
+                const double edge_length = std::sqrt(edge_normal_x * edge_normal_x + edge_normal_y * edge_normal_y +
+                                                    edge_normal_z * edge_normal_z);
+                double centre_x = 0.;
+                double centre_y = 0.;
+                double centre_z = 0.;
+                for (idx_t jnode = 0; jnode < cell_nodes.cols(e1); ++jnode) {
+                    const idx_t cell_node = cell_nodes(e1, jnode);
+                    centre_x += node_xyz(cell_node, XX);
+                    centre_y += node_xyz(cell_node, YY);
+                    centre_z += node_xyz(cell_node, ZZ);
+                }
+
+                bool e1_is_right = edge_normal_x * centre_x + edge_normal_y * centre_y + edge_normal_z * centre_z < 0.;
+                if (edge_length == 0.) {
+                    const double longitude1 = node_lonlat(node1, LON);
+                    const double longitude2 = node_lonlat(node2, LON);
+                    const bool north_pole = node_lonlat(node1, LAT) > 0.;
+                    e1_is_right = north_pole ? longitude1 > longitude2 : longitude1 < longitude2;
+                }
+
+                if (e1_is_right) {
+                    if (e2 == cell_nodes.missing_value()) {
+                        // Re-orient the edge such that e1 is on its left side.
+                        idx_t swapped[2] = {node2, node1};
+                        edge_nodes.set(edge, swapped);
+                    }
+                    else {
+                        edge_to_elem_data[iedge * 2 + 0] = e2;
+                        edge_to_elem_data[iedge * 2 + 1] = e1;
+                    }
+                }
             }
         }
 
