@@ -13,6 +13,7 @@
 #include "atlas/functionspace/FunctionSpace.h"
 #include "atlas/array/ArrayView.h"
 #include "atlas/array/Array.h"
+#include "atlas/mdspan.h"
 #include "atlas/option.h"
 #include "atlas/parallel/mpi/mpi.h"
 
@@ -57,12 +58,14 @@ void Locator::locate(
     span<idx_t> remote_index, const idx_t remote_index_base) const {
     constexpr gidx_t fs_global_index_base_ = 1;
     constexpr int distribution_base_ = 0;
+    auto fs_global_index_view = array::make_view<const gidx_t,1>(fs_global_index_);
+    auto fs_ghost_view = array::make_view<const int,1>(fs_ghost_);
     if (distribution_array_.size()) {
         ::atlas::parallel::Locator::locate(
             // context
             mpi_comm_,
-            array::make_view<const gidx_t,1>(fs_global_index_).as_mdspan(), fs_global_index_base_,
-            array::make_view<const int,1>(fs_ghost_).as_mdspan(),
+            make_mdspan<layout_right>(fs_global_index_view), fs_global_index_base_,
+            make_mdspan<layout_right>(fs_ghost_view),
             span<const int>{distribution_array_.data(), distribution_array_.size()}, distribution_base_,
             // input
             global_index, global_index_base,
@@ -74,9 +77,9 @@ void Locator::locate(
         ::atlas::parallel::Locator::locate(
             // context
             mpi_comm_,
-            array::make_view<const gidx_t,1>(fs_global_index_).as_mdspan(),
+            make_mdspan<layout_right>(fs_global_index_view),
             fs_global_index_base_,
-            array::make_view<const int,1>(fs_ghost_).as_mdspan(),
+            make_mdspan<layout_right>(fs_ghost_view),
             fspan<const int>{&distribution_function_, distribution_size_}, distribution_base_,
             // input
             global_index, global_index_base,

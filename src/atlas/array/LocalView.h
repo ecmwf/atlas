@@ -64,30 +64,32 @@ namespace array {
 /// @endcode
 
 
-template <typename Value, int Rank>
+template <typename ElementType, int Rank>
 class LocalView {
     template <typename T>
-    using is_non_const_value_type = typename std::is_same<T, typename std::remove_const<Value>::type>;
+    using is_non_const_value_type = typename std::is_same<T, typename std::remove_const<ElementType>::type>;
 
 #define ENABLE_IF_NON_CONST                                                                             \
     template <bool EnableBool                                                                   = true, \
-              typename std::enable_if<(!std::is_const<Value>::value && EnableBool), int>::type* = nullptr>
+              typename std::enable_if<(!std::is_const<ElementType>::value && EnableBool), int>::type* = nullptr>
 
 #define ENABLE_IF_CONST_WITH_NON_CONST(T)                                                                             \
-    template <typename T, typename std::enable_if<(std::is_const<Value>::value && is_non_const_value_type<T>::value), \
+    template <typename T, typename std::enable_if<(std::is_const<ElementType>::value && is_non_const_value_type<T>::value), \
                                                   int>::type* = nullptr>
 
 
 public:
     // -- Type definitions
-    using value_type  = Value;
-    using return_type = value_type;
+    using element_type = ElementType;
+    using value_type  = std::remove_cv_t<element_type>;
+    using return_type = element_type;
+    using data_handle_type = element_type*;
 
     static constexpr int RANK{Rank};
 
 private:
-    using slicer_t       = typename helpers::ArraySlicer<LocalView<Value, Rank>>;
-    using const_slicer_t = typename helpers::ArraySlicer<const LocalView<const Value, Rank>>;
+    using slicer_t       = typename helpers::ArraySlicer<LocalView<ElementType, Rank>>;
+    using const_slicer_t = typename helpers::ArraySlicer<const LocalView<const ElementType, Rank>>;
 
     template <typename... Args>
     struct slice_t {
@@ -101,18 +103,44 @@ private:
 
     using mdspan_extents_type = dextents<size_t,RANK>;
     using mdspan_strides_type = std::array<size_t,RANK>;
-    using mdspan_type         = mdspan<value_type, mdspan_extents_type, layout_stride>;
-    using const_mdspan_type   = mdspan<const value_type, mdspan_extents_type, layout_stride>;
 
 public:
     // -- Constructors
 
+    LocalView(const LocalView& other): data_(other.data_), size_(other.size_) {
+        init_metadata_pointers();
+        copy_metadata(other.shape_, other.strides_);
+    }
 
-    template <typename ValueTp, typename = std::enable_if_t<std::is_convertible_v<ValueTp*, Value*>>>
-    LocalView(const LocalView<ValueTp,Rank>& other): data_(other.data_), size_(other.size_), shape_(other.shape_), strides_(other.strides_) {}
 
-    template <typename ValueTp, typename Int1, typename Int2, typename = std::enable_if_t<std::is_convertible_v<ValueTp*, Value*> && std::is_integral_v<Int1> && std::is_integral_v<Int2>>>
-    LocalView(ValueTp* data, const Int1 shape[], const Int2 strides[]): data_(data) {
+    template <typename ElementTypeTp, typename = std::enable_if_t<std::is_convertible_v<ElementTypeTp*, ElementType*>>>
+    LocalView(const LocalView<ElementTypeTp,Rank>& other): data_(other.data_), size_(other.size_) {
+        init_metadata_pointers();
+        copy_metadata(other.shape_, other.strides_);
+    }
+
+    LocalView& operator=(const LocalView& other) {
+        if (this != &other) {
+            data_ = other.data_;
+            size_ = other.size_;
+            init_metadata_pointers();
+            copy_metadata(other.shape_, other.strides_);
+        }
+        return *this;
+    }
+
+    template <typename ElementTypeTp, typename = std::enable_if_t<std::is_convertible_v<ElementTypeTp*, ElementType*>>>
+    LocalView& operator=(const LocalView<ElementTypeTp,Rank>& other) {
+        data_ = other.data_;
+        size_ = other.size_;
+        init_metadata_pointers();
+        copy_metadata(other.shape_, other.strides_);
+        return *this;
+    }
+
+    template <typename ElementTypeTp, typename Int1, typename Int2, typename = std::enable_if_t<std::is_convertible_v<ElementTypeTp*, ElementType*> && std::is_integral_v<Int1> && std::is_integral_v<Int2>>>
+    LocalView(ElementTypeTp* data, const Int1 shape[], const Int2 strides[]): data_(data) {
+        init_metadata_pointers();
         size_ = 1;
         for (idx_t j = 0; j < Rank; ++j) {
             shape_[j]   = shape[j];
@@ -121,8 +149,9 @@ public:
         }
     }
 
-    template <typename ValueTp, typename Int, typename = std::enable_if_t<std::is_convertible_v<ValueTp*, Value*> && std::is_integral_v<Int>>>
-    LocalView(ValueTp* data, const Int shape[]): data_(data) {
+    template <typename ElementTypeTp, typename Int, typename = std::enable_if_t<std::is_convertible_v<ElementTypeTp*, ElementType*> && std::is_integral_v<Int>>>
+    LocalView(ElementTypeTp* data, const Int shape[]): data_(data) {
+        init_metadata_pointers();
         size_ = 1;
         for (int j = Rank - 1; j >= 0; --j) {
             shape_[j]   = shape[j];
@@ -131,103 +160,112 @@ public:
         }
     }
 
-    template <typename ValueTp, typename ArrayShape, typename = std::enable_if_t<std::is_convertible_v<ValueTp*, Value*>>>
-    LocalView(ValueTp* data, const ArrayShape& shape) : LocalView(data,shape.data()) {}
+    template <typename ElementTypeTp, typename ArrayShape, typename = std::enable_if_t<std::is_convertible_v<ElementTypeTp*, ElementType*>>>
+    LocalView(ElementTypeTp* data, const ArrayShape& shape) : LocalView(data,shape.data()) {}
 
 
-    template <typename T, typename E, typename L, typename A, typename = std::enable_if_t<std::is_convertible_v<typename A::data_handle_type, Value*> && E::rank() == Rank>>
+    template <typename T, typename E, typename L, typename A, typename = std::enable_if_t<std::is_convertible_v<typename A::data_handle_type, ElementType*> && E::rank() == Rank>>
     LocalView(mdspan<T,E,L,A>& other) :
         data_(other.data_handle()), size_(other.size()) {
+        init_metadata_pointers();
         for (int j = 0; j < Rank; ++j) {
             shape_[j] = other.extent(j);
             strides_[j] = other.stride(j);
         }
     }
 
-    ENABLE_IF_CONST_WITH_NON_CONST(value_type)
-    operator const LocalView<value_type, Rank>&() const {
-        static_assert(std::is_const<Value>::value, "must be const");
+    ENABLE_IF_CONST_WITH_NON_CONST(element_type)
+    operator const LocalView<element_type, Rank>&() const {
+        static_assert(std::is_const<element_type>::value, "must be const");
         static_assert(!std::is_const<value_type>::value, "must be non-const");
-        return (const LocalView<value_type, Rank>&)(*this);
+        return (const LocalView<element_type, Rank>&)(*this);
     }
 
-    const_mdspan_type as_mdspan() const {
-        return const_mdspan_type{this->data(), {mdspan_extents(), mdspan_strides()}};
-    }
-
-    mdspan_type as_mdspan() {
-        return mdspan_type{this->data(), {mdspan_extents(), mdspan_strides()}};
-    }
 
     // -- Access methods
 
     template <typename... Idx, int Rank_ = Rank, typename = std::enable_if_t<sizeof...(Idx) == Rank_>>
-    value_type& operator()(Idx... idx) {
+    inline ATLAS_HOST_DEVICE
+    element_type& operator()(Idx... idx) {
         check_bounds(idx...);
         return data_[index(idx...)];
     }
 
     template <typename... Idx, int Rank_ = Rank, typename = std::enable_if_t<sizeof...(Idx) == Rank_>>
-    const value_type& operator()(Idx... idx) const {
+    inline ATLAS_HOST_DEVICE
+    const element_type& operator()(Idx... idx) const {
         check_bounds(idx...);
         return data_[index(idx...)];
     }
 
     template <typename Idx, int Rank_ = Rank, typename = std::enable_if_t<Rank_ == 1>>
-    const value_type& operator[](Idx idx) const {
+    inline ATLAS_HOST_DEVICE
+    const element_type& operator[](Idx idx) const noexcept(!ATLAS_ARRAYVIEW_BOUNDS_CHECKING || !ATLAS_HOST_COMPILE) {
         check_bounds(idx);
         return data_[index(idx)];
     }
 
     template <typename Idx, int Rank_ = Rank, typename = std::enable_if_t<Rank_ == 1>>
-    value_type& operator[](Idx idx) {
+    inline ATLAS_HOST_DEVICE
+    element_type& operator[](Idx idx) noexcept(!ATLAS_ARRAYVIEW_BOUNDS_CHECKING || !ATLAS_HOST_COMPILE) {
         check_bounds(idx);
         return data_[index(idx)];
     }
 
-    idx_t size() const { return size_; }
+    inline ATLAS_HOST_DEVICE
+    idx_t size() const noexcept { return size_; }
 
     template <typename Int>
-    idx_t shape(Int idx) const {
+    inline ATLAS_HOST_DEVICE
+    idx_t shape(Int idx) const noexcept {
         return shape_[idx];
     }
 
     /// @brief Return number of values in dimension idx, equivalent to shape(idx)
     template <typename Int>
-    ATLAS_HOST_DEVICE
-    idx_t extent(Int idx) const {
+    inline ATLAS_HOST_DEVICE
+    idx_t extent(Int idx) const noexcept {
         return shape(idx);
     }
 
     template <typename Int>
-    idx_t stride(Int idx) const {
+    inline ATLAS_HOST_DEVICE
+    idx_t stride(Int idx) const noexcept {
         return strides_[idx];
     }
 
-    const idx_t* shape() const { return shape_.data(); }
+    inline ATLAS_HOST_DEVICE
+    const idx_t* shape() const noexcept { return shape_; }
 
-    const idx_t* strides() const { return strides_.data(); }
+    inline ATLAS_HOST_DEVICE
+    const idx_t* strides() const noexcept { return strides_; }
 
-    value_type const* data() const { return data_; }
+    inline ATLAS_HOST_DEVICE
+    element_type const* data() const noexcept { return data_; }
 
-    value_type* data() { return data_; }
+    inline ATLAS_HOST_DEVICE
+    element_type* data() noexcept { return data_; }
 
-    bool contiguous() const { return (size_ == shape_[0] * strides_[0] ? true : false); }
+    inline ATLAS_HOST_DEVICE
+    constexpr data_handle_type data_handle() const noexcept { return data_; }
+
+    inline ATLAS_HOST_DEVICE
+    bool contiguous() const noexcept { return (size_ == shape_[0] * strides_[0] ? true : false); }
 
     ENABLE_IF_NON_CONST
     void assign(const value_type& value);
 
     void dump(std::ostream& os) const;
 
-    static constexpr idx_t rank() { return Rank; }
+    inline static constexpr idx_t rank() noexcept { return Rank; }
 
     template <typename... Args>
-    typename slice_t<Args...>::type slice(Args... args) {
+    inline typename slice_t<Args...>::type slice(Args... args) {
         return slicer_t(*this).apply(args...);
     }
 
     template <typename... Args>
-    typename const_slice_t<Args...>::type slice(Args... args) const {
+    inline typename const_slice_t<Args...>::type slice(Args... args) const {
         return const_slicer_t(*this).apply(args...);
     }
 
@@ -237,44 +275,70 @@ public:
     }
 
 private:
+
+    inline ATLAS_HOST_DEVICE 
+    void init_metadata_pointers() noexcept {
+        shape_ = shape_data_;
+        strides_ = strides_data_;
+    }
+
+    template <typename Shape, typename Strides>
+    inline ATLAS_HOST_DEVICE
+    void copy_metadata(const Shape& shape, const Strides& strides) noexcept {
+        for (int j = 0; j < Rank; ++j) {
+            shape_[j] = shape[j];
+            strides_[j] = strides[j];
+        }
+    }
+
     // -- Private methods
 
     template <int Dim, typename Int, typename... Ints>
+    inline ATLAS_HOST_DEVICE
     constexpr idx_t index_part(Int idx, Ints... next_idx) const {
         return idx * strides_[Dim] + index_part<Dim + 1>(next_idx...);
     }
 
     template <int Dim, typename Int>
+    inline ATLAS_HOST_DEVICE
     constexpr idx_t index_part(Int last_idx) const {
         return last_idx * strides_[Dim];
     }
 
     template <typename... Ints>
+    inline ATLAS_HOST_DEVICE
     constexpr idx_t index(Ints... idx) const {
         return index_part<0>(idx...);
     }
 
 #if ATLAS_ARRAYVIEW_BOUNDS_CHECKING
     template <typename... Ints>
+    inline ATLAS_HOST_DEVICE
     void check_bounds(Ints... idx) const {
         static_assert(sizeof...(idx) == Rank, "Expected number of indices is different from rank of array");
+#if ATLAS_HOST_COMPILE
         return check_bounds_part<0>(idx...);
+#endif
     }
 #else
     template <typename... Ints>
-    void check_bounds(Ints... idx) const {
+    inline ATLAS_HOST_DEVICE
+    void check_bounds(Ints... idx) const noexcept {
         static_assert(sizeof...(idx) == Rank, "Expected number of indices is different from rank of array");
     }
 #endif
 
     template <typename... Ints>
+    inline ATLAS_HOST_DEVICE
     void check_bounds_force(Ints... idx) const {
         static_assert(sizeof...(idx) == Rank, "Expected number of indices is different from rank of array");
+#if ATLAS_HOST_COMPILE
         return check_bounds_part<0>(idx...);
+#endif
     }
 
     template <int Dim, typename Int, typename... Ints>
-    void check_bounds_part(Int idx, Ints... next_idx) const {
+    inline void check_bounds_part(Int idx, Ints... next_idx) const {
         if (idx_t(idx) >= shape_[Dim]) {
             throw_OutOfRange("LocalView", array_dim<Dim>(), idx, shape_[Dim]);
         }
@@ -282,30 +346,30 @@ private:
     }
 
     template <int Dim, typename Int>
-    void check_bounds_part(Int last_idx) const {
+    inline void check_bounds_part(Int last_idx) const {
         if (idx_t(last_idx) >= shape_[Dim]) {
             throw_OutOfRange("LocalView", array_dim<Dim>(), last_idx, shape_[Dim]);
         }
     }
 
     template<int... i>
-    ATLAS_HOST_DEVICE
+    inline ATLAS_HOST_DEVICE
     mdspan_extents_type _get_mdspan_extents(std::integer_sequence<int, i...> = {}) const {
         return mdspan_extents_type{(shape_[i])...};
     }
 
-    ATLAS_HOST_DEVICE
+    inline ATLAS_HOST_DEVICE
     mdspan_extents_type mdspan_extents() const {
         return _get_mdspan_extents(std::make_integer_sequence<int,RANK>{});
     }
 
     template<int... i>
-    ATLAS_HOST_DEVICE
+    inline ATLAS_HOST_DEVICE
     mdspan_strides_type _get_mdspan_strides(std::integer_sequence<int, i...> = {}) const {
         return mdspan_strides_type{(static_cast<typename mdspan_strides_type::value_type>(strides_[i]))...};
     }
 
-    ATLAS_HOST_DEVICE
+    inline ATLAS_HOST_DEVICE
     mdspan_strides_type mdspan_strides() const {
         return _get_mdspan_strides(std::make_integer_sequence<int,RANK>{});
     }
@@ -314,10 +378,12 @@ private:
     // -- Private data
     template<typename,int> friend class LocalView;
 
-    value_type* data_;
+    element_type* data_;
     idx_t size_;
-    std::array<idx_t,Rank> shape_;
-    std::array<idx_t,Rank> strides_;
+    idx_t* shape_;
+    idx_t* strides_;
+    idx_t shape_data_[Rank];
+    idx_t strides_data_[Rank];
 
 #undef ENABLE_IF_NON_CONST
 #undef ENABLE_IF_CONST_WITH_NON_CONST

@@ -3,6 +3,7 @@
 #include <array>
 #include <iostream>
 #include <string_view>
+#include <type_traits>
 
 #if PLUTO_MDSPAN_USE_BRACKET_OPERATOR
 #define MDINDEX(...) __VA_ARGS__
@@ -172,6 +173,46 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char* argv[]) {
         pluto::mdspan<double const,pluto::dims<2>> view_2x3_const = view_2x3_nonconst;
         PRINT(view_2x3_const);
         expect_equal(view_2x3_const, std::array{1,2,3,4,5,6});
+    }
+
+    std::cout<< "\n\nTest accessor conversions" << std::endl;
+    {
+        using default_span          = pluto::mdspan<double, pluto::dims<2>>;
+        using aligned_span          = pluto::mdspan<double, pluto::dims<2>, pluto::layout_right, pluto::aligned_accessor<double, alignof(double)>>;
+        using restrict_span         = pluto::mdspan<double, pluto::dims<2>, pluto::layout_right, pluto::restrict_accessor<double>>;
+        using restrict_aligned_span = pluto::mdspan<double, pluto::dims<2>, pluto::layout_right, pluto::restrict_aligned_accessor<double, alignof(double)>>;
+
+        static_assert(std::is_convertible_v<pluto::restrict_accessor<double>, pluto::default_accessor<double>>);
+        static_assert(std::is_convertible_v<pluto::default_accessor<double>, pluto::restrict_accessor<double>>);
+        static_assert(std::is_convertible_v<pluto::restrict_accessor<double>, pluto::restrict_aligned_accessor<double, alignof(double)>>);
+        static_assert(std::is_convertible_v<pluto::default_accessor<double>, pluto::restrict_aligned_accessor<double, alignof(double)>>);
+        static_assert(std::is_convertible_v<pluto::restrict_aligned_accessor<double, alignof(double)>, pluto::restrict_accessor<double>>);
+        static_assert(std::is_convertible_v<pluto::restrict_aligned_accessor<double, alignof(double)>, pluto::default_accessor<double>>);
+
+        pluto::dims<2> shape{2,3};
+        default_span span{container.data(), shape};
+        aligned_span span_aligned{span};
+        restrict_span span_restrict{span};
+        restrict_aligned_span span_restrict_aligned_1{span_aligned};
+        restrict_aligned_span span_restrict_aligned_2{span_restrict};
+        default_span span_default_1{span_aligned};
+        default_span span_default_2{span_restrict};
+        default_span span_default_3{span_restrict_aligned_1};
+
+        PRINT(span_aligned);
+        PRINT(span_restrict);
+        PRINT(span_restrict_aligned_1);
+        PRINT(span_restrict_aligned_2);
+        PRINT(span_default_1);
+        PRINT(span_default_2);
+        PRINT(span_default_3);
+        expect_equal(span_aligned, std::array{1,2,3,4,5,6});
+        expect_equal(span_restrict, std::array{1,2,3,4,5,6});
+        expect_equal(span_restrict_aligned_1, std::array{1,2,3,4,5,6});
+        expect_equal(span_restrict_aligned_2, std::array{1,2,3,4,5,6});
+        expect_equal(span_default_1, std::array{1,2,3,4,5,6});
+        expect_equal(span_default_2, std::array{1,2,3,4,5,6});
+        expect_equal(span_default_3, std::array{1,2,3,4,5,6});
     }
 
     std::cout<< "\n\nTest layout_stride assignment" << std::endl;

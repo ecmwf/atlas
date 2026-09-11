@@ -31,15 +31,6 @@ namespace test {
 
 //-----------------------------------------------------------------------------
 
-template <typename T>
-mdspan<T,dims<1>> make_mdspan(std::vector<T>& v) {
-    return mdspan<T,dims<1>>{v.data(), v.size()};
-}
-template <typename T, size_t N>
-mdspan<T,extents<size_t,dynamic_extent,N>> make_mdspan(std::vector<std::array<T,N>>& v) {
-    return mdspan<T,extents<size_t,dynamic_extent,N>>{reinterpret_cast<T*>(v.data()), v.size()};
-}
-
 //-----------------------------------------------------------------------------
 
 CASE("test_tiny_mesh") {

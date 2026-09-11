@@ -10,6 +10,8 @@
 
 #include "hic/hic_dummy/dummyShouldNotBeCalled.h"
 
+#include <cstddef>
+
 #define DUMMY_SHOULD_NOT_BE_CALLED(SYMBOL) dummyShouldNotBeCalled(#SYMBOL)
 #define DUMMY_FUNCTION(SYMBOL)                     \
     template <typename... Args>                    \
@@ -45,10 +47,20 @@ struct dummyPointerAttributes {
     void* devicePointer{nullptr};
 };
 
+struct dummyDeviceProp_t {
+    char name[256]{"dummy"};
+    std::size_t totalGlobalMem{0};
+    int multiProcessorCount{1};
+    int warpSize{1};
+    int clockRate{0};
+};
+
 DUMMY_FUNCTION(DeviceSynchronize)
 DUMMY_FUNCTION(Free)
 DUMMY_FUNCTION(FreeAsync)
+DUMMY_FUNCTION(GetDevice)
 DUMMY_FUNCTION(GetDeviceCount)
+DUMMY_FUNCTION(GetDeviceProperties)
 DUMMY_FUNCTION(GetErrorString)
 DUMMY_FUNCTION(GetLastError)
 DUMMY_FUNCTION(HostGetDevicePointer)

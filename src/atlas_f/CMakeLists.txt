@@ -221,6 +221,7 @@ ecbuild_add_library( TARGET atlas_f
         util/atlas_KDTree_module.F90
         util/atlas_Metadata_module.F90
         util/atlas_allocate_module.F90
+        util/atlas_relayout_module.F90
         output/atlas_output_module.F90
         domain/atlas_Domain_module.F90
         functionspace/atlas_FunctionSpace_module.fypp

@@ -74,6 +74,11 @@ util/Config.cc
 util/Config.h
 
 mdspan.h
+mdspan/make_mdspan.h
+mdspan/make_mdspan_helpers.h
+mdspan/mdspan.h
+mdspan/mdspan_introspection.h
+mdspan/mdspan_introspection_detail.h
 )
 
 list( APPEND atlas_grid_srcs
@@ -889,6 +894,12 @@ util/Point.cc
 util/Point.h
 util/Polygon.cc
 util/Polygon.h
+util/relayout.cc
+util/relayout.h
+util/relayout_on_host_double.cc
+util/relayout_on_host_float.cc
+util/relayout_on_host_int.cc
+util/relayout_on_host_long.cc
 util/Rotation.cc
 util/Rotation.h
 util/Registry.h
@@ -988,10 +999,18 @@ if( atlas_HAVE_GPU )
   include( atlas_host_device )
   list( APPEND source_list
     parallel/detail/DevicePacker.hic
+    util/relayout_on_device_double.hic
+    util/relayout_on_device_float.hic
+    util/relayout_on_device_int.hic
+    util/relayout_on_device_long.hic
   )
   atlas_host_device( source_list
     SOURCES
       parallel/detail/DevicePacker.hic
+      util/relayout_on_device_double.hic
+      util/relayout_on_device_float.hic
+      util/relayout_on_device_int.hic
+      util/relayout_on_device_long.hic
       mesh/Connectivity.cc
   )
 

@@ -27,7 +27,7 @@ namespace array {
 
 
 template <typename Value, int Rank>
-ENABLE_IF_NON_CONST void LocalView<Value, Rank>::assign(const Value& value) {
+ENABLE_IF_NON_CONST void LocalView<Value, Rank>::assign(const value_type& value) {
     helpers::array_assigner<Value, Rank>::apply(*this, value);
 }
 
