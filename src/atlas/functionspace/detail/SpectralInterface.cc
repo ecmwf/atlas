@@ -26,7 +26,8 @@ struct SpectralFortranAccess {
     int nump() const { return fs_.nump(); }
     array::LocalView<const int, 1> nvalue() const { return fs_.nvalue(); }
     array::LocalView<const int, 1> nmyms() const { return fs_.nmyms(); }
-    array::LocalView<const int, 1> nasm0() const { return fs_.nasm0(); }
+    array::LocalView<const int, 1> nasm0_base0() const { return fs_.nasm0_base0(); }
+    array::LocalView<const int, 1> nasm0_base1() const { return fs_.nasm0_base1(); }
 };
 }  // namespace detail
 
@@ -128,8 +129,8 @@ void atlas__SpectralFunctionSpace__nmyms(const detail::Spectral* This, const int
     size              = nmyms_.size();
 }
 
-void atlas__SpectralFunctionSpace__nasm0(const detail::Spectral* This, const int*& nasm0, int& size) {
-    const auto nasm0_ = SpectralFortranAccess(*This).nasm0();
+void atlas__SpectralFunctionSpace__nasm0_base1(const detail::Spectral* This, const int*& nasm0, int& size) {
+    const auto nasm0_ = SpectralFortranAccess(*This).nasm0_base1();
     nasm0             = nasm0_.data();
     size              = nasm0_.size();
 }

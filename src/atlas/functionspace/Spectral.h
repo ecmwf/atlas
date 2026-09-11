@@ -45,18 +45,54 @@ class Spectral : public functionspace::FunctionSpaceImpl {
   Spectral data is organised as:
      m = zonal wavenumber
      n = total wavenumber
-  
-  const auto zonal_wavenumbers = Spectral::zonal_wavenumbers();
-  const int truncation = Spectral::truncation();
-  idx_t jc=0;
-  for( int jm=0; jm<zonal_wavenumbers.size(); ++jm ) {
-    int m = zonal_wavenumbers(jm);
-    for( int n=m; m<=truncation; ++n ) {
-      data( jc++, jfld ) = func_real_part(m,n);
-      data( jc++, jfld ) = func_imag_part(m,n);
-    }
+
+  const auto zonal_wavenumbers = spectral.zonal_wavenumbers();
+  const int truncation = spectral.truncation();
+  idx_t index = 0;
+  for( idx_t jm=0; jm<zonal_wavenumbers.size(); ++jm ) {
+      const int m = zonal_wavenumbers(jm);
+      for( int n=m; n<=truncation; ++n ) {
+          data( index,   level ) = func_real_part(n,m,level);
+          data( index+1, level ) = func_imag_part(n,m,level);
+          index += 2;
+      }
   }
-  
+
+  Alternatively, offsets_by_zonal_wavenumber() can be used as the base offset
+  for each zonal wavenumber.
+
+  const auto offsets_by_zonal_wavenumber = spectral.offsets_by_zonal_wavenumber();
+  for( idx_t jm=0; jm<zonal_wavenumbers.size(); ++jm ) {
+      const int m = zonal_wavenumbers(jm);
+      const idx_t offset_for_zonal_wavenumber = offsets_by_zonal_wavenumber[m];
+      for( int n=m; n<=truncation; ++n ) {
+          const idx_t index = offset_for_zonal_wavenumber + 2 * (n - m);
+          data( index,   level ) = func_real_part(n,m,level);
+          data( index+1, level ) = func_imag_part(n,m,level);
+      }
+  }
+
+  Or inverting the loop order, less efficient.
+
+  for( int n=0; n<=truncation; ++n ) {
+      for( idx_t jm=0; jm<zonal_wavenumbers.size(); ++jm ) {
+          const int m = zonal_wavenumbers(jm);
+          if( m > n ) {
+              continue;
+          }
+          const idx_t offset_for_zonal_wavenumber = offsets_by_zonal_wavenumber[m];
+          const idx_t index = offset_for_zonal_wavenumber + 2 * (n - m);
+          data( index,   level ) = func_real_part(n,m,level);
+          data( index+1, level ) = func_imag_part(n,m,level);
+      }
+  }
+
+  The same storage order can also be accessed with parallel_for().
+
+  spectral.parallel_for([&]( idx_t real, idx_t imag, int n, int m ) {
+      data( real, level ) = func_real_part(n,m,level);
+      data( imag, level ) = func_imag_part(n,m,level);
+  });
 */
 
 public:
@@ -93,7 +129,8 @@ public:
     void norm(const Field&, double norm_per_level[], int rank = 0) const;
     void norm(const Field&, std::vector<double>& norm_per_level, int rank = 0) const;
 
-    array::LocalView<const int, 1> zonal_wavenumbers() const;  // zero-based, OK
+    array::LocalView<const int, 1> zonal_wavenumbers() const;  // zero-based
+    array::LocalView<const int, 1> offsets_by_zonal_wavenumber() const;  // zero-based nasm0 for use in C++
 
     idx_t levels() const { return nb_levels_; }
 
@@ -102,6 +139,7 @@ public:
         For(const Spectral& fs, const util::Config& config = util::NoConfig()):
             truncation{fs.truncation()},
             zonal_wavenumbers{fs.zonal_wavenumbers()},
+            offsets_by_zonal_wavenumber{fs.offsets_by_zonal_wavenumber()},
             global{config.getBool("global", false)},
             owner{config.getInt("owner", 0)} {}
 
@@ -109,6 +147,7 @@ public:
         using View = const array::LocalView<const int, 1>;
         int truncation;
         View zonal_wavenumbers;
+        View offsets_by_zonal_wavenumber;
         bool global;
         idx_t owner;
 
@@ -120,24 +159,24 @@ public:
         // Functor: void f(real,imag,n,m)
         template <typename Functor, FunctorArgs(idx_t, idx_t, int, int)>
         void operator()(const Functor& f) const {
-            idx_t index = 0;
             if (global) {
                 if (owner == mpi::rank()) {
-                    for(int m = 0; m <= truncation; ++m) {
-                        for (int n = m; n <= truncation; ++n) {
+                    atlas_omp_parallel_for(int m = 0; m <= truncation; ++m) {
+                        idx_t index = global_offset_by_zonal_wavenumber(m);
+                        for (int n = m; n <= truncation; ++n, index += 2) {
                             f(index, index + 1, n, m);
-                            index += 2;
                         }
                     }
+
                 }
             }
             else {
                 const int nb_zonal_wavenumbers{static_cast<int>(zonal_wavenumbers.size())};
-                for(int jm = 0; jm < nb_zonal_wavenumbers; ++jm) {
+                atlas_omp_parallel_for(int jm = 0; jm < nb_zonal_wavenumbers; ++jm) {
                     const int m = zonal_wavenumbers(jm);
-                    for (int n = m; n <= truncation; ++n) {
+                    idx_t index = offsets_by_zonal_wavenumber[m];
+                    for (int n = m; n <= truncation; ++n, index += 2) {
                         f(index, index + 1, n, m);
-                        index += 2;
                     }
                 }
             }
@@ -146,28 +185,46 @@ public:
         // Functor: void f(real,imag,n)
         template <typename Functor, FunctorArgs(idx_t, idx_t, int)>
         void operator()(const Functor& f) const {
-            idx_t index = 0;
             if (global) {
                 if (owner == mpi::rank()) {
-                    for(int m = 0; m <= truncation; ++m) {
-                        for (int n = m; n <= truncation; ++n) {
+                    atlas_omp_parallel_for(int m = 0; m <= truncation; ++m) {
+                        idx_t index = global_offset_by_zonal_wavenumber(m);
+                        for (int n = m; n <= truncation; ++n, index += 2) {
                             f(index, index + 1, n);
-                            index += 2;
                         }
                     }
                 }
             }
             else {
                 const int nb_zonal_wavenumbers{static_cast<int>(zonal_wavenumbers.size())};
-                for(int jm = 0; jm < nb_zonal_wavenumbers; ++jm) {
+                atlas_omp_parallel_for(int jm = 0; jm < nb_zonal_wavenumbers; ++jm) {
                     const int m = zonal_wavenumbers(jm);
-                    for (int n = m; n <= truncation; ++n) {
+                    idx_t index = offsets_by_zonal_wavenumber[m];
+                    for (int n = m; n <= truncation; ++n, index += 2) {
                         f(index, index + 1, n);
-                        index += 2;
                     }
                 }
             }
         }
+        idx_t global_offset_by_zonal_wavenumber(const int m) const {
+            // For the global packed triangular layout:
+            // idx_t index = 0;
+            // for(int m = 0; m <= truncation; ++m) {
+            //     for (int n = m; n <= truncation; ++n) {
+            //         f(index, index + 1, n);
+            //         index += 2;
+            //     }
+            // }
+
+            // The value `index` can be computed directly rather than accumulated:
+            //    index = offset(m) + 2 * (n - m)
+            // where
+            //    offset(m) = sum_{k=0}^{m-1} 2 * (truncation - k + 1)
+            // which simplifies to:
+            //    offset(m) = m * (2 * truncation + 3 - m)
+            return static_cast<idx_t>(m) * (static_cast<idx_t>(truncation) * 2 + 3 - m);
+        }
+
 #undef FunctorArgs
     };
     template <typename Functor>
@@ -198,16 +255,19 @@ private:  // methods
 
 private:  // Fortran access
     friend struct SpectralFortranAccess;
-    int nump() const;                               // equivalent to nmyms().size()
+    int nump() const;                               // Number of zonal wave numbers m on THIS rank, equivalent to nmyms().size()
     array::LocalView<const int, 1> nvalue() const;  // Return wave number n for a given index
-    array::LocalView<const int, 1> nmyms() const;   // Return list of local zonal wavenumbers "m"
-    array::LocalView<const int, 1> nasm0() const;
+    array::LocalView<const int, 1> nmyms() const;   // Array of actual m values (zonal wave numbers) on this rank (size nump)
+    array::LocalView<const int, 1> nasm0_base0() const;   // Base offset in memory for this zonal wave number
+    array::LocalView<const int, 1> nasm0_base1() const;   // Base offset in memory for this zonal wave number
 
 private:  // data
     idx_t nb_levels_;
     int truncation_;
 
     class Parallelisation;
+    friend class Parallelisation_ectrans;
+    friend class Parallelisation_local;
     std::unique_ptr<Parallelisation> parallelisation_;
 };
 
@@ -232,7 +292,8 @@ public:
     void norm(const Field&, double norm_per_level[], int rank = 0) const;
     void norm(const Field&, std::vector<double>& norm_per_level, int rank = 0) const;
 
-    array::LocalView<const int, 1> zonal_wavenumbers() const;  // zero-based, OK
+    array::LocalView<const int, 1> zonal_wavenumbers() const;  // zero-based
+    array::LocalView<const int, 1> offsets_by_zonal_wavenumber() const;  // zero-based nasm0 for use in C++
 
     idx_t nb_spectral_coefficients() const;
     idx_t nb_spectral_coefficients_global() const;
