@@ -13,6 +13,7 @@
 
 #include "atlas/functionspace.h"
 #include "atlas/interpolation/method/Method.h"
+// #include "atlas/interpolation/method/unstructured/ConservativeSphericalPolygonInterpolationLimiter.h"
 #include "atlas/util/ConvexSphericalPolygon.h"
 
 namespace atlas {
@@ -20,6 +21,9 @@ namespace interpolation {
 namespace method {
 
 using Indices = std::vector<idx_t>;
+
+
+class ConservativeSphericalPolygonInterpolationLimiter;
 
 
 class ConservativeSphericalPolygonInterpolation : public Method {
@@ -37,10 +41,10 @@ private:
         size_t footprint() const override;
         static std::string static_type() { return "ConservativeSphericalPolygonInterpolation"; }
         std::string type() const override { return static_type(); }
-        void print(std::ostream& out) const;
 
     private:
         friend class ConservativeSphericalPolygonInterpolation;
+        friend class ConservativeSphericalPolygonInterpolationLimiter;
 
         struct PolygonsData {
             enum class Context { SOURCE, TARGET } context;
@@ -73,6 +77,7 @@ private:
         } timings;
 
         std::vector<InterpolationParameters> tgt_iparam_;
+        std::vector<InterpolationParameters> src_iparam_; // only for validate_ and limiter_
 
         // Reconstructible if need be
         FunctionSpace src_fs_;
@@ -128,27 +133,35 @@ public:
 
     private:
         friend class ConservativeSphericalPolygonInterpolation;
+        friend class ConservativeSphericalPolygonInterpolationLimiter;
         Cache(std::shared_ptr<InterpolationCacheEntry> entry);
         const Data* entry_{nullptr};
     };
 
     struct Statistics {
         enum Counts {
-            NUM_SRC_PLG = 0,  // index, number of source polygons
-            NUM_TGT_PLG,      // index, number of target polygons
-            NUM_INT_PLG,      // index, number of intersection polygons
-            NUM_UNCVR_FULL_TGT,    // index, number of completely non covered target polygons
-            NUM_UNCVR_PART_TGT,    // index, number of partially non covered target polygons
+            NUM_SRC_PLG = 0,        // index, number of source polygons
+            NUM_TGT_PLG,            // index, number of target polygons
+            NUM_INT_PLG,            // index, number of intersection polygons
+            NUM_UNCVR_FULL_TGT,     // index, number of completely non covered target polygons
+            NUM_UNCVR_PART_TGT,     // index, number of partially non covered target polygons
             NUM_ENUM_SIZE
         };
         enum Errors {
-            ERR_TGT_INTERSECTPLG_L1 = 0,      // see above
-            ERR_TGT_INTERSECTPLG_LINF,    // see above
-            ERR_SRCTGT_INTERSECTPLG_DIFF,    // index, 1/(unit_sphere.area) ( \sum_{scell} scell.area - \sum{tcell} tcell.area )
-            ERR_REMAP_CONS,  // index, error in mass conservation
-            ERR_REMAP_L2,    // index, error accuracy for given analytical function
-            ERR_REMAP_LINF,  // index, like REMAP_L2 but in L_infinity norm
+            ERR_TGT_INTERSECTPLG_L1 = 0,    // see above
+            ERR_TGT_INTERSECTPLG_LINF,      // see above
+            ERR_SRCTGT_INTERSECTPLG_DIFF,   // index, 1/(unit_sphere.area) ( \sum_{scell} scell.area - \sum{tcell} tcell.area )
+            ERR_REMAP_CONS,                 // index, error in mass conservation
+            ERR_REMAP_RELCONS,              // index, error in mass conservation as percentage of source mass
+            ERR_REMAP_L2,                   // index, error accuracy for given analytical function
+            ERR_REMAP_LINF,                 // index, like REMAP_L2 but in L_infinity norm
             ERR_ENUM_SIZE
+        };
+        enum Mass {
+            MASS_SRC = 0,       // total source mass
+            MASS_TGT,
+            MASS_LIMITER,
+            MASS_ENUM_SIZE
         };
         enum Timings {
             TIME_SRC_PLG = 0,   // index, max time in second per task to build source polygons
@@ -178,13 +191,14 @@ public:
             MEM_IPARAM,      // index, max memory size per task of stored intersection parameters
             MEM_ENUM_SIZE
         };
-        std::array<int, NUM_ENUM_SIZE> counts;
-        std::array<double, ERR_ENUM_SIZE> errors;
-        std::array<size_t, MEM_ENUM_SIZE> memory;
-        std::array<double, TIME_ENUM_SIZE> time;
+        std::array<int, NUM_ENUM_SIZE> counts = {-1};
+        std::array<double, ERR_ENUM_SIZE> errors = {-1.};
+        std::array<double, MASS_ENUM_SIZE> mass = {-1.};
+        std::array<size_t, MEM_ENUM_SIZE> memory = {1};
+        std::array<double, TIME_ENUM_SIZE> time = {-1};
 
-        double tgt_area_sum;
-        double src_area_sum;
+        double tgt_area_sum = 0.;
+        double src_area_sum = 0.;
         bool all;
         bool accuracy;
         bool conservation;
@@ -201,6 +215,8 @@ public:
 
 
 public:
+    friend class ConservativeSphericalPolygonInterpolationLimiter;
+
     ConservativeSphericalPolygonInterpolation(const Config& = util::NoConfig());
 
     using Method::do_setup;
@@ -222,7 +238,24 @@ public:
 
     interpolation::Cache createCache() const override;
 
+
 private:
+
+struct Workspace_get_cell_neighbours {
+    PointXYZ p0;
+    PointLonLat p0_ll;
+    PointXYZ p1;
+    PointLonLat p1_ll;
+};
+
+struct Workspace_get_node_neighbours {
+    std::vector<idx_t> nbr_nodes_od;
+    std::vector< std::array<idx_t,2> > cnodes;
+};
+
+
+private:
+
     using Polygon = util::ConvexSphericalPolygon;
     using PolygonArray = std::vector<util::ConvexSphericalPolygon>;
 
@@ -236,15 +269,10 @@ private:
     void dump_intersection(const std::string, const Polygon& plg_1, const PolygonArray& plg_2_array,
                            const Indices& plg_2_idx_array) const;
 
-    struct Workspace_get_cell_neighbours;
     std::vector<idx_t> get_cell_neighbours(Mesh&, idx_t jcell, Workspace_get_cell_neighbours&) const;
-
-    struct Workspace_get_node_neighbours;
     std::vector<idx_t> get_node_neighbours(Mesh&, idx_t jcell, Workspace_get_node_neighbours&) const;
 
     void init_polygons_data(FunctionSpace fs, Data::PolygonsData& md);
-
-
     Polygon get_csp_celldata(idx_t csp_id, const Mesh& mesh, const Data::PolygonsData& md);
     Polygon get_csp_nodedata(idx_t csp_id, const Mesh& mesh, Data::PolygonsData& md);
 
@@ -261,7 +289,7 @@ private:
 
     std::pair<idx_t, idx_t> csp_to_cell_and_subcell(idx_t csp_id, const Data::PolygonsData& md) const {
         auto iterator_upper_bound = std::upper_bound(md.csp_index.begin(), md.csp_index.end(), csp_id);
-        idx_t idx     = iterator_upper_bound-1 - md.csp_index.begin();
+        idx_t idx     = iterator_upper_bound - 1 - md.csp_index.begin();
         idx_t cell    = md.csp_cell_index[idx];
         idx_t subcell = csp_id - md.csp_index[idx];
         return std::make_pair(cell, subcell);
@@ -289,7 +317,8 @@ private:
         return md.cell_data ? get_polygons_celldata(fs, md) : get_polygons_nodedata(fs, md);
     }
 
-
+    PointXYZ src_gradient_celldata(idx_t scell, const array::ArrayView<double, 1>& src_vals) const;
+    PointXYZ src_gradient_nodedata(idx_t snode, const array::ArrayView<double, 1>& src_vals) const;
     int next_index(int current_index, int size) const;
     int prev_index(int current_index, int size) const;
 
@@ -304,8 +333,14 @@ private:
     mutable Mesh src_mesh_;
     mutable Mesh tgt_mesh_;
     bool normalise_;
+    std::string limiter_;
+    std::string limiter_output_;
+    int limiter_detector_size_;
+    int limiter_iterations_;
     int order_;
     bool matrix_free_;
+
+    mutable idx_t tcsp_size_;              // for the zeroslope limiter only
 
     mutable Statistics remap_stat_;
 

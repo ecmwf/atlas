@@ -25,16 +25,11 @@ namespace function {
 ///           as the sinusoid analytical function in Sec 2.1.2.
 ///           The longitude (lon) and latitude (lat) are assumed to be in degrees,
 ///
-double MDPI_sinusoid(double lon, double lat);
-double MDPI_harmonic(double lon, double lat);
-double MDPI_vortex(double lon, double lat);
-double MDPI_gulfstream(double lon, double lat);
+double XStep(double lon, double lat);
+
 
 extern "C" {
-    double atlas__functions__MDPI_sinusoid(double& lon, double& lat);
-    double atlas__functions__MDPI_harmonic(double& lon, double& lat);
-    double atlas__functions__MDPI_vortex(double& lon, double& lat);
-    double atlas__functions__MDPI_gulfstream(double& lon, double& lat);
+    double atlas__functions__XStep(double& lon, double& lat);
 }
 
 }  // namespace function
