@@ -80,6 +80,9 @@ CASE("Forward interpolation") {
         };
 
         SECTION("Automatic halo exchange enabled (default behaviour), manual=false, correct") {
+            // Default behaviour. Halo exchange of source field triggers if field is dirty.
+            // Interpolation has executed correctly.
+
             auto [source_field, target_field] = make_and_init_fields();
             const auto interp                 = create_interp_object(function_spaces);
             interp.execute(source_field, target_field);
@@ -87,6 +90,9 @@ CASE("Forward interpolation") {
             EXPECT(!has_nan(target_field));
         }
         SECTION("Automatic halo exchange disabled, manual=false, faulty") {
+            // Automatic halo exchange of source field is disabled.
+            // Interpolation is incorrect. Dirty halo data (NaNs) have propogated to target field.
+
             auto [source_field, target_field] = make_and_init_fields();
             const auto interp                 = create_interp_object(function_spaces, false);
             interp.execute(source_field, target_field);
@@ -94,6 +100,9 @@ CASE("Forward interpolation") {
             EXPECT(has_nan(target_field));
         }
         SECTION("Manual halo exchange") {
+            // Automatic halo exchange is disabled, but we manually perform it before interpolation.
+            // Interpolation has executed correctly.
+
             auto [source_field, target_field] = make_and_init_fields();
             source_field.haloExchange();
             const auto interp = create_interp_object(function_spaces, false);
@@ -126,6 +135,9 @@ CASE("Adjoint interpolation") {
     };
 
     SECTION("Automatic halo exchange enabled (default behaviour)") {
+        // Default behaviour. Adjoint of halo exchange always triggers after adjoint of interpolation.
+        // Source field is valid and ready to use in further computations.
+
         auto [source_field, target_field] = make_and_init_fields();
         const auto interp                 = create_interp_object(function_spaces);
         interp.execute_adjoint(source_field, target_field);
@@ -133,6 +145,9 @@ CASE("Adjoint interpolation") {
         EXPECT(has_empty_halos(source_field));
     }
     SECTION("Automatic halo exchange disabled") {
+        // Automatic adjoint halo exchange of source field is disabled.
+        // Source field may contain sensitivity information in its halo.
+
         auto [source_field, target_field] = make_and_init_fields();
         const auto interp                 = create_interp_object(function_spaces, false);
         interp.execute_adjoint(source_field, target_field);
@@ -140,6 +155,9 @@ CASE("Adjoint interpolation") {
         EXPECT(!has_empty_halos(source_field));
     }
     SECTION("Manual halo exchange") {
+        // Automatic adjoint of halo exchange has been disabled, but we manually trigger it after adjoint of interpolation.
+        // Source field is valid and ready to use in further computations.
+
         auto [source_field, target_field] = make_and_init_fields();
         const auto interp                 = create_interp_object(function_spaces, false);
         interp.execute_adjoint(source_field, target_field);
