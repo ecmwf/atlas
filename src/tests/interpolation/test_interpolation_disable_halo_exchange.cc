@@ -79,7 +79,7 @@ CASE("Forward interpolation") {
             return std::any_of(view.data(), view.data() + view.size(), [](double value) { return std::isnan(value); });
         };
 
-        SECTION("Automatic halo exchange enabled (default behaviour)") {
+        SECTION("Automatic halo exchange enabled (default behaviour), manual=false, correct") {
             auto [source_field, target_field] = make_and_init_fields();
             const auto interp                 = create_interp_object(function_spaces);
             interp.execute(source_field, target_field);
