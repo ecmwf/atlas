@@ -86,7 +86,7 @@ CASE("Forward interpolation") {
             EXPECT(!source_field.dirty());
             EXPECT(!has_nan(target_field));
         }
-        SECTION("Automatic halo exchange disabled") {
+        SECTION("Automatic halo exchange disabled, manual=false, faulty") {
             auto [source_field, target_field] = make_and_init_fields();
             const auto interp                 = create_interp_object(function_spaces, false);
             interp.execute(source_field, target_field);
