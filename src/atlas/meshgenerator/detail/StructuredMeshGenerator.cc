@@ -262,6 +262,29 @@ void StructuredMeshGenerator::generate(const Grid& grid, const grid::Distributio
     Region region;
     generate_region(rg, distribution, mypart, region);
 
+    if (options.getBool("patch_pole")) {
+        const bool north_to_south = rg.y().front() > rg.y().back();
+        const idx_t north         = north_to_south ? 0 : rg.ny() - 1;
+        const idx_t south         = north_to_south ? rg.ny() - 1 : 0;
+
+        auto extend_patch_region = [&](idx_t jlat) {
+            if (rg.nx(jlat) > 0 && distribution.partition(rg.index(0, jlat)) == mypart) {
+                const idx_t previous_size = region.lat_end.at(jlat) - region.lat_begin.at(jlat) + 1;
+                const idx_t patch_end = rg.nx(jlat) - ((rg.periodic() && !options.getBool("three_dimensional")) ? 0 : 1);
+                region.lat_begin.at(jlat)  = 0;
+                region.lat_end.at(jlat)    = patch_end;
+                region.nnodes += patch_end + 1 - previous_size;
+            }
+        };
+
+        if (rg.y(north) != 90. && rg.domain().containsNorthPole()) {
+            extend_patch_region(north);
+        }
+        if (rg.y(south) != -90. && rg.domain().containsSouthPole()) {
+            extend_patch_region(south);
+        }
+    }
+
     if (not rg.projection() && rg.domain().global()) {
         double max_dy = 0;
         for (size_t ilat = 0; ilat < rg.ny()-1; ilat++) {
@@ -906,18 +929,10 @@ void StructuredMeshGenerator::generate_mesh(const StructuredGrid& rg, const grid
     idx_t nx_north        = y_numbering < 0 ? rg.nx().front() : rg.nx().back();
     idx_t nx_south        = y_numbering < 0 ? rg.nx().back() : rg.nx().front();
 
-    std::vector<int> part_north(nx_north);
-    std::vector<int> part_south(nx_south);
-    if (y_numbering < 0) {
-        distribution.partition(0, nx_north, part_north);
-        distribution.partition(rg.size() - nx_south, rg.size(), part_south);
-    }
-    else {
-        distribution.partition(0, nx_south, part_south);
-        distribution.partition(rg.size() - nx_north, rg.size(), part_north);
-    }
-    bool mypart_at_north = std::any_of(part_north.begin(), part_north.end(), [&](int p) { return p == mypart; });
-    bool mypart_at_south = std::any_of(part_south.begin(), part_south.end(), [&](int p) { return p == mypart; });
+    const int part_north = distribution.partition(y_numbering < 0 ? 0 : rg.size() - nx_north);
+    const int part_south = distribution.partition(y_numbering < 0 ? rg.size() - nx_south : 0);
+    bool mypart_at_north = part_north == mypart;
+    bool mypart_at_south = part_south == mypart;
 
     bool three_dimensional             = options.getBool("three_dimensional");
     bool periodic_east_west            = rg.periodic();
