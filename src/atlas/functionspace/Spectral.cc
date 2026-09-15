@@ -72,10 +72,11 @@ class Parallelisation_local : public Spectral::Parallelisation {
 public:
     Parallelisation_local(int truncation): truncation_(truncation) {
         // Assume serial!!!
+        nspec2g_ = (truncation_ + 1) * (truncation_ + 2);
         nmyms_.resize(truncation_ + 1);
         nasm0_base0_.resize(truncation_ + 1);
         nasm0_base1_.resize(truncation_ + 1);
-        nvalue_.resize(nb_spectral_coefficients());
+        nvalue_.resize(nspec2g_);
         idx_t jc{0};
         for (idx_t m = 0; m <= truncation_; ++m) {
             nmyms_[m] = m;
@@ -86,9 +87,9 @@ public:
                 nvalue_[jc++] = n;
             }
         }
-        ATLAS_ASSERT(jc == nb_spectral_coefficients());
+        ATLAS_ASSERT(jc == nspec2g_);
     }
-    int nb_spectral_coefficients_global() const override { return (truncation_ + 1) * (truncation_ + 2); }
+    int nb_spectral_coefficients_global() const override { return nspec2g_; }
     int nb_spectral_coefficients() const override { return nb_spectral_coefficients_global(); }
     int truncation_;
     std::string distribution() const override { return "serial"; }
@@ -109,6 +110,7 @@ public:
     array::LocalView<const int, 1> nasm0_base1() const override {
         return array::make_view<int, 1>(nasm0_base1_.data(), array::make_shape(truncation_ + 1));
     }
+    int nspec2g_;
     std::vector<int> nmyms_;
     std::vector<int> nasm0_base0_; // zero-based offsets for use in C++
     std::vector<int> nasm0_base1_; // one-based offsets for use in Fortran
