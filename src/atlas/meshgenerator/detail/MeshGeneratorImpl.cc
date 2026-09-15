@@ -10,9 +10,6 @@
 
 #include <numeric>
 
-#include "eckit/utils/Hash.h"
-
-#include "atlas/array/ArrayView.h"
 #include "atlas/field/Field.h"
 #include "atlas/grid/Distribution.h"
 #include "atlas/grid/Grid.h"

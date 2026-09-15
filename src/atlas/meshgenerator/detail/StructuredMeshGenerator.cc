@@ -273,7 +273,7 @@ void StructuredMeshGenerator::generate(const Grid& grid, const grid::Distributio
 
     mesh.metadata().set("nb_parts",options.getInt("nb_parts"));
     mesh.metadata().set("part",options.getInt("part"));
-    mesh.metadata().set("mpi_comm",options.getString("mpi_comm"));
+    mesh.metadata().set("mpi_comm", options.getString("mpi_comm"));
     generate_mesh(rg, distribution, region, mesh);
 }
 
