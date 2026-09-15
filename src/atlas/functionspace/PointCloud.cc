@@ -495,7 +495,7 @@ void PointCloud::scatter(const FieldSet& global_fieldset, FieldSet& local_fields
         }
 
         auto name = loc.name();
-        glb.metadata().broadcast(loc.metadata(), root);
+        glb.metadata().broadcast(loc.metadata(), root, mpi_comm());
         loc.metadata().set("global", false);
         if( !name.empty() ) {
             loc.metadata().set("name", name);

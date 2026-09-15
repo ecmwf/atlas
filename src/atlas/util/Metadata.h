@@ -57,8 +57,10 @@ public:
     void broadcast(idx_t root);
     void broadcast(Metadata&);
     void broadcast(Metadata&, idx_t root);
+    void broadcast(Metadata&, idx_t root, const std::string& mpi_comm);
     void broadcast(Metadata&) const;
     void broadcast(Metadata&, idx_t root) const;
+    void broadcast(Metadata&, idx_t root, const std::string& mpi_comm) const;
 
     size_t footprint() const;
     std::string json(eckit::JSON::Formatting = eckit::JSON::Formatting::indent()) const;

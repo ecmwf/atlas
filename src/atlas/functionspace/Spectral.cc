@@ -457,7 +457,7 @@ void Spectral::scatter(const FieldSet& global_fieldset, FieldSet& local_fieldset
         args.rspec               = spectral_data(loc);
         TRANS_CHECK(::trans_distspec(&args));
 
-        glb.metadata().broadcast(loc.metadata(), root);
+        glb.metadata().broadcast(loc.metadata(), root, mpi_comm_);
         loc.metadata().set("global", false);
 #else
         throw_Exception(
