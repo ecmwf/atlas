@@ -168,7 +168,7 @@ void scope::push(std::string_view name) {
     ScopeStack::instance().push(name);
 }
 
-void scope::push(const Comm& comm) {
+void scope::detail::push(const Comm& comm) {
     ScopeStack::instance().push(comm);
 }
 
