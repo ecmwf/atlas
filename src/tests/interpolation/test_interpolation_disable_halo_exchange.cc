@@ -52,11 +52,11 @@ void assign_field(Field field, double owned_value, double ghost_value) {
     }
 }
 
-Interpolation create_interp_object(const FunctionSpaces& fs, bool perform_halo_exchange = true) {
+Interpolation create_interp_object(const FunctionSpaces& fs, bool allow_halo_exchange = true) {
     auto conf = option::type("structured-bilinear") | util::Config("ajoint", true);
 
-    if (!perform_halo_exchange) {
-        conf.set("perform_halo_exchange", false);
+    if (!allow_halo_exchange) {
+        conf.set("allow_halo_exchange", false);
     }
 
     return Interpolation(conf, fs.source(), fs.target());
