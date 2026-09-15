@@ -48,67 +48,39 @@ namespace atlas {
 namespace functionspace {
 namespace detail {
 
-#if ATLAS_HAVE_TRANS
 class Spectral::Parallelisation {
 public:
-    Parallelisation(const std::shared_ptr<::Trans_t> other): trans_(other) {}
+    Parallelisation() = default;
+    virtual ~Parallelisation() {}
+    virtual int nb_spectral_coefficients_global() const = 0;
+    virtual int nb_spectral_coefficients() const = 0;
 
-    Parallelisation(int truncation) {
-        trans_ = std::shared_ptr<::Trans_t>(new ::Trans_t, [](::Trans_t* p) {
-            TRANS_CHECK(::trans_delete(p));
-            delete p;
-        });
-#if ATLAS_ECTRANS_VERSION_AT_LEAST(1, 8, 0)
-        TRANS_CHECK(::trans_set_mpi_comm(mpi::comm().communicator()));
-#endif
-        TRANS_CHECK(::trans_new(trans_.get()));
-        TRANS_CHECK(::trans_set_trunc(trans_.get(), truncation));
-        TRANS_CHECK(::trans_use_mpi(mpi::size() > 1));
-        TRANS_CHECK(::trans_setup(trans_.get()));
-    }
+    virtual int nump() const = 0;
 
-    int nb_spectral_coefficients_global() const { return trans_->nspec2g; }
-    int nb_spectral_coefficients() const { return trans_->nspec2; }
+    virtual array::LocalView<const int, 1> nvalue() const = 0;
 
-    int nump() const { return trans_->nump; }
+    virtual array::LocalView<const int, 1> nmyms() const = 0;
 
-    array::LocalView<const int, 1> nvalue() const {
-        if (trans_->nvalue == nullptr) {
-            ::trans_inquire(trans_.get(), "nvalue");
-        }
-        return array::make_view<const int, 1>(trans_->nvalue, array::make_shape(trans_->nspec2));
-    }
+    virtual array::LocalView<const int, 1> nasm0_base0() const = 0;
 
-    array::LocalView<const int, 1> nmyms() const {
-        if (trans_->nmyms == nullptr) {
-            ::trans_inquire(trans_.get(), "nmyms");
-        }
-        return array::make_view<const int, 1>(trans_->nmyms, array::make_shape(nump()));
-    }
+    virtual array::LocalView<const int, 1> nasm0_base1() const = 0;
 
-    array::LocalView<const int, 1> nasm0() const {
-        if (trans_->nasm0 == nullptr) {
-            ::trans_inquire(trans_.get(), "nasm0");
-        }
-        return array::make_view<const int, 1>(trans_->nasm0, array::make_shape(trans_->nsmax + 1));
-    }
-
-    std::string distribution() const { return "ectrans"; }
-    operator ::Trans_t*() const { return trans_.get(); }
-    std::shared_ptr<::Trans_t> trans_;
+    virtual std::string distribution() const = 0;
 };
-#else
-class Spectral::Parallelisation {
+
+class Parallelisation_local : public Spectral::Parallelisation {
 public:
-    Parallelisation(int truncation): truncation_(truncation) {
+    Parallelisation_local(int truncation): truncation_(truncation) {
         // Assume serial!!!
         nmyms_.resize(truncation_ + 1);
-        nasm0_.resize(truncation_ + 1);
+        nasm0_base0_.resize(truncation_ + 1);
+        nasm0_base1_.resize(truncation_ + 1);
         nvalue_.resize(nb_spectral_coefficients());
         idx_t jc{0};
         for (idx_t m = 0; m <= truncation_; ++m) {
             nmyms_[m] = m;
-            nasm0_[m] = jc + 1;  // Fortran index
+            nasm0_base0_[m] = jc;      // zero-based index
+            nasm0_base1_[m] = jc + 1;  // Fortran index
             for (idx_t n = m; n <= truncation_; ++n) {
                 nvalue_[jc++] = n;
                 nvalue_[jc++] = n;
@@ -116,27 +88,102 @@ public:
         }
         ATLAS_ASSERT(jc == nb_spectral_coefficients());
     }
-    int nb_spectral_coefficients_global() const { return (truncation_ + 1) * (truncation_ + 2); }
-    int nb_spectral_coefficients() const { return nb_spectral_coefficients_global(); }
+    int nb_spectral_coefficients_global() const override { return (truncation_ + 1) * (truncation_ + 2); }
+    int nb_spectral_coefficients() const override { return nb_spectral_coefficients_global(); }
     int truncation_;
-    std::string distribution() const { return "serial"; }
+    std::string distribution() const override { return "serial"; }
 
-    int nump() const { return truncation_ + 1; }
+    int nump() const override { return truncation_ + 1; }
 
-    array::LocalView<const int, 1> nmyms() const {
+    array::LocalView<const int, 1> nmyms() const override {
         return array::make_view<int, 1>(nmyms_.data(), array::make_shape(nump()));
     }
 
-    array::LocalView<const int, 1> nvalue() const {
+    array::LocalView<const int, 1> nvalue() const override {
         return array::make_view<int, 1>(nvalue_.data(), array::make_shape(nb_spectral_coefficients()));
     }
 
-    array::LocalView<const int, 1> nasm0() const {
-        return array::make_view<int, 1>(nasm0_.data(), array::make_shape(truncation_ + 1));
+    array::LocalView<const int, 1> nasm0_base0() const override {
+        return array::make_view<int, 1>(nasm0_base0_.data(), array::make_shape(truncation_ + 1));
+    }
+    array::LocalView<const int, 1> nasm0_base1() const override {
+        return array::make_view<int, 1>(nasm0_base1_.data(), array::make_shape(truncation_ + 1));
     }
     std::vector<int> nmyms_;
-    std::vector<int> nasm0_;
+    std::vector<int> nasm0_base0_; // zero-based offsets for use in C++
+    std::vector<int> nasm0_base1_; // one-based offsets for use in Fortran
     std::vector<int> nvalue_;
+};
+
+#if ATLAS_HAVE_TRANS
+class Parallelisation_ectrans : public Spectral::Parallelisation {
+public:
+    Parallelisation_ectrans(int truncation, const std::string& mpi_comm) {
+        const auto& comm = mpi::comm(mpi_comm);
+        trans_ = std::shared_ptr<::Trans_t>(new ::Trans_t, [](::Trans_t* p) {
+            TRANS_CHECK(::trans_delete(p));
+            delete p;
+        });
+#if ATLAS_ECTRANS_VERSION_AT_LEAST(1, 8, 0)
+        TRANS_CHECK(::trans_set_mpi_comm(comm.communicator()));
+#endif
+        TRANS_CHECK(::trans_new(trans_.get()));
+        TRANS_CHECK(::trans_set_trunc(trans_.get(), truncation));
+        TRANS_CHECK(::trans_use_mpi(comm.size() > 1));
+        TRANS_CHECK(::trans_setup(trans_.get()));
+    }
+    virtual ~Parallelisation_ectrans() {}
+
+    int nb_spectral_coefficients_global() const override { return trans_->nspec2g; }
+    int nb_spectral_coefficients() const override { return trans_->nspec2; }
+
+    int nump() const override { return trans_->nump; }
+
+    array::LocalView<const int, 1> nvalue() const override {
+        if (trans_->nvalue == nullptr) {
+            ::trans_inquire(trans_.get(), "nvalue");
+        }
+        return array::make_view<const int, 1>(trans_->nvalue, array::make_shape(trans_->nspec2));
+    }
+
+    array::LocalView<const int, 1> nmyms() const override {
+        if (trans_->nmyms == nullptr) {
+            ::trans_inquire(trans_.get(), "nmyms");
+        }
+        return array::make_view<const int, 1>(trans_->nmyms, array::make_shape(nump()));
+    }
+
+    void setup_nasm0() const {
+        if (trans_->nasm0 == nullptr) {
+            ::trans_inquire(trans_.get(), "nasm0");
+        }
+        nasm0_base0_.resize(trans_->nsmax + 1);
+        nasm0_base1_.resize(trans_->nsmax + 1);
+        for (int m = 0; m <= trans_->nsmax; ++m) {
+            nasm0_base0_[m] = trans_->nasm0[m] - 1;  // convert to zero-based indexing
+            nasm0_base1_[m] = trans_->nasm0[m];      // one-based indexing as in Fortran
+        }
+    }
+
+    array::LocalView<const int, 1> nasm0_base0() const override {
+        if (nasm0_base0_.empty()) {
+            setup_nasm0();
+        }
+        return array::make_view<const int, 1>(nasm0_base0_.data(), array::make_shape(trans_->nsmax + 1));
+    }
+
+    array::LocalView<const int, 1> nasm0_base1() const override {
+        if (nasm0_base1_.empty()) {
+            setup_nasm0();
+        }
+        return array::make_view<const int, 1>(nasm0_base1_.data(), array::make_shape(trans_->nsmax + 1));
+    }
+
+    std::string distribution() const override { return "ectrans"; }
+    operator ::Trans_t*() const { return trans_.get(); }
+    std::shared_ptr<::Trans_t> trans_;
+    mutable std::vector<int> nasm0_base0_; // zero-based offsets
+    mutable std::vector<int> nasm0_base1_; // one-based offsets as in Fortran
 };
 #endif
 
@@ -164,7 +211,8 @@ idx_t Spectral::config_size(const eckit::Configuration& config) const {
         if (global) {
             idx_t owner(0);
             config.get("owner", owner);
-            size = (idx_t(mpi::rank()) == owner ? nb_spectral_coefficients_global() : 0);
+            const auto& comm = mpi::comm(mpi_comm_);
+            size = (comm.size() == 0 || idx_t(comm.rank()) == owner ? nb_spectral_coefficients_global() : 0);
         }
     }
     return size;
@@ -176,8 +224,30 @@ Spectral::Spectral(const eckit::Configuration& config): Spectral::Spectral(confi
 
 // ----------------------------------------------------------------------
 
+namespace {
+    std::string get_mpi_comm(const eckit::Configuration& config) {
+        return config.getString("mpi_comm", mpi::comm().name());
+    }
+
+    [[maybe_unused]] bool is_backend_local(const eckit::Configuration& config) {
+        std::string backend;
+        if (config.get("backend", backend)) {
+            if (backend == "local") {
+                return true;
+            }
+        }
+        return false;
+    }
+}
+
 Spectral::Spectral(const int truncation, const eckit::Configuration& config):
-    nb_levels_(0), truncation_(truncation), parallelisation_(new Parallelisation(truncation_)) {
+    mpi_comm_(get_mpi_comm(config)), nb_levels_(0), truncation_(truncation),
+        #if ATLAS_HAVE_TRANS
+            parallelisation_(is_backend_local(config) ? static_cast<Parallelisation*>(new Parallelisation_local(truncation_)) : static_cast<Parallelisation*>(new Parallelisation_ectrans(truncation_, mpi_comm_)))
+        #else
+            parallelisation_(new Parallelisation_local(truncation_))
+        #endif
+    {
     config.get("levels", nb_levels_);
 }
 
@@ -188,11 +258,11 @@ std::string Spectral::distribution() const {
 }
 
 idx_t Spectral::part() const {
-  return mpi::rank();
+    return mpi::comm(mpi_comm_).rank();
 }
 
 idx_t Spectral::nb_parts() const {
-   return mpi::size();
+     return mpi::comm(mpi_comm_).size();
 }
 
 size_t Spectral::footprint() const {
@@ -258,6 +328,26 @@ Field Spectral::createField(const Field& other, const eckit::Configuration& conf
                        config);
 }
 
+namespace {
+
+// Workaround for ectrans version < 2.1 because of problem with
+// zero-sized spectral data arrays, see https://github.com/ecmwf-ifs/ectrans/pull/476
+[[maybe_unused]] double* zero_size_spectral_data() {
+    static double value = 0.;
+    return &value;
+}
+
+[[maybe_unused]] double* spectral_data(Field& field) {
+    double* data = field.array().data<double>();
+    return data == nullptr && field.shape(0) == 0 ? zero_size_spectral_data() : data;
+}
+
+[[maybe_unused]] const double* spectral_data(const Field& field) {
+    const double* data = field.array().data<double>();
+    return data == nullptr && field.shape(0) == 0 ? zero_size_spectral_data() : data;
+}
+}  // namespace
+
 void Spectral::gather(const FieldSet& local_fieldset, FieldSet& global_fieldset) const {
     ATLAS_ASSERT(local_fieldset.size() == global_fieldset.size());
 
@@ -273,7 +363,7 @@ void Spectral::gather(const FieldSet& local_fieldset, FieldSet& global_fieldset)
 #if ATLAS_HAVE_TRANS
         Field& glb = global_fieldset[f];
         idx_t root = 0;
-        idx_t rank = mpi::rank();
+        idx_t rank = mpi::comm(mpi_comm_).rank();
         glb.metadata().get("owner", root);
         ATLAS_ASSERT(loc.shape(0) == nb_spectral_coefficients());
         if (rank == root) {
@@ -292,11 +382,16 @@ void Spectral::gather(const FieldSet& local_fieldset, FieldSet& global_fieldset)
                             " using IFS trans library as its data is not contiguous");
         }
 
-        struct ::GathSpec_t args = new_gathspec(*parallelisation_);
+        const Parallelisation_ectrans* parallelisation_ectrans = dynamic_cast<Parallelisation_ectrans*>(parallelisation_.get());
+        if (parallelisation_ectrans == nullptr) {
+            throw_Exception(
+                "Cannot gather spectral fields because Spectral functionspace is not using ectrans.");
+        }
+        struct ::GathSpec_t args = new_gathspec(*parallelisation_ectrans);
         args.nfld                = nto.size();
         args.rspecg              = glb.array().data<double>();
         args.nto                 = nto.data();
-        args.rspec               = loc.array().data<double>();
+        args.rspec               = spectral_data(loc);
         TRANS_CHECK(::trans_gathspec(&args));
 #else
 
@@ -329,7 +424,7 @@ void Spectral::scatter(const FieldSet& global_fieldset, FieldSet& local_fieldset
 
 #if ATLAS_HAVE_TRANS
         idx_t root = 0;
-        idx_t rank = mpi::rank();
+        idx_t rank = mpi::comm(mpi_comm_).rank();
 
         glb.metadata().get("owner", root);
         ATLAS_ASSERT(loc.shape(0) == nb_spectral_coefficients());
@@ -349,11 +444,17 @@ void Spectral::scatter(const FieldSet& global_fieldset, FieldSet& local_fieldset
                             " using IFS trans library as its data is not contiguous");
         }
 
-        struct ::DistSpec_t args = new_distspec(*parallelisation_);
+        const Parallelisation_ectrans* parallelisation_ectrans = dynamic_cast<Parallelisation_ectrans*>(parallelisation_.get());
+        if (parallelisation_ectrans == nullptr) {
+            throw_Exception(
+                "Cannot gather spectral fields because Spectral functionspace is not using ectrans.");
+        }
+
+        struct ::DistSpec_t args = new_distspec(*parallelisation_ectrans);
         args.nfld                = int(nfrom.size());
         args.rspecg              = glb.array().data<double>();
         args.nfrom               = nfrom.data();
-        args.rspec               = loc.array().data<double>();
+        args.rspec               = spectral_data(loc);
         TRANS_CHECK(::trans_distspec(&args));
 
         glb.metadata().broadcast(loc.metadata(), root);
@@ -386,9 +487,15 @@ void Spectral::norm(const Field& field, double& norm, int rank) const {
 #if ATLAS_HAVE_TRANS
     ATLAS_ASSERT(std::max<int>(1, field.levels()) == 1,
                  "Only a single-level field can be used for computing single norm.");
-    struct ::SpecNorm_t args = new_specnorm(*parallelisation_);
+    const Parallelisation_ectrans* parallelisation_ectrans = dynamic_cast<Parallelisation_ectrans*>(parallelisation_.get());
+    if (parallelisation_ectrans == nullptr) {
+        throw_Exception(
+            "Cannot gather spectral fields because Spectral functionspace is not using ectrans.");
+    }
+
+    struct ::SpecNorm_t args = new_specnorm(*parallelisation_ectrans);
     args.nfld                = 1;
-    args.rspec               = field.array().data<double>();
+    args.rspec               = spectral_data(field);
     args.rnorm               = &norm;
     args.nmaster             = rank + 1;
     TRANS_CHECK(::trans_specnorm(&args));
@@ -404,9 +511,15 @@ void Spectral::norm(const Field& field, double norm_per_level[], int rank) const
         throw_Exception("Cannot compute spectral norm of field " + field.name() +
                         " using IFS trans library as its data is not contiguous");
     }
-    struct ::SpecNorm_t args = new_specnorm(*parallelisation_);
+    const Parallelisation_ectrans* parallelisation_ectrans = dynamic_cast<Parallelisation_ectrans*>(parallelisation_.get());
+    if (parallelisation_ectrans == nullptr) {
+        throw_Exception(
+            "Cannot gather spectral fields because Spectral functionspace is not using ectrans.");
+    }
+
+    struct ::SpecNorm_t args = new_specnorm(*parallelisation_ectrans);
     args.nfld                = std::max<int>(1, field.levels());
-    args.rspec               = field.array().data<double>();
+    args.rspec               = spectral_data(field);
     args.rnorm               = norm_per_level;
     args.nmaster             = rank + 1;
     TRANS_CHECK(::trans_specnorm(&args));
@@ -424,6 +537,10 @@ array::LocalView<const int, 1> Spectral::zonal_wavenumbers() const {
     return parallelisation_->nmyms();
 }
 
+array::LocalView<const int, 1> Spectral::offsets_by_zonal_wavenumber() const {
+    return parallelisation_->nasm0_base0();
+}
+
 int Spectral::nump() const {
     return parallelisation_->nump();
 }
@@ -436,8 +553,12 @@ array::LocalView<const int, 1> Spectral::nmyms() const {
     return parallelisation_->nmyms();
 }
 
-array::LocalView<const int, 1> Spectral::nasm0() const {
-    return parallelisation_->nasm0();
+array::LocalView<const int, 1> Spectral::nasm0_base0() const {
+    return parallelisation_->nasm0_base0();
+}
+
+array::LocalView<const int, 1> Spectral::nasm0_base1() const {
+    return parallelisation_->nasm0_base1();
 }
 
 
@@ -491,6 +612,10 @@ void Spectral::norm(const Field& field, std::vector<double>& norm_per_level, int
 
 array::LocalView<const int, 1> Spectral::zonal_wavenumbers() const {
     return functionspace_->zonal_wavenumbers();
+}
+
+array::LocalView<const int, 1> Spectral::offsets_by_zonal_wavenumber() const {
+    return functionspace_->offsets_by_zonal_wavenumber();
 }
 
 // ----------------------------------------------------------------------

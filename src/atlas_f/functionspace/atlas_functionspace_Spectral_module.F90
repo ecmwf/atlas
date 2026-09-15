@@ -230,7 +230,7 @@ function nasm0(this)
   type(c_ptr) :: nasm0_c_ptr
   integer(c_int), pointer :: nasm0_f_ptr(:)
   integer(c_int) :: size
-  call atlas__SpectralFunctionSpace__nasm0(this%c_ptr(), nasm0_c_ptr, size)
+  call atlas__SpectralFunctionSpace__nasm0_base1(this%c_ptr(), nasm0_c_ptr, size)
   call c_f_pointer ( nasm0_c_ptr , nasm0_f_ptr , (/size/) )
   nasm0(0:) => nasm0_f_ptr(:)
 end function
