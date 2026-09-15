@@ -597,10 +597,20 @@ CASE("separate vector field components") {
 
   uSourceView.assign(0.);
   vSourceView.assign(0.);
+  const auto sourceGhostView = array::make_view<int, 1>(sourceFunctionSpace.ghost());
   for (auto idx = idx_t{0}; idx < sourceFunctionSpace.size(); idx++) {
+    if (sourceGhostView(idx)) {
+      continue;
+    }
     std::tie(uSourceView(idx), vSourceView(idx)) =
         vortexHorizontal(sourceLonLatView(idx, 0), sourceLonLatView(idx, 1));
   }
+
+  // Copy non-halo exchanged source fields.
+  auto uOriginalSource = sourceFieldSet["u"].clone();
+  auto vOriginalSource = sourceFieldSet["v"].clone();
+  const auto uOriginalSourceView = array::make_view<double, 1>(uOriginalSource);
+  const auto vOriginalSourceView = array::make_view<double, 1>(vOriginalSource);
 
   const auto interpScheme =
       InterpSchemeFixtures::get("structured_linear_spherical");
@@ -642,15 +652,15 @@ CASE("separate vector field components") {
   uSourceAdjointView.assign(0.);
   vSourceAdjointView.assign(0.);
 
-  //  sourceAdjointFieldSet.set_dirty(false);
+  sourceAdjointFieldSet.set_dirty(false); // Check that adjoint of halo exchange still triggers on "clean" fields.
   interp.execute_adjoint(sourceAdjointFieldSet, targetAdjointFieldSet);
 
   constexpr auto tinyNum = 1e-13;
   const auto targetDotTarget = dotProduct(uTargetView, uTargetView) +
                                dotProduct(vTargetView, vTargetView);
   const auto sourceDotSourceAdjoint =
-      dotProduct(uSourceView, uSourceAdjointView) +
-      dotProduct(vSourceView, vSourceAdjointView);
+      dotProduct(uOriginalSourceView, uSourceAdjointView) +
+      dotProduct(vOriginalSourceView, vSourceAdjointView);
 
   const auto dotProdRatio = targetDotTarget / sourceDotSourceAdjoint;
   EXPECT_APPROX_EQ(dotProdRatio, 1., tinyNum);

@@ -521,6 +521,7 @@ Method::Method(const Method::Config& config) {
     }
 
     config.get("adjoint", adjoint_ = false);
+    config.get("allow_halo_exchange", allow_halo_exchange_ = true);
 }
 
 void Method::setup(const FunctionSpace& source, const FunctionSpace& target) {
