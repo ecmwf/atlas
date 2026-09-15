@@ -71,11 +71,17 @@ subroutine atlas_build_halo(mesh,nelems)
   call atlas__build_halo(mesh%c_ptr(),nelems)
 end subroutine atlas_build_halo
 
-subroutine atlas_build_edges(mesh)
+subroutine atlas_build_edges(mesh, config)
   use atlas_BuildEdges_c_binding
   use atlas_Mesh_module, only: atlas_Mesh
+  use atlas_Config_module, only: atlas_Config
   type(atlas_Mesh), intent(inout) :: mesh
-  call atlas__build_edges(mesh%c_ptr())
+  type(atlas_Config), intent(in), optional :: config
+  if (present(config)) then
+    call atlas__build_edges_config(mesh%c_ptr(), config%c_ptr())
+  else
+    call atlas__build_edges(mesh%c_ptr())
+  end if
 end subroutine atlas_build_edges
 
 subroutine atlas_build_pole_edges(mesh)
