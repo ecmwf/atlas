@@ -245,7 +245,8 @@ CASE("test_build_edges") {
     Mesh mesh = generator.generate(grid);
 
     // Accumulate facets of cells ( edges in 2D )
-    mesh::actions::build_edges(mesh, Config("pole_edges", false)("node_order", "global_index"));
+    mesh::actions::build_edges(
+        mesh, Config("pole_edges", false)("node_order", "global_index")("cell_order", "left_first"));
 
     std::vector<idx_t> edge_nodes_check{
         0,  21, 21, 22, 22, 1,  1,  0,  22, 23, 23, 2,  2,  1,  3,  25, 25, 26, 26, 4,  4,  3,  26, 27, 27, 5,  5,
