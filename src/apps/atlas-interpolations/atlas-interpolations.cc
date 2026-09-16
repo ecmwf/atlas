@@ -898,7 +898,7 @@ Matrix AtlasInterpolations::read_matrix(std::string matrix_name, std::string for
     }
     else if (format == "scrip") {
         Log::info() << "Reading matrix from file '" << matrix_name << ".nc'" << std::endl;
-        return ScripIO::read(matrix_name + ".nc");
+        return ScripIO::read_matrix(matrix_name + ".nc");
     }
     else {
         ATLAS_THROW_EXCEPTION("Matrix format " << format << " is not recognised. Recognized are {eckit,scrip}");
@@ -916,7 +916,7 @@ void AtlasInterpolations::write_matrix(const Matrix& matrix, std::string matrix_
     }
     else if (format == "scrip") {
         Log::info() << "Writing matrix in scrip format to file '" << matrix_name << ".nc'" << std::endl;
-        ScripIO::write(matrix, matrix_name+".nc");
+        ScripIO::write_matrix(matrix, matrix_name+".nc");
     }
     else {
         ATLAS_THROW_EXCEPTION("Matrix format " << format << " is not recognised. Recognized are {eckit,scrip}");

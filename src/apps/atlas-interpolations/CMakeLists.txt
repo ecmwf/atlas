@@ -12,6 +12,8 @@ ecbuild_add_executable(
   SOURCES atlas-interpolations.cc
           ScripIO.h
           ScripIO.cc
+          AtlasIO.h
+          AtlasIO.cc
   LIBS    atlas
 )
 

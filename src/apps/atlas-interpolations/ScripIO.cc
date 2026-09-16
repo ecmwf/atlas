@@ -21,6 +21,8 @@
 #include "atlas/linalg/sparse/MakeEckitSparseMatrix.h"
 #include "atlas/runtime/Exception.h"
 
+#include "atlas/runtime/Log.h"
+
 
 namespace atlas {
 
@@ -29,7 +31,7 @@ using scrip_index = int;
 using scrip_value = double;
 using scrip_size  = size_t;
 
-SparseMatrixStorage ScripIO::read(const std::string& matrix_name) {
+SparseMatrixStorage ScripIO::read_matrix(const std::string& matrix_name) {
 #if ATLAS_HAVE_NETCDF == 0
     ATLAS_THROW_EXCEPTION("Cannot read SCRIP files: Atlas not compiled with NetCDF support");
 #else
@@ -79,7 +81,7 @@ SparseMatrixStorage ScripIO::read(const std::string& matrix_name) {
 }
 
 
-void ScripIO::write(const SparseMatrixStorage& matrix, const std::string& matrix_name) {
+void ScripIO::write_matrix(const SparseMatrixStorage& matrix, const std::string& matrix_name) {
 #if ATLAS_HAVE_NETCDF == 0
     ATLAS_THROW_EXCEPTION("Cannot write SCRIP file: Atlas not compiled with NetCDF support");
 #else
@@ -121,5 +123,19 @@ void ScripIO::write(const SparseMatrixStorage& matrix, const std::string& matrix
     }
 #endif
 }
+
+
+void ScripIO::read_mask(const std::string& mask_name, mdspan<int,dims<1>> mask) {
+    ATLAS_DEBUG_VAR(mask_name);
+    netCDF::NcFile f(mask_name, netCDF::NcFile::read);
+    scrip_size grid_size = f.getDim("grid_size").getSize();
+    if (mask.size() != grid_size) {
+        ATLAS_DEBUG_VAR(mask.size());
+        ATLAS_DEBUG_VAR(grid_size);
+    }
+    ATLAS_ASSERT(mask.size() == grid_size);
+    f.getVar("grid_imask").getVar(mask.data_handle());
+}
+
 
 }
