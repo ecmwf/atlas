@@ -630,7 +630,6 @@ int AtlasInterpolations::execute(const AtlasTool::Args& args) {
 
     ATLAS_TRACE_SCOPE("Setup source and target") {
         timers.functionspace_setup.start();
-        // create_fspaces(config, sgrid, tgrid, src_fs, tgt_fs);
         std::tie(src_fs, tgt_fs) = get_fs(sgrid, tgrid, args);
         timers.functionspace_setup.stop();
     }
@@ -648,12 +647,6 @@ int AtlasInterpolations::execute(const AtlasTool::Args& args) {
     matrix.clear();
 
     if (args.getBool("interpolate",false) || args.getBool("output-matrix",false) || args.getBool("test-interpolator",false) || (args.getBool("test-matrix",false) && !matrix_tested)) {
-        ATLAS_TRACE_SCOPE("Setup source and target") {
-            timers.functionspace_setup.start();
-            // create_fspaces(config, sgrid, tgrid, src_fs, tgt_fs);
-            std::tie(src_fs, tgt_fs) = get_fs(sgrid, tgrid, args);
-            timers.functionspace_setup.stop();
-        }
 
         ATLAS_TRACE_SCOPE("Setup interpolator") {
             timers.interpolation_setup.start();
