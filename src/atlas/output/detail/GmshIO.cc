@@ -137,6 +137,8 @@ enum class MissingValuePolicy
     PRESERVE
 };
 
+using MaskedValuePolicy = MissingValuePolicy;
+
 MissingValuePolicy missing_value_policy(const Metadata& gmsh_options) {
     const std::string policy = gmsh_options.get<std::string>("missing_value.policy");
     if (policy == "skip") {
@@ -154,6 +156,23 @@ MissingValuePolicy missing_value_policy(const Metadata& gmsh_options) {
     ATLAS_THROW_EXCEPTION("Unsupported Gmsh missing_value.policy: " << policy);
 }
 
+MaskedValuePolicy masked_value_policy(const Metadata& gmsh_options) {
+    const std::string policy = gmsh_options.get<std::string>("masked_value.policy");
+    if (policy == "skip") {
+        return MaskedValuePolicy::SKIP;
+    }
+    if (policy == "fill") {
+        return MaskedValuePolicy::FILL;
+    }
+    if (policy == "nan") {
+        return MaskedValuePolicy::NOT_A_NUMBER;
+    }
+    if (policy == "preserve") {
+        return MaskedValuePolicy::PRESERVE;
+    }
+    ATLAS_THROW_EXCEPTION("Unsupported Gmsh masked_value.policy: " << policy);
+}
+
 template <typename Value>
 Value missing_value_fill(const Metadata& gmsh_options, MissingValuePolicy policy) {
     if (policy != MissingValuePolicy::FILL) {
@@ -165,14 +184,39 @@ Value missing_value_fill(const Metadata& gmsh_options, MissingValuePolicy policy
 }
 
 template <typename Value>
-class MissingValueHandling {
+Value masked_value_fill(const Metadata& gmsh_options, MaskedValuePolicy policy) {
+    if (policy != MaskedValuePolicy::FILL) {
+        return Value{0};
+    }
+    double fill = 0.;
+    gmsh_options.get("masked_value.fill", fill);
+    return static_cast<Value>(fill);
+}
+
+template <typename Value>
+class ValueHandling {
 public:
-    MissingValueHandling(const Metadata& gmsh_options, const Field& field):
+    ValueHandling(const Metadata& gmsh_options, const Field& field, const Field& mask = Field()):
         missing_(field),
         policy_(missing_value_policy(gmsh_options)),
-        fill_(missing_value_fill<Value>(gmsh_options, policy_)) {}
+        missing_fill_(missing_value_fill<Value>(gmsh_options, policy_)),
+        masked_policy_(masked_value_policy(gmsh_options)),
+        masked_fill_(masked_value_fill<Value>(gmsh_options, masked_policy_)) {
+        if (mask) {
+            ATLAS_ASSERT(mask.contiguous());
+            mask_ = mask.array().host_data<int>();
+        }
+    }
 
     bool include(const array::LocalView<const Value, 2>& data, idx_t n) const {
+        if (masked(n)) {
+            if (masked_policy_ == MaskedValuePolicy::SKIP) {
+                return false;
+            }
+            if (masked_policy_ != MaskedValuePolicy::PRESERVE) {
+                return true;
+            }
+        }
         if (!missing_ || policy_ != MissingValuePolicy::SKIP) {
             return true;
         }
@@ -184,12 +228,23 @@ public:
         return true;
     }
 
-    Value value(Value value) const {
+    Value value(Value value, idx_t n) const {
+        if (masked(n)) {
+            if (masked_policy_ == MaskedValuePolicy::FILL) {
+                return masked_fill_;
+            }
+            if (masked_policy_ == MaskedValuePolicy::NOT_A_NUMBER) {
+                if constexpr (std::numeric_limits<Value>::has_quiet_NaN) {
+                    return std::numeric_limits<Value>::quiet_NaN();
+                }
+                ATLAS_THROW_EXCEPTION("Gmsh masked_value.policy 'nan' requires a floating-point field");
+            }
+        }
         if (!missing_ || !missing_(value)) {
             return value;
         }
         if (policy_ == MissingValuePolicy::FILL) {
-            return fill_;
+            return missing_fill_;
         }
         if (policy_ == MissingValuePolicy::NOT_A_NUMBER) {
             if constexpr (std::numeric_limits<Value>::has_quiet_NaN) {
@@ -201,21 +256,28 @@ public:
     }
 
 private:
+    bool masked(idx_t n) const {
+        return mask_ && mask_[n] == 0;
+    }
+
     field::MissingValue missing_;
     MissingValuePolicy policy_;
-    Value fill_;
+    Value missing_fill_;
+    MaskedValuePolicy masked_policy_;
+    Value masked_fill_;
+    const int* mask_{nullptr};
 };
 
-template <typename Value, typename GlobalIndex, typename MissingValueHandling>
+template <typename Value, typename GlobalIndex, typename ValueHandling>
 void write_level(std::ostream& out, GlobalIndex gidx, const array::LocalView<Value, 2>& data,
-                 const MissingValueHandling& missing_value) {
+                 const ValueHandling& value_handling) {
     using value_type = typename std::remove_const<Value>::type;
     int ndata        = data.shape(0);
     int nvars        = data.shape(1);
     if (nvars == 1) {
         for (idx_t n = 0; n < ndata; ++n) {
-            if (missing_value.include(data, n)) {
-                out << gidx(n) << " " << missing_value.value(data(n, 0)) << "\n";
+            if (value_handling.include(data, n)) {
+                out << gidx(n) << " " << value_handling.value(data(n, 0), n) << "\n";
             }
         }
     }
@@ -223,9 +285,9 @@ void write_level(std::ostream& out, GlobalIndex gidx, const array::LocalView<Val
         std::array<value_type, 3> data_vec;
         data_vec.fill(static_cast<value_type>(0));
         for (idx_t n = 0; n < ndata; ++n) {
-            if (missing_value.include(data, n)) {
+            if (value_handling.include(data, n)) {
                 for (idx_t v = 0; v < nvars; ++v) {
-                    data_vec[v] = missing_value.value(data(n, v));
+                    data_vec[v] = value_handling.value(data(n, v), n);
                 }
                 out << gidx(n);
                 for (int v = 0; v < 3; ++v) {
@@ -240,10 +302,10 @@ void write_level(std::ostream& out, GlobalIndex gidx, const array::LocalView<Val
         data_vec.fill(static_cast<value_type>(0));
         if (nvars == 4) {
             for (int n = 0; n < ndata; ++n) {
-                if (missing_value.include(data, n)) {
+                if (value_handling.include(data, n)) {
                     for (int i = 0; i < 2; ++i) {
                         for (int j = 0; j < 2; ++j) {
-                            data_vec[i * 3 + j] = missing_value.value(data(n, i * 2 + j));
+                            data_vec[i * 3 + j] = value_handling.value(data(n, i * 2 + j), n);
                         }
                     }
                     out << gidx(n);
@@ -256,10 +318,10 @@ void write_level(std::ostream& out, GlobalIndex gidx, const array::LocalView<Val
         }
         else if (nvars == 9) {
             for (int n = 0; n < ndata; ++n) {
-                if (missing_value.include(data, n)) {
+                if (value_handling.include(data, n)) {
                     for (int i = 0; i < 3; ++i) {
                         for (int j = 0; j < 3; ++j) {
-                            data_vec[i * 3 + j] = missing_value.value(data(n, i * 2 + j));
+                            data_vec[i * 3 + j] = value_handling.value(data(n, i * 2 + j), n);
                         }
                     }
                     out << gidx(n);
@@ -279,11 +341,11 @@ void write_level(std::ostream& out, GlobalIndex gidx, const array::LocalView<Val
     }
 }
 
-template <typename Value, typename MissingValueHandling>
-idx_t count_output_values(const array::LocalView<const Value, 2>& data, const MissingValueHandling& missing_value) {
+template <typename Value, typename ValueHandling>
+idx_t count_output_values(const array::LocalView<const Value, 2>& data, const ValueHandling& value_handling) {
     idx_t count = 0;
     for (idx_t n = 0; n < data.shape(0); ++n) {
-        count += missing_value.include(data, n);
+        count += value_handling.include(data, n);
     }
     return count;
 }
@@ -339,6 +401,20 @@ int field_vars(int nvars) {
     }
 }
 
+template <typename FunctionSpace>
+Field output_mask(const FunctionSpace& function_space, bool gather) {
+    if (!function_space.hasMask()) {
+        return Field();
+    }
+    Field mask = function_space.mask();
+    if (gather) {
+        Field global_mask = function_space.createField(mask, option::global());
+        function_space.gather(mask, global_mask);
+        return global_mask;
+    }
+    return mask;
+}
+
 }  // namespace
 
 // ----------------------------------------------------------------------------
@@ -353,6 +429,7 @@ void write_field_nodes(const Metadata& gmsh_options, const functionspace::NodeCo
     idx_t ndata = std::min<idx_t>(function_space.nb_nodes(), field.shape(0));
     idx_t nvars = std::max<idx_t>(1, field.variables());
     auto gidx   = array::make_view<gidx_t, 1>(function_space.nodes().global_index());
+    Field mask  = output_mask(function_space, gather);
     Field gidx_glb;
     Field field_glb;
     if (gather) {
@@ -371,8 +448,8 @@ void write_field_nodes(const Metadata& gmsh_options, const functionspace::NodeCo
         if ((gather && mpi::rank() == 0) || !gather) {
             auto data =
                 gather ? make_level_view<Value>(field_glb, ndata, jlev) : make_level_view<Value>(field, ndata, jlev);
-            MissingValueHandling<Value> missing_value(gmsh_options, field);
-            const idx_t ndata_output = count_output_values(data, missing_value);
+            ValueHandling<Value> value_handling(gmsh_options, field, mask);
+            const idx_t ndata_output = count_output_values(data, value_handling);
 
             out << "$NodeData\n";
             out << "1\n";
@@ -384,7 +461,7 @@ void write_field_nodes(const Metadata& gmsh_options, const functionspace::NodeCo
             out << field_vars(nvars) << "\n";
             out << ndata_output << "\n";
             out << mpi::rank() << "\n";
-            write_level(out, gidx, data, missing_value);
+            write_level(out, gidx, data, value_handling);
             out << "$EndNodeData\n";
         }
     }
@@ -407,8 +484,8 @@ void write_field_nodes(const Metadata& gmsh_options, const functionspace::NoFunc
         int jlev = lev[ilev];
 
         auto data = make_level_view<Value>(field, ndata, jlev);
-        MissingValueHandling<Value> missing_value(gmsh_options, field);
-        const idx_t ndata_output = count_output_values(data, missing_value);
+        ValueHandling<Value> value_handling(gmsh_options, field);
+        const idx_t ndata_output = count_output_values(data, value_handling);
 
         out << "$NodeData\n";
         out << "1\n";
@@ -420,7 +497,7 @@ void write_field_nodes(const Metadata& gmsh_options, const functionspace::NoFunc
         out << field_vars(nvars) << "\n";
         out << ndata_output << "\n";
         out << mpi::rank() << "\n";
-        write_level(out, gidx, data, missing_value);
+        write_level(out, gidx, data, value_handling);
         out << "$EndNodeData\n";
     }
 }
@@ -456,6 +533,7 @@ void write_field_nodes(const Metadata& gmsh_options, const functionspace::Struct
     idx_t ndata = std::min<idx_t>(function_space.sizeOwned(), field.shape(0));
     idx_t nvars = std::max<idx_t>(1, field.variables());
     auto gidx   = array::make_view<gidx_t, 1>(function_space.global_index());
+    Field mask  = output_mask(function_space, gather);
     Field gidx_glb;
     Field field_glb;
     if (gather) {
@@ -480,8 +558,8 @@ void write_field_nodes(const Metadata& gmsh_options, const functionspace::Struct
 
         auto data =
             gather ? make_level_view<DATATYPE>(field_glb, ndata, jlev) : make_level_view<DATATYPE>(field, ndata, jlev);
-        MissingValueHandling<DATATYPE> missing_value(gmsh_options, field);
-        const idx_t ndata_output = count_output_values(data, missing_value);
+        ValueHandling<DATATYPE> value_handling(gmsh_options, field, mask);
+        const idx_t ndata_output = count_output_values(data, value_handling);
 
 
         out << "$NodeData\n";
@@ -494,7 +572,7 @@ void write_field_nodes(const Metadata& gmsh_options, const functionspace::Struct
         out << field_vars(nvars) << "\n";
         out << ndata_output << "\n";
         out << mpi::rank() << "\n";
-        write_level(out, gidx, data, missing_value);
+        write_level(out, gidx, data, value_handling);
         out << "$EndNodeData\n";
     }
 }
@@ -512,6 +590,7 @@ void write_field_elems(const Metadata& gmsh_options, const functionspace::CellCo
     idx_t ndata = std::min<idx_t>(function_space.nb_cells(), field.shape(0));
     idx_t nvars = std::max<idx_t>(1, field.variables());
     auto gidx   = array::make_view<gidx_t, 1>(function_space.cells().global_index());
+    Field mask  = output_mask(function_space, gather);
     Field gidx_glb;
     Field field_glb;
     if (gather) {
@@ -531,8 +610,8 @@ void write_field_elems(const Metadata& gmsh_options, const functionspace::CellCo
 
         auto data =
             gather ? make_level_view<DATATYPE>(field_glb, ndata, jlev) : make_level_view<DATATYPE>(field, ndata, jlev);
-        MissingValueHandling<DATATYPE> missing_value(gmsh_options, field);
-        const idx_t ndata_output = count_output_values(data, missing_value);
+        ValueHandling<DATATYPE> value_handling(gmsh_options, field, mask);
+        const idx_t ndata_output = count_output_values(data, value_handling);
 
 
         if ((gather && mpi::rank() == 0) || !gather) {
@@ -546,7 +625,7 @@ void write_field_elems(const Metadata& gmsh_options, const functionspace::CellCo
             out << field_vars(nvars) << "\n";
             out << ndata_output << "\n";
             out << mpi::rank() << "\n";
-            write_level(out, gidx, data, missing_value);
+            write_level(out, gidx, data, value_handling);
             out << "$EndElementData\n";
         }
     }
@@ -700,6 +779,8 @@ GmshIO::GmshIO() {
 
     options.set<std::string>("missing_value.policy", "skip");
     options.set<double>("missing_value.fill", 0.);
+    options.set<std::string>("masked_value.policy", "skip");
+    options.set<double>("masked_value.fill", 0.);
 }
 
 GmshIO::~GmshIO() = default;

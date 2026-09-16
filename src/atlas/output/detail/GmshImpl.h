@@ -75,6 +75,8 @@ public:
         std::string coordinates;
         std::string missing_value_policy;
         double missing_value_fill;
+        std::string masked_value_policy;
+        double masked_value_fill;
     };
 
     static void setGmshConfiguration(detail::GmshIO&, const Configuration&);

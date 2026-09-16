@@ -16,6 +16,7 @@
 
 #include "atlas/array/MakeView.h"
 #include "atlas/field/Field.h"
+#include "atlas/functionspace/NodeColumns.h"
 #include "atlas/mesh/Mesh.h"
 #include "atlas/output/Gmsh.h"
 #include "atlas/output/Output.h"
@@ -130,6 +131,15 @@ util::Config missing_value_config(const std::string& policy, double fill = 0.) {
     return util::Config("missing_value", missing_value);
 }
 
+util::Config masked_value_config(const std::string& policy, double fill = 0.) {
+    util::Config masked_value;
+    masked_value.set("policy", policy);
+    if (policy == "fill") {
+        masked_value.set("fill", fill);
+    }
+    return util::Config("masked_value", masked_value);
+}
+
 }  // namespace
 
 //-----------------------------------------------------------------------------
@@ -232,6 +242,115 @@ CASE("test_gmsh_missing_value_policy") {
     SECTION("nan is rejected for integer fields") {
         EXPECT_THROWS(output::Gmsh("test_gmsh_missing_integer_nan.msh", missing_value_config("nan"))
                           .write(integer_field_with_missing_value()));
+    }
+}
+
+CASE("test_gmsh_masked_value_policy") {
+    auto write_masked_field = [](const std::string& path, const util::Config& config) {
+        Mesh mesh = test::generate_mesh(Grid("O8"));
+        functionspace::NodeColumns functionspace(mesh);
+        functionspace.setMask([](int* mask, size_t size) {
+            std::fill(mask, mask + size, 1);
+            mask[1] = 0;
+        });
+
+        Field field = functionspace.createField<double>(option::name("values"));
+        auto values = array::make_view<double, 1>(field);
+        for (idx_t n = 0; n < values.size(); ++n) {
+            values(n) = static_cast<double>(n + 1);
+        }
+        output::Gmsh(path).write(field, config);
+        return read_scalar_node_data(path);
+    };
+
+    SECTION("skip is the default") {
+        const auto data = write_masked_field("test_gmsh_masked_preserve.msh", util::Config());
+        EXPECT(std::find(data.values.begin(), data.values.end(), 2.) == data.values.end());
+    }
+
+    SECTION("skip") {
+        const auto data = write_masked_field("test_gmsh_masked_skip.msh", masked_value_config("skip"));
+        EXPECT(std::find(data.values.begin(), data.values.end(), 2.) == data.values.end());
+    }
+
+    SECTION("fill") {
+        const auto data = write_masked_field("test_gmsh_masked_fill.msh", masked_value_config("fill", -7.5));
+        EXPECT_EQ(data.values[1], -7.5);
+    }
+
+    SECTION("fill takes precedence over missing-value skip") {
+        Mesh mesh = test::generate_mesh(Grid("O8"));
+        functionspace::NodeColumns functionspace(mesh);
+        functionspace.setMask([](int* mask, size_t size) {
+            std::fill(mask, mask + size, 1);
+            mask[0] = 0;
+        });
+        Field field = functionspace.createField<double>(option::name("values"));
+        auto values = array::make_view<double, 1>(field);
+        std::fill(values.data(), values.data() + values.size(), 1.);
+        values(0) = -999.;
+        field.metadata().set("missing_value_type", "equals");
+        field.metadata().set("missing_value", -999.);
+
+        output::Gmsh("test_gmsh_masked_missing_fill.msh").write(field, masked_value_config("fill", -7.5));
+        const auto data = read_scalar_node_data("test_gmsh_masked_missing_fill.msh");
+
+        EXPECT_EQ(data.values[0], -7.5);
+    }
+
+    SECTION("masked and missing values use different fill values") {
+        Mesh mesh = test::generate_mesh(Grid("O8"));
+        functionspace::NodeColumns functionspace(mesh);
+        functionspace.setMask([](int* mask, size_t size) {
+            std::fill(mask, mask + size, 1);
+            mask[0] = 0;
+        });
+        Field field = functionspace.createField<double>(option::name("values"));
+        auto values = array::make_view<double, 1>(field);
+        std::fill(values.data(), values.data() + values.size(), 1.);
+        values(1)   = -999.;
+        field.metadata().set("missing_value_type", "equals");
+        field.metadata().set("missing_value", -999.);
+
+        const util::Config config = masked_value_config("fill", -7.5) | missing_value_config("fill", -8.5);
+        output::Gmsh("test_gmsh_masked_missing_different_fill.msh").write(field, config);
+        const auto data = read_scalar_node_data("test_gmsh_masked_missing_different_fill.msh");
+
+        EXPECT_EQ(data.values[0], -7.5);
+        EXPECT_EQ(data.values[1], -8.5);
+    }
+
+    SECTION("nan") {
+        const auto data = write_masked_field("test_gmsh_masked_nan.msh", masked_value_config("nan"));
+        EXPECT(std::isnan(data.values[1]));
+    }
+
+    SECTION("invalid policy is rejected") {
+        EXPECT_THROWS(write_masked_field("test_gmsh_masked_invalid.msh", masked_value_config("invalid")));
+    }
+
+    SECTION("nan is rejected for integer fields") {
+        Mesh mesh = test::generate_mesh(Grid("O8"));
+        functionspace::NodeColumns functionspace(mesh);
+        functionspace.setMask([](int* mask, size_t size) {
+            std::fill(mask, mask + size, 1);
+            mask[0] = 0;
+        });
+        Field field = functionspace.createField<int>(option::name("values"));
+
+        EXPECT_THROWS(output::Gmsh("test_gmsh_masked_integer_nan.msh")
+                          .write(field, masked_value_config("nan")));
+    }
+
+    SECTION("does not allocate an unset mask") {
+        Mesh mesh = test::generate_mesh(Grid("O8"));
+        functionspace::NodeColumns functionspace(mesh);
+        EXPECT(!functionspace.hasMask());
+
+        Field field = functionspace.createField<double>(option::name("values"));
+        output::Gmsh("test_gmsh_masked_unset.msh").write(field, masked_value_config("fill"));
+
+        EXPECT(!functionspace.hasMask());
     }
 }
 

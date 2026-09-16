@@ -42,6 +42,8 @@ void GmshImpl::defaults() {
     config_.coordinates          = "xy";
     config_.missing_value_policy = "skip";
     config_.missing_value_fill   = 0.;
+    config_.masked_value_policy  = "skip";
+    config_.masked_value_fill    = 0.;
 
     config_.configured_land_water = false;
     config_.land                  = true;
@@ -68,6 +70,8 @@ void merge(GmshImpl::Configuration& present, const eckit::Parametrisation& updat
     update.get("coordinates", present.coordinates);
     update.get("missing_value.policy", present.missing_value_policy);
     update.get("missing_value.fill", present.missing_value_fill);
+    update.get("masked_value.policy", present.masked_value_policy);
+    update.get("masked_value.fill", present.masked_value_fill);
     if (update.has("water") || update.has("land")) {
         update.get("land", present.land);
         update.get("water", present.water);
@@ -117,6 +121,8 @@ void GmshImpl::setGmshConfiguration(detail::GmshIO& gmsh, const GmshImpl::Config
     gmsh.options.set("nodes", c.coordinates);
     gmsh.options.set("missing_value.policy", c.missing_value_policy);
     gmsh.options.set("missing_value.fill", c.missing_value_fill);
+    gmsh.options.set("masked_value.policy", c.masked_value_policy);
+    gmsh.options.set("masked_value.fill", c.masked_value_fill);
     if (c.configured_land_water) {
         gmsh.options.set("land", c.land);
         gmsh.options.set("water", c.water);
