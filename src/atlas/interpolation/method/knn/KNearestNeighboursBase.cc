@@ -31,9 +31,20 @@ namespace {
 
 template <typename FunctionSpace_type>
 void insert_tree(util::IndexKDTree& tree, const FunctionSpace_type& functionspace) {
-    size_t ip{0};
-    for (auto p : functionspace.iterate().lonlat()) {
-        tree.insert(p, ip++);
+    if (functionspace.hasMask()) {
+        auto mask = array::make_view<int, 1>(functionspace.mask());
+        size_t ip{0};
+        for (auto p : functionspace.iterate().lonlat()) {
+            if (mask(ip) != 0) {
+                tree.insert(p, ip++);
+            }
+        }
+    }
+    else {
+        size_t ip{0};
+        for (auto p : functionspace.iterate().lonlat()) {
+            tree.insert(p, ip++);
+        }
     }
 }
 
@@ -42,9 +53,19 @@ void insert_tree(util::IndexKDTree& tree, const functionspace::NodeColumns& func
     auto halo   = array::make_view<int, 1>(functionspace.nodes().halo());
     int h       = functionspace.halo().size();
 
-    for (idx_t ip = 0; ip < lonlat.shape(0); ++ip) {
-        if (halo(ip) <= h) {
-            tree.insert(PointLonLat(lonlat(ip, LON), lonlat(ip, LAT)), ip);
+    if (functionspace.hasMask()) {
+        auto mask = array::make_view<int, 1>(functionspace.mask());
+        for (idx_t ip = 0; ip < lonlat.shape(0); ++ip) {
+            if (mask(ip) != 0 && halo(ip) <= h) {
+                tree.insert(PointLonLat(lonlat(ip, LON), lonlat(ip, LAT)), ip);
+            }
+        }
+    }
+    else {
+        for (idx_t ip = 0; ip < lonlat.shape(0); ++ip) {
+            if (halo(ip) <= h) {
+                tree.insert(PointLonLat(lonlat(ip, LON), lonlat(ip, LAT)), ip);
+            }
         }
     }
 }
@@ -54,9 +75,19 @@ void insert_tree(util::IndexKDTree& tree, const functionspace::CellColumns& func
     auto halo   = array::make_view<int, 1>(functionspace.cells().halo());
     int h       = functionspace.halo().size();
 
-    for (idx_t ip = 0; ip < lonlat.shape(0); ++ip) {
-        if (halo(ip) <= h) {
-            tree.insert(PointLonLat(lonlat(ip, LON), lonlat(ip, LAT)), ip);
+    if (functionspace.hasMask()) {
+        auto mask = array::make_view<int, 1>(functionspace.mask());
+        for (idx_t ip = 0; ip < lonlat.shape(0); ++ip) {
+            if (mask(ip) != 0 && halo(ip) <= h){
+                tree.insert(PointLonLat(lonlat(ip, LON), lonlat(ip, LAT)), ip);
+            }
+        }
+    }
+    else {
+        for (idx_t ip = 0; ip < lonlat.shape(0); ++ip) {
+            if (halo(ip) <= h){
+                tree.insert(PointLonLat(lonlat(ip, LON), lonlat(ip, LAT)), ip);
+            }
         }
     }
 }
@@ -64,8 +95,18 @@ void insert_tree(util::IndexKDTree& tree, const functionspace::CellColumns& func
 void insert_tree(util::IndexKDTree& tree, const functionspace::StructuredColumns& functionspace) {
     auto lonlat = array::make_view<double, 2>(functionspace.lonlat());
 
-    for (idx_t ip = 0; ip < lonlat.shape(0); ++ip) {
-        tree.insert(PointLonLat(lonlat(ip, LON), lonlat(ip, LAT)), ip);
+    if (functionspace.hasMask()) {
+        auto mask = array::make_view<int, 1>(functionspace.mask());
+        for (idx_t ip = 0; ip < lonlat.shape(0); ++ip) {
+            if (mask(ip) != 0) {
+                tree.insert(PointLonLat(lonlat(ip, LON), lonlat(ip, LAT)), ip);
+            }
+        }
+    }
+    else {
+        for (idx_t ip = 0; ip < lonlat.shape(0); ++ip) {
+            tree.insert(PointLonLat(lonlat(ip, LON), lonlat(ip, LAT)), ip);
+        }
     }
 }
 
