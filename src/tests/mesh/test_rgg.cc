@@ -11,6 +11,7 @@
 #include <algorithm>
 #include <iomanip>
 #include <sstream>
+#include <string>
 
 #include "eckit/types/FloatCompare.h"
 
@@ -303,6 +304,58 @@ CASE("test_rgg_meshgen_one_part") {
             EXPECT(mesh.cells().elements(1).size() == 32);
             output::Gmsh("minimal5.msh").write(mesh);
         }
+    }
+}
+
+CASE("test_rgg_meshgen_patch_quads_with_odd_rims") {
+    auto check_five_node_pole_rims = [](const StructuredGrid& grid, const std::string& output_prefix) {
+        ATLAS_ASSERT(grid.ny() > 0);
+        ATLAS_ASSERT(grid.nx(0) == 5);
+        ATLAS_ASSERT(grid.nx(grid.ny() - 1) == 5);
+
+        util::Config triangle_options;
+        triangle_options.set("3d", false);
+        triangle_options.set("include_pole", false);
+        triangle_options.set("patch_quads", false);
+
+        util::Config mixed_options = triangle_options;
+        mixed_options.set("patch_quads", true);
+
+        auto triangular_mesh = StructuredMeshGenerator(triangle_options).generate(grid);
+        auto patched_mesh    = StructuredMeshGenerator(mixed_options).generate(grid);
+
+        // Each five-node pole rim changes from three triangles to one quad and one triangle.
+        EXPECT_EQ(patched_mesh.cells().elements(0).size(), triangular_mesh.cells().elements(0).size() + 2);
+        EXPECT_EQ(patched_mesh.cells().elements(1).size(), triangular_mesh.cells().elements(1).size() - 4);
+
+        auto patched_flags   = array::make_view<int, 1>(patched_mesh.cells().flags());
+        using CellTopology   = mesh::Nodes::Topology;
+        idx_t nb_patch_cells = 0;
+        for (idx_t jcell = 0; jcell < patched_mesh.cells().size(); ++jcell) {
+            nb_patch_cells += CellTopology::check(patched_flags(jcell), CellTopology::PATCH) ? 1 : 0;
+        }
+        EXPECT_EQ(nb_patch_cells, 4);
+
+        output::Gmsh(output_prefix + "_xyz.msh", util::Config("coordinates", "xyz")).write(patched_mesh);
+        output::Gmsh(output_prefix + "_xy.msh", util::Config("coordinates", "xy")).write(patched_mesh);
+    };
+
+    SECTION("periodic grid") {
+        int nlat   = 2;
+        long lon[] = {5, 7}; // will be mirrored by equator
+        check_five_node_pole_rims(test::minimal_grid(nlat, lon), "test_rgg_patch_quads_periodic");
+    }
+
+    SECTION("non-periodic grid") {
+        std::vector<long> nx{5, 7, 7, 5};
+        StructuredGrid grid = ReducedGaussianGrid(nx, RectangularDomain({0., 320.}, {-90., 90.}));
+        EXPECT(!grid.periodic());
+        EXPECT_EQ(grid.nx(0), 5);
+        EXPECT_EQ(grid.nx(1), 7);
+        EXPECT_EQ(grid.nx(2), 7);
+        EXPECT_EQ(grid.nx(3), 5);
+        EXPECT_EQ(grid.ny(), 4);
+        check_five_node_pole_rims(grid, "test_rgg_patch_quads_non_periodic");
     }
 }
 
