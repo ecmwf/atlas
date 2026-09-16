@@ -25,7 +25,7 @@
 #include "atlas/interpolation/AssembleGlobalMatrix.h"
 #include "atlas/interpolation/method/MethodFactory.h"
 #include "atlas/linalg/sparse.h"
-#include "atlas/linalg/sparse/MakeEckitSparseMatrix.h"
+
 #include "atlas/mesh/Mesh.h"
 #include "atlas/meshgenerator.h"
 #include "atlas/output/Gmsh.h"
@@ -46,7 +46,6 @@ using atlas::util::Config;
 
 using Matrix = atlas::linalg::SparseMatrixStorage;
 using StopWatch = atlas::runtime::trace::StopWatch;
-
 
 namespace atlas {
 
@@ -129,7 +128,7 @@ public:
         add_option(new eckit::option::Separator("Output options"));
         add_option(new SimpleOption<bool>("output-matrix", "Write interpolation matrix"));
         add_option(new SimpleOption<std::string>("matrix.name", "Name of the remapping matrix. If not provided a default unique name will be chosen"));
-        add_option(new SimpleOption<std::string>("matrix.format", "Format of the remapping matrix: eckit, SCRIP"));
+        add_option(new SimpleOption<std::string>("matrix.format", "Format of the remapping matrix: eckit, scrip"));
 
         add_option(new SimpleOption<bool>("output-gmsh", "Set to enable gmsh output for tests"));
         add_option(new SimpleOption<std::string>("gmsh.coordinates", "Choose the coordinates in gmsh output: {lonlat, xyz}"));
@@ -510,18 +509,23 @@ void test_matrix(const Grid& sgrid, const Grid& tgrid, const Matrix& matrix, con
         }
     }
 
-    StopWatch timer_serial_sparse_matrix_multiply;
-    timer_serial_sparse_matrix_multiply.start();
-    atlas::linalg::sparse_matrix_multiply(
-        atlas::linalg::make_host_view<double>(matrix),
-        atlas::array::make_view<double,1>(sdata.data(), matrix.cols()),
-        atlas::array::make_view<double,1>(tdata.data(), matrix.rows()));
-    timer_serial_sparse_matrix_multiply.stop();
-    Log::info() << "Serial sparse-matrix-multiply timer  \t: " << elapsed_ms(timer_serial_sparse_matrix_multiply.elapsed(),true) << " [ms]" << std::endl;
-    Log::info() << "Serial sparse-matrix non-zero entries\t: " << matrix.nnz() << std::endl;
-
+    ATLAS_TRACE_SCOPE("sparse-matrix-multiply") {
+        StopWatch timer_serial_sparse_matrix_multiply;
+        timer_serial_sparse_matrix_multiply.start();
+        atlas::linalg::sparse_matrix_multiply(
+            atlas::linalg::make_host_view<double>(matrix),
+            atlas::array::make_view<double,1>(sdata.data(), matrix.cols()),
+            atlas::array::make_view<double,1>(tdata.data(), matrix.rows()));
+        timer_serial_sparse_matrix_multiply.stop();
+        Log::info() << "Serial sparse-matrix-multiply timer  \t: " << elapsed_ms(timer_serial_sparse_matrix_multiply.elapsed(),true) << " [ms]" << std::endl;
+        Log::info() << "Serial sparse-matrix non-zero entries\t: " << matrix.nnz() << std::endl;
+    }
 
     if (args.getBool("output-checksum",false)) {
+        ATLAS_TRACE("checksum target-field");
+
+        // The matrix version is possibly not bit-identical with the interpolator version
+        // This is because the matrix version uses grid points without halo, wrapping around the globe
         size_t min_size = std::min(tgt_ref.size(), tdata.size());
         for (size_t i=0; i<min_size; ++i) {
             if (std::abs(tgt_ref[i] - tdata[i]) < 1.e-14) {
@@ -534,8 +538,6 @@ void test_matrix(const Grid& sgrid, const Grid& tgrid, const Matrix& matrix, con
         checksum_file << std::setw(8) << target_checksum << "    [test-matrix]   checksum of target field" << std::endl;
     }
 
-    // atlas::array::make_view<double,1>(tdata.data(), matrix.rows()).dump(Log::info());
-    // Log::info() << std::endl;
 
 
     if (args.getBool("output-gmsh",false)) {
@@ -602,6 +604,7 @@ int AtlasInterpolations::execute(const AtlasTool::Args& args) {
                 print_matrix(matrix, Log::info());
                 Log::info() << std::endl;
                 if (output_checksum) {
+                    ATLAS_TRACE("checksum input-matrix");
                     std::ofstream checksum_file(checksum_file_path ,std::ios::app);
                     auto matrix_view = linalg::make_host_view<double,int>(matrix);
                     auto outer_checksum = util::checksum(matrix_view.inner(), matrix_view.inner_size());
@@ -668,6 +671,7 @@ int AtlasInterpolations::execute(const AtlasTool::Args& args) {
         Log::info() << "Interpolation setup timer\t: " << elapsed_ms(timers.interpolation_setup) << " [ms]"  << std::endl;
 
         if (args.getBool("test-interpolator", false)) {
+            ATLAS_TRACE("Test test_interpolator");
             auto src_field = interpolator.source().createField<double>();
             auto tgt_field = interpolator.target().createField<double>();
             auto src_lonlat = array::make_view<double, 2>(interpolator.source().lonlat());
@@ -686,6 +690,7 @@ int AtlasInterpolations::execute(const AtlasTool::Args& args) {
 
             Field tgt_field_global;
             if (output_checksum) {
+                ATLAS_TRACE("checksum target-field");
                 tgt_field_global = tgt_fs.createField(tgt_field, option::global());
                 auto tgt_field_global_v = array::make_view<double,1>(tgt_field_global);
                 tgt_fs.gather(tgt_field, tgt_field_global);
@@ -715,7 +720,7 @@ int AtlasInterpolations::execute(const AtlasTool::Args& args) {
                     std::string tgt_name = "test_interpolator_target_" + matrix_name;
                     Log::info() << "Storing field '" << tgt_name << ".msh'." << std::endl;
                     std::string coords = args.getString("gmsh.coordinates", "lonlat");
-                    output::Gmsh gmsh(tgt_name + ".msh", Config("coordinates", coords) | Config("ghost", "true"));
+                    output::Gmsh gmsh(tgt_name + ".msh", Config("coordinates", coords) | Config("ghost", "false"));
                     gmsh.write(tmesh);
                     gmsh.write(tgt_field);
                 }
@@ -724,12 +729,16 @@ int AtlasInterpolations::execute(const AtlasTool::Args& args) {
     }
 
     if (args.getBool("output-matrix",false) || (args.getBool("test-matrix",false) && !matrix_tested)) {
-        matrix = interpolation::assemble_global_matrix(tgrid.size(), sgrid.size(), interpolator);
+        ATLAS_TRACE("Matrix operations");
+        ATLAS_TRACE_SCOPE("assemble_global_matrix") {
+            matrix = interpolation::assemble_global_matrix(tgrid.size(), sgrid.size(), interpolator);
+        }
         if (mpi::comm().rank() == 0) {
             if (args.getBool("output-matrix",false)) {
                 write_matrix(matrix, matrix_name, matrix_format);
                 print_matrix(matrix, Log::info());
                 if (output_checksum) {
+                    ATLAS_TRACE("checksum output-matrix");
                     std::ofstream checksum_file(checksum_file_path ,std::ios::app);
                     auto matrix_view = linalg::make_host_view<double,int>(matrix);
                     auto outer_checksum = util::checksum(matrix_view.inner(), matrix_view.inner_size());
@@ -797,7 +806,7 @@ void AtlasInterpolations::write_matrix(const Matrix& matrix, std::string matrix_
         ScripIO::write(matrix, matrix_name+".nc");
     }
     else {
-        ATLAS_NOTIMPLEMENTED;
+        ATLAS_THROW_EXCEPTION("Matrix format " << format << " is not recognised. Recognized are {eckit,scrip}");
     }
 }
 
