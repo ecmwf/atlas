@@ -1330,10 +1330,24 @@ void StructuredMeshGenerator::generate_mesh(const StructuredGrid& rg, const grid
 
     auto node_on_latitude = [&](idx_t ilat, idx_t ip) { return node_numbering.at(offset_loc.at(ilat) + ip); };
 
+    auto set_quad_connectivity = [&](idx_t cell, const idx_t nodes[]) {
+        ATLAS_ASSERT(node_connectivity.cols(cell) == 4);
+        for (idx_t node = 0; node < 4; ++node) {
+            node_connectivity.set(cell, node, nodes[node]);
+        }
+    };
+
+    auto set_triag_connectivity = [&](idx_t cell, const idx_t nodes[]) {
+        ATLAS_ASSERT(node_connectivity.cols(cell) == 3);
+        for (idx_t node = 0; node < 3; ++node) {
+            node_connectivity.set(cell, node, nodes[node]);
+        }
+    };
+
     auto add_patch_quad = [&]() {
         ATLAS_ASSERT(jquad < nquads);
         jcell = quad_begin + jquad++;
-        node_connectivity.set(jcell, quad_nodes);
+        set_quad_connectivity(jcell, quad_nodes);
         cells_glb_idx(jcell) = jcell + 1;
         cells_part(jcell)    = mypart;
         Topology::set(cells_flags(jcell), Topology::PATCH);
@@ -1342,7 +1356,7 @@ void StructuredMeshGenerator::generate_mesh(const StructuredGrid& rg, const grid
     auto add_patch_triag = [&]() {
         ATLAS_ASSERT(jtriag < ntriags);
         jcell = triag_begin + jtriag++;
-        node_connectivity.set(jcell, triag_nodes);
+        set_triag_connectivity(jcell, triag_nodes);
         cells_glb_idx(jcell) = jcell + 1;
         cells_part(jcell)    = mypart;
         Topology::set(cells_flags(jcell), Topology::PATCH);
@@ -1431,7 +1445,7 @@ void StructuredMeshGenerator::generate_mesh(const StructuredGrid& rg, const grid
                 }
 
                 jcell = quad_begin + jquad++;
-                node_connectivity.set(jcell, quad_nodes);
+                set_quad_connectivity(jcell, quad_nodes);
                 cells_glb_idx(jcell) = jcell + 1;
                 cells_part(jcell)    = mypart;
                 if( regular_cells_glb_idx ) {
@@ -1475,7 +1489,7 @@ void StructuredMeshGenerator::generate_mesh(const StructuredGrid& rg, const grid
                     }
                 }
                 jcell = triag_begin + jtriag++;
-                node_connectivity.set(jcell, triag_nodes);
+                set_triag_connectivity(jcell, triag_nodes);
                 cells_glb_idx(jcell) = jcell + 1;
                 cells_part(jcell)    = mypart;
             }
@@ -1498,7 +1512,7 @@ void StructuredMeshGenerator::generate_mesh(const StructuredGrid& rg, const grid
             if (y_numbering > 0) {
                 fix_triag_orientation(triag_nodes);
             }
-            node_connectivity.set(jcell, triag_nodes);
+            set_triag_connectivity(jcell, triag_nodes);
             cells_glb_idx(jcell) = jcell + 1;
             cells_part(jcell)    = mypart;
         }
@@ -1537,7 +1551,7 @@ void StructuredMeshGenerator::generate_mesh(const StructuredGrid& rg, const grid
                 //            }
 
                 jcell = triag_begin + jtriag++;
-                node_connectivity.set(jcell, triag_nodes);
+                set_triag_connectivity(jcell, triag_nodes);
 
                 cells_glb_idx(jcell) = jcell + 1;
                 cells_part(jcell)    = mypart;
@@ -1577,7 +1591,7 @@ void StructuredMeshGenerator::generate_mesh(const StructuredGrid& rg, const grid
                 fix_triag_orientation(triag_nodes);
             }
 
-            node_connectivity.set(jcell, triag_nodes);
+            set_triag_connectivity(jcell, triag_nodes);
             cells_glb_idx(jcell) = jcell + 1;
             cells_part(jcell)    = mypart;
         }
@@ -1616,7 +1630,7 @@ void StructuredMeshGenerator::generate_mesh(const StructuredGrid& rg, const grid
                 //            }
 
                 jcell = triag_begin + jtriag++;
-                node_connectivity.set(jcell, triag_nodes);
+                set_triag_connectivity(jcell, triag_nodes);
 
                 cells_glb_idx(jcell) = jcell + 1;
                 cells_part(jcell)    = mypart;
