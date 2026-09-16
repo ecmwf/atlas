@@ -35,6 +35,7 @@
 #include "atlas/runtime/Trace.h"
 #include "atlas/util/Checksum.h"
 #include "atlas/util/detail/Cache.h"
+#include "atlas/util/vector.h"
 
 #if ATLAS_HAVE_FORTRAN
 #define REMOTE_IDX_BASE 1
@@ -144,7 +145,7 @@ private:
         value_type* value = new value_type();
 
         mesh::IsGhostNode is_ghost(mesh.nodes());
-        std::vector<int> mask(mesh.nodes().size());
+        atlas::vector<int> mask(mesh.nodes().size());
         const idx_t npts = mask.size();
         atlas_omp_parallel_for(idx_t n = 0; n < npts; ++n) {
             mask[n] = is_ghost(n) ? 1 : 0;
@@ -591,6 +592,14 @@ const parallel::Checksum& NodeColumns::deprecated_checksum() const {
     }
     checksum_ = NodeColumnsChecksumCache::instance().get_or_create(mesh_);
     return *checksum_;
+}
+
+Field NodeColumns::mask() const {
+    if (!field_mask_) {
+        field_mask_ = createField(option::name("mask") | option::datatypeT<int>() | option::levels(0));
+        array::make_view<int, 1>(field_mask_).assign(1);
+    }
+    return field_mask_;
 }
 
 

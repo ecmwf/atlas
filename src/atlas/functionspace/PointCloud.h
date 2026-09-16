@@ -62,6 +62,7 @@ public:
     Field lonlat() const override { return lonlat_; }
     const Field& vertical() const { return vertical_; }
     Field ghost() const override;
+    Field mask() const override;
     Field remote_index() const override { return remote_index_; }
     Field global_index() const override { return global_index_; }
     Field partition() const override { return partition_; }
@@ -179,6 +180,8 @@ private:
     Field vertical_;
     mutable Field ghost_;
     mutable Field remote_index_;
+    mutable Field mask_;
+
     Field global_index_;
     Field partition_;
     idx_t size_owned_;

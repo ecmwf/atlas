@@ -106,6 +106,8 @@ public:
 
     Field partition() const override;
 
+    Field mask() const override;
+
     std::string mpi_comm() const override { return mesh_.mpi_comm(); }
 
 private:  // methods
@@ -128,6 +130,7 @@ private:                           // data
     mutable util::ObjectHandle<parallel::GatherScatter> gather_scatter_;  // without ghost
     mutable util::ObjectHandle<parallel::HaloExchange> halo_exchange_;
     mutable util::ObjectHandle<parallel::Checksum> checksum_;
+    mutable Field field_mask_;
 };
 
 // -------------------------------------------------------------------

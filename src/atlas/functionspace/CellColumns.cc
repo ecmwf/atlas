@@ -330,6 +330,14 @@ Field CellColumns::createField(const Field& other, const eckit::Configuration& c
                        option::variables(other.variables()) | config);
 }
 
+Field CellColumns::mask() const {
+    if (!field_mask_) {
+        field_mask_ = createField(option::name("mask") | option::datatypeT<int>() | option::levels(0));
+        array::make_view<int, 1>(field_mask_).assign(1);
+    }
+    return field_mask_;
+}
+
 
 namespace {
 

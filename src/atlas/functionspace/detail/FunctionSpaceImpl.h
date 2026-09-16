@@ -116,6 +116,12 @@ public:
 
     virtual atlas::Field global_index() const;
 
+    virtual atlas::Field mask() const;
+
+    virtual bool hasMask() const;
+
+    virtual void setMask(const atlas::Field& global_mask);
+
     virtual const util::PartitionPolygons& polygons() const;
 
     virtual const Projection& projection() const;

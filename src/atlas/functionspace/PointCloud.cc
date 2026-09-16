@@ -1131,6 +1131,13 @@ void PointCloud::adjointHaloExchange(const Field& field, bool) const {
     adjointHaloExchange(fieldset);
 }
 
+Field PointCloud::mask() const {
+    if (!mask_) {
+        mask_ = createField(option::name("mask") | option::datatypeT<int>() | option::levels(0));
+        array::make_view<int, 1>(mask_).assign(1);
+    }
+    return mask_;
+}
 
 }  // namespace detail
 
