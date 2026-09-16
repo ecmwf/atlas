@@ -965,29 +965,32 @@ void StructuredMeshGenerator::generate_mesh(const StructuredGrid& rg, const grid
     int ntriags = region.ntriags;
     int nquads  = region.nquads;
 
+    auto count_pole_patch_cells = [&](idx_t nb_ring_nodes) {
+        ATLAS_ASSERT(nb_ring_nodes >= 3);
+        if (patch_quads) {
+            // A polygon with N rim vertices needs N-2 triangle-equivalents.
+            // Each quad consumes two; an odd rim leaves one triangle.
+            nquads += (nb_ring_nodes - 2) / 2;
+            ntriags += nb_ring_nodes % 2;
+        }
+        else {
+            ntriags += nb_ring_nodes - 2;
+        }
+    };
+
     if (include_north_pole) {
         ++nnodes;
         ntriags += nx_north - (periodic_east_west ? 0 : 1);
     }
     else if (patch_north_pole) {
-        if (patch_quads) {
-            nquads += (nx_north + 1) / 2;
-        }
-        else {
-            ntriags += nx_north - 2;
-        }
+        count_pole_patch_cells(nx_north);
     }
     if (include_south_pole) {
         ++nnodes;
         ntriags += nx_south - (periodic_east_west ? 0 : 1);
     }
     else if (patch_south_pole) {
-        if (patch_quads) {
-            nquads += (nx_south + 1) / 2;
-        }
-        else {
-            ntriags += nx_south - 2;
-        }
+        count_pole_patch_cells(nx_south);
     }
 
     size_t node_numbering_size = nnodes;
@@ -1325,6 +1328,87 @@ void StructuredMeshGenerator::generate_mesh(const StructuredGrid& rg, const grid
         nodes[1] = tmp;
     };
 
+    auto node_on_latitude = [&](idx_t ilat, idx_t ip) { return node_numbering.at(offset_loc.at(ilat) + ip); };
+
+    auto set_quad_connectivity = [&](idx_t cell, const idx_t nodes[]) {
+        ATLAS_ASSERT(node_connectivity.cols(cell) == 4);
+        for (idx_t node = 0; node < 4; ++node) {
+            node_connectivity.set(cell, node, nodes[node]);
+        }
+    };
+
+    auto set_triag_connectivity = [&](idx_t cell, const idx_t nodes[]) {
+        ATLAS_ASSERT(node_connectivity.cols(cell) == 3);
+        for (idx_t node = 0; node < 3; ++node) {
+            node_connectivity.set(cell, node, nodes[node]);
+        }
+    };
+
+    auto add_patch_quad = [&]() {
+        ATLAS_ASSERT(jquad < nquads);
+        jcell = quad_begin + jquad++;
+        set_quad_connectivity(jcell, quad_nodes);
+        cells_glb_idx(jcell) = jcell + 1;
+        cells_part(jcell)    = mypart;
+        Topology::set(cells_flags(jcell), Topology::PATCH);
+    };
+
+    auto add_patch_triag = [&]() {
+        ATLAS_ASSERT(jtriag < ntriags);
+        jcell = triag_begin + jtriag++;
+        set_triag_connectivity(jcell, triag_nodes);
+        cells_glb_idx(jcell) = jcell + 1;
+        cells_part(jcell)    = mypart;
+        Topology::set(cells_flags(jcell), Topology::PATCH);
+    };
+
+    enum class Pole
+    {
+        NORTH,
+        SOUTH
+    };
+
+    auto add_quad_pole_patch = [&](idx_t ilat, idx_t nb_ring_nodes, Pole pole) {
+        ATLAS_ASSERT(nb_ring_nodes >= 3);
+
+        idx_t first = 0;
+        idx_t last  = nb_ring_nodes - 1;
+
+        // Work inward from both sides of the rim. Four remaining vertices form
+        // a quad; three remaining vertices form the final triangle.
+        while (first + 3 <= last) {
+            if (pole == Pole::NORTH) {
+                quad_nodes[0] = node_on_latitude(ilat, first);
+                quad_nodes[1] = node_on_latitude(ilat, first + 1);
+                quad_nodes[2] = node_on_latitude(ilat, last - 1);
+                quad_nodes[3] = node_on_latitude(ilat, last);
+            }
+            else {
+                quad_nodes[0] = node_on_latitude(ilat, last);
+                quad_nodes[1] = node_on_latitude(ilat, last - 1);
+                quad_nodes[2] = node_on_latitude(ilat, first + 1);
+                quad_nodes[3] = node_on_latitude(ilat, first);
+            }
+            add_patch_quad();
+            ++first;
+            --last;
+        }
+
+        if (first + 2 == last) {
+            if (pole == Pole::NORTH) {
+                triag_nodes[0] = node_on_latitude(ilat, first);
+                triag_nodes[1] = node_on_latitude(ilat, first + 1);
+                triag_nodes[2] = node_on_latitude(ilat, last);
+            }
+            else {
+                triag_nodes[0] = node_on_latitude(ilat, last);
+                triag_nodes[1] = node_on_latitude(ilat, first + 1);
+                triag_nodes[2] = node_on_latitude(ilat, first);
+            }
+            add_patch_triag();
+        }
+    };
+
     bool regular_cells_glb_idx = rg.regular();
     if (options.getBool("triangulate") || y_numbering > 0 || rg.y().front() != 90. || rg.y().back() != -90.) {
         regular_cells_glb_idx = false;
@@ -1361,7 +1445,7 @@ void StructuredMeshGenerator::generate_mesh(const StructuredGrid& rg, const grid
                 }
 
                 jcell = quad_begin + jquad++;
-                node_connectivity.set(jcell, quad_nodes);
+                set_quad_connectivity(jcell, quad_nodes);
                 cells_glb_idx(jcell) = jcell + 1;
                 cells_part(jcell)    = mypart;
                 if( regular_cells_glb_idx ) {
@@ -1405,7 +1489,7 @@ void StructuredMeshGenerator::generate_mesh(const StructuredGrid& rg, const grid
                     }
                 }
                 jcell = triag_begin + jtriag++;
-                node_connectivity.set(jcell, triag_nodes);
+                set_triag_connectivity(jcell, triag_nodes);
                 cells_glb_idx(jcell) = jcell + 1;
                 cells_part(jcell)    = mypart;
             }
@@ -1428,7 +1512,7 @@ void StructuredMeshGenerator::generate_mesh(const StructuredGrid& rg, const grid
             if (y_numbering > 0) {
                 fix_triag_orientation(triag_nodes);
             }
-            node_connectivity.set(jcell, triag_nodes);
+            set_triag_connectivity(jcell, triag_nodes);
             cells_glb_idx(jcell) = jcell + 1;
             cells_part(jcell)    = mypart;
         }
@@ -1438,37 +1522,7 @@ void StructuredMeshGenerator::generate_mesh(const StructuredGrid& rg, const grid
         idx_t ilat = y_numbering < 0 ? 0 : std::abs(region.south - region.north);
 
         if (patch_quads) {
-            idx_t ip1, ip2, ip3, ip4;
-
-            idx_t jforward  = 0;
-            idx_t jbackward = rg.nx(jlat) - 1;
-
-            while (true) {
-                ip1 = jforward;
-                ip2 = jforward + 1;
-                ip3 = jbackward - 1;
-                ip4 = jbackward;
-
-                quad_nodes[0] = node_numbering.at(offset_loc.at(ilat) + ip1);
-                quad_nodes[1] = node_numbering.at(offset_loc.at(ilat) + ip2);
-                quad_nodes[2] = node_numbering.at(offset_loc.at(ilat) + ip3);
-                quad_nodes[3] = node_numbering.at(offset_loc.at(ilat) + ip4);
-
-                jcell = quad_begin + jquad++;
-                node_connectivity.set(jcell, quad_nodes);
-
-                cells_glb_idx(jcell) = jcell + 1;
-                cells_part(jcell)    = mypart;
-                Topology::set(cells_flags(jcell), Topology::PATCH);
-
-                if (jcell == cells_glb_idx.size() - 1) {
-                }
-                if (jforward + 1 == jbackward) {
-                    break;
-                }
-                ++jforward;
-                --jbackward;
-            }
+            add_quad_pole_patch(ilat, rg.nx(jlat), Pole::NORTH);
         }
         else {
             idx_t ip1, ip2, ip3;
@@ -1497,7 +1551,7 @@ void StructuredMeshGenerator::generate_mesh(const StructuredGrid& rg, const grid
                 //            }
 
                 jcell = triag_begin + jtriag++;
-                node_connectivity.set(jcell, triag_nodes);
+                set_triag_connectivity(jcell, triag_nodes);
 
                 cells_glb_idx(jcell) = jcell + 1;
                 cells_part(jcell)    = mypart;
@@ -1537,7 +1591,7 @@ void StructuredMeshGenerator::generate_mesh(const StructuredGrid& rg, const grid
                 fix_triag_orientation(triag_nodes);
             }
 
-            node_connectivity.set(jcell, triag_nodes);
+            set_triag_connectivity(jcell, triag_nodes);
             cells_glb_idx(jcell) = jcell + 1;
             cells_part(jcell)    = mypart;
         }
@@ -1547,37 +1601,7 @@ void StructuredMeshGenerator::generate_mesh(const StructuredGrid& rg, const grid
         idx_t ilat = y_numbering > 0 ? 0 : std::abs(region.south - region.north);
 
         if (patch_quads) {
-            idx_t ip1, ip2, ip3, ip4;
-
-            idx_t jforward  = 0;
-            idx_t jbackward = rg.nx(jlat) - 1;
-
-            while (true) {
-                ip1 = jbackward;
-                ip2 = jbackward - 1;
-                ip3 = jforward + 1;
-                ip4 = jforward;
-
-                quad_nodes[0] = node_numbering.at(offset_loc.at(ilat) + ip1);
-                quad_nodes[1] = node_numbering.at(offset_loc.at(ilat) + ip2);
-                quad_nodes[2] = node_numbering.at(offset_loc.at(ilat) + ip3);
-                quad_nodes[3] = node_numbering.at(offset_loc.at(ilat) + ip4);
-
-                jcell = quad_begin + jquad++;
-                node_connectivity.set(jcell, quad_nodes);
-
-                cells_glb_idx(jcell) = jcell + 1;
-                cells_part(jcell)    = mypart;
-                Topology::set(cells_flags(jcell), Topology::PATCH);
-
-                if (jcell == cells_glb_idx.size() - 1) {
-                }
-                if (jforward + 1 == jbackward) {
-                    break;
-                }
-                ++jforward;
-                --jbackward;
-            }
+            add_quad_pole_patch(ilat, rg.nx(jlat), Pole::SOUTH);
         }
         else {
             idx_t ip1, ip2, ip3;
@@ -1606,7 +1630,7 @@ void StructuredMeshGenerator::generate_mesh(const StructuredGrid& rg, const grid
                 //            }
 
                 jcell = triag_begin + jtriag++;
-                node_connectivity.set(jcell, triag_nodes);
+                set_triag_connectivity(jcell, triag_nodes);
 
                 cells_glb_idx(jcell) = jcell + 1;
                 cells_part(jcell)    = mypart;
