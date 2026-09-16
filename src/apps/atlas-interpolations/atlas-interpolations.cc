@@ -146,7 +146,16 @@ public:
         add_option(new SimpleOption<std::string>("matrix.format", "Format of the remapping matrix: eckit, scrip"));
 
         add_option(new SimpleOption<bool>("output-gmsh", "Set to enable gmsh output for tests"));
-        add_option(new SimpleOption<std::string>("gmsh.coordinates", "Choose the coordinates in gmsh output: {lonlat, xyz}"));
+        add_option(
+            new SimpleOption<std::string>("gmsh.coordinates", "Choose the coordinates in gmsh output: {lonlat, xyz}"));
+        add_option(new SimpleOption<std::string>("gmsh.missing_value.policy",
+                                                 "Missing-value policy in Gmsh output: {skip, fill, nan, preserve}"));
+        add_option(new SimpleOption<double>("gmsh.missing_value.fill",
+                                            "Fill value used by the Gmsh missing-value policy 'fill'"));
+        add_option(new SimpleOption<std::string>("gmsh.masked_value.policy",
+                                                 "Masked-value policy in Gmsh output: {skip, fill, nan, preserve}"));
+        add_option(new SimpleOption<double>("gmsh.masked_value.fill",
+                                            "Fill value used by the Gmsh masked-value policy 'fill'"));
 
         add_option(new SimpleOption<bool>("output-checksum", "Compute checksums"));
         add_option(new SimpleOption<std::string>("checksum.file", "Path of files for checksums [default='checksum']"));
@@ -163,9 +172,7 @@ public:
         add_option(new SimpleOption<long>("spherical_harmonic.n", "total wave number 'n' of a spherical harmonic"));
         add_option(new SimpleOption<long>("spherical_harmonic.m", "zonal wave number 'm' of a spherical harmonic"));
 
-        add_option(new SimpleOption<double>("missing-value", "Value used with --test-matrix to add as missing value"));
-        add_option(new SimpleOption<bool>("gmsh.missing-value", "If set, do not output values matching --missing-value in Gmsh output within --test-matrix"));
-
+        add_option(new SimpleOption<double>("missing_value", "Value used with --test-matrix to mark missing values"));
     }
 };
 
@@ -613,8 +620,22 @@ std::pair<FunctionSpace, FunctionSpace> get_fs(const Grid& sgrid, const Grid& tg
 }
 
 
+Config gmsh_field_config(const AtlasTool::Args& args, const std::string& default_policy = "skip") {
+    Config config;
+    config.set("missing_value.policy", args.getString("gmsh.missing_value.policy", default_policy));
+    config.set("masked_value.policy", args.getString("gmsh.masked_value.policy", default_policy));
+    if (args.has("gmsh.missing_value.fill")) {
+        config.set("missing_value.fill", args.getDouble("gmsh.missing_value.fill"));
+    }
+    if (args.has("gmsh.masked_value.fill")) {
+        config.set("masked_value.fill", args.getDouble("gmsh.masked_value.fill"));
+    }
+    return config;
+}
+
 template <typename View>
-void gmsh_output(const std::string& name, const Grid& grid, const View& field, const AtlasTool::Args& args) {
+void gmsh_output(const std::string& name, const Grid& grid, const View& field, const std::string& mask_option,
+                 const AtlasTool::Args& args) {
     mpi::Scope mpi_scope("self");
     Log::info() << "Storing field '" << name << ".msh'" << std::endl;
     ATLAS_ASSERT(field.size() <= grid.size());
@@ -623,19 +644,23 @@ void gmsh_output(const std::string& name, const Grid& grid, const View& field, c
     auto mesh = Mesh(grid);
     gmsh.write(mesh);
     auto fs = gridpoints_are_cells(grid) ? FunctionSpace(CellColumns(mesh)) : FunctionSpace(NodeColumns(mesh));
-    auto f = fs.createField<double>(option::name(name));
-    if (args.getBool("gmsh.missing-value",false)) {
-        f.metadata().set("missing_value",args.getDouble("missing-value",0.));
-        f.metadata().set("missing_value_type","equals");
+    if (args.has(mask_option)) {
+        const std::string mask_name = args.getString(mask_option);
+        fs.setMask([mask_name](int* mask, size_t size) { read_mask(mask_name, mdspan<int, dims<1>>(mask, size)); });
     }
-    auto v = array::make_view<double,1>(f);
-    auto g = array::make_view<gidx_t,1>(fs.global_index());
-    size_t min_size = std::min<size_t>(f.size(),field.size());
-    for(size_t i=0; i<min_size; ++i) {
-        v(i) = field[g(i)-1];
+    auto f = fs.createField<double>(option::name(name));
+    if (args.has("missing_value")) {
+        f.metadata().set("missing_value", args.getDouble("missing_value"));
+        f.metadata().set("missing_value_type", "equals");
+    }
+    auto v          = array::make_view<double, 1>(f);
+    auto g          = array::make_view<gidx_t, 1>(fs.global_index());
+    size_t min_size = std::min<size_t>(f.size(), field.size());
+    for (size_t i = 0; i < min_size; ++i) {
+        v(i) = field[g(i) - 1];
     }
     fs.haloExchange(f);
-    gmsh.write(f);
+    gmsh.write(f, gmsh_field_config(args));
 }
 
 void test_matrix(const Grid& sgrid, const Grid& tgrid, const Matrix& matrix, const AtlasTool::Args& args) {
@@ -677,12 +702,14 @@ void test_matrix(const Grid& sgrid, const Grid& tgrid, const Matrix& matrix, con
         Log::info() << "Serial sparse-matrix non-zero entries\t: " << matrix.nnz() << std::endl;
     }
 
-    ATLAS_TRACE_SCOPE("Apply missing values to target") {
-        double missing_value = args.getDouble("missing-value",0.);
-        auto m = atlas::linalg::make_host_view<double>(matrix);
-        for (idx_t r=0; r<m.rows(); ++r) {
-            if (m.outer()[r+1] - m.outer()[r] == 0) {
-                tdata[r] = missing_value;
+    if (args.has("missing_value")) {
+        ATLAS_TRACE_SCOPE("Apply missing values to target") {
+            double missing_value = args.getDouble("missing_value");
+            auto m               = atlas::linalg::make_host_view<double>(matrix);
+            for (idx_t r = 0; r < m.rows(); ++r) {
+                if (m.outer()[r + 1] - m.outer()[r] == 0) {
+                    tdata[r] = missing_value;
+                }
             }
         }
     }
@@ -708,33 +735,13 @@ void test_matrix(const Grid& sgrid, const Grid& tgrid, const Matrix& matrix, con
 
     if (args.getBool("output-gmsh", false)) {
         ATLAS_TRACE_SCOPE("Gmsh serial output") {
-
-            auto apply_mask = [&](const std::string& option, const Grid& grid, std::vector<double>& data) {
-                if (not args.has(option)) {
-                    return;
-                }
-
-                std::vector<int> mask(grid.size());
-                const std::string mask_name = args.getString(option);
-                read_mask(mask_name, mdspan<int,dims<1>>(mask.data(), mask.size()));
-
-                const double missing_value = args.getDouble("missing-value",0.);
-                for(size_t i=0; i<data.size(); ++i) {
-                    if(mask[i] == 0) {
-                        data[i] = missing_value;
-                    }
-                }
-            };
-
-            apply_mask("s.mask", sgrid, sdata);
-
             std::string sname = "test_matrix_source_" + get_matrix_name(args);
-            gmsh_output(sname, sgrid, atlas::array::make_view<double,1>(sdata.data(), matrix.cols()), args);
-
-            apply_mask("t.mask", tgrid, tdata);
+            auto sview        = atlas::array::make_view<double, 1>(sdata.data(), matrix.cols());
+            gmsh_output(sname, sgrid, sview, "s.mask", args);
 
             std::string tname = "test_matrix_target_" + get_matrix_name(args);
-            gmsh_output(tname, tgrid, atlas::array::make_view<double,1>(tdata.data(), matrix.rows()), args);
+            auto tview        = atlas::array::make_view<double, 1>(tdata.data(), matrix.rows());
+            gmsh_output(tname, tgrid, tview, "t.mask", args);
         }
     }
 }
@@ -931,7 +938,7 @@ int AtlasInterpolations::execute(const AtlasTool::Args& args) {
                     std::string coords = args.getString("gmsh.coordinates", "lonlat");
                     output::Gmsh gmsh(tgt_name + ".msh", Config("coordinates", coords) | Config("ghost", "false"));
                     gmsh.write(tmesh);
-                    gmsh.write(tgt_field);
+                    gmsh.write(tgt_field, gmsh_field_config(args));
                 }
             }
         }
