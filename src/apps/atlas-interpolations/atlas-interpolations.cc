@@ -25,28 +25,27 @@
 #include "atlas/interpolation/AssembleGlobalMatrix.h"
 #include "atlas/interpolation/method/MethodFactory.h"
 #include "atlas/linalg/sparse.h"
-#include "atlas/linalg/sparse/MakeEckitSparseMatrix.h"
+
 #include "atlas/mesh/Mesh.h"
 #include "atlas/meshgenerator.h"
 #include "atlas/output/Gmsh.h"
 #include "atlas/parallel/mpi/mpi.h"
 #include "atlas/runtime/AtlasTool.h"
-#include "atlas/util/CoordinateEnums.h"
 #include "atlas/util/Checksum.h"
+#include "atlas/util/CoordinateEnums.h"
 #include "atlas/util/function/VortexRollup.h"
 
 #include "ScripIO.h"
 
 
-using atlas::functionspace::PointCloud;
-using atlas::functionspace::NodeColumns;
 using atlas::functionspace::CellColumns;
+using atlas::functionspace::NodeColumns;
+using atlas::functionspace::PointCloud;
 using atlas::functionspace::StructuredColumns;
 using atlas::util::Config;
 
-using Matrix = atlas::linalg::SparseMatrixStorage;
+using Matrix    = atlas::linalg::SparseMatrixStorage;
 using StopWatch = atlas::runtime::trace::StopWatch;
-
 
 namespace atlas {
 
@@ -71,10 +70,9 @@ class AtlasInterpolations : public AtlasTool {
     int execute(const AtlasTool::Args& args) override;
     std::string briefDescription() override {
         return "Atlas intepolation app to perform MPI-parallel interpolations for given source "
-                "and target grids and/or generate remapping matrices.\n"; }
-    std::string usage() override {
-        return name() + " [OPTION] ... [--help]";
+               "and target grids and/or generate remapping matrices.\n";
     }
+    std::string usage() override { return name() + " [OPTION] ... [--help]"; }
     std::string longDescription() override {
         return "The 's.grid' and 't.grid' arguments are source and target grids name, "
                "for instance: N80, F40, O24, L64x33, CS-ED-12, etc. See './bin/atlas-grids --list' "
@@ -103,12 +101,13 @@ public:
     AtlasInterpolations(int argc, char* argv[]): AtlasTool(argc, argv) {
         // Commands
         add_option(new eckit::option::Separator("Commands"));
-        add_option(new SimpleOption<bool>("list",  "List available interpolation types"));
+        add_option(new SimpleOption<bool>("list", "List available interpolation types"));
         add_option(new SimpleOption<bool>("interpolate", "Test an interpolation type"));
 
         // Configuration
         add_option(new eckit::option::Separator("Interpolation options"));
-        add_option(new SimpleOption<std::string>("i.knn", "number of nearest neighbours in case i.type=knn or k-nearest-neighbours. (default=1)"));
+        add_option(new SimpleOption<std::string>(
+            "i.knn", "number of nearest neighbours in case i.type=knn or k-nearest-neighbours. (default=1)"));
         add_option(new SimpleOption<bool>("i.normalise", "Normalise weights"));
         add_option(new SimpleOption<std::string>("s.grid", "source grid"));
         add_option(new SimpleOption<std::string>("t.grid", "target grid"));
@@ -128,8 +127,9 @@ public:
 
         add_option(new eckit::option::Separator("Output options"));
         add_option(new SimpleOption<bool>("output-matrix", "Write interpolation matrix"));
-        add_option(new SimpleOption<std::string>("matrix.name", "Name of the remapping matrix. If not provided a default unique name will be chosen"));
-        add_option(new SimpleOption<std::string>("matrix.format", "Format of the remapping matrix: eckit, SCRIP"));
+        add_option(new SimpleOption<std::string>(
+            "matrix.name", "Name of the remapping matrix. If not provided a default unique name will be chosen"));
+        add_option(new SimpleOption<std::string>("matrix.format", "Format of the remapping matrix: eckit, scrip"));
 
         add_option(new SimpleOption<bool>("output-gmsh", "Set to enable gmsh output for tests"));
         add_option(new SimpleOption<std::string>("gmsh.coordinates", "Choose the coordinates in gmsh output: {lonlat, xyz}"));
@@ -150,7 +150,7 @@ double elapsed_ms(const StopWatch& timer, bool single_rank = false) {
 }
 
 std::string get_interpolation_method(const AtlasTool::Args& args) {
-    std::string method = args.getString("i.type", "finite-element");
+    std::string method   = args.getString("i.type", "finite-element");
     auto method_contains = [method](std::string_view substr) { return method.find(substr) != std::string_view::npos; };
     if (method_contains("cons")) {
         return method_contains("2") ? "cons2" : "cons";
@@ -159,19 +159,19 @@ std::string get_interpolation_method(const AtlasTool::Args& args) {
 }
 
 std::string get_extension(const std::string& str) {
-   std::size_t i = str.rfind('.', str.length());
-   if (i != std::string::npos) {
-      return(str.substr(i+1, str.length() - i));
-   }
-   return("");
+    std::size_t i = str.rfind('.', str.length());
+    if (i != std::string::npos) {
+        return (str.substr(i + 1, str.length() - i));
+    }
+    return ("");
 }
 
 std::string get_basename(const std::string& str) {
     std::string basename = str;
-    std::string ext = get_extension(str);
+    std::string ext      = get_extension(str);
     if (ext == "eckit" || ext == "nc") {
         std::size_t lastindex = str.find_last_of(".");
-        basename = str.substr(0, lastindex);
+        basename              = str.substr(0, lastindex);
     }
     return basename;
 }
@@ -205,8 +205,8 @@ std::string get_matrix_name(const AtlasTool::Args& args) {
         auto matrix = args.getString("matrix.name");
         return get_basename(matrix);
     }
-    auto sgrid = args.getString("s.grid");
-    auto tgrid = args.getString("t.grid");
+    auto sgrid              = args.getString("s.grid");
+    auto tgrid              = args.getString("t.grid");
     auto interpolation_name = get_interpolation_method(args);
     return "remap_" + sgrid + "_" + tgrid + "_" + interpolation_name;
 }
@@ -269,14 +269,16 @@ Mesh create_mesh_with_gridpoints_as_nodes(const Grid& grid, const grid::Distribu
             return MeshGenerator("structured", option::halo(halo)).generate(grid, dist);
         }
         else {
-            ATLAS_THROW_EXCEPTION("Could not detect the mesh generator for grid \"" << grid.name() << "\" that treats grid points as nodes");
+            ATLAS_THROW_EXCEPTION("Could not detect the mesh generator for grid \""
+                                  << grid.name() << "\" that treats grid points as nodes");
         }
     }
     return Mesh(grid, dist, option::halo(halo));
 }
 
-std::pair<FunctionSpace,FunctionSpace> get_fs(const Grid& sgrid, const Grid& tgrid, const AtlasTool::Args& args) {
-    enum class fs_type {
+std::pair<FunctionSpace, FunctionSpace> get_fs(const Grid& sgrid, const Grid& tgrid, const AtlasTool::Args& args) {
+    enum class fs_type
+    {
         unset,
         structured,
         cells,
@@ -284,24 +286,32 @@ std::pair<FunctionSpace,FunctionSpace> get_fs(const Grid& sgrid, const Grid& tgr
         points
     };
     auto to_fs_type = [](const std::string& str) -> fs_type {
-        if (str == "structured") { return fs_type::structured; }
-        if (str == "cells")      { return fs_type::cells; }
-        if (str == "nodes")      { return fs_type::nodes; }
-        if (str == "points")     { return fs_type::points; }
+        if (str == "structured") {
+            return fs_type::structured;
+        }
+        if (str == "cells") {
+            return fs_type::cells;
+        }
+        if (str == "nodes") {
+            return fs_type::nodes;
+        }
+        if (str == "points") {
+            return fs_type::points;
+        }
         return fs_type::unset;
     };
     FunctionSpace sfs, tfs;
     std::string interpolation_method = get_interpolation_method(args);
-    fs_type sfs_type = fs_type::unset;
-    fs_type tfs_type = fs_type::unset;
-    bool target_follows_source = true;
-    int shalo = 0;
-    int thalo = 0;
+    fs_type sfs_type                 = fs_type::unset;
+    fs_type tfs_type                 = fs_type::unset;
+    bool target_follows_source       = true;
+    int shalo                        = 0;
+    int thalo                        = 0;
     if (string_starts_with(interpolation_method, "cons")) {
-        int order = string_starts_with(interpolation_method, "cons2") ? 2 : 1;
+        int order             = string_starts_with(interpolation_method, "cons2") ? 2 : 1;
         target_follows_source = false;
-        sfs_type = gridpoints_are_cells(sgrid) ? fs_type::cells : fs_type::nodes;
-        tfs_type = gridpoints_are_cells(tgrid) ? fs_type::cells : fs_type::nodes;
+        sfs_type              = gridpoints_are_cells(sgrid) ? fs_type::cells : fs_type::nodes;
+        tfs_type              = gridpoints_are_cells(tgrid) ? fs_type::cells : fs_type::nodes;
         if (tfs_type == fs_type::nodes) {
             thalo = 1;
         }
@@ -314,11 +324,11 @@ std::pair<FunctionSpace,FunctionSpace> get_fs(const Grid& sgrid, const Grid& tgr
         if (mpi::size() == 1 && sgrid.type() == "ORCA") {
             shalo = 0;
         }
-
     }
     else if (string_starts_with(interpolation_method, "structured-")) {
         if (not StructuredGrid(sgrid)) {
-            ATLAS_THROW_EXCEPTION("Interpolation method " << interpolation_method << " requires that the source grid is a StructuredGrid");
+            ATLAS_THROW_EXCEPTION("Interpolation method " << interpolation_method
+                                                          << " requires that the source grid is a StructuredGrid");
         }
         sfs_type = fs_type::structured;
         tfs_type = fs_type::points;
@@ -332,10 +342,12 @@ std::pair<FunctionSpace,FunctionSpace> get_fs(const Grid& sgrid, const Grid& tgr
     }
     else if (string_starts_with(interpolation_method, "grid-box")) {
         if (not StructuredGrid(sgrid)) {
-            ATLAS_THROW_EXCEPTION("Interpolation method " << interpolation_method << " requires that the source grid is a StructuredGrid");
+            ATLAS_THROW_EXCEPTION("Interpolation method " << interpolation_method
+                                                          << " requires that the source grid is a StructuredGrid");
         }
         if (not StructuredGrid(tgrid)) {
-            ATLAS_THROW_EXCEPTION("Interpolation method " << interpolation_method << " requires that the target grid is a StructuredGrid");
+            ATLAS_THROW_EXCEPTION("Interpolation method " << interpolation_method
+                                                          << " requires that the target grid is a StructuredGrid");
         }
         sfs_type = fs_type::structured;
         tfs_type = fs_type::structured;
@@ -364,7 +376,9 @@ std::pair<FunctionSpace,FunctionSpace> get_fs(const Grid& sgrid, const Grid& tgr
             sfs_type = fs_type::structured;
         }
         else {
-            Log::warning() << "WARNING: The source will be meshed for reason of creating the distribution of the target grid" << std::endl;
+            Log::warning()
+                << "WARNING: The source will be meshed for reason of creating the distribution of the target grid"
+                << std::endl;
             sfs_type = fs_type::nodes;
         }
     }
@@ -372,13 +386,16 @@ std::pair<FunctionSpace,FunctionSpace> get_fs(const Grid& sgrid, const Grid& tgr
     args.get("t.halo", thalo);
 
     if (target_follows_source && sgrid.type() == "ORCA" && mpi::size() > 1) {
-        ATLAS_THROW_EXCEPTION("ORCA grid is not yet supported as source in parallel for interpolation method \"" << interpolation_method << "\"");
+        ATLAS_THROW_EXCEPTION("ORCA grid is not yet supported as source in parallel for interpolation method \""
+                              << interpolation_method << "\"");
     }
     if (not target_follows_source && tgrid.type() == "ORCA" && mpi::size() > 1) {
-        ATLAS_THROW_EXCEPTION("ORCA grid is not yet supported as target in parallel for interpolation method \"" << interpolation_method << "\"");
+        ATLAS_THROW_EXCEPTION("ORCA grid is not yet supported as target in parallel for interpolation method \""
+                              << interpolation_method << "\"");
     }
-    if (string_starts_with(interpolation_method,"grid-box") && shalo > 0) {
-        ATLAS_THROW_EXCEPTION( "Interpolation method \"" << interpolation_method << "\" only supported with --s.halo=0 (default)");
+    if (string_starts_with(interpolation_method, "grid-box") && shalo > 0) {
+        ATLAS_THROW_EXCEPTION("Interpolation method \"" << interpolation_method
+                                                        << "\" only supported with --s.halo=0 (default)");
     }
 
     auto create_grid_dist = [&](const Grid& grid) {
@@ -420,11 +437,11 @@ std::pair<FunctionSpace,FunctionSpace> get_fs(const Grid& sgrid, const Grid& tgr
         FunctionSpace fs;
         if (type == fs_type::cells) {
             auto mesh = Mesh(grid, dist, option::halo(halo));
-            fs = CellColumns(mesh, option::halo(halo));
+            fs        = CellColumns(mesh, option::halo(halo));
         }
         else if (type == fs_type::nodes) {
             auto mesh = create_mesh_with_gridpoints_as_nodes(grid, dist, halo);
-            fs = NodeColumns(mesh, option::halo(halo));
+            fs        = NodeColumns(mesh, option::halo(halo));
         }
         else if (type == fs_type::structured) {
             fs = StructuredColumns(grid, dist, option::halo(halo));
@@ -471,7 +488,7 @@ std::pair<FunctionSpace,FunctionSpace> get_fs(const Grid& sgrid, const Grid& tgr
             sfs = create_fs(sfs_type, sgrid, sdist, shalo);
         }
     }
-    return std::make_pair(sfs,tfs);
+    return std::make_pair(sfs, tfs);
 }
 
 
@@ -510,35 +527,38 @@ void test_matrix(const Grid& sgrid, const Grid& tgrid, const Matrix& matrix, con
         }
     }
 
-    StopWatch timer_serial_sparse_matrix_multiply;
-    timer_serial_sparse_matrix_multiply.start();
-    atlas::linalg::sparse_matrix_multiply(
-        atlas::linalg::make_host_view<double>(matrix),
-        atlas::array::make_view<double,1>(sdata.data(), matrix.cols()),
-        atlas::array::make_view<double,1>(tdata.data(), matrix.rows()));
-    timer_serial_sparse_matrix_multiply.stop();
-    Log::info() << "Serial sparse-matrix-multiply timer  \t: " << elapsed_ms(timer_serial_sparse_matrix_multiply.elapsed(),true) << " [ms]" << std::endl;
-    Log::info() << "Serial sparse-matrix non-zero entries\t: " << matrix.nnz() << std::endl;
+    ATLAS_TRACE_SCOPE("sparse-matrix-multiply") {
+        StopWatch timer_serial_sparse_matrix_multiply;
+        timer_serial_sparse_matrix_multiply.start();
+        atlas::linalg::sparse_matrix_multiply(atlas::linalg::make_host_view<double>(matrix),
+                                              atlas::array::make_view<double, 1>(sdata.data(), matrix.cols()),
+                                              atlas::array::make_view<double, 1>(tdata.data(), matrix.rows()));
+        timer_serial_sparse_matrix_multiply.stop();
+        Log::info() << "Serial sparse-matrix-multiply timer  \t: "
+                    << elapsed_ms(timer_serial_sparse_matrix_multiply.elapsed(), true) << " [ms]" << std::endl;
+        Log::info() << "Serial sparse-matrix non-zero entries\t: " << matrix.nnz() << std::endl;
+    }
 
+    if (args.getBool("output-checksum", false)) {
+        ATLAS_TRACE("checksum target-field");
 
-    if (args.getBool("output-checksum",false)) {
+        // The matrix version is possibly not bit-identical with the interpolator version
+        // This is because the matrix version uses grid points without halo, wrapping around the globe
         size_t min_size = std::min(tgt_ref.size(), tdata.size());
-        for (size_t i=0; i<min_size; ++i) {
+        for (size_t i = 0; i < min_size; ++i) {
             if (std::abs(tgt_ref[i] - tdata[i]) < 1.e-14) {
                 tdata[i] = tgt_ref[i];
             }
         }
 
-        std::ofstream checksum_file(args.getString("checksum.file","checksum"),std::ios::app);
+        std::ofstream checksum_file(args.getString("checksum.file", "checksum"), std::ios::app);
         auto target_checksum = atlas::util::checksum(tdata.data(), matrix.rows());
         checksum_file << std::setw(8) << target_checksum << "    [test-matrix]   checksum of target field" << std::endl;
     }
 
-    // atlas::array::make_view<double,1>(tdata.data(), matrix.rows()).dump(Log::info());
-    // Log::info() << std::endl;
 
 
-    if (args.getBool("output-gmsh",false)) {
+    if (args.getBool("output-gmsh", false)) {
         ATLAS_TRACE_SCOPE("Gmsh serial output") {
             std::string sname = "test_matrix_source_" + get_matrix_name(args);
             gmsh_output(sname, sgrid, atlas::array::make_view<double,1>(sdata.data(), matrix.cols()), args);
@@ -570,8 +590,8 @@ int AtlasInterpolations::execute(const AtlasTool::Args& args) {
         return success();
     }
 
-    bool output_checksum = args.getBool("output-checksum",false);
-    std::string checksum_file_path = args.getString("checksum.file","checksum");
+    bool output_checksum           = args.getBool("output-checksum", false);
+    std::string checksum_file_path = args.getString("checksum.file", "checksum");
     if (output_checksum) {
         eckit::PathName checksum_file(checksum_file_path);
         if (checksum_file.exists()) {
@@ -579,41 +599,46 @@ int AtlasInterpolations::execute(const AtlasTool::Args& args) {
         }
     }
 
-    auto sgrid = get_sgrid(args);
-    auto tgrid = get_tgrid(args);
+    auto sgrid             = get_sgrid(args);
+    auto tgrid             = get_tgrid(args);
     std::string sdata_name = gridpoints_are_cells(sgrid) ? "cell data" : "node data";
     std::string tdata_name = gridpoints_are_cells(tgrid) ? "cell data" : "node data";
 
     std::string interpolation_method = get_interpolation_method(args);
-    Log::info() << "\tsource grid\t:\t" << sgrid.name() << " (" << sdata_name <<")\n\ttarget grid\t:\t" << tgrid.name()
-        << " (" << tdata_name <<")\n\tinterpolation\t:\t" << interpolation_method << std::endl;
+    Log::info() << "\tsource grid\t:\t" << sgrid.name() << " (" << sdata_name << ")\n\ttarget grid\t:\t" << tgrid.name()
+                << " (" << tdata_name << ")\n\tinterpolation\t:\t" << interpolation_method << std::endl;
 
     std::string matrix_format = get_matrix_format(args);
-    std::string matrix_name = get_matrix_name(args);
-    bool matrix_tested = false;
+    std::string matrix_name   = get_matrix_name(args);
+    bool matrix_tested        = false;
     Matrix matrix;
-    if (args.getBool("read-matrix",false)) {
+    if (args.getBool("read-matrix", false)) {
         if (mpi::comm().rank() == 0) {
             ATLAS_TRACE_SCOPE("Read matrix on rank 0") {
                 timers.global_matrix_read.start();
                 matrix = read_matrix(matrix_name, matrix_format);
                 timers.global_matrix_read.stop();
-                Log::info() << "Global matrix read timer\t: " << elapsed_ms(timers.global_matrix_read,true) << " [ms]"  << std::endl;
+                Log::info() << "Global matrix read timer\t: " << elapsed_ms(timers.global_matrix_read, true) << " [ms]"
+                            << std::endl;
                 print_matrix(matrix, Log::info());
                 Log::info() << std::endl;
                 if (output_checksum) {
-                    std::ofstream checksum_file(checksum_file_path ,std::ios::app);
-                    auto matrix_view = linalg::make_host_view<double,int>(matrix);
+                    ATLAS_TRACE("checksum input-matrix");
+                    std::ofstream checksum_file(checksum_file_path, std::ios::app);
+                    auto matrix_view    = linalg::make_host_view<double, int>(matrix);
                     auto outer_checksum = util::checksum(matrix_view.inner(), matrix_view.inner_size());
                     auto inner_checksum = util::checksum(matrix_view.outer(), matrix_view.outer_size());
                     auto value_checksum = util::checksum(matrix_view.value(), matrix_view.value_size());
-                    checksum_file << std::setw(8) << outer_checksum << "    [read-matrix]   checksum of matrix.outer()" << std::endl;
-                    checksum_file << std::setw(8) << inner_checksum << "    [read-matrix]   checksum of matrix.inner()" << std::endl;
-                    checksum_file << std::setw(8) << value_checksum << "    [read-matrix]   checksum of matrix.value()" << std::endl;
+                    checksum_file << std::setw(8) << outer_checksum << "    [read-matrix]   checksum of matrix.outer()"
+                                  << std::endl;
+                    checksum_file << std::setw(8) << inner_checksum << "    [read-matrix]   checksum of matrix.inner()"
+                                  << std::endl;
+                    checksum_file << std::setw(8) << value_checksum << "    [read-matrix]   checksum of matrix.value()"
+                                  << std::endl;
                 }
             }
         }
-        if (args.getBool("test-matrix",false)) {
+        if (args.getBool("test-matrix", false)) {
             if (mpi::comm().rank() == 0) {
                 test_matrix(sgrid, tgrid, matrix, args);
             }
@@ -639,12 +664,14 @@ int AtlasInterpolations::execute(const AtlasTool::Args& args) {
         auto distributed_matrix = interpolation::distribute_global_matrix(src_fs, tgt_fs, matrix);
         timers.global_matrix_setup.stop();
         cache = interpolation::MatrixCache{std::move(distributed_matrix)};
-        Log::info() << "Global matrix setup timer\t: " << elapsed_ms(timers.global_matrix_setup) << " [ms]"  << std::endl;
+        Log::info() << "Global matrix setup timer\t: " << elapsed_ms(timers.global_matrix_setup) << " [ms]"
+                    << std::endl;
     }
 
     matrix.clear();
 
-    if (args.getBool("interpolate",false) || args.getBool("output-matrix",false) || args.getBool("test-interpolator",false) || (args.getBool("test-matrix",false) && !matrix_tested)) {
+    if (args.getBool("interpolate", false) || args.getBool("output-matrix", false) ||
+        args.getBool("test-interpolator", false) || (args.getBool("test-matrix", false) && !matrix_tested)) {
         ATLAS_TRACE_SCOPE("Setup source and target") {
             timers.functionspace_setup.start();
             // create_fspaces(config, sgrid, tgrid, src_fs, tgt_fs);
@@ -655,7 +682,7 @@ int AtlasInterpolations::execute(const AtlasTool::Args& args) {
         ATLAS_TRACE_SCOPE("Setup interpolator") {
             timers.interpolation_setup.start();
             auto config = get_interpolation_config(sgrid, tgrid, args);
-            if (string_starts_with(interpolation_method,"grid-box")) {
+            if (string_starts_with(interpolation_method, "grid-box")) {
                 interpolator = Interpolation(config, sgrid, tgrid);
             }
             else {
@@ -664,12 +691,15 @@ int AtlasInterpolations::execute(const AtlasTool::Args& args) {
             timers.interpolation_setup.stop();
         }
 
-        Log::info() << "Grid + FunctionSpace timer\t: " << elapsed_ms(timers.functionspace_setup) << " [ms]"  << std::endl;
-        Log::info() << "Interpolation setup timer\t: " << elapsed_ms(timers.interpolation_setup) << " [ms]"  << std::endl;
+        Log::info() << "Grid + FunctionSpace timer\t: " << elapsed_ms(timers.functionspace_setup) << " [ms]"
+                    << std::endl;
+        Log::info() << "Interpolation setup timer\t: " << elapsed_ms(timers.interpolation_setup) << " [ms]"
+                    << std::endl;
 
         if (args.getBool("test-interpolator", false)) {
-            auto src_field = interpolator.source().createField<double>();
-            auto tgt_field = interpolator.target().createField<double>();
+            ATLAS_TRACE("Test test_interpolator");
+            auto src_field  = interpolator.source().createField<double>();
+            auto tgt_field  = interpolator.target().createField<double>();
             auto src_lonlat = array::make_view<double, 2>(interpolator.source().lonlat());
             ATLAS_TRACE_SCOPE("initialize source") {
                 auto src_field_v = array::make_view<double, 1>(src_field);
@@ -677,45 +707,54 @@ int AtlasInterpolations::execute(const AtlasTool::Args& args) {
                     src_field_v[i] = util::function::vortex_rollup(src_lonlat(i, 0), src_lonlat(i, 1), 1.);
                 }
             }
-            src_field.set_dirty(false); // all values are up to date
+            src_field.set_dirty(false);  // all values are up to date
 
             timers.interpolation_exe.start();
             interpolator.execute(src_field, tgt_field);
             timers.interpolation_exe.stop();
-            Log::info() << "Interpolation execute timer     : " << elapsed_ms(timers.interpolation_exe) << " [ms]"  << std::endl;
+            Log::info() << "Interpolation execute timer     : " << elapsed_ms(timers.interpolation_exe) << " [ms]"
+                        << std::endl;
 
             Field tgt_field_global;
             if (output_checksum) {
-                tgt_field_global = tgt_fs.createField(tgt_field, option::global());
-                auto tgt_field_global_v = array::make_view<double,1>(tgt_field_global);
+                ATLAS_TRACE("checksum target-field");
+                tgt_field_global        = tgt_fs.createField(tgt_field, option::global());
+                auto tgt_field_global_v = array::make_view<double, 1>(tgt_field_global);
                 tgt_fs.gather(tgt_field, tgt_field_global);
 
                 if (mpi::rank() == 0) {
                     auto target_checksum = util::checksum(tgt_field_global_v.data(), tgt_field_global_v.size());
                     std::ofstream checksum_file(checksum_file_path, std::ios::app);
-                    checksum_file << std::setw(8) << target_checksum << "    [test-interp]   checksum of target field" << std::endl;
+                    checksum_file << std::setw(8) << target_checksum << "    [test-interp]   checksum of target field"
+                                  << std::endl;
 
                     // for further comparison with test-matrix
                     tgt_ref.resize(tgt_field_global_v.size());
-                    for( idx_t i=0; i<tgt_field_global_v.size(); ++i) {
+                    for (idx_t i = 0; i < tgt_field_global_v.size(); ++i) {
                         tgt_ref[i] = tgt_field_global_v[i];
                     }
                 }
             }
 
-            if (args.getBool("output-gmsh",false)) {
+            if (args.getBool("output-gmsh", false)) {
                 Mesh tmesh;
-                if (auto fs = NodeColumns(tgt_fs)) { tmesh = fs.mesh(); }
-                if (auto fs = CellColumns(tgt_fs)) { tmesh = fs.mesh(); }
+                if (auto fs = NodeColumns(tgt_fs)) {
+                    tmesh = fs.mesh();
+                }
+                if (auto fs = CellColumns(tgt_fs)) {
+                    tmesh = fs.mesh();
+                }
                 if (not tmesh) {
-                    Log::warning() << "Target function space is NOT mesh based, hence no Gmsh output will be created for this" << std::endl;
+                    Log::warning()
+                        << "Target function space is NOT mesh based, hence no Gmsh output will be created for this"
+                        << std::endl;
                 }
                 else {
                     tgt_field.haloExchange();
                     std::string tgt_name = "test_interpolator_target_" + matrix_name;
                     Log::info() << "Storing field '" << tgt_name << ".msh'." << std::endl;
                     std::string coords = args.getString("gmsh.coordinates", "lonlat");
-                    output::Gmsh gmsh(tgt_name + ".msh", Config("coordinates", coords) | Config("ghost", "true"));
+                    output::Gmsh gmsh(tgt_name + ".msh", Config("coordinates", coords) | Config("ghost", "false"));
                     gmsh.write(tmesh);
                     gmsh.write(tgt_field);
                 }
@@ -723,25 +762,31 @@ int AtlasInterpolations::execute(const AtlasTool::Args& args) {
         }
     }
 
-    if (args.getBool("output-matrix",false) || (args.getBool("test-matrix",false) && !matrix_tested)) {
-        matrix = interpolation::assemble_global_matrix(tgrid.size(), sgrid.size(), interpolator);
+    if (args.getBool("output-matrix", false) || (args.getBool("test-matrix", false) && !matrix_tested)) {
+        ATLAS_TRACE("Matrix operations");
+        ATLAS_TRACE_SCOPE("assemble_global_matrix") {
+            matrix = interpolation::assemble_global_matrix(tgrid.size(), sgrid.size(), interpolator);
+        }
         if (mpi::comm().rank() == 0) {
-            if (args.getBool("output-matrix",false)) {
+            if (args.getBool("output-matrix", false)) {
                 write_matrix(matrix, matrix_name, matrix_format);
                 print_matrix(matrix, Log::info());
                 if (output_checksum) {
-                    std::ofstream checksum_file(checksum_file_path ,std::ios::app);
-                    auto matrix_view = linalg::make_host_view<double,int>(matrix);
+                    ATLAS_TRACE("checksum output-matrix");
+                    std::ofstream checksum_file(checksum_file_path, std::ios::app);
+                    auto matrix_view    = linalg::make_host_view<double, int>(matrix);
                     auto outer_checksum = util::checksum(matrix_view.inner(), matrix_view.inner_size());
                     auto inner_checksum = util::checksum(matrix_view.outer(), matrix_view.outer_size());
                     auto value_checksum = util::checksum(matrix_view.value(), matrix_view.value_size());
-                    checksum_file << std::setw(8) << outer_checksum << "    [output-matrix] checksum of matrix.outer()" << std::endl;
-                    checksum_file << std::setw(8) << inner_checksum << "    [output-matrix] checksum of matrix.inner()" << std::endl;
-                    checksum_file << std::setw(8) << value_checksum << "    [output-matrix] checksum of matrix.value()" << std::endl;
+                    checksum_file << std::setw(8) << outer_checksum << "    [output-matrix] checksum of matrix.outer()"
+                                  << std::endl;
+                    checksum_file << std::setw(8) << inner_checksum << "    [output-matrix] checksum of matrix.inner()"
+                                  << std::endl;
+                    checksum_file << std::setw(8) << value_checksum << "    [output-matrix] checksum of matrix.value()"
+                                  << std::endl;
                 }
-
             }
-            if (args.getBool("test-matrix",false) && !matrix_tested) {
+            if (args.getBool("test-matrix", false) && !matrix_tested) {
                 test_matrix(sgrid, tgrid, matrix, args);
             }
         }
@@ -758,7 +803,6 @@ int AtlasInterpolations::execute(const AtlasTool::Args& args) {
                     Log::info() << f.rdbuf() << std::endl;
                 }
             }
-
         }
     }
 
@@ -797,18 +841,18 @@ void AtlasInterpolations::write_matrix(const Matrix& matrix, std::string matrix_
         ScripIO::write(matrix, matrix_name+".nc");
     }
     else {
-        ATLAS_NOTIMPLEMENTED;
+        ATLAS_THROW_EXCEPTION("Matrix format " << format << " is not recognised. Recognized are {eckit,scrip}");
     }
 }
 
 void AtlasInterpolations::print_matrix(const Matrix& matrix, std::ostream& out) {
     out << "    matrix.rows : " << matrix.rows() << '\n';
     out << "    matrix.cols : " << matrix.cols() << '\n';
-    out << "    matrix.nnz  : " << matrix.nnz()  << '\n';
+    out << "    matrix.nnz  : " << matrix.nnz() << '\n';
 }
 
 
-} // namespace
+}  // namespace atlas
 
 
 int main(int argc, char** argv) {
