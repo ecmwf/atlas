@@ -41,6 +41,7 @@
 #include "atlas/util/function/SphericalHarmonic.h"
 #include "atlas/util/function/VortexRollup.h"
 
+#include "AtlasIO.h"
 #include "ScripIO.h"
 
 #if ATLAS_HAVE_GRIB
@@ -121,7 +122,9 @@ public:
         add_option(new SimpleOption<bool>("i.normalise", "Normalise weights"));
         add_option(new SimpleOption<std::string>("s.grid", "source grid"));
         add_option(new SimpleOption<std::string>("s.grib", "file path to input"));
+        add_option(new SimpleOption<std::string>("s.mask", "source mask"));
         add_option(new SimpleOption<std::string>("t.grid", "target grid"));
+        add_option(new SimpleOption<std::string>("t.mask", "target mask"));
         add_option(new SimpleOption<std::string>("i.type", "interpolation type"));
 
         add_option(new eckit::option::Separator("Advanced configuration"));
@@ -315,6 +318,29 @@ std::string get_matrix_name(const AtlasTool::Args& args) {
     auto tgrid = args.getString("t.grid");
     auto interpolation_name = get_interpolation_method(args);
     return "remap_" + sgrid + "_" + tgrid + "_" + interpolation_name;
+}
+
+std::string get_mask_format(const std::string& mask) {
+    auto ext = get_extension(mask);
+    if (ext == "nc") {
+        return "scrip";
+    }
+    else if (ext == "atlas") {
+        return "atlas";
+    }
+    ATLAS_NOTIMPLEMENTED;
+}
+
+void read_mask(const std::string& mask_name, mdspan<int,dims<1>> mask) {
+    if (get_mask_format(mask_name) == "scrip") {
+        ScripIO::read_mask(mask_name, mask);
+    }
+    else if (get_mask_format(mask_name) == "atlas") {
+        AtlasIO::read_mask(mask_name, mask);
+    }
+    else {
+        ATLAS_NOTIMPLEMENTED;
+    }
 }
 
 Config get_interpolation_config(const Grid& sgrid, const Grid& tgrid, const AtlasTool::Args& args) {
@@ -661,8 +687,30 @@ void test_matrix(const Grid& sgrid, const Grid& tgrid, const Matrix& matrix, con
 
     if (args.getBool("output-gmsh",false)) {
         ATLAS_TRACE_SCOPE("Gmsh serial output") {
+
+            auto apply_mask = [&](const std::string& option, const Grid& grid, std::vector<double>& data) {
+                if (not args.has(option)) {
+                    return;
+                }
+
+                std::vector<int> mask(grid.size());
+                const std::string mask_name = args.getString(option);
+                read_mask(mask_name, mdspan<int,dims<1>>(mask.data(), mask.size()));
+
+                const double missing_value = args.getDouble("missing-value",0.);
+                for(size_t i=0; i<data.size(); ++i) {
+                    if(mask[i] == 0) {
+                        data[i] = missing_value;
+                    }
+                }
+            };
+
+            apply_mask("s.mask", sgrid, sdata);
+
             std::string sname = "test_matrix_source_" + get_matrix_name(args);
             gmsh_output(sname, sgrid, atlas::array::make_view<double,1>(sdata.data(), matrix.cols()), args);
+
+            apply_mask("t.mask", tgrid, tdata);
 
             std::string tname = "test_matrix_target_" + get_matrix_name(args);
             gmsh_output(tname, tgrid, atlas::array::make_view<double,1>(tdata.data(), matrix.rows()), args);
@@ -766,6 +814,16 @@ int AtlasInterpolations::execute(const AtlasTool::Args& args) {
     matrix.clear();
 
     if (args.getBool("interpolate",false) || args.getBool("output-matrix",false) || args.getBool("test-interpolator",false) || (args.getBool("test-matrix",false) && !matrix_tested)) {
+        auto configure_mask = [&](const std::string& mask_option, FunctionSpace& fs) {
+            if (args.has(mask_option)) {
+                fs.setMask([&](int* mask, size_t size) {
+                    read_mask(args.getString(mask_option), mdspan<int,dims<1>>(mask, size));
+                });
+            }
+        };
+
+        configure_mask("s.mask", src_fs);
+        configure_mask("t.mask", tgt_fs);
 
         ATLAS_TRACE_SCOPE("Setup interpolator") {
             timers.interpolation_setup.start();
