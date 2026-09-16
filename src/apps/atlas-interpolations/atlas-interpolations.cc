@@ -155,6 +155,9 @@ public:
         add_option(new SimpleOption<long>("spherical_harmonic.n", "total wave number 'n' of a spherical harmonic"));
         add_option(new SimpleOption<long>("spherical_harmonic.m", "zonal wave number 'm' of a spherical harmonic"));
 
+        add_option(new SimpleOption<double>("missing-value", "Value used with --test-matrix to add as missing value"));
+        add_option(new SimpleOption<bool>("gmsh.missing-value", "If set, do not output values matching --missing-value in Gmsh output within --test-matrix"));
+
     }
 };
 
@@ -575,6 +578,10 @@ void gmsh_output(const std::string& name, const Grid& grid, const View& field, c
     gmsh.write(mesh);
     auto fs = gridpoints_are_cells(grid) ? FunctionSpace(CellColumns(mesh)) : FunctionSpace(NodeColumns(mesh));
     auto f = fs.createField<double>(option::name(name));
+    if (args.getBool("gmsh.missing-value",false)) {
+        f.metadata().set("missing_value",args.getDouble("missing-value",0.));
+        f.metadata().set("missing_value_type","equals");
+    }
     auto v = array::make_view<double,1>(f);
     auto g = array::make_view<gidx_t,1>(fs.global_index());
     size_t min_size = std::min<size_t>(f.size(),field.size());
@@ -613,6 +620,16 @@ void test_matrix(const Grid& sgrid, const Grid& tgrid, const Matrix& matrix, con
         Log::info() << "Serial sparse-matrix-multiply timer  \t: "
                     << elapsed_ms(timer_serial_sparse_matrix_multiply.elapsed(), true) << " [ms]" << std::endl;
         Log::info() << "Serial sparse-matrix non-zero entries\t: " << matrix.nnz() << std::endl;
+    }
+
+    ATLAS_TRACE_SCOPE("Apply missing values to target") {
+        double missing_value = args.getDouble("missing-value",0.);
+        auto m = atlas::linalg::make_host_view<double>(matrix);
+        for (idx_t r=0; r<m.rows(); ++r) {
+            if (m.outer()[r+1] - m.outer()[r] == 0) {
+                tdata[r] = missing_value;
+            }
+        }
     }
 
     if (args.getBool("output-checksum", false)) {
