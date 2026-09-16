@@ -81,6 +81,14 @@ public:
 
     virtual interpolation::Cache createCache() const;
 
+    const array::Array& failedInterpolations() const {
+        return *failed_interpolations_;
+    }
+
+    const array::Array& maskedInterpolations() const {
+        return *masked_interpolations_;
+    }
+
 protected:
     virtual void do_execute(const FieldSet& source, FieldSet& target, Metadata&) const;
     virtual void do_execute(const Field& source, Field& target, Metadata&) const;
@@ -148,6 +156,12 @@ protected:
 
     void check_compatibility(const Field& src, const Field& tgt, const Matrix& W) const;
 
+    void adaptMatrixWithSourceMask();
+    void adaptMatrixWithFallback();
+    void adaptMatrixWithTargetMask();
+
+    void post_setup();
+
 private:
     template <typename Value>
     void interpolate_field(const Field& src, Field& tgt, const Matrix&) const;
@@ -181,6 +195,9 @@ private:
     std::string linalg_backend_;
     bool adjoint_{false};
     mutable std::unique_ptr<Matrix> matrix_transpose_;
+
+    mutable std::unique_ptr<array::Array> failed_interpolations_;
+    mutable std::unique_ptr<array::Array> masked_interpolations_;
 
 protected:
     bool allow_halo_exchange_{true};

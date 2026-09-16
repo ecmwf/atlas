@@ -683,7 +683,26 @@ void test_matrix(const Grid& sgrid, const Grid& tgrid, const Matrix& matrix, con
         checksum_file << std::setw(8) << target_checksum << "    [test-matrix]   checksum of target field" << std::endl;
     }
 
+#if 0
+    {
+        auto it = tgrid.lonlat().begin();
+        for (size_t i=0; i<tdata.size(); ++i) {
+            if (tdata[i] < -2.0) {
+                std::vector<double> src_val;
+                std::vector<double> weights;
+                linalg::sparse_matrix_for_each_row(i, atlas::linalg::make_host_view<double>(matrix), [&](auto row, auto col, auto val) {
+                    weights.emplace_back(val);
+                    src_val.emplace_back(sdata[col]);
+                });
 
+                Log::info() << i << "\t" << tdata[i] << "\t" << *it << std::endl;
+                Log::info() << "\t weights " << weights << std::endl; 
+                Log::info() << "\t src_val " << src_val << std::endl; 
+            }
+            ++it;
+        }
+    }
+#endif
 
     if (args.getBool("output-gmsh",false)) {
         ATLAS_TRACE_SCOPE("Gmsh serial output") {
@@ -835,6 +854,7 @@ int AtlasInterpolations::execute(const AtlasTool::Args& args) {
                 interpolator = Interpolation(config, src_fs, tgt_fs, cache);
             }
             timers.interpolation_setup.stop();
+            ATLAS_DEBUG_VAR(interpolator.failedInterpolations().size());
         }
 
         Log::info() << "Grid + FunctionSpace timer\t: " << elapsed_ms(timers.functionspace_setup) << " [ms]"  << std::endl;
@@ -859,12 +879,29 @@ int AtlasInterpolations::execute(const AtlasTool::Args& args) {
             timers.interpolation_exe.stop();
             Log::info() << "Interpolation execute timer     : " << elapsed_ms(timers.interpolation_exe) << " [ms]"  << std::endl;
 
+#if 0
+            // Set the target values marked as missing to zero
+            auto tgt_field_v = array::make_view<double,1>(tgt_field);
+            for (idx_t i = 0; i < tgt_fs.size(); ++i) {
+                if (tgt_field_v[i] == 9999.) {
+                    tgt_field_v[i] = 0;
+                }
+            }
+#endif
+
             Field tgt_field_global;
             if (output_checksum) {
                 ATLAS_TRACE("checksum target-field");
                 tgt_field_global = tgt_fs.createField(tgt_field, option::global());
                 auto tgt_field_global_v = array::make_view<double,1>(tgt_field_global);
                 tgt_fs.gather(tgt_field, tgt_field_global);
+#if 0
+                for( idx_t i=0; i<tgt_field_global_v.size(); ++i) {
+                    if (tgt_field_global_v(i) == 9999.) {
+                        tgt_field_global_v(i) = 0.;
+                    }
+                }
+#endif
 
                 if (mpi::rank() == 0) {
                     auto target_checksum = util::checksum(tgt_field_global_v.data(), tgt_field_global_v.size());
@@ -893,9 +930,26 @@ int AtlasInterpolations::execute(const AtlasTool::Args& args) {
                     std::string coords = args.getString("gmsh.coordinates", "lonlat");
                     output::Gmsh gmsh(tgt_name + ".msh", Config("coordinates", coords) | Config("ghost", "false"));
                     gmsh.write(tmesh);
+#if 0
+                    auto tview = array::make_view<double,1>(tgt_field);
+                    for(size_t i=0; i<tview.shape(0); ++i) {
+                        if (tview(i) == 9999.) {
+                            tview(i) = 0;
+                        }
+                    }
+#endif
                     gmsh.write(tgt_field);
                 }
             }
+#if 0
+            // This writes the mask to file, can be used to interpolate masks
+            std::vector<int> output_mask(tgrid.size());
+            auto tview = array::make_view<double,1>(tgt_field);
+            for(size_t i=0; i<output_mask.size(); ++i) {
+                output_mask[i] = (tview(i) != 0 && tview(i) != 9999.) ? 1 : 0;
+            }
+            AtlasIO::write_mask("mask_"+tgrid.name()+".atlas", tgrid.name(), mdspan<int,dims<1>>(output_mask.data(), output_mask.size()));
+#endif
         }
     }
 
