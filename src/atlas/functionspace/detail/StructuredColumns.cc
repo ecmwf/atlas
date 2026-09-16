@@ -998,6 +998,14 @@ size_t StructuredColumns::footprint() const {
     return size;
 }
 
+Field StructuredColumns::mask() const {
+    if (!field_mask_) {
+        field_mask_ = createField(option::name("mask")|option::datatypeT<int>()|option::levels(0));
+        array::make_view<int, 1>(field_mask_).assign(1);
+    }
+    return field_mask_;
+}
+
 // ----------------------------------------------------------------------------
 
 

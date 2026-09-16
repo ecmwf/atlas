@@ -280,6 +280,8 @@ public:
 
     Field partition() const override { return nodes_.partition(); }
 
+    Field mask() const override;
+
     const util::PartitionPolygon& polygon(idx_t halo = 0) const override { return mesh_.polygon(halo); }
 
     const util::PartitionPolygons& polygons() const override { return mesh_.polygons(); }
@@ -312,6 +314,7 @@ private:                  // data
     mutable util::ObjectHandle<parallel::GatherScatter> gather_scatter_;  // without ghost
     mutable util::ObjectHandle<parallel::HaloExchange> halo_exchange_;
     mutable util::ObjectHandle<parallel::Checksum> checksum_;
+    mutable Field field_mask_;
 
 private:
     template <typename Value>

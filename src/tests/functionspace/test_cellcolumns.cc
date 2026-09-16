@@ -127,6 +127,19 @@ CASE("test_functionspace_CellColumns_no_halo") {
     output.write(field);
 }
 
+CASE("CellColumns owns its mask") {
+    Mesh mesh = generate_mesh();
+    CellColumns first(mesh);
+    CellColumns second(mesh);
+
+    auto first_mask  = array::make_view<int, 1>(first.mask());
+    auto second_mask = array::make_view<int, 1>(second.mask());
+    first_mask(0)    = 0;
+
+    EXPECT(second_mask(0) == 1);
+    EXPECT(!mesh.cells().has_field("mask"));
+}
+
 
 CASE("test_functionspace_CellColumns_halo_1") {
     Mesh mesh = generate_mesh();

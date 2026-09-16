@@ -63,6 +63,19 @@ CASE("test_functionspace_NodeColumns_no_halo") {
     }
 }
 
+CASE("NodeColumns owns its mask") {
+    Mesh mesh = StructuredMeshGenerator().generate(Grid("O8"));
+    functionspace::NodeColumns first(mesh);
+    functionspace::NodeColumns second(mesh);
+
+    auto first_mask  = array::make_view<int, 1>(first.mask());
+    auto second_mask = array::make_view<int, 1>(second.mask());
+    first_mask(0)    = 0;
+
+    EXPECT(second_mask(0) == 1);
+    EXPECT(!mesh.nodes().has_field("mask"));
+}
+
 CASE("test_functionspace_NodeColumns") {
     ReducedGaussianGrid grid({4, 8, 8, 4});
 
