@@ -27,8 +27,6 @@ public:
     virtual ~KNearestNeighboursBase() override {}
 
 protected:
-    void buildPointSearchTree(Mesh& meshSource) { buildPointSearchTree(meshSource, mesh::Halo(meshSource)); }
-    void buildPointSearchTree(Mesh& meshSource, const mesh::Halo&);
     void buildPointSearchTree(const FunctionSpace&);
     bool extractTreeFromCache(const Cache&);
 
