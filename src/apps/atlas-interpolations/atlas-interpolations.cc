@@ -43,6 +43,10 @@
 
 #include "ScripIO.h"
 
+#if ATLAS_HAVE_GRIB
+#include "GribFileReader.h"
+#include "Grib.h"
+#endif
 
 using atlas::functionspace::PointCloud;
 using atlas::functionspace::NodeColumns;
@@ -116,6 +120,7 @@ public:
         add_option(new SimpleOption<std::string>("i.knn", "number of nearest neighbours in case i.type=knn or k-nearest-neighbours. (default=1)"));
         add_option(new SimpleOption<bool>("i.normalise", "Normalise weights"));
         add_option(new SimpleOption<std::string>("s.grid", "source grid"));
+        add_option(new SimpleOption<std::string>("s.grib", "file path to input"));
         add_option(new SimpleOption<std::string>("t.grid", "target grid"));
         add_option(new SimpleOption<std::string>("i.type", "interpolation type"));
 
@@ -256,6 +261,35 @@ bool string_starts_with(std::string_view str, std::string_view substr) {
     return str.rfind(substr, 0) == 0;
 };
 
+Grid get_sgrid(const AtlasTool::Args& args) {
+    ATLAS_ASSERT(args.has("s.grib") or args.has("s.grid"), "Could not detect grid because s.grib or s.grid is not defined");
+    if (args.has("s.grid")) {
+        return Grid(args.getString("s.grid"));
+    }
+    else if(args.has("s.grib")) {
+#if ATLAS_HAVE_GRIB
+        // Read from GRIB
+        GribFileReader grib_reader(args.getString("s.grib"));
+        ATLAS_ASSERT(grib_reader.count());
+        return grib_reader.grib().get_grid();
+#else
+        throw_Exception("GRIB support is not available", Here());
+#endif
+    }
+    throw_Exception("Could not detect grid because s.grid or s.grib is not defined", Here());
+}
+
+Grid get_tgrid(const AtlasTool::Args& args) {
+    return Grid(args.getString("t.grid", "O32"));
+}
+
+bool gridpoints_are_cells(const Grid& g) {
+    if (g.type() == "healpix") {
+        return true;
+    }
+    return false;
+}
+
 std::string get_matrix_format(const AtlasTool::Args& args) {
     if (args.has("matrix.format")) {
         return args.getString("matrix.format");
@@ -277,25 +311,10 @@ std::string get_matrix_name(const AtlasTool::Args& args) {
         auto matrix = args.getString("matrix.name");
         return get_basename(matrix);
     }
-    auto sgrid = args.getString("s.grid");
+    auto sgrid = get_sgrid(args).name();
     auto tgrid = args.getString("t.grid");
     auto interpolation_name = get_interpolation_method(args);
     return "remap_" + sgrid + "_" + tgrid + "_" + interpolation_name;
-}
-
-Grid get_sgrid(const AtlasTool::Args& args) {
-    return Grid(args.getString("s.grid", "O8"));
-}
-
-Grid get_tgrid(const AtlasTool::Args& args) {
-    return Grid(args.getString("t.grid", "O32"));
-}
-
-bool gridpoints_are_cells(const Grid& g) {
-    if (g.type() == "healpix") {
-        return true;
-    }
-    return false;
 }
 
 Config get_interpolation_config(const Grid& sgrid, const Grid& tgrid, const AtlasTool::Args& args) {
@@ -580,13 +599,22 @@ void test_matrix(const Grid& sgrid, const Grid& tgrid, const Matrix& matrix, con
     std::vector<double> tdata(tgrid.size());
 
     ATLAS_TRACE_SCOPE("initialize source") {
-        if (args.has("init")) {
+        if (args.has("init") || not args.has("s.grib")) {
             ATLAS_DEBUG("using init");
             auto init = get_init(args);
             idx_t n{0};
             for (auto p : sgrid.lonlat()) {
                 sdata[n++] = init(p);
             }
+        }
+        else {
+            ATLAS_DEBUG("using grib");
+
+            ATLAS_ASSERT(args.has("s.grib"));
+#if ATLAS_HAVE_GRIB
+            GribFileReader grib_reader(args.getString("s.grib"));
+            grib_reader.grib().get_values(sdata.data(),sdata.size());
+#endif
         }
     }
 
