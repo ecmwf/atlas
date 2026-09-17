@@ -15,6 +15,7 @@
 #include <iostream>
 #include <limits>
 #include <stdexcept>
+#include <type_traits>
 
 #include "eckit/config/Resource.h"
 #include "eckit/filesystem/PathName.h"
@@ -268,6 +269,18 @@ private:
     const int* mask_{nullptr};
 };
 
+template <typename Value>
+void write_ascii_value(std::ostream& out, Value value) {
+    if constexpr (std::is_floating_point_v<Value>) {
+        // Check for quiet_NaN in value. This check does not work for signaling NaNs and can still raise FE_INVALID!
+        if (std::isnan(value)) {
+            out << "nan";
+            return;
+        }
+    }
+    out << value;
+}
+
 template <typename Value, typename GlobalIndex, typename ValueHandling>
 void write_level(std::ostream& out, GlobalIndex gidx, const array::LocalView<Value, 2>& data,
                  const ValueHandling& value_handling) {
@@ -277,7 +290,9 @@ void write_level(std::ostream& out, GlobalIndex gidx, const array::LocalView<Val
     if (nvars == 1) {
         for (idx_t n = 0; n < ndata; ++n) {
             if (value_handling.include(data, n)) {
-                out << gidx(n) << " " << value_handling.value(data(n, 0), n) << "\n";
+                out << gidx(n) << " ";
+                write_ascii_value(out, value_handling.value(data(n, 0), n));
+                out << "\n";
             }
         }
     }
@@ -291,7 +306,8 @@ void write_level(std::ostream& out, GlobalIndex gidx, const array::LocalView<Val
                 }
                 out << gidx(n);
                 for (int v = 0; v < 3; ++v) {
-                    out << " " << data_vec[v];
+                    out << " ";
+                    write_ascii_value(out, data_vec[v]);
                 }
                 out << "\n";
             }
@@ -310,7 +326,8 @@ void write_level(std::ostream& out, GlobalIndex gidx, const array::LocalView<Val
                     }
                     out << gidx(n);
                     for (int v = 0; v < 9; ++v) {
-                        out << " " << data_vec[v];
+                        out << " ";
+                        write_ascii_value(out, data_vec[v]);
                     }
                     out << "\n";
                 }
@@ -326,7 +343,8 @@ void write_level(std::ostream& out, GlobalIndex gidx, const array::LocalView<Val
                     }
                     out << gidx(n);
                     for (int v = 0; v < 9; ++v) {
-                        out << " " << data_vec[v];
+                        out << " ";
+                        write_ascii_value(out, data_vec[v]);
                     }
                     out << "\n";
                 }

@@ -348,6 +348,8 @@ CASE("test_gmsh_masked_value_policy") {
         EXPECT(!functionspace.hasMask());
 
         Field field = functionspace.createField<double>(option::name("values"));
+        auto values = array::make_view<double, 1>(field);
+        std::fill(values.data(), values.data() + values.size(), 1.);
         output::Gmsh("test_gmsh_masked_unset.msh").write(field, masked_value_config("fill"));
 
         EXPECT(!functionspace.hasMask());
