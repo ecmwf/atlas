@@ -139,6 +139,34 @@ CASE("test FunctionSpace NodeColumns") {
     gmsh.write(field);
 }
 
+CASE("setMask initializes on a nonzero owner") {
+    Fixture fixture;
+
+    auto mesh = Mesh(grid(), option::mpi_split_comm());
+    FunctionSpace fs = functionspace::NodeColumns(mesh, atlas::option::halo(1));
+    constexpr idx_t root = 1;
+    int initialization_count = 0;
+
+    fs.setMask([&initialization_count](int* mask, size_t size) {
+        ++initialization_count;
+        for (size_t j = 0; j < size; ++j) {
+            mask[j] = (j+1)%2;
+        }
+    }, root);
+
+    const int expected_initialization_count = mpi::comm("split").rank() == root ? 1 : 0;
+    EXPECT_EQUAL(initialization_count, expected_initialization_count);
+
+    auto gidx  = array::make_view<gidx_t,1>(fs.global_index());
+    auto ghost = array::make_view<int,1>(fs.ghost());
+    auto mask  = array::make_view<int, 1>(fs.mask());
+    for (idx_t j = 0; j < fs.size(); ++j) {
+        if (not ghost(j)) {
+            EXPECT_EQUAL(mask(j), gidx[j]%2);
+        }
+    }
+}
+
 CASE("test FunctionSpace Spectral records communicator") {
     Fixture fixture;
 

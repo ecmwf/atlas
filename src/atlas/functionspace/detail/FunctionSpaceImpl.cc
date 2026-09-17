@@ -22,7 +22,9 @@ namespace functionspace {
 
 // ------------------------------------------------------------------
 
-FunctionSpaceImpl::FunctionSpaceImpl(): metadata_(new util::Metadata()) {}
+FunctionSpaceImpl::FunctionSpaceImpl(): metadata_(new util::Metadata()) {
+    metadata().set("has_mask", false);
+}
 
 FunctionSpaceImpl::~FunctionSpaceImpl() {
     delete metadata_;
@@ -78,6 +80,21 @@ Field FunctionSpaceImpl::partition() const {
 
 Field FunctionSpaceImpl::global_index() const {
     throw_Exception("global_index() not implemented in derived class ["+type()+"]", Here());
+}
+
+Field FunctionSpaceImpl::mask() const {
+    ATLAS_NOTIMPLEMENTED;
+}
+
+bool FunctionSpaceImpl::hasMask() const {
+    return metadata().getBool("has_mask");
+}
+
+void FunctionSpaceImpl::setMask(const Field& global_mask) {
+    Field local_mask = mask();
+    scatter(global_mask, local_mask);
+    haloExchange(local_mask);
+    metadata().set("has_mask", true);
 }
 
 const util::PartitionPolygon& FunctionSpaceImpl::polygon(idx_t /*halo */) const {

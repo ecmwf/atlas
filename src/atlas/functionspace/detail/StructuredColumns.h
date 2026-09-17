@@ -151,6 +151,7 @@ public:
     Field index_i() const { return field_index_i_; }
     Field index_j() const { return field_index_j_; }
     Field ghost() const override { return field_ghost_; }
+    Field mask() const override;
 
     idx_t compute_j(idx_t j) const;
     void compute_xy(idx_t i, idx_t j, PointXY& xy) const;
@@ -226,6 +227,7 @@ private:  // data
     Field field_index_i_;
     Field field_index_j_;
     Field field_ghost_;
+    mutable Field field_mask_;
 
     class Map2to1 {
     public:
