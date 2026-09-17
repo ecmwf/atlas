@@ -15,9 +15,10 @@
 #include <iostream>
 #include <limits>
 #include <stdexcept>
+#include <type_traits>
 
-#include "eckit/filesystem/PathName.h"
 #include "eckit/config/Resource.h"
+#include "eckit/filesystem/PathName.h"
 
 #include "atlas/array.h"
 #include "atlas/array/ArrayView.h"
@@ -129,15 +130,169 @@ array::LocalView<const T, 2> make_level_view(const Field& field, int ndata, int 
     }
 }
 
-template <typename Value, typename GlobalIndex, typename IncludeIndex>
-void write_level(std::ostream& out, GlobalIndex gidx, const array::LocalView<Value, 2>& data, IncludeIndex include) {
+enum class MissingValuePolicy
+{
+    SKIP,
+    FILL,
+    NOT_A_NUMBER,
+    PRESERVE
+};
+
+using MaskedValuePolicy = MissingValuePolicy;
+
+MissingValuePolicy missing_value_policy(const Metadata& gmsh_options) {
+    const std::string policy = gmsh_options.get<std::string>("missing_value.policy");
+    if (policy == "skip") {
+        return MissingValuePolicy::SKIP;
+    }
+    if (policy == "fill") {
+        return MissingValuePolicy::FILL;
+    }
+    if (policy == "nan") {
+        return MissingValuePolicy::NOT_A_NUMBER;
+    }
+    if (policy == "preserve") {
+        return MissingValuePolicy::PRESERVE;
+    }
+    ATLAS_THROW_EXCEPTION("Unsupported Gmsh missing_value.policy: " << policy);
+}
+
+MaskedValuePolicy masked_value_policy(const Metadata& gmsh_options) {
+    const std::string policy = gmsh_options.get<std::string>("masked_value.policy");
+    if (policy == "skip") {
+        return MaskedValuePolicy::SKIP;
+    }
+    if (policy == "fill") {
+        return MaskedValuePolicy::FILL;
+    }
+    if (policy == "nan") {
+        return MaskedValuePolicy::NOT_A_NUMBER;
+    }
+    if (policy == "preserve") {
+        return MaskedValuePolicy::PRESERVE;
+    }
+    ATLAS_THROW_EXCEPTION("Unsupported Gmsh masked_value.policy: " << policy);
+}
+
+template <typename Value>
+Value missing_value_fill(const Metadata& gmsh_options, MissingValuePolicy policy) {
+    if (policy != MissingValuePolicy::FILL) {
+        return Value{0};
+    }
+    double fill = 0.;
+    gmsh_options.get("missing_value.fill", fill);
+    return static_cast<Value>(fill);
+}
+
+template <typename Value>
+Value masked_value_fill(const Metadata& gmsh_options, MaskedValuePolicy policy) {
+    if (policy != MaskedValuePolicy::FILL) {
+        return Value{0};
+    }
+    double fill = 0.;
+    gmsh_options.get("masked_value.fill", fill);
+    return static_cast<Value>(fill);
+}
+
+template <typename Value>
+class ValueHandling {
+public:
+    ValueHandling(const Metadata& gmsh_options, const Field& field, const Field& mask = Field()):
+        missing_(field),
+        policy_(missing_value_policy(gmsh_options)),
+        missing_fill_(missing_value_fill<Value>(gmsh_options, policy_)),
+        masked_policy_(masked_value_policy(gmsh_options)),
+        masked_fill_(masked_value_fill<Value>(gmsh_options, masked_policy_)) {
+        if (mask) {
+            ATLAS_ASSERT(mask.contiguous());
+            mask_ = mask.array().host_data<int>();
+        }
+    }
+
+    bool include(const array::LocalView<const Value, 2>& data, idx_t n) const {
+        if (masked(n)) {
+            if (masked_policy_ == MaskedValuePolicy::SKIP) {
+                return false;
+            }
+            if (masked_policy_ != MaskedValuePolicy::PRESERVE) {
+                return true;
+            }
+        }
+        if (!missing_ || policy_ != MissingValuePolicy::SKIP) {
+            return true;
+        }
+        for (idx_t v = 0; v < data.shape(1); ++v) {
+            if (missing_(data(n, v))) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    Value value(Value value, idx_t n) const {
+        if (masked(n)) {
+            if (masked_policy_ == MaskedValuePolicy::FILL) {
+                return masked_fill_;
+            }
+            if (masked_policy_ == MaskedValuePolicy::NOT_A_NUMBER) {
+                if constexpr (std::numeric_limits<Value>::has_quiet_NaN) {
+                    return std::numeric_limits<Value>::quiet_NaN();
+                }
+                ATLAS_THROW_EXCEPTION("Gmsh masked_value.policy 'nan' requires a floating-point field");
+            }
+        }
+        if (!missing_ || !missing_(value)) {
+            return value;
+        }
+        if (policy_ == MissingValuePolicy::FILL) {
+            return missing_fill_;
+        }
+        if (policy_ == MissingValuePolicy::NOT_A_NUMBER) {
+            if constexpr (std::numeric_limits<Value>::has_quiet_NaN) {
+                return std::numeric_limits<Value>::quiet_NaN();
+            }
+            ATLAS_THROW_EXCEPTION("Gmsh missing_value.policy 'nan' requires a floating-point field");
+        }
+        return value;
+    }
+
+private:
+    bool masked(idx_t n) const {
+        return mask_ && mask_[n] == 0;
+    }
+
+    field::MissingValue missing_;
+    MissingValuePolicy policy_;
+    Value missing_fill_;
+    MaskedValuePolicy masked_policy_;
+    Value masked_fill_;
+    const int* mask_{nullptr};
+};
+
+template <typename Value>
+void write_ascii_value(std::ostream& out, Value value) {
+    if constexpr (std::is_floating_point_v<Value>) {
+        // Check for quiet_NaN in value. This check does not work for signaling NaNs and can still raise FE_INVALID!
+        if (std::isnan(value)) {
+            out << "nan";
+            return;
+        }
+    }
+    out << value;
+}
+
+template <typename Value, typename GlobalIndex, typename ValueHandling>
+void write_level(std::ostream& out, GlobalIndex gidx, const array::LocalView<Value, 2>& data,
+                 const ValueHandling& value_handling) {
     using value_type = typename std::remove_const<Value>::type;
     int ndata        = data.shape(0);
     int nvars        = data.shape(1);
     if (nvars == 1) {
         for (idx_t n = 0; n < ndata; ++n) {
-            if (include(n)) {
-                out << gidx(n) << " " << data(n, 0) << "\n";
+            if (value_handling.include(data, n)) {
+                out << gidx(n) << " ";
+                write_ascii_value(out, value_handling.value(data(n, 0), n));
+                out << "\n";
             }
         }
     }
@@ -145,13 +300,14 @@ void write_level(std::ostream& out, GlobalIndex gidx, const array::LocalView<Val
         std::array<value_type, 3> data_vec;
         data_vec.fill(static_cast<value_type>(0));
         for (idx_t n = 0; n < ndata; ++n) {
-            if (include(n)) {
+            if (value_handling.include(data, n)) {
                 for (idx_t v = 0; v < nvars; ++v) {
-                    data_vec[v] = data(n, v);
+                    data_vec[v] = value_handling.value(data(n, v), n);
                 }
                 out << gidx(n);
                 for (int v = 0; v < 3; ++v) {
-                    out << " " << data_vec[v];
+                    out << " ";
+                    write_ascii_value(out, data_vec[v]);
                 }
                 out << "\n";
             }
@@ -162,15 +318,16 @@ void write_level(std::ostream& out, GlobalIndex gidx, const array::LocalView<Val
         data_vec.fill(static_cast<value_type>(0));
         if (nvars == 4) {
             for (int n = 0; n < ndata; ++n) {
-                if (include(n)) {
+                if (value_handling.include(data, n)) {
                     for (int i = 0; i < 2; ++i) {
                         for (int j = 0; j < 2; ++j) {
-                            data_vec[i * 3 + j] = data(n, i * 2 + j);
+                            data_vec[i * 3 + j] = value_handling.value(data(n, i * 2 + j), n);
                         }
                     }
                     out << gidx(n);
                     for (int v = 0; v < 9; ++v) {
-                        out << " " << data_vec[v];
+                        out << " ";
+                        write_ascii_value(out, data_vec[v]);
                     }
                     out << "\n";
                 }
@@ -178,15 +335,16 @@ void write_level(std::ostream& out, GlobalIndex gidx, const array::LocalView<Val
         }
         else if (nvars == 9) {
             for (int n = 0; n < ndata; ++n) {
-                if (include(n)) {
+                if (value_handling.include(data, n)) {
                     for (int i = 0; i < 3; ++i) {
                         for (int j = 0; j < 3; ++j) {
-                            data_vec[i * 3 + j] = data(n, i * 2 + j);
+                            data_vec[i * 3 + j] = value_handling.value(data(n, i * 2 + j), n);
                         }
                     }
                     out << gidx(n);
                     for (int v = 0; v < 9; ++v) {
-                        out << " " << data_vec[v];
+                        out << " ";
+                        write_ascii_value(out, data_vec[v]);
                     }
                     out << "\n";
                 }
@@ -200,9 +358,14 @@ void write_level(std::ostream& out, GlobalIndex gidx, const array::LocalView<Val
         ATLAS_NOTIMPLEMENTED;
     }
 }
-template <typename Value, typename GlobalIndex>
-void write_level(std::ostream& out, GlobalIndex gidx, const array::LocalView<Value, 2>& data) {
-    write_level(out, gidx, data, [](idx_t) { return true; });
+
+template <typename Value, typename ValueHandling>
+idx_t count_output_values(const array::LocalView<const Value, 2>& data, const ValueHandling& value_handling) {
+    idx_t count = 0;
+    for (idx_t n = 0; n < data.shape(0); ++n) {
+        count += value_handling.include(data, n);
+    }
+    return count;
 }
 
 std::vector<int> get_levels(int nlev, const Metadata& gmsh_options) {
@@ -223,7 +386,7 @@ std::vector<int> get_levels(int nlev, const Metadata& gmsh_options) {
 
 std::string field_lev(const Field& field, int jlev) {
     if (field.levels()) {
-        char str[6] = {0, 0, 0, 0, 0, 0};
+        char str[6]  = {0, 0, 0, 0, 0, 0};
         auto str_len = std::snprintf(str, sizeof(str), "[%03d]", jlev);
         ATLAS_ASSERT(str_len == 5);
         return std::string(str);
@@ -256,6 +419,20 @@ int field_vars(int nvars) {
     }
 }
 
+template <typename FunctionSpace>
+Field output_mask(const FunctionSpace& function_space, bool gather) {
+    if (!function_space.hasMask()) {
+        return Field();
+    }
+    Field mask = function_space.mask();
+    if (gather) {
+        Field global_mask = function_space.createField(mask, option::global());
+        function_space.gather(mask, global_mask);
+        return global_mask;
+    }
+    return mask;
+}
+
 }  // namespace
 
 // ----------------------------------------------------------------------------
@@ -270,6 +447,7 @@ void write_field_nodes(const Metadata& gmsh_options, const functionspace::NodeCo
     idx_t ndata = std::min<idx_t>(function_space.nb_nodes(), field.shape(0));
     idx_t nvars = std::max<idx_t>(1, field.variables());
     auto gidx   = array::make_view<gidx_t, 1>(function_space.nodes().global_index());
+    Field mask  = output_mask(function_space, gather);
     Field gidx_glb;
     Field field_glb;
     if (gather) {
@@ -282,32 +460,14 @@ void write_field_nodes(const Metadata& gmsh_options, const functionspace::NodeCo
         function_space.gather(field, field_glb);
         ndata = std::min<idx_t>(function_space.nb_nodes_global(), field_glb.shape(0));
     }
-    auto missing = field::MissingValue(field);
-
     std::vector<int> lev = get_levels(nlev, gmsh_options);
     for (size_t ilev = 0; ilev < lev.size(); ++ilev) {
         int jlev = lev[ilev];
         if ((gather && mpi::rank() == 0) || !gather) {
             auto data =
                 gather ? make_level_view<Value>(field_glb, ndata, jlev) : make_level_view<Value>(field, ndata, jlev);
-            auto include_idx = [&](idx_t n) {
-                for (idx_t v = 0; v < nvars; ++v) {
-                    if (missing(data(n, v))) {
-                        return false;
-                    }
-                }
-                return true;
-            };
-            idx_t ndata_nonmissing = [&] {
-                if (missing) {
-                    idx_t c = 0;
-                    for (idx_t n = 0; n < ndata; ++n) {
-                        c += include_idx(n);
-                    }
-                    return c;
-                }
-                return ndata;
-            }();
+            ValueHandling<Value> value_handling(gmsh_options, field, mask);
+            const idx_t ndata_output = count_output_values(data, value_handling);
 
             out << "$NodeData\n";
             out << "1\n";
@@ -317,14 +477,9 @@ void write_field_nodes(const Metadata& gmsh_options, const functionspace::NodeCo
             out << "4\n";
             out << field_step(field) << "\n";
             out << field_vars(nvars) << "\n";
-            out << ndata_nonmissing << "\n";
+            out << ndata_output << "\n";
             out << mpi::rank() << "\n";
-            if (missing) {
-                write_level(out, gidx, data, include_idx);
-            }
-            else {
-                write_level(out, gidx, data);
-            }
+            write_level(out, gidx, data, value_handling);
             out << "$EndNodeData\n";
         }
     }
@@ -342,31 +497,13 @@ void write_field_nodes(const Metadata& gmsh_options, const functionspace::NoFunc
     idx_t nvars = std::max<idx_t>(1, field.variables());
     auto gidx   = [](idx_t inode) { return inode + 1; };
 
-    auto missing = field::MissingValue(field);
-
     std::vector<int> lev = get_levels(nlev, gmsh_options);
     for (size_t ilev = 0; ilev < lev.size(); ++ilev) {
         int jlev = lev[ilev];
 
-        auto data        = make_level_view<Value>(field, ndata, jlev);
-        auto include_idx = [&](idx_t n) {
-            for (idx_t v = 0; v < nvars; ++v) {
-                if (missing(data(n, v))) {
-                    return false;
-                }
-            }
-            return true;
-        };
-        idx_t ndata_nonmissing = [&] {
-            if (missing) {
-                idx_t c = 0;
-                for (idx_t n = 0; n < ndata; ++n) {
-                    c += include_idx(n);
-                }
-                return c;
-            }
-            return ndata;
-        }();
+        auto data = make_level_view<Value>(field, ndata, jlev);
+        ValueHandling<Value> value_handling(gmsh_options, field);
+        const idx_t ndata_output = count_output_values(data, value_handling);
 
         out << "$NodeData\n";
         out << "1\n";
@@ -376,14 +513,9 @@ void write_field_nodes(const Metadata& gmsh_options, const functionspace::NoFunc
         out << "4\n";
         out << field_step(field) << "\n";
         out << field_vars(nvars) << "\n";
-        out << ndata_nonmissing << "\n";
+        out << ndata_output << "\n";
         out << mpi::rank() << "\n";
-        if (missing) {
-            write_level(out, gidx, data, include_idx);
-        }
-        else {
-            write_level(out, gidx, data);
-        }
+        write_level(out, gidx, data, value_handling);
         out << "$EndNodeData\n";
     }
 }
@@ -419,6 +551,7 @@ void write_field_nodes(const Metadata& gmsh_options, const functionspace::Struct
     idx_t ndata = std::min<idx_t>(function_space.sizeOwned(), field.shape(0));
     idx_t nvars = std::max<idx_t>(1, field.variables());
     auto gidx   = array::make_view<gidx_t, 1>(function_space.global_index());
+    Field mask  = output_mask(function_space, gather);
     Field gidx_glb;
     Field field_glb;
     if (gather) {
@@ -432,8 +565,6 @@ void write_field_nodes(const Metadata& gmsh_options, const functionspace::Struct
         ndata = field_glb.shape(0);
     }
 
-    auto missing = field::MissingValue(field);
-
     std::vector<int> lev = get_levels(nlev, gmsh_options);
     for (size_t ilev = 0; ilev < lev.size(); ++ilev) {
         int jlev          = lev[ilev];
@@ -445,25 +576,8 @@ void write_field_nodes(const Metadata& gmsh_options, const functionspace::Struct
 
         auto data =
             gather ? make_level_view<DATATYPE>(field_glb, ndata, jlev) : make_level_view<DATATYPE>(field, ndata, jlev);
-
-        auto include_idx = [&](idx_t n) {
-            for (idx_t v = 0; v < nvars; ++v) {
-                if (missing(data(n, v))) {
-                    return false;
-                }
-            }
-            return true;
-        };
-        idx_t ndata_nonmissing = [&] {
-            if (missing) {
-                idx_t c = 0;
-                for (idx_t n = 0; n < ndata; ++n) {
-                    c += include_idx(n);
-                }
-                return c;
-            }
-            return ndata;
-        }();
+        ValueHandling<DATATYPE> value_handling(gmsh_options, field, mask);
+        const idx_t ndata_output = count_output_values(data, value_handling);
 
 
         out << "$NodeData\n";
@@ -474,14 +588,9 @@ void write_field_nodes(const Metadata& gmsh_options, const functionspace::Struct
         out << "4\n";
         out << field_step(field) << "\n";
         out << field_vars(nvars) << "\n";
-        out << ndata_nonmissing << "\n";
+        out << ndata_output << "\n";
         out << mpi::rank() << "\n";
-        if (missing) {
-            write_level(out, gidx, data, include_idx);
-        }
-        else {
-            write_level(out, gidx, data);
-        }
+        write_level(out, gidx, data, value_handling);
         out << "$EndNodeData\n";
     }
 }
@@ -499,6 +608,7 @@ void write_field_elems(const Metadata& gmsh_options, const functionspace::CellCo
     idx_t ndata = std::min<idx_t>(function_space.nb_cells(), field.shape(0));
     idx_t nvars = std::max<idx_t>(1, field.variables());
     auto gidx   = array::make_view<gidx_t, 1>(function_space.cells().global_index());
+    Field mask  = output_mask(function_space, gather);
     Field gidx_glb;
     Field field_glb;
     if (gather) {
@@ -512,33 +622,14 @@ void write_field_elems(const Metadata& gmsh_options, const functionspace::CellCo
         ndata = std::min<idx_t>(function_space.nb_cells_global(), field_glb.shape(0));
     }
 
-    auto missing = field::MissingValue(field);
-
     std::vector<int> lev = get_levels(nlev, gmsh_options);
     for (size_t ilev = 0; ilev < lev.size(); ++ilev) {
         int jlev = lev[ilev];
 
-        auto data = gather ? make_level_view<DATATYPE>(field_glb, ndata, jlev)
-                            : make_level_view<DATATYPE>(field, ndata, jlev);
-
-        auto include_idx = [&](idx_t n) {
-            for (idx_t v = 0; v < nvars; ++v) {
-                if (missing(data(n, v))) {
-                    return false;
-                }
-            }
-            return true;
-        };
-        idx_t ndata_nonmissing = [&] {
-            if (missing) {
-                idx_t c = 0;
-                for (idx_t n = 0; n < ndata; ++n) {
-                    c += include_idx(n);
-                }
-                return c;
-            }
-            return ndata;
-        }();
+        auto data =
+            gather ? make_level_view<DATATYPE>(field_glb, ndata, jlev) : make_level_view<DATATYPE>(field, ndata, jlev);
+        ValueHandling<DATATYPE> value_handling(gmsh_options, field, mask);
+        const idx_t ndata_output = count_output_values(data, value_handling);
 
 
         if ((gather && mpi::rank() == 0) || !gather) {
@@ -550,14 +641,9 @@ void write_field_elems(const Metadata& gmsh_options, const functionspace::CellCo
             out << "4\n";
             out << field_step(field) << "\n";
             out << field_vars(nvars) << "\n";
-            out << ndata_nonmissing << "\n";
+            out << ndata_output << "\n";
             out << mpi::rank() << "\n";
-            if (missing) {
-                write_level(out, gidx, data, include_idx);
-            }
-            else {
-                write_level(out, gidx, data);
-            }
+            write_level(out, gidx, data, value_handling);
             out << "$EndElementData\n";
         }
     }
@@ -708,6 +794,11 @@ GmshIO::GmshIO() {
 
     // Levels of fields to use
     options.set<std::vector<long>>("levels", std::vector<long>());
+
+    options.set<std::string>("missing_value.policy", "skip");
+    options.set<double>("missing_value.fill", 0.);
+    options.set<std::string>("masked_value.policy", "skip");
+    options.set<double>("masked_value.fill", 0.);
 }
 
 GmshIO::~GmshIO() = default;
@@ -970,12 +1061,12 @@ void GmshIO::write(const Mesh& mesh, const PathName& file_path) const {
     const Field coords_field = nodes.field(nodes_field);
     array::ArrayT<double> dummy_double(1, 1);
     array::ArrayT<idx_t> dummy_idx(1, 1);
-    bool coords_is_idx = coords_field.datatype().kind() == array::make_datatype<idx_t>().kind();
-    auto coords        = array::make_view<const double, 2>(coords_is_idx ? dummy_double : coords_field.array());
-    auto coords_idx    = array::make_view<const idx_t, 2>(coords_is_idx ? coords_field.array() : dummy_idx);
+    bool coords_is_idx    = coords_field.datatype().kind() == array::make_datatype<idx_t>().kind();
+    auto coords           = array::make_view<const double, 2>(coords_is_idx ? dummy_double : coords_field.array());
+    auto coords_idx       = array::make_view<const idx_t, 2>(coords_is_idx ? coords_field.array() : dummy_idx);
     bool coords_is_lonlat = coords_field.name() == "lonlat";
 
-    double filter_edge_ratio = eckit::Resource<double>("$ATLAS_GMSH_FILTER_EDGE_RATIO",0.);
+    double filter_edge_ratio = eckit::Resource<double>("$ATLAS_GMSH_FILTER_EDGE_RATIO", 0.);
 
     auto glb_idx = array::make_view<gidx_t, 1>(nodes.global_index());
 
@@ -1050,8 +1141,8 @@ void GmshIO::write(const Mesh& mesh, const PathName& file_path) const {
         idx_t nb_elements(0);
         for (const mesh::HybridElements* hybrid : grouped_elements) {
             nb_elements += hybrid->size();
-            const auto hybrid_halo  = array::make_view<int, 1>(hybrid->halo());
-            const auto hybrid_flags = array::make_view<int, 1>(hybrid->flags());
+            const auto hybrid_halo        = array::make_view<int, 1>(hybrid->halo());
+            const auto hybrid_flags       = array::make_view<int, 1>(hybrid->flags());
             const auto& node_connectivity = hybrid->node_connectivity();
 
             auto include = [&](idx_t e) {
@@ -1080,27 +1171,27 @@ void GmshIO::write(const Mesh& mesh, const PathName& file_path) const {
 
                 if (coords_is_lonlat) {
                     if (node_connectivity.cols(e) == 3) {
-                        auto x0 = [&]() { return coords(node_connectivity(e,0),LON); };
-                        auto x1 = [&]() { return coords(node_connectivity(e,1),LON); };
-                        auto x2 = [&]() { return coords(node_connectivity(e,2),LON); };
-                        auto y0 = [&]() { return coords(node_connectivity(e,0),LAT); };
-                        auto y1 = [&]() { return coords(node_connectivity(e,1),LAT); };
-                        auto y2 = [&]() { return coords(node_connectivity(e,2),LAT); };
+                        auto x0            = [&]() { return coords(node_connectivity(e, 0), LON); };
+                        auto x1            = [&]() { return coords(node_connectivity(e, 1), LON); };
+                        auto x2            = [&]() { return coords(node_connectivity(e, 2), LON); };
+                        auto y0            = [&]() { return coords(node_connectivity(e, 0), LAT); };
+                        auto y1            = [&]() { return coords(node_connectivity(e, 1), LAT); };
+                        auto y2            = [&]() { return coords(node_connectivity(e, 2), LAT); };
                         auto triangle_area = (x0() * (y1() - y2()) + x1() * (y2() - y0()) + x2() * (y0() - y1())) * 0.5;
-                        if (triangle_area <= 0 ) {
+                        if (triangle_area <= 0) {
                             return false;
                         }
                         // edge length comparison
                         if (filter_edge_ratio > 0.) {
-                            auto dx10 = (x1()-x0());
-                            auto dx21 = (x2()-x1());
-                            auto dx02 = (x0()-x2());
-                            auto dy10 = (y1()-y0());
-                            auto dy21 = (y2()-y1());
-                            auto dy02 = (y0()-y2());
-                            auto d10 = dx10*dx10 + dy10*dy10;
-                            auto d21 = dx21*dx21 + dy21*dy21;
-                            auto d02 = dx02*dx02 + dy02*dy02;
+                            auto dx10 = (x1() - x0());
+                            auto dx21 = (x2() - x1());
+                            auto dx02 = (x0() - x2());
+                            auto dy10 = (y1() - y0());
+                            auto dy21 = (y2() - y1());
+                            auto dy02 = (y0() - y2());
+                            auto d10  = dx10 * dx10 + dy10 * dy10;
+                            auto d21  = dx21 * dx21 + dy21 * dy21;
+                            auto d02  = dx02 * dx02 + dy02 * dy02;
                             auto dmin = std::min(d10, std::min(d21, d02));
                             auto dmax = std::max(d10, std::max(d21, d02));
                             if (dmax > filter_edge_ratio * dmin) {
@@ -1179,27 +1270,28 @@ void GmshIO::write(const Mesh& mesh, const PathName& file_path) const {
                     }
                     if (coords_is_lonlat) {
                         if (nb_nodes == 3) {
-                            auto x0 = [&]() { return coords(node_connectivity(e,0),LON); };
-                            auto x1 = [&]() { return coords(node_connectivity(e,1),LON); };
-                            auto x2 = [&]() { return coords(node_connectivity(e,2),LON); };
-                            auto y0 = [&]() { return coords(node_connectivity(e,0),LAT); };
-                            auto y1 = [&]() { return coords(node_connectivity(e,1),LAT); };
-                            auto y2 = [&]() { return coords(node_connectivity(e,2),LAT); };
-                            auto triangle_area = (x0() * (y1() - y2()) + x1() * (y2() - y0()) + x2() * (y0() - y1())) * 0.5;
-                            if (triangle_area <= 0 ) {
+                            auto x0 = [&]() { return coords(node_connectivity(e, 0), LON); };
+                            auto x1 = [&]() { return coords(node_connectivity(e, 1), LON); };
+                            auto x2 = [&]() { return coords(node_connectivity(e, 2), LON); };
+                            auto y0 = [&]() { return coords(node_connectivity(e, 0), LAT); };
+                            auto y1 = [&]() { return coords(node_connectivity(e, 1), LAT); };
+                            auto y2 = [&]() { return coords(node_connectivity(e, 2), LAT); };
+                            auto triangle_area =
+                                (x0() * (y1() - y2()) + x1() * (y2() - y0()) + x2() * (y0() - y1())) * 0.5;
+                            if (triangle_area <= 0) {
                                 return false;
                             }
                             // edge length comparison
                             if (filter_edge_ratio > 0.) {
-                                auto dx10 = (x1()-x0());
-                                auto dx21 = (x2()-x1());
-                                auto dx02 = (x0()-x2());
-                                auto dy10 = (y1()-y0());
-                                auto dy21 = (y2()-y1());
-                                auto dy02 = (y0()-y2());
-                                auto d10 = dx10*dx10 + dy10*dy10;
-                                auto d21 = dx21*dx21 + dy21*dy21;
-                                auto d02 = dx02*dx02 + dy02*dy02;
+                                auto dx10 = (x1() - x0());
+                                auto dx21 = (x2() - x1());
+                                auto dx02 = (x0() - x2());
+                                auto dy10 = (y1() - y0());
+                                auto dy21 = (y2() - y1());
+                                auto dy02 = (y0() - y2());
+                                auto d10  = dx10 * dx10 + dy10 * dy10;
+                                auto d21  = dx21 * dx21 + dy21 * dy21;
+                                auto d02  = dx02 * dx02 + dy02 * dy02;
                                 auto dmin = std::min(d10, std::min(d21, d02));
                                 auto dmax = std::max(d10, std::max(d21, d02));
                                 if (dmax > filter_edge_ratio * dmin) {
