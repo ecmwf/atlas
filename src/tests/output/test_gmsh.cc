@@ -21,6 +21,7 @@
 #include "atlas/mesh/actions/BuildEdges.h"
 #include "atlas/output/Gmsh.h"
 #include "atlas/output/Output.h"
+#include "atlas/util/Topology.h"
 #include "atlas/util/Config.h"
 
 #include "tests/AtlasTestEnvironment.h"
@@ -147,8 +148,203 @@ util::Config masked_value_config(const std::string& policy, double fill = 0.) {
 
 CASE("test_gmsh_output_1") {
     Mesh mesh = test::generate_mesh(Grid("N32"));
-    output::Gmsh gmsh("test_gmsh_output_1.msh");
+    mesh.metadata().set("part", 2);
+    mesh.metadata().set("nb_parts", 4);
+    output::Gmsh gmsh("test_gmsh_output_1.msh", util::Config("element_partition_as_entity", true));
     gmsh.write(mesh);
+
+    std::ifstream file("test_gmsh_output_1.msh");
+    std::string line;
+    std::getline(file, line);
+    EXPECT_EQ(line, "$MeshFormat");
+    std::getline(file, line);
+    EXPECT_EQ(line, "4.1 0 " + std::to_string(sizeof(size_t)));
+
+    while (std::getline(file, line) && line != "$Entities") {
+    }
+    EXPECT(file);
+    int nb_points;
+    int nb_curves;
+    int nb_surfaces;
+    int nb_volumes;
+    file >> nb_points >> nb_curves >> nb_surfaces >> nb_volumes;
+    EXPECT_EQ(nb_points, 0);
+    EXPECT_EQ(nb_curves, 0);
+    EXPECT_EQ(nb_surfaces, 2);
+    EXPECT_EQ(nb_volumes, 0);
+
+    std::getline(file, line);
+    for (int expected_owner : {0, 2}) {
+        std::getline(file, line);
+        std::istringstream entity_record(line);
+        int entity_tag;
+        entity_record >> entity_tag;
+        EXPECT_EQ(entity_tag, expected_owner);
+    }
+
+    while (std::getline(file, line) && line != "$Nodes") {
+    }
+    EXPECT(file);
+    size_t nb_node_blocks;
+    size_t nb_nodes;
+    gidx_t min_node_tag;
+    gidx_t max_node_tag;
+    file >> nb_node_blocks >> nb_nodes >> min_node_tag >> max_node_tag;
+    EXPECT_EQ(nb_node_blocks, 1);
+    EXPECT_EQ(nb_nodes, mesh.nodes().size());
+
+    int entity_dimension;
+    int entity_tag;
+    int parametric;
+    size_t nb_nodes_in_block;
+    file >> entity_dimension >> entity_tag >> parametric >> nb_nodes_in_block;
+    EXPECT_EQ(entity_dimension, 2);
+    EXPECT_EQ(entity_tag, 2);
+    EXPECT_EQ(parametric, 0);
+    EXPECT_EQ(nb_nodes_in_block, nb_nodes);
+}
+
+CASE("test_gmsh_output_binary") {
+    Mesh mesh = test::generate_mesh(Grid("N16"));
+    util::Config config("binary", true);
+    config.set("info", true);
+    output::Gmsh("test_gmsh_output_binary.msh", config).write(mesh);
+
+    std::ifstream file("test_gmsh_output_binary.msh", std::ios::binary);
+    std::string line;
+    std::getline(file, line);
+    EXPECT_EQ(line, "$MeshFormat");
+    std::getline(file, line);
+    EXPECT_EQ(line, "4.1 1 " + std::to_string(sizeof(size_t)));
+
+    std::ifstream info_file("test_gmsh_output_binary_info.msh", std::ios::binary);
+    std::getline(info_file, line);
+    EXPECT_EQ(line, "$MeshFormat");
+    std::getline(info_file, line);
+    EXPECT_EQ(line, "4.1 1 " + std::to_string(sizeof(size_t)));
+    int endian_check;
+    info_file.read(reinterpret_cast<char*>(&endian_check), sizeof(endian_check));
+    EXPECT_EQ(endian_check, 1);
+    while (std::getline(info_file, line) && line != "$NodeData") {
+    }
+    EXPECT(info_file);
+    for (int header_line = 0; header_line < 9; ++header_line) {
+        std::getline(info_file, line);
+    }
+    int node_tag;
+    double latitude;
+    info_file.read(reinterpret_cast<char*>(&node_tag), sizeof(node_tag));
+    info_file.read(reinterpret_cast<char*>(&latitude), sizeof(latitude));
+    auto global_index = array::make_view<gidx_t, 1>(mesh.nodes().global_index());
+    auto lonlat       = array::make_view<double, 2>(mesh.nodes().lonlat());
+    EXPECT_EQ(node_tag, global_index(0));
+    EXPECT_EQ(latitude, lonlat(0, LAT));
+}
+
+CASE("test_gmsh_output_canonical_entities") {
+    Mesh mesh = test::generate_mesh(Grid("N16"));
+    mesh.metadata().set("part", 2);
+    mesh.metadata().set("nb_parts", 4);
+    output::Gmsh("test_gmsh_output_canonical.msh", util::Config("element_partition_as_entity", false)).write(mesh);
+
+    std::ifstream file("test_gmsh_output_canonical.msh");
+    std::string contents((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
+    EXPECT(contents.find("$PartitionedEntities\n4\n0\n0 0 1 0\n4 2 1 1 2 ") != std::string::npos);
+    EXPECT(contents.find("$Nodes\n1 ") != std::string::npos);
+    EXPECT(contents.find("\n2 4 0 ") != std::string::npos);
+}
+
+CASE("test_gmsh_output_ghost_elements") {
+    Mesh mesh = test::generate_mesh(Grid("N16"));
+    mesh.metadata().set("part", 2);
+    mesh.metadata().set("nb_parts", 4);
+
+    mesh::Elements& elements = mesh.cells().elements(0);
+    auto flags               = elements.view<int, 1>(elements.flags());
+    auto halo                = elements.view<int, 1>(elements.halo());
+    auto partition           = elements.view<int, 1>(elements.partition());
+    util::Topology::set(flags(0), util::Topology::GHOST);
+    halo(0)      = 1;
+    partition(0) = 0;
+
+    util::Config owner_entity_config("element_partition_as_entity", true);
+    output::Gmsh("test_gmsh_output_without_ghost.msh", owner_entity_config).write(mesh);
+    std::ifstream without_ghost_file("test_gmsh_output_without_ghost.msh");
+    std::string without_ghost((std::istreambuf_iterator<char>(without_ghost_file)), std::istreambuf_iterator<char>());
+
+    owner_entity_config.set("ghost", true);
+    output::Gmsh("test_gmsh_output_ghost.msh", owner_entity_config).write(mesh);
+
+    std::ifstream file("test_gmsh_output_ghost.msh");
+    std::string contents((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
+    auto element_count = [](const std::string& mesh_contents) {
+        std::istringstream stream(mesh_contents);
+        std::string line;
+        while (std::getline(stream, line) && line != "$Elements") {
+        }
+        size_t nb_blocks;
+        size_t nb_elements;
+        stream >> nb_blocks >> nb_elements;
+        return nb_elements;
+    };
+    EXPECT_EQ(element_count(contents), element_count(without_ghost) + 1);
+    EXPECT(without_ghost.find("$GhostElements") == std::string::npos);
+    EXPECT(contents.find("$PartitionedEntities") == std::string::npos);
+
+    const auto elements_begin = contents.find("$Elements\n");
+    const auto elements_end   = contents.find("$EndElements\n", elements_begin);
+    EXPECT(elements_begin != std::string::npos);
+    EXPECT(elements_end != std::string::npos);
+    EXPECT(contents.substr(elements_begin, elements_end - elements_begin).find("\n2 0 ") != std::string::npos);
+
+    EXPECT(contents.find("$GhostElements") == std::string::npos);
+    EXPECT(contents.find("$ElementData") == std::string::npos);
+
+    util::Config canonical_config("ghost", true);
+    canonical_config.set("element_partition_as_entity", false);
+    output::Gmsh("test_gmsh_output_ghost_canonical.msh", canonical_config).write(mesh);
+
+    std::ifstream canonical_file("test_gmsh_output_ghost_canonical.msh");
+    std::string canonical((std::istreambuf_iterator<char>(canonical_file)), std::istreambuf_iterator<char>());
+    EXPECT(canonical.find("$GhostElements") != std::string::npos);
+    std::istringstream canonical_stream(canonical.substr(canonical.find("$Elements\n") + 10));
+    size_t nb_blocks;
+    size_t nb_elements;
+    gidx_t min_element_tag;
+    gidx_t max_element_tag;
+    canonical_stream >> nb_blocks >> nb_elements >> min_element_tag >> max_element_tag;
+    bool found_local_entity = false;
+    bool found_owner_entity = false;
+    for (size_t block = 0; block < nb_blocks; ++block) {
+        int dimension;
+        int entity_tag;
+        int element_type;
+        size_t block_size;
+        canonical_stream >> dimension >> entity_tag >> element_type >> block_size;
+        EXPECT_EQ(dimension, 2);
+        found_local_entity |= entity_tag == 4;
+        found_owner_entity |= entity_tag == 2;
+        std::string line;
+        std::getline(canonical_stream, line);
+        for (size_t element = 0; element < block_size; ++element) {
+            std::getline(canonical_stream, line);
+        }
+    }
+    EXPECT(found_local_entity);
+    EXPECT(found_owner_entity);
+
+    util::Config binary_config("ghost", true);
+    binary_config.set("binary", true);
+    binary_config.set("element_partition_as_entity", true);
+    output::Gmsh("test_gmsh_output_ghost_binary.msh", binary_config).write(mesh);
+
+    std::ifstream binary_file("test_gmsh_output_ghost_binary.msh", std::ios::binary);
+    std::getline(binary_file, contents);
+    EXPECT_EQ(contents, "$MeshFormat");
+    std::getline(binary_file, contents);
+    EXPECT_EQ(contents, "4.1 1 " + std::to_string(sizeof(size_t)));
+    std::string binary_contents((std::istreambuf_iterator<char>(binary_file)), std::istreambuf_iterator<char>());
+    EXPECT(binary_contents.find("$ElementData") == std::string::npos);
 }
 
 CASE("test_gmsh_output_2") {

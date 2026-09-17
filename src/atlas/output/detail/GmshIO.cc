@@ -14,6 +14,8 @@
 #include <fstream>
 #include <iostream>
 #include <limits>
+#include <map>
+#include <numeric>
 #include <stdexcept>
 #include <type_traits>
 
@@ -93,7 +95,7 @@ enum GmshElementTypes
 // ----------------------------------------------------------------------------
 void write_header_ascii(std::ostream& out) {
     out << "$MeshFormat\n";
-    out << "2.2 0 " << sizeof(double) << "\n";
+    out << "4.1 0 " << sizeof(size_t) << "\n";
     out << "$EndMeshFormat\n";
 }
 // ----------------------------------------------------------------------------
@@ -101,7 +103,7 @@ void write_header_ascii(std::ostream& out) {
 // ----------------------------------------------------------------------------
 void write_header_binary(std::ostream& out) {
     out << "$MeshFormat\n";
-    out << "2.2 1 " << sizeof(double) << "\n";
+    out << "4.1 1 " << sizeof(size_t) << "\n";
     int one = 1;
     out.write(reinterpret_cast<const char*>(&one), sizeof(int));
     out << "\n$EndMeshFormat\n";
@@ -270,10 +272,147 @@ private:
     const int* mask_{nullptr};
 };
 
+class NodeInclusionPolicy {
+public:
+    explicit NodeInclusionPolicy(const mesh::Nodes& nodes): nodes_(nodes.size()) {
+        std::iota(nodes_.begin(), nodes_.end(), idx_t{0});
+    }
+
+    const std::vector<idx_t>& included() const { return nodes_; }
+    size_t size() const { return nodes_.size(); }
+    bool empty() const { return nodes_.empty(); }
+
+private:
+    std::vector<idx_t> nodes_;
+};
+
+enum class ElementInclusion
+{
+    SKIP,
+    OWNED,
+    GHOST
+};
+
+class ElementInclusionPolicy {
+public:
+    ElementInclusionPolicy(const Metadata& gmsh_options, int part, bool include_patch, bool coords_is_lonlat,
+                           const array::ArrayView<const double, 2>& coords, const mesh::Elements& elements):
+        part_(part),
+        include_ghost_(gmsh_options.get<bool>("ghost") && gmsh_options.get<bool>("elements")),
+        filter_land_water_(gmsh_options.has("water") || gmsh_options.has("land")),
+        include_water_(gmsh_options.getBool("water", false)),
+        include_land_(gmsh_options.getBool("land", false)),
+        include_patch_(include_patch),
+        coords_is_lonlat_(coords_is_lonlat),
+        filter_edge_ratio_(eckit::Resource<double>("$ATLAS_GMSH_FILTER_EDGE_RATIO", 0.)),
+        coords_(coords),
+        elements_(elements),
+        nb_nodes_(elements.element_type().name() == "Pentagon" ? 4 : elements.node_connectivity().cols()),
+        halo_(elements.view<int, 1>(elements.halo())),
+        flags_(elements.view<int, 1>(elements.flags())),
+        partition_(elements.view<int, 1>(elements.partition())) {}
+
+    ElementInclusion operator()(idx_t elem) const {
+        auto topology = Topology::view(flags_(elem));
+
+        if (filter_land_water_ && !(include_water_ && include_land_) &&
+            !((include_water_ && topology.check(Topology::WATER)) ||
+              (include_land_ && topology.check(Topology::LAND)))) {
+            return ElementInclusion::SKIP;
+        }
+        if (!include_ghost_ && (topology.check(Topology::GHOST) || halo_(elem))) {
+            return ElementInclusion::SKIP;
+        }
+        if (!include_patch_ && topology.check(Topology::PATCH)) {
+            return ElementInclusion::SKIP;
+        }
+        if (topology.check(Topology::INVALID)) {
+            return ElementInclusion::SKIP;
+        }
+        if (coords_is_lonlat_ && nb_nodes_ == 3 && !include_triangle(elements_.node_connectivity(), elem)) {
+            return ElementInclusion::SKIP;
+        }
+        const bool ghost = (topology.check(Topology::GHOST) || halo_(elem)) && partition_(elem) != part_;
+        return ghost ? ElementInclusion::GHOST : ElementInclusion::OWNED;
+    }
+
+    size_t nb_nodes() const { return nb_nodes_; }
+
+private:
+    bool include_triangle(const mesh::BlockConnectivity& connectivity, idx_t elem) const {
+        auto x0            = coords_(connectivity(elem, 0), LON);
+        auto x1            = coords_(connectivity(elem, 1), LON);
+        auto x2            = coords_(connectivity(elem, 2), LON);
+        auto y0            = coords_(connectivity(elem, 0), LAT);
+        auto y1            = coords_(connectivity(elem, 1), LAT);
+        auto y2            = coords_(connectivity(elem, 2), LAT);
+        auto triangle_area = (x0 * (y1 - y2) + x1 * (y2 - y0) + x2 * (y0 - y1)) * 0.5;
+        if (triangle_area <= 0.) {
+            return false;
+        }
+        if (filter_edge_ratio_ <= 0.) {
+            return true;
+        }
+        auto d10  = (x1 - x0) * (x1 - x0) + (y1 - y0) * (y1 - y0);
+        auto d21  = (x2 - x1) * (x2 - x1) + (y2 - y1) * (y2 - y1);
+        auto d02  = (x0 - x2) * (x0 - x2) + (y0 - y2) * (y0 - y2);
+        auto dmin = std::min(d10, std::min(d21, d02));
+        auto dmax = std::max(d10, std::max(d21, d02));
+        return dmax <= filter_edge_ratio_ * dmin;
+    }
+
+    int part_;
+    bool include_ghost_;
+    bool filter_land_water_;
+    bool include_water_;
+    bool include_land_;
+    bool include_patch_;
+    bool coords_is_lonlat_;
+    double filter_edge_ratio_;
+    array::ArrayView<const double, 2> coords_;
+    const mesh::Elements& elements_;
+    size_t nb_nodes_;
+    array::LocalView<const int, 1> halo_;
+    array::LocalView<const int, 1> flags_;
+    array::LocalView<const int, 1> partition_;
+};
+
+int field_vars(int nvars) {
+    if (nvars == 1) {
+        return 1;
+    }
+    if (nvars <= 3) {
+        return 3;
+    }
+    if (nvars == 4 || nvars == 9) {
+        return 9;
+    }
+    ATLAS_NOTIMPLEMENTED;
+}
+
+template <typename Value, typename ValueHandling>
+typename std::remove_const<Value>::type output_value(const array::LocalView<Value, 2>& data,
+                                                     const ValueHandling& value_handling, idx_t n, int component) {
+    using value_type     = typename std::remove_const<Value>::type;
+    const int input_vars = data.shape(1);
+    int input_component  = component;
+    if (input_vars == 4) {
+        const int row = component / 3;
+        const int col = component % 3;
+        if (row >= 2 || col >= 2) {
+            return value_type{0};
+        }
+        input_component = row * 2 + col;
+    }
+    if (input_component >= input_vars) {
+        return value_type{0};
+    }
+    return value_handling.value(data(n, input_component), n);
+}
+
 template <typename Value>
 void write_ascii_value(std::ostream& out, Value value) {
     if constexpr (std::is_floating_point_v<Value>) {
-        // Check for quiet_NaN in value. This check does not work for signaling NaNs and can still raise FE_INVALID!
         if (std::isnan(value)) {
             out << "nan";
             return;
@@ -285,78 +424,34 @@ void write_ascii_value(std::ostream& out, Value value) {
 template <typename Value, typename GlobalIndex, typename ValueHandling>
 void write_level(std::ostream& out, GlobalIndex gidx, const array::LocalView<Value, 2>& data,
                  const ValueHandling& value_handling) {
-    using value_type = typename std::remove_const<Value>::type;
-    int ndata        = data.shape(0);
-    int nvars        = data.shape(1);
-    if (nvars == 1) {
-        for (idx_t n = 0; n < ndata; ++n) {
-            if (value_handling.include(data, n)) {
-                out << gidx(n) << " ";
-                write_ascii_value(out, value_handling.value(data(n, 0), n));
-                out << "\n";
-            }
+    const int nvars = field_vars(data.shape(1));
+    for (idx_t n = 0; n < data.shape(0); ++n) {
+        if (!value_handling.include(data, n)) {
+            continue;
         }
+        out << gidx(n);
+        for (int v = 0; v < nvars; ++v) {
+            out << " ";
+            write_ascii_value(out, output_value(data, value_handling, n, v));
+        }
+        out << "\n";
     }
-    else if (nvars <= 3) {
-        std::array<value_type, 3> data_vec;
-        data_vec.fill(static_cast<value_type>(0));
-        for (idx_t n = 0; n < ndata; ++n) {
-            if (value_handling.include(data, n)) {
-                for (idx_t v = 0; v < nvars; ++v) {
-                    data_vec[v] = value_handling.value(data(n, v), n);
-                }
-                out << gidx(n);
-                for (int v = 0; v < 3; ++v) {
-                    out << " ";
-                    write_ascii_value(out, data_vec[v]);
-                }
-                out << "\n";
-            }
+}
+
+template <typename Value, typename GlobalIndex, typename ValueHandling>
+void write_level_binary(std::ostream& out, GlobalIndex gidx, const array::LocalView<Value, 2>& data,
+                        const ValueHandling& value_handling) {
+    const int nvars = field_vars(data.shape(1));
+    for (idx_t n = 0; n < data.shape(0); ++n) {
+        if (!value_handling.include(data, n)) {
+            continue;
         }
-    }
-    else if (nvars <= 9) {
-        std::array<value_type, 9> data_vec;
-        data_vec.fill(static_cast<value_type>(0));
-        if (nvars == 4) {
-            for (int n = 0; n < ndata; ++n) {
-                if (value_handling.include(data, n)) {
-                    for (int i = 0; i < 2; ++i) {
-                        for (int j = 0; j < 2; ++j) {
-                            data_vec[i * 3 + j] = value_handling.value(data(n, i * 2 + j), n);
-                        }
-                    }
-                    out << gidx(n);
-                    for (int v = 0; v < 9; ++v) {
-                        out << " ";
-                        write_ascii_value(out, data_vec[v]);
-                    }
-                    out << "\n";
-                }
-            }
+        const int tag = static_cast<int>(gidx(n));
+        out.write(reinterpret_cast<const char*>(&tag), sizeof(tag));
+        for (int v = 0; v < nvars; ++v) {
+            const double value = static_cast<double>(output_value(data, value_handling, n, v));
+            out.write(reinterpret_cast<const char*>(&value), sizeof(value));
         }
-        else if (nvars == 9) {
-            for (int n = 0; n < ndata; ++n) {
-                if (value_handling.include(data, n)) {
-                    for (int i = 0; i < 3; ++i) {
-                        for (int j = 0; j < 3; ++j) {
-                            data_vec[i * 3 + j] = value_handling.value(data(n, i * 2 + j), n);
-                        }
-                    }
-                    out << gidx(n);
-                    for (int v = 0; v < 9; ++v) {
-                        out << " ";
-                        write_ascii_value(out, data_vec[v]);
-                    }
-                    out << "\n";
-                }
-            }
-        }
-        else {
-            ATLAS_NOTIMPLEMENTED;
-        }
-    }
-    else {
-        ATLAS_NOTIMPLEMENTED;
     }
 }
 
@@ -426,21 +521,6 @@ int field_step(const Field& field) {
     return field.metadata().has("step") ? field.metadata().get<size_t>("step") : 0;
 }
 
-int field_vars(int nvars) {
-    if (nvars == 1) {
-        return nvars;
-    }
-    else if (nvars <= 3) {
-        return 3;
-    }
-    else if (nvars <= 9) {
-        return 9;
-    }
-    else {
-        return nvars;
-    }
-}
-
 template <typename FunctionSpace>
 Field output_mask(const FunctionSpace& function_space, bool gather) {
     if (!function_space.hasMask()) {
@@ -501,7 +581,13 @@ void write_field_nodes(const Metadata& gmsh_options, const functionspace::NodeCo
             out << field_vars(nvars) << "\n";
             out << ndata_output << "\n";
             out << mpi::rank() << "\n";
-            write_level(out, gidx, data, value_handling);
+            if (gmsh_options.get<bool>("ascii")) {
+                write_level(out, gidx, data, value_handling);
+            }
+            else {
+                write_level_binary(out, gidx, data, value_handling);
+                out << "\n";
+            }
             out << "$EndNodeData\n";
         }
     }
@@ -537,7 +623,13 @@ void write_field_nodes(const Metadata& gmsh_options, const functionspace::NoFunc
         out << field_vars(nvars) << "\n";
         out << ndata_output << "\n";
         out << mpi::rank() << "\n";
-        write_level(out, gidx, data, value_handling);
+        if (gmsh_options.get<bool>("ascii")) {
+            write_level(out, gidx, data, value_handling);
+        }
+        else {
+            write_level_binary(out, gidx, data, value_handling);
+            out << "\n";
+        }
         out << "$EndNodeData\n";
     }
 }
@@ -612,7 +704,13 @@ void write_field_nodes(const Metadata& gmsh_options, const functionspace::Struct
         out << field_vars(nvars) << "\n";
         out << ndata_output << "\n";
         out << mpi::rank() << "\n";
-        write_level(out, gidx, data, value_handling);
+        if (gmsh_options.get<bool>("ascii")) {
+            write_level(out, gidx, data, value_handling);
+        }
+        else {
+            write_level_binary(out, gidx, data, value_handling);
+            out << "\n";
+        }
         out << "$EndNodeData\n";
     }
 }
@@ -666,7 +764,13 @@ void write_field_elems(const Metadata& gmsh_options, const FunctionSpace& functi
             out << field_vars(nvars) << "\n";
             out << ndata_output << "\n";
             out << mpi::rank() << "\n";
-            write_level(out, gidx, data, value_handling);
+            if (gmsh_options.get<bool>("ascii")) {
+                write_level(out, gidx, data, value_handling);
+            }
+            else {
+                write_level_binary(out, gidx, data, value_handling);
+                out << "\n";
+            }
             out << "$EndElementData\n";
         }
     }
@@ -814,6 +918,9 @@ GmshIO::GmshIO() {
 
     // Output of edges
     options.set<bool>("edges", true);
+
+    // Use the zero-based element owner as the elementary entity tag
+    options.set<bool>("element_partition_as_entity", false);
 
     // Levels of fields to use
     options.set<std::vector<long>>("levels", std::vector<long>());
@@ -1071,12 +1178,7 @@ void GmshIO::read(const PathName& file_path, Mesh& mesh) const {
 
 void GmshIO::write(const Mesh& mesh, const PathName& file_path) const {
     mpi::Scope scope(mesh.mpi_comm());
-    int part           = mesh.metadata().has("part") ? mesh.metadata().get<size_t>("part") : mpi::rank();
-    bool include_ghost = options.get<bool>("ghost") && options.get<bool>("elements");
-
-    bool land_water_flag = options.has("water") || options.has("land");
-    bool include_water   = options.getBool("water", false);
-    bool include_land    = options.getBool("land", false);
+    int part = mesh.metadata().has("part") ? mesh.metadata().get<size_t>("part") : mpi::rank();
 
     std::string nodes_field  = options.get<std::string>("nodes");
     const mesh::Nodes& nodes = mesh.nodes();
@@ -1089,20 +1191,23 @@ void GmshIO::write(const Mesh& mesh, const PathName& file_path) const {
     auto coords_idx       = array::make_view<const idx_t, 2>(coords_is_idx ? coords_field.array() : dummy_idx);
     bool coords_is_lonlat = coords_field.name() == "lonlat";
 
-    double filter_edge_ratio = eckit::Resource<double>("$ATLAS_GMSH_FILTER_EDGE_RATIO", 0.);
-
     auto glb_idx = array::make_view<gidx_t, 1>(nodes.global_index());
 
     const idx_t surfdim = nodes.field(nodes_field).shape(1);  // nb of variables in coords
 
     bool include_patch = (surfdim == 3);
+    NodeInclusionPolicy node_inclusion(nodes);
 
 
     ATLAS_ASSERT(surfdim == 2 || surfdim == 3);
 
     Log::debug() << "writing mesh to gmsh file " << file_path << std::endl;
 
-    bool binary = !options.get<bool>("ascii");
+    const bool binary                      = !options.get<bool>("ascii");
+    const bool element_partition_as_entity = options.get<bool>("element_partition_as_entity");
+
+    ATLAS_DEBUG_VAR(element_partition_as_entity);
+    ATLAS_DEBUG_VAR(binary);
 
     openmode mode = std::ios::out;
     if (binary) {
@@ -1118,265 +1223,476 @@ void GmshIO::write(const Mesh& mesh, const PathName& file_path) const {
         write_header_ascii(file);
     }
 
-    // Nodes
-    const idx_t nb_nodes = nodes.size();
-    file << "$Nodes\n";
-    file << nb_nodes << "\n";
-    double xyz[3] = {0., 0., 0.};
-    for (idx_t n = 0; n < nb_nodes; ++n) {
-        gidx_t g = glb_idx(n);
+    struct ElementBlock {
+        const mesh::Elements* elements;
+        int dimension;
+        int gmsh_type;
+        size_t nb_nodes;
+        std::vector<idx_t> included;
+        std::map<int, std::vector<idx_t>> ghosts_by_owner;
+        std::map<int, std::vector<idx_t>> by_owner;
+    };
 
-        if (coords_is_idx) {
-            for (idx_t d = 0; d < surfdim; ++d) {
-                xyz[d] = coords_idx(n, d);
-            }
-        }
-        else {
-            for (idx_t d = 0; d < surfdim; ++d) {
-                xyz[d] = coords(n, d);
-            }
-        }
+    std::vector<ElementBlock> element_blocks;
+    std::vector<const mesh::HybridElements*> grouped_elements;
+    if (options.get<bool>("elements")) {
+        grouped_elements.push_back(&mesh.cells());
+    }
+    if (options.get<bool>("edges")) {
+        grouped_elements.push_back(&mesh.edges());
+    }
 
-        if (binary) {
-            file.write(reinterpret_cast<const char*>(&g), sizeof(gidx_t));
-            file.write(reinterpret_cast<const char*>(&xyz), sizeof(double) * 3);
-        }
-        else {
-            file << g << " " << xyz[XX] << " " << xyz[YY] << " " << xyz[ZZ] << "\n";
+    for (const mesh::HybridElements* hybrid : grouped_elements) {
+        for (idx_t etype = 0; etype < hybrid->nb_types(); ++etype) {
+            const mesh::Elements& elements        = hybrid->elements(etype);
+            const mesh::ElementType& element_type = elements.element_type();
+            ElementInclusionPolicy element_inclusion(options, part, include_patch, coords_is_lonlat, coords, elements);
+            ElementBlock block{&elements, 2, 0, element_inclusion.nb_nodes(), {}, {}, {}};
+            auto element_owner = elements.view<int, 1>(elements.partition());
+            if (element_type.name() == "Line") {
+                block.dimension = 1;
+                block.gmsh_type = LINE;
+            }
+            else if (element_type.name() == "Triangle") {
+                block.gmsh_type = TRIAG;
+            }
+            else if (element_type.name() == "Quadrilateral") {
+                block.gmsh_type = QUAD;
+            }
+            else if (element_type.name() == "Pentagon") {
+                block.gmsh_type = QUAD;
+            }
+            else {
+                ATLAS_NOTIMPLEMENTED;
+            }
+
+            std::vector<ElementInclusion> inclusion(elements.size());
+            std::map<int, size_t> owner_counts;
+            size_t included_count = 0;
+            for (idx_t elem = 0; elem < elements.size(); ++elem) {
+                inclusion[elem] = element_inclusion(elem);
+                switch (inclusion[elem]) {
+                    case ElementInclusion::OWNED:
+                        element_partition_as_entity ? ++owner_counts[element_owner(elem)] : ++included_count;
+                        break;
+                    case ElementInclusion::GHOST:
+                        ++owner_counts[element_owner(elem)];
+                        break;
+                    case ElementInclusion::SKIP:
+                        break;
+                }
+            }
+
+            if (element_partition_as_entity) {
+                for (const auto& [owner, count] : owner_counts) {
+                    block.by_owner[owner].reserve(count);
+                }
+            }
+            else {
+                block.included.reserve(included_count);
+                for (const auto& [owner, count] : owner_counts) {
+                    block.ghosts_by_owner[owner].reserve(count);
+                }
+            }
+            for (idx_t elem = 0; elem < elements.size(); ++elem) {
+                switch (inclusion[elem]) {
+                    case ElementInclusion::OWNED:
+                        (element_partition_as_entity ? block.by_owner[element_owner(elem)] : block.included)
+                            .push_back(elem);
+                        break;
+                    case ElementInclusion::GHOST:
+                        (element_partition_as_entity ? block.by_owner[element_owner(elem)]
+                                                     : block.ghosts_by_owner[element_owner(elem)])
+                            .push_back(elem);
+                        break;
+                    case ElementInclusion::SKIP:
+                        break;
+                }
+            }
+            if (element_partition_as_entity ? !block.by_owner.empty()
+                                            : !block.included.empty() || !block.ghosts_by_owner.empty()) {
+                element_blocks.emplace_back(std::move(block));
+            }
         }
     }
+
+    const idx_t nb_nodes                     = static_cast<idx_t>(node_inclusion.size());
+    const int partition_tag                  = part;
+    const int canonical_entity_tag           = part + 2;
+    const int node_entity_tag = element_partition_as_entity ? partition_tag : canonical_entity_tag;
+    const int nb_partitions =
+        std::max(part + 1, mesh.metadata().has("nb_parts") ? mesh.metadata().get<int>("nb_parts")
+                                                           : static_cast<int>(mpi::size()));
+    const bool has_curve_blocks = std::any_of(element_blocks.begin(), element_blocks.end(),
+                                              [](const auto& block) { return block.dimension == 1; });
+    std::map<int, bool> curve_entity_owners;
+    std::map<int, bool> surface_entity_owners;
+    if (element_partition_as_entity) {
+        if (nb_nodes) {
+            surface_entity_owners[partition_tag] = true;
+        }
+        for (const auto& block : element_blocks) {
+            auto& owners = block.dimension == 1 ? curve_entity_owners : surface_entity_owners;
+            for ([[maybe_unused]] const auto& [owner, elements] : block.by_owner) {
+                owners[owner] = true;
+            }
+        }
+    }
+    else {
+        if (nb_nodes) {
+            surface_entity_owners[part] = true;
+        }
+        for (const auto& block : element_blocks) {
+            auto& owners = block.dimension == 1 ? curve_entity_owners : surface_entity_owners;
+            if (!block.included.empty()) {
+                owners[part] = true;
+            }
+            for ([[maybe_unused]] const auto& [owner, elements] : block.ghosts_by_owner) {
+                owners[owner] = true;
+            }
+        }
+    }
+    const size_t nb_ghost_entities = 0;
+
+    double xyz_min[3] = {std::numeric_limits<double>::max(), std::numeric_limits<double>::max(),
+                         std::numeric_limits<double>::max()};
+    double xyz_max[3] = {-std::numeric_limits<double>::max(), -std::numeric_limits<double>::max(),
+                         -std::numeric_limits<double>::max()};
+    auto node_xyz     = [&](idx_t node) {
+        std::array<double, 3> xyz{0., 0., 0.};
+        for (idx_t dimension = 0; dimension < surfdim; ++dimension) {
+            xyz[dimension] = coords_is_idx ? coords_idx(node, dimension) : coords(node, dimension);
+        }
+        return xyz;
+    };
+    for (idx_t node : node_inclusion.included()) {
+        auto xyz = node_xyz(node);
+        for (idx_t dimension = 0; dimension < 3; ++dimension) {
+            xyz_min[dimension] = std::min(xyz_min[dimension], xyz[dimension]);
+            xyz_max[dimension] = std::max(xyz_max[dimension], xyz[dimension]);
+        }
+    }
+    if (nb_nodes == 0) {
+        std::fill(xyz_min, xyz_min + 3, 0.);
+        std::fill(xyz_max, xyz_max + 3, 0.);
+    }
+
+    auto write_bounding_box = [&]() {
+        file << xyz_min[0] << " " << xyz_min[1] << " " << xyz_min[2] << " " << xyz_max[0] << " " << xyz_max[1] << " "
+             << xyz_max[2];
+    };
+    auto write_binary = [&](const auto& value) { file.write(reinterpret_cast<const char*>(&value), sizeof(value)); };
+    auto write_binary_bounding_box = [&]() {
+        file.write(reinterpret_cast<const char*>(xyz_min), sizeof(xyz_min));
+        file.write(reinterpret_cast<const char*>(xyz_max), sizeof(xyz_max));
+    };
+
+    file << "$Entities\n";
     if (binary) {
+        const size_t entity_counts[4] = {
+            0, element_partition_as_entity ? curve_entity_owners.size() : (has_curve_blocks ? 1ul : 0ul),
+            element_partition_as_entity ? surface_entity_owners.size() : 1ul, 0};
+        file.write(reinterpret_cast<const char*>(entity_counts), sizeof(entity_counts));
+        auto write_entity_record = [&](int tag) {
+            const size_t nb_physical   = 1;
+            const int physical_tag     = 1;
+            const size_t nb_boundaries = 0;
+            write_binary(tag);
+            write_binary_bounding_box();
+            write_binary(nb_physical);
+            write_binary(physical_tag);
+            write_binary(nb_boundaries);
+        };
+        if (element_partition_as_entity) {
+            for ([[maybe_unused]] const auto& [owner, present] : curve_entity_owners) {
+                write_entity_record(owner);
+            }
+            for ([[maybe_unused]] const auto& [owner, present] : surface_entity_owners) {
+                write_entity_record(owner);
+            }
+        }
+        else {
+            if (has_curve_blocks) {
+                write_entity_record(1);  // parent curve entity
+            }
+            write_entity_record(1);  // parent surface entity
+        }
         file << "\n";
+    }
+    else {
+        file << "0 " << (element_partition_as_entity ? curve_entity_owners.size() : (has_curve_blocks ? 1 : 0)) << " "
+             << (element_partition_as_entity ? surface_entity_owners.size() : 1) << " 0\n";
+        auto write_entity_record = [&](int tag) {
+            file << tag << " ";
+            write_bounding_box();
+            file << " 1 1 0\n";
+        };
+        if (element_partition_as_entity) {
+            for ([[maybe_unused]] const auto& [owner, present] : curve_entity_owners) {
+                write_entity_record(owner);
+            }
+            for ([[maybe_unused]] const auto& [owner, present] : surface_entity_owners) {
+                write_entity_record(owner);
+            }
+        }
+        else {
+            if (has_curve_blocks) {
+                write_entity_record(1);
+            }
+            write_entity_record(1);
+        }
+    }
+    file << "$EndEntities\n";
+
+    constexpr int dim_1d = 1;
+    constexpr int dim_2d = 2;
+    if (!element_partition_as_entity) {
+        file << "$PartitionedEntities\n";
+        if (binary) {
+            const size_t partitions       = nb_partitions;
+            const size_t entity_counts[4] = {0, curve_entity_owners.size(), surface_entity_owners.size(), 0};
+            write_binary(partitions);
+            write_binary(nb_ghost_entities);
+            file.write(reinterpret_cast<const char*>(entity_counts), sizeof(entity_counts));
+            auto write_partitioned_entity = [&](int owner, int dimension) {
+                const int parent_tag_value        = 1;
+                const size_t entity_nb_partitions = 1;
+                const size_t nb_physical          = 1;
+                const int physical_tag            = 1;
+                const size_t nb_boundaries        = 0;
+                write_binary(owner + 2);
+                write_binary(dimension);
+                write_binary(parent_tag_value);
+                write_binary(entity_nb_partitions);
+                write_binary(owner);
+                write_binary_bounding_box();
+                write_binary(nb_physical);
+                write_binary(physical_tag);
+                write_binary(nb_boundaries);
+            };
+            for ([[maybe_unused]] const auto& [owner, present] : curve_entity_owners) {
+                write_partitioned_entity(owner, dim_1d);
+            }
+            for ([[maybe_unused]] const auto& [owner, present] : surface_entity_owners) {
+                write_partitioned_entity(owner, dim_2d);
+            }
+            file << "\n";
+        }
+        else {
+            file << nb_partitions << "\n";
+            file << nb_ghost_entities << "\n";
+            file << "0 " << curve_entity_owners.size() << " " << surface_entity_owners.size() << " 0\n";
+            auto write_partitioned_entity = [&](int owner, int dimension) {
+                file << owner + 2 << " " << dimension << " 1 1 " << owner << " ";
+                write_bounding_box();
+                file << " 1 1 0\n";
+            };
+            for ([[maybe_unused]] const auto& [owner, present] : curve_entity_owners) {
+                write_partitioned_entity(owner, dim_1d);
+            }
+            for ([[maybe_unused]] const auto& [owner, present] : surface_entity_owners) {
+                write_partitioned_entity(owner, dim_2d);
+            }
+        }
+        file << "$EndPartitionedEntities\n";
+    }
+
+    gidx_t min_node_tag = node_inclusion.empty() ? 0 : glb_idx(node_inclusion.included().front());
+    gidx_t max_node_tag = min_node_tag;
+    for (idx_t node : node_inclusion.included()) {
+        min_node_tag = std::min(min_node_tag, glb_idx(node));
+        max_node_tag = std::max(max_node_tag, glb_idx(node));
+    }
+    file << "$Nodes\n";
+    if (binary) {
+        const size_t node_header[4] = {nb_nodes ? 1ul : 0ul, static_cast<size_t>(nb_nodes),
+                                       static_cast<size_t>(min_node_tag), static_cast<size_t>(max_node_tag)};
+        file.write(reinterpret_cast<const char*>(node_header), sizeof(node_header));
+        if (nb_nodes) {
+            const int dimension  = 2;
+            const int parametric = 0;
+            const size_t count   = nb_nodes;
+            write_binary(dimension);
+            write_binary(node_entity_tag);
+            write_binary(parametric);
+            write_binary(count);
+            for (idx_t node : node_inclusion.included()) {
+                const size_t tag = glb_idx(node);
+                write_binary(tag);
+            }
+            for (idx_t node : node_inclusion.included()) {
+                auto xyz = node_xyz(node);
+                file.write(reinterpret_cast<const char*>(xyz.data()), sizeof(double) * xyz.size());
+            }
+        }
+        file << "\n";
+    }
+    else {
+        file << (nb_nodes ? 1 : 0) << " " << nb_nodes << " " << min_node_tag << " " << max_node_tag << "\n";
+        if (nb_nodes) {
+            file << "2 " << node_entity_tag << " 0 " << nb_nodes << "\n";
+            for (idx_t node : node_inclusion.included()) {
+                file << glb_idx(node) << "\n";
+            }
+            for (idx_t node : node_inclusion.included()) {
+                auto xyz = node_xyz(node);
+                file << xyz[0] << " " << xyz[1] << " " << xyz[2] << "\n";
+            }
+        }
     }
     file << "$EndNodes\n";
 
-    // Elements
-    file << "$Elements\n";
-    {
-        std::vector<const mesh::HybridElements*> grouped_elements;
-        if (options.get<bool>("elements")) {
-            grouped_elements.push_back(&mesh.cells());
-        }
-        if (options.get<bool>("edges")) {
-            grouped_elements.push_back(&mesh.edges());
-        }
-
-        idx_t nb_elements(0);
-        for (const mesh::HybridElements* hybrid : grouped_elements) {
-            nb_elements += hybrid->size();
-            const auto hybrid_halo        = array::make_view<int, 1>(hybrid->halo());
-            const auto hybrid_flags       = array::make_view<int, 1>(hybrid->flags());
-            const auto& node_connectivity = hybrid->node_connectivity();
-
-            auto include = [&](idx_t e) {
-                auto topology = Topology::view(hybrid_flags(e));
-                if (land_water_flag && not(include_water && include_land)) {
-                    if (include_water && !topology.check(Topology::WATER)) {
-                        return false;
-                    }
-                    if (include_land && !topology.check(Topology::LAND)) {
-                        return false;
-                    }
-                }
-                if (not include_ghost) {
-                    if (topology.check(Topology::GHOST) || hybrid_halo(e)) {
-                        return false;
-                    }
-                }
-                if (not include_patch) {
-                    if (topology.check(Topology::PATCH)) {
-                        return false;
-                    }
-                }
-                if (topology.check(Topology::INVALID)) {
-                    return false;
-                }
-
-                if (coords_is_lonlat) {
-                    if (node_connectivity.cols(e) == 3) {
-                        auto x0            = [&]() { return coords(node_connectivity(e, 0), LON); };
-                        auto x1            = [&]() { return coords(node_connectivity(e, 1), LON); };
-                        auto x2            = [&]() { return coords(node_connectivity(e, 2), LON); };
-                        auto y0            = [&]() { return coords(node_connectivity(e, 0), LAT); };
-                        auto y1            = [&]() { return coords(node_connectivity(e, 1), LAT); };
-                        auto y2            = [&]() { return coords(node_connectivity(e, 2), LAT); };
-                        auto triangle_area = (x0() * (y1() - y2()) + x1() * (y2() - y0()) + x2() * (y0() - y1())) * 0.5;
-                        if (triangle_area <= 0) {
-                            return false;
-                        }
-                        // edge length comparison
-                        if (filter_edge_ratio > 0.) {
-                            auto dx10 = (x1() - x0());
-                            auto dx21 = (x2() - x1());
-                            auto dx02 = (x0() - x2());
-                            auto dy10 = (y1() - y0());
-                            auto dy21 = (y2() - y1());
-                            auto dy02 = (y0() - y2());
-                            auto d10  = dx10 * dx10 + dy10 * dy10;
-                            auto d21  = dx21 * dx21 + dy21 * dy21;
-                            auto d02  = dx02 * dx02 + dy02 * dy02;
-                            auto dmin = std::min(d10, std::min(d21, d02));
-                            auto dmax = std::max(d10, std::max(d21, d02));
-                            if (dmax > filter_edge_ratio * dmin) {
-                                return false;
-                            }
-                        }
-                    }
-                }
-                return true;
-            };
-
-            for (idx_t e = 0; e < hybrid->size(); ++e) {
-                if (not include(e)) {
-                    --nb_elements;
+    size_t nb_elements     = 0;
+    gidx_t min_element_tag = 0;
+    gidx_t max_element_tag = 0;
+    for (const auto& block : element_blocks) {
+        auto elems_glb_idx = block.elements->view<gidx_t, 1>(block.elements->global_index());
+        auto update_element_range = [&](idx_t elem) {
+            const gidx_t tag = elems_glb_idx(elem);
+            if (nb_elements++ == 0) {
+                min_element_tag = tag;
+                max_element_tag = tag;
+            }
+            else {
+                min_element_tag = std::min(min_element_tag, tag);
+                max_element_tag = std::max(max_element_tag, tag);
+            }
+        };
+        if (element_partition_as_entity) {
+            for (const auto& [owner, elements] : block.by_owner) {
+                for (idx_t elem : elements) {
+                    update_element_range(elem);
                 }
             }
         }
-
-        file << nb_elements << "\n";
-
-        for (const mesh::HybridElements* hybrid : grouped_elements) {
-            for (idx_t etype = 0; etype < hybrid->nb_types(); ++etype) {
-                const mesh::Elements& elements                   = hybrid->elements(etype);
-                const mesh::ElementType& element_type            = elements.element_type();
-                const mesh::BlockConnectivity& node_connectivity = elements.node_connectivity();
-                size_t nb_nodes                                  = node_connectivity.cols();
-
-                int gmsh_elem_type;
-                if (element_type.name() == "Line") {
-                    gmsh_elem_type = 1;
-                }
-                else if (element_type.name() == "Triangle") {
-                    gmsh_elem_type = 2;
-                }
-                else if (element_type.name() == "Quadrilateral") {
-                    gmsh_elem_type = 3;
-                }
-                else if (element_type.name() == "Pentagon") {
-                    // Hack: treat as quadrilateral and ignore 5th point
-                    gmsh_elem_type = 3;
-                    nb_nodes       = 4;
-                }
-                else {
-                    ATLAS_NOTIMPLEMENTED;
-                }
-
-
-                auto elems_glb_idx   = elements.view<gidx_t, 1>(elements.global_index());
-                auto elems_partition = elements.view<int, 1>(elements.partition());
-
-                auto elems_halo  = elements.view<int, 1>(elements.halo());
-                auto elems_flags = elements.view<int, 1>(elements.flags());
-
-                auto include = [&](idx_t e) {
-                    auto topology = Topology::view(elems_flags(e));
-                    if (land_water_flag && not(include_water && include_land)) {
-                        if (include_water && !topology.check(Topology::WATER)) {
-                            return false;
-                        }
-                        if (include_land && !topology.check(Topology::LAND)) {
-                            return false;
-                        }
-                    }
-                    if (not include_ghost) {
-                        if (topology.check(Topology::GHOST) || elems_halo(e)) {
-                            return false;
-                        }
-                    }
-                    if (not include_patch) {
-                        if (topology.check(Topology::PATCH)) {
-                            return false;
-                        }
-                    }
-                    if (topology.check(Topology::INVALID)) {
-                        return false;
-                    }
-                    if (coords_is_lonlat) {
-                        if (nb_nodes == 3) {
-                            auto x0 = [&]() { return coords(node_connectivity(e, 0), LON); };
-                            auto x1 = [&]() { return coords(node_connectivity(e, 1), LON); };
-                            auto x2 = [&]() { return coords(node_connectivity(e, 2), LON); };
-                            auto y0 = [&]() { return coords(node_connectivity(e, 0), LAT); };
-                            auto y1 = [&]() { return coords(node_connectivity(e, 1), LAT); };
-                            auto y2 = [&]() { return coords(node_connectivity(e, 2), LAT); };
-                            auto triangle_area =
-                                (x0() * (y1() - y2()) + x1() * (y2() - y0()) + x2() * (y0() - y1())) * 0.5;
-                            if (triangle_area <= 0) {
-                                return false;
-                            }
-                            // edge length comparison
-                            if (filter_edge_ratio > 0.) {
-                                auto dx10 = (x1() - x0());
-                                auto dx21 = (x2() - x1());
-                                auto dx02 = (x0() - x2());
-                                auto dy10 = (y1() - y0());
-                                auto dy21 = (y2() - y1());
-                                auto dy02 = (y0() - y2());
-                                auto d10  = dx10 * dx10 + dy10 * dy10;
-                                auto d21  = dx21 * dx21 + dy21 * dy21;
-                                auto d02  = dx02 * dx02 + dy02 * dy02;
-                                auto dmin = std::min(d10, std::min(d21, d02));
-                                auto dmax = std::max(d10, std::max(d21, d02));
-                                if (dmax > filter_edge_ratio * dmin) {
-                                    return false;
-                                }
-                            }
-                        }
-                    }
-                    return true;
-                };
-                if (binary) {
-                    idx_t nb_elems = elements.size();
-                    if (!include_ghost) {
-                        for (idx_t elem = 0; elem < elements.size(); ++elem) {
-                            if (elems_halo(elem)) {
-                                --nb_elems;
-                            }
-                        }
-                    }
-
-                    int header[3];
-                    int data[9];
-                    header[0] = gmsh_elem_type;
-                    header[1] = nb_elems;
-                    header[2] = 4;  // nb_tags
-                    file.write(reinterpret_cast<const char*>(&header), sizeof(int) * 3);
-                    data[1]         = 1;
-                    data[2]         = 1;
-                    data[3]         = 1;
-                    size_t datasize = sizeof(int) * (5 + nb_nodes);
-                    for (idx_t elem = 0; elem < nb_elems; ++elem) {
-                        if (include_ghost || !elems_halo(elem)) {
-                            data[0] = elems_glb_idx(elem);
-                            data[4] = elems_partition(elem);
-                            for (idx_t n = 0; n < nb_nodes; ++n) {
-                                data[5 + n] = glb_idx(node_connectivity(elem, n));
-                            }
-                            file.write(reinterpret_cast<const char*>(&data), datasize);
-                        }
-                    }
-                }
-                else {
-                    std::stringstream ss_elem_info;
-                    ss_elem_info << " " << gmsh_elem_type << " 4 1 1 1 ";
-                    std::string elem_info = ss_elem_info.str();
-                    for (idx_t elem = 0; elem < elements.size(); ++elem) {
-                        if (include(elem)) {
-                            file << elems_glb_idx(elem) << elem_info << elems_partition(elem);
-                            for (idx_t n = 0; n < nb_nodes; ++n) {
-                                file << " " << glb_idx(node_connectivity(elem, n));
-                            }
-                            file << "\n";
-                        }
-                    }
+        else {
+            for (idx_t elem : block.included) {
+                update_element_range(elem);
+            }
+            for (const auto& [owner, elements] : block.ghosts_by_owner) {
+                for (idx_t elem : elements) {
+                    update_element_range(elem);
                 }
             }
         }
     }
+    const size_t nb_element_blocks = std::accumulate(
+        element_blocks.begin(), element_blocks.end(), size_t{0}, [&](size_t count, const auto& block) {
+            return count + (element_partition_as_entity ? block.by_owner.size()
+                                                        : !block.included.empty() + block.ghosts_by_owner.size());
+        });
+    file << "$Elements\n";
     if (binary) {
+        const size_t element_header[4] = {nb_element_blocks, nb_elements, static_cast<size_t>(min_element_tag),
+                                          static_cast<size_t>(max_element_tag)};
+        file.write(reinterpret_cast<const char*>(element_header), sizeof(element_header));
+        for (const auto& block : element_blocks) {
+            const auto& node_connectivity = block.elements->node_connectivity();
+            auto elems_glb_idx            = block.elements->view<gidx_t, 1>(block.elements->global_index());
+            auto write_block              = [&](const std::vector<idx_t>& elements, int block_entity_tag) {
+                if (elements.empty()) {
+                    return;
+                }
+                const size_t count = elements.size();
+                write_binary(block.dimension);
+                write_binary(block_entity_tag);
+                write_binary(block.gmsh_type);
+                write_binary(count);
+                for (idx_t elem : elements) {
+                    const size_t element_tag = elems_glb_idx(elem);
+                    write_binary(element_tag);
+                    for (idx_t node = 0; node < block.nb_nodes; ++node) {
+                        const size_t node_tag = glb_idx(node_connectivity(elem, node));
+                        write_binary(node_tag);
+                    }
+                }
+            };
+            if (element_partition_as_entity) {
+                for (const auto& [owner, elements] : block.by_owner) {
+                    write_block(elements, owner);
+                }
+            }
+            else {
+                write_block(block.included, canonical_entity_tag);
+                for (const auto& [owner, elements] : block.ghosts_by_owner) {
+                    write_block(elements, owner + 2);
+                }
+            }
+        }
         file << "\n";
     }
+    else {
+        file << nb_element_blocks << " " << nb_elements << " " << min_element_tag << " " << max_element_tag << "\n";
+        for (const auto& block : element_blocks) {
+            const auto& node_connectivity = block.elements->node_connectivity();
+            auto elems_glb_idx            = block.elements->view<gidx_t, 1>(block.elements->global_index());
+            auto write_block              = [&](const std::vector<idx_t>& elements, int block_entity_tag) {
+                if (elements.empty()) {
+                    return;
+                }
+                file << block.dimension << " " << block_entity_tag << " " << block.gmsh_type << " "
+                     << elements.size() << "\n";
+                for (idx_t elem : elements) {
+                    file << elems_glb_idx(elem);
+                    for (idx_t node = 0; node < block.nb_nodes; ++node) {
+                        file << " " << glb_idx(node_connectivity(elem, node));
+                    }
+                    file << "\n";
+                }
+            };
+            if (element_partition_as_entity) {
+                for (const auto& [owner, elements] : block.by_owner) {
+                    write_block(elements, owner);
+                }
+            }
+            else {
+                write_block(block.included, canonical_entity_tag);
+                for (const auto& [owner, elements] : block.ghosts_by_owner) {
+                    write_block(elements, owner + 2);
+                }
+            }
+        }
+    }
     file << "$EndElements\n";
+
+    size_t nb_ghost_elements = 0;
+    for (const auto& block : element_blocks) {
+        for (const auto& [owner, elements] : block.ghosts_by_owner) {
+            nb_ghost_elements += elements.size();
+        }
+    }
+    if (nb_ghost_elements && !element_partition_as_entity) {
+        file << "$GhostElements\n";
+        if (binary) {
+            write_binary(nb_ghost_elements);
+            for (const auto& block : element_blocks) {
+                auto elems_glb_idx = block.elements->view<gidx_t, 1>(block.elements->global_index());
+                for (const auto& [owner, elements] : block.ghosts_by_owner) {
+                    for (idx_t elem : elements) {
+                        const size_t element_tag         = elems_glb_idx(elem);
+                        const size_t nb_ghost_partitions = 1;
+                        write_binary(element_tag);
+                        write_binary(owner);
+                        write_binary(nb_ghost_partitions);
+                        write_binary(partition_tag);
+                    }
+                }
+            }
+            file << "\n";
+        }
+        else {
+            file << nb_ghost_elements << "\n";
+            for (const auto& block : element_blocks) {
+                auto elems_glb_idx = block.elements->view<gidx_t, 1>(block.elements->global_index());
+                for (const auto& [owner, elements] : block.ghosts_by_owner) {
+                    for (idx_t elem : elements) {
+                        file << elems_glb_idx(elem) << " " << owner << " 1 " << partition_tag << "\n";
+                    }
+                }
+            }
+        }
+        file << "$EndGhostElements\n";
+    }
     file << std::flush;
 
     // Optional mesh information file
@@ -1527,7 +1843,7 @@ void GmshIO::write_delegate(const FieldSet& fieldset, const functionspace::NodeC
 
     // Header
     if (is_new_file) {
-        write_header_ascii(file);
+        binary ? write_header_binary(file) : write_header_ascii(file);
     }
 
     // field::Fields
@@ -1565,7 +1881,7 @@ void GmshIO::write_delegate(const FieldSet& fieldset, const functionspace::NoFun
 
     // Header
     if (is_new_file) {
-        write_header_ascii(file);
+        binary ? write_header_binary(file) : write_header_ascii(file);
     }
 
     // field::Fields
@@ -1603,7 +1919,7 @@ void GmshIO::write_delegate(const FieldSet& fieldset, const functionspace::CellC
 
     // Header
     if (is_new_file) {
-        write_header_ascii(file);
+        binary ? write_header_binary(file) : write_header_ascii(file);
     }
 
     // field::Fields
@@ -1684,7 +2000,7 @@ void GmshIO::write_delegate(const FieldSet& fieldset, const functionspace::Struc
 
     // Header
     if (is_new_file) {
-        write_header_ascii(file);
+        binary ? write_header_binary(file) : write_header_ascii(file);
     }
 
     // field::Fields

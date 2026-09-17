@@ -63,6 +63,7 @@ public:
         bool gather;
         bool ghost;
         bool info;
+        bool element_partition_as_entity;
 
         bool configured_land_water;
         bool land;

@@ -190,6 +190,10 @@ Meshgen2Gmsh::Meshgen2Gmsh(int argc, char** argv): AtlasTool(argc, argv) {
         "land", "Output elements containing land points (not specifying --water or --land enables both)"));
     add_option(new SimpleOption<bool>("fixup", "Apply custom fixes to the mesh where it applies"));
     add_option(new SimpleOption<bool>("gmsh", "Output gmsh (default=true)"));
+    add_option(new SimpleOption<std::string>("gmsh-format", "Gmsh output format [ascii,binary] (default=ascii)"));
+    add_option(new SimpleOption<bool>("gmsh-gather", "Gather Gmsh field output to rank 0 (default=false)"));
+    add_option(new SimpleOption<bool>(
+        "gmsh-partition-as-entity", "Use the element partition as the Gmsh elementary entity (default=false)"));
     add_option(new SimpleOption<long>("partition", "partition [0:partitions]"));
     add_option(new SimpleOption<long>("partitions", "Number of partitions"));
     add_option(new SimpleOption<bool>("partition-graph", "Output partition graph"));
@@ -332,6 +336,12 @@ int Meshgen2Gmsh::execute(const Args& args) {
     args.get("coordinates", coordinates);
 
     if (args.getBool("gmsh", true)) {
+        std::string gmsh_format = "ascii";
+        args.get("gmsh-format", gmsh_format);
+        if (gmsh_format != "ascii" && gmsh_format != "binary") {
+            throw_Exception("Invalid --gmsh-format='" + gmsh_format + "': expected 'ascii' or 'binary'", Here());
+        }
+
         bool torus = false;
         args.get("torus", torus);
         if (torus) {
@@ -345,10 +355,13 @@ int Meshgen2Gmsh::execute(const Args& args) {
         }
 
         Config gmsh_config;
+        gmsh_config.set("binary", gmsh_format == "binary");
         gmsh_config.set("coordinates", coordinates);
         gmsh_config.set("edges", edges);
+        gmsh_config.set("gather", args.getBool("gmsh-gather", false));
         gmsh_config.set("ghost", ghost);
         gmsh_config.set("info", info);
+        gmsh_config.set("element_partition_as_entity", args.getBool("gmsh-partition-as-entity", false));
         if (args.has("land") || args.has("water")) {
             gmsh_config.set("land", args.getBool("land", false));
             gmsh_config.set("water", args.getBool("water", false));
