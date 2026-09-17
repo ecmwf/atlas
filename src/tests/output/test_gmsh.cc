@@ -8,6 +8,7 @@
  * nor does it submit to any jurisdiction.
  */
 
+#include <algorithm>
 #include <cmath>
 #include <fstream>
 #include <sstream>
@@ -88,6 +89,41 @@ NodeData read_scalar_node_data(const std::string& path) {
         }
     }
     return data;
+}
+
+std::vector<gidx_t> read_element_tags(const std::string& path, int requested_dimension) {
+    std::ifstream file(path);
+    std::string line;
+    while (std::getline(file, line) && line != "$Elements") {
+    }
+    EXPECT(file);
+
+    size_t nb_blocks;
+    size_t nb_elements;
+    gidx_t min_tag;
+    gidx_t max_tag;
+    file >> nb_blocks >> nb_elements >> min_tag >> max_tag;
+    std::getline(file, line);
+
+    std::vector<gidx_t> tags;
+    for (size_t block = 0; block < nb_blocks; ++block) {
+        int dimension;
+        int entity_tag;
+        int element_type;
+        size_t nb_elements_in_block;
+        file >> dimension >> entity_tag >> element_type >> nb_elements_in_block;
+        std::getline(file, line);
+        for (size_t element = 0; element < nb_elements_in_block; ++element) {
+            std::getline(file, line);
+            if (dimension == requested_dimension) {
+                std::istringstream record(line);
+                gidx_t tag;
+                record >> tag;
+                tags.push_back(tag);
+            }
+        }
+    }
+    return tags;
 }
 
 Field field_with_missing_value() {
@@ -239,6 +275,36 @@ CASE("test_gmsh_output_binary") {
     auto lonlat       = array::make_view<double, 2>(mesh.nodes().lonlat());
     EXPECT_EQ(node_tag, global_index(0));
     EXPECT_EQ(latitude, lonlat(0, LAT));
+}
+
+CASE("test_gmsh_preserves_compact_edge_tags") {
+    Mesh mesh = test::generate_mesh(Grid("N16"));
+    mesh::actions::build_edges(mesh);
+
+    auto edge_global_index = array::make_view<gidx_t, 1>(mesh.edges().global_index());
+    for (idx_t edge = 0; edge < mesh.edges().size(); ++edge) {
+        edge_global_index(edge) = 10 + 2 * edge;
+    }
+
+    output::Gmsh("test_gmsh_output_compact_edges.msh", util::Config("edges", true)).write(mesh);
+    auto tags = read_element_tags("test_gmsh_output_compact_edges.msh", 1);
+    std::sort(tags.begin(), tags.end());
+    EXPECT(tags.size() >= 2);
+    if (tags.size() < 2) {
+        return;
+    }
+
+    gidx_t max_cell_tag = 0;
+    auto cell_global_index = array::make_view<gidx_t, 1>(mesh.cells().global_index());
+    for (idx_t cell = 0; cell < mesh.cells().size(); ++cell) {
+        max_cell_tag = std::max(max_cell_tag, cell_global_index(cell));
+    }
+    gidx_t edge_tag_offset = 10;
+    while (edge_tag_offset <= max_cell_tag) {
+        edge_tag_offset *= 10;
+    }
+    EXPECT_EQ(tags[0], edge_tag_offset + 1);
+    EXPECT_EQ(tags[1], edge_tag_offset + 3);
 }
 
 CASE("test_gmsh_output_canonical_entities") {

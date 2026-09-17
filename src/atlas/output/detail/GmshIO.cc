@@ -493,6 +493,7 @@ std::string field_lev(const Field& field, int jlev) {
 }
 
 thread_local std::string field_name_prefix;
+thread_local Field element_global_index_override;
 
 class FieldNamePrefixScope {
 public:
@@ -507,6 +508,21 @@ public:
 
 private:
     std::string previous_;
+};
+
+class ElementGlobalIndexScope {
+public:
+    explicit ElementGlobalIndexScope(const Field& global_index): previous_(element_global_index_override) {
+        element_global_index_override = global_index;
+    }
+
+    ElementGlobalIndexScope(const ElementGlobalIndexScope&)            = delete;
+    ElementGlobalIndexScope& operator=(const ElementGlobalIndexScope&) = delete;
+
+    ~ElementGlobalIndexScope() { element_global_index_override = previous_; }
+
+private:
+    Field previous_;
 };
 
 std::string output_field_name(const Field& field) {
@@ -533,6 +549,64 @@ Field output_mask(const FunctionSpace& function_space, bool gather) {
         return global_mask;
     }
     return mask;
+}
+
+Field gmsh_edge_tags(const Mesh& mesh, gidx_t offset) {
+    const idx_t nb_edges  = mesh.edges().size();
+    auto edge_global_index = array::make_view<gidx_t, 1>(mesh.edges().global_index());
+
+    std::vector<int> counts(mpi::size());
+    std::vector<int> displacements(mpi::size());
+    constexpr idx_t root = 0;
+    mpi::comm().gather(nb_edges, counts, root);
+
+    idx_t nb_global_edges = 0;
+    if (mpi::rank() == root) {
+        for (idx_t rank = 0; rank < mpi::size(); ++rank) {
+            displacements[rank] = nb_global_edges;
+            nb_global_edges += counts[rank];
+        }
+    }
+
+    std::vector<gidx_t> global_edge_tags(nb_global_edges);
+    mpi::comm().gatherv(edge_global_index.data(), nb_edges, global_edge_tags.data(), counts.data(),
+                        displacements.data(), root);
+
+    if (mpi::rank() == root) {
+        std::vector<gidx_t> unique_edge_tags = global_edge_tags;
+        std::sort(unique_edge_tags.begin(), unique_edge_tags.end());
+        unique_edge_tags.erase(std::unique(unique_edge_tags.begin(), unique_edge_tags.end()),
+                               unique_edge_tags.end());
+        const bool approximately_compact =
+            unique_edge_tags.empty() ||
+            unique_edge_tags.back() - unique_edge_tags.front() + 1 <= 2 * unique_edge_tags.size();
+        for (gidx_t& tag : global_edge_tags) {
+            if (approximately_compact) {
+                tag = offset + tag - unique_edge_tags.front() + 1;
+            }
+            else {
+                tag = offset + std::distance(unique_edge_tags.begin(),
+                                             std::lower_bound(unique_edge_tags.begin(), unique_edge_tags.end(), tag)) +
+                      1;
+            }
+        }
+    }
+
+    Field tags("gmsh_element_tags", array::make_datatype<gidx_t>(), {nb_edges});
+    auto local_tags = array::make_view<gidx_t, 1>(tags);
+    mpi::comm().scatterv(global_edge_tags.data(), counts.data(), displacements.data(), local_tags.data(), nb_edges,
+                         root);
+
+    gidx_t local_max_tag = 0;
+    for (idx_t edge = 0; edge < nb_edges; ++edge) {
+        local_max_tag = std::max(local_max_tag, local_tags(edge));
+    }
+    gidx_t max_tag = 0;
+    mpi::comm().allReduce(local_max_tag, max_tag, eckit::mpi::max());
+    if (max_tag > std::numeric_limits<int>::max()) {
+        ATLAS_THROW_EXCEPTION("Gmsh element tag exceeds the supported 32-bit ElementData range");
+    }
+    return tags;
 }
 
 }  // namespace
@@ -727,7 +801,7 @@ void write_field_elems(const Metadata& gmsh_options, const FunctionSpace& functi
     idx_t nlev  = std::max<idx_t>(1, field.levels());
     idx_t ndata = std::min<idx_t>(function_space.size(), field.shape(0));
     idx_t nvars = std::max<idx_t>(1, field.variables());
-    Field global_index = function_space.global_index();
+    Field global_index = element_global_index_override ? element_global_index_override : function_space.global_index();
     auto gidx          = array::make_view<gidx_t, 1>(global_index);
     Field mask  = output_mask(function_space, gather);
     Field gidx_glb;
@@ -1206,6 +1280,23 @@ void GmshIO::write(const Mesh& mesh, const PathName& file_path) const {
     const bool binary                      = !options.get<bool>("ascii");
     const bool element_partition_as_entity = options.get<bool>("element_partition_as_entity");
 
+    gidx_t local_max_cell_tag = 0;
+    auto cell_global_index    = array::make_view<gidx_t, 1>(mesh.cells().global_index());
+    for (idx_t cell = 0; cell < mesh.cells().size(); ++cell) {
+        local_max_cell_tag = std::max(local_max_cell_tag, cell_global_index(cell));
+    }
+    gidx_t max_cell_tag = 0;
+    mpi::comm().allReduce(local_max_cell_tag, max_cell_tag, eckit::mpi::max());
+
+    gidx_t edge_tag_offset = 10;
+    while (edge_tag_offset <= max_cell_tag) {
+        if (edge_tag_offset > std::numeric_limits<int>::max() / 10) {
+            ATLAS_THROW_EXCEPTION("No 32-bit Gmsh element tag range remains above the cell tags");
+        }
+        edge_tag_offset *= 10;
+    }
+    Field edge_element_tags = gmsh_edge_tags(mesh, edge_tag_offset);
+
     ATLAS_DEBUG_VAR(element_partition_as_entity);
     ATLAS_DEBUG_VAR(binary);
 
@@ -1225,6 +1316,7 @@ void GmshIO::write(const Mesh& mesh, const PathName& file_path) const {
 
     struct ElementBlock {
         const mesh::Elements* elements;
+        const Field* global_index;
         int dimension;
         int gmsh_type;
         size_t nb_nodes;
@@ -1247,7 +1339,8 @@ void GmshIO::write(const Mesh& mesh, const PathName& file_path) const {
             const mesh::Elements& elements        = hybrid->elements(etype);
             const mesh::ElementType& element_type = elements.element_type();
             ElementInclusionPolicy element_inclusion(options, part, include_patch, coords_is_lonlat, coords, elements);
-            ElementBlock block{&elements, 2, 0, element_inclusion.nb_nodes(), {}, {}, {}};
+            const Field& element_global_index = hybrid == &mesh.edges() ? edge_element_tags : hybrid->global_index();
+            ElementBlock block{&elements, &element_global_index, 2, 0, element_inclusion.nb_nodes(), {}, {}, {}};
             auto element_owner = elements.view<int, 1>(elements.partition());
             if (element_type.name() == "Line") {
                 block.dimension = 1;
@@ -1546,7 +1639,7 @@ void GmshIO::write(const Mesh& mesh, const PathName& file_path) const {
     gidx_t min_element_tag = 0;
     gidx_t max_element_tag = 0;
     for (const auto& block : element_blocks) {
-        auto elems_glb_idx = block.elements->view<gidx_t, 1>(block.elements->global_index());
+        auto elems_glb_idx = block.elements->view<gidx_t, 1>(*block.global_index);
         auto update_element_range = [&](idx_t elem) {
             const gidx_t tag = elems_glb_idx(elem);
             if (nb_elements++ == 0) {
@@ -1588,7 +1681,7 @@ void GmshIO::write(const Mesh& mesh, const PathName& file_path) const {
         file.write(reinterpret_cast<const char*>(element_header), sizeof(element_header));
         for (const auto& block : element_blocks) {
             const auto& node_connectivity = block.elements->node_connectivity();
-            auto elems_glb_idx            = block.elements->view<gidx_t, 1>(block.elements->global_index());
+            auto elems_glb_idx            = block.elements->view<gidx_t, 1>(*block.global_index);
             auto write_block              = [&](const std::vector<idx_t>& elements, int block_entity_tag) {
                 if (elements.empty()) {
                     return;
@@ -1625,7 +1718,7 @@ void GmshIO::write(const Mesh& mesh, const PathName& file_path) const {
         file << nb_element_blocks << " " << nb_elements << " " << min_element_tag << " " << max_element_tag << "\n";
         for (const auto& block : element_blocks) {
             const auto& node_connectivity = block.elements->node_connectivity();
-            auto elems_glb_idx            = block.elements->view<gidx_t, 1>(block.elements->global_index());
+            auto elems_glb_idx            = block.elements->view<gidx_t, 1>(*block.global_index);
             auto write_block              = [&](const std::vector<idx_t>& elements, int block_entity_tag) {
                 if (elements.empty()) {
                     return;
@@ -1666,7 +1759,7 @@ void GmshIO::write(const Mesh& mesh, const PathName& file_path) const {
         if (binary) {
             write_binary(nb_ghost_elements);
             for (const auto& block : element_blocks) {
-                auto elems_glb_idx = block.elements->view<gidx_t, 1>(block.elements->global_index());
+                auto elems_glb_idx = block.elements->view<gidx_t, 1>(*block.global_index);
                 for (const auto& [owner, elements] : block.ghosts_by_owner) {
                     for (idx_t elem : elements) {
                         const size_t element_tag         = elems_glb_idx(elem);
@@ -1683,7 +1776,7 @@ void GmshIO::write(const Mesh& mesh, const PathName& file_path) const {
         else {
             file << nb_ghost_elements << "\n";
             for (const auto& block : element_blocks) {
-                auto elems_glb_idx = block.elements->view<gidx_t, 1>(block.elements->global_index());
+                auto elems_glb_idx = block.elements->view<gidx_t, 1>(*block.global_index);
                 for (const auto& [owner, elements] : block.ghosts_by_owner) {
                     for (idx_t elem : elements) {
                         file << elems_glb_idx(elem) << " " << owner << " 1 " << partition_tag << "\n";
@@ -1737,6 +1830,7 @@ void GmshIO::write(const Mesh& mesh, const PathName& file_path) const {
         if (mesh.edges().size()) {
             functionspace::EdgeColumns function_space(mesh);
             FieldNamePrefixScope field_name_prefix_scope("edges.");
+            ElementGlobalIndexScope element_global_index_scope(edge_element_tags);
             for (const auto& field_name : extra_fields) {
                 if (mesh.edges().has_field(field_name)) {
                     write(mesh.edges().field(field_name), function_space, mesh_info, std::ios_base::app);
