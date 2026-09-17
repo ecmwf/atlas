@@ -1297,9 +1297,6 @@ void GmshIO::write(const Mesh& mesh, const PathName& file_path) const {
     }
     Field edge_element_tags = gmsh_edge_tags(mesh, edge_tag_offset);
 
-    ATLAS_DEBUG_VAR(element_partition_as_entity);
-    ATLAS_DEBUG_VAR(binary);
-
     openmode mode = std::ios::out;
     if (binary) {
         mode = std::ios::out | std::ios::binary;
@@ -1747,45 +1744,6 @@ void GmshIO::write(const Mesh& mesh, const PathName& file_path) const {
         }
     }
     file << "$EndElements\n";
-
-    size_t nb_ghost_elements = 0;
-    for (const auto& block : element_blocks) {
-        for (const auto& [owner, elements] : block.ghosts_by_owner) {
-            nb_ghost_elements += elements.size();
-        }
-    }
-    if (nb_ghost_elements && !element_partition_as_entity) {
-        file << "$GhostElements\n";
-        if (binary) {
-            write_binary(nb_ghost_elements);
-            for (const auto& block : element_blocks) {
-                auto elems_glb_idx = block.elements->view<gidx_t, 1>(*block.global_index);
-                for (const auto& [owner, elements] : block.ghosts_by_owner) {
-                    for (idx_t elem : elements) {
-                        const size_t element_tag         = elems_glb_idx(elem);
-                        const size_t nb_ghost_partitions = 1;
-                        write_binary(element_tag);
-                        write_binary(owner);
-                        write_binary(nb_ghost_partitions);
-                        write_binary(partition_tag);
-                    }
-                }
-            }
-            file << "\n";
-        }
-        else {
-            file << nb_ghost_elements << "\n";
-            for (const auto& block : element_blocks) {
-                auto elems_glb_idx = block.elements->view<gidx_t, 1>(*block.global_index);
-                for (const auto& [owner, elements] : block.ghosts_by_owner) {
-                    for (idx_t elem : elements) {
-                        file << elems_glb_idx(elem) << " " << owner << " 1 " << partition_tag << "\n";
-                    }
-                }
-            }
-        }
-        file << "$EndGhostElements\n";
-    }
     file << std::flush;
 
     // Optional mesh information file

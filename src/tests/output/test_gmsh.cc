@@ -372,7 +372,7 @@ CASE("test_gmsh_output_ghost_elements") {
 
     std::ifstream canonical_file("test_gmsh_output_ghost_canonical.msh");
     std::string canonical((std::istreambuf_iterator<char>(canonical_file)), std::istreambuf_iterator<char>());
-    EXPECT(canonical.find("$GhostElements") != std::string::npos);
+    EXPECT(canonical.find("$GhostElements") == std::string::npos);
     std::istringstream canonical_stream(canonical.substr(canonical.find("$Elements\n") + 10));
     size_t nb_blocks;
     size_t nb_elements;
