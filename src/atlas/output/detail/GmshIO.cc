@@ -27,6 +27,7 @@
 #include "atlas/field/Field.h"
 #include "atlas/field/FieldSet.h"
 #include "atlas/field/MissingValue.h"
+#include "atlas/functionspace/EdgeColumns.h"
 #include "atlas/functionspace/FunctionSpace.h"
 #include "atlas/mesh/ElementType.h"
 #include "atlas/mesh/Elements.h"
@@ -396,6 +397,27 @@ std::string field_lev(const Field& field, int jlev) {
     }
 }
 
+thread_local std::string field_name_prefix;
+
+class FieldNamePrefixScope {
+public:
+    explicit FieldNamePrefixScope(std::string prefix): previous_(std::move(field_name_prefix)) {
+        field_name_prefix = std::move(prefix);
+    }
+
+    FieldNamePrefixScope(const FieldNamePrefixScope&)            = delete;
+    FieldNamePrefixScope& operator=(const FieldNamePrefixScope&) = delete;
+
+    ~FieldNamePrefixScope() { field_name_prefix = std::move(previous_); }
+
+private:
+    std::string previous_;
+};
+
+std::string output_field_name(const Field& field) {
+    return field_name_prefix + field.name();
+}
+
 double field_time(const Field& field) {
     return field.metadata().has("time") ? field.metadata().get<double>("time") : 0.;
 }
@@ -471,7 +493,7 @@ void write_field_nodes(const Metadata& gmsh_options, const functionspace::NodeCo
 
             out << "$NodeData\n";
             out << "1\n";
-            out << "\"" << field.name() << field_lev(field, jlev) << "\"\n";
+            out << "\"" << output_field_name(field) << field_lev(field, jlev) << "\"\n";
             out << "1\n";
             out << field_time(field) << "\n";
             out << "4\n";
@@ -507,7 +529,7 @@ void write_field_nodes(const Metadata& gmsh_options, const functionspace::NoFunc
 
         out << "$NodeData\n";
         out << "1\n";
-        out << "\"" << field.name() << field_lev(field, jlev) << "\"\n";
+        out << "\"" << output_field_name(field) << field_lev(field, jlev) << "\"\n";
         out << "1\n";
         out << field_time(field) << "\n";
         out << "4\n";
@@ -582,7 +604,7 @@ void write_field_nodes(const Metadata& gmsh_options, const functionspace::Struct
 
         out << "$NodeData\n";
         out << "1\n";
-        out << "\"" << field.name() << field_lev << "\"\n";
+        out << "\"" << output_field_name(field) << field_lev << "\"\n";
         out << "1\n";
         out << field_time(field) << "\n";
         out << "4\n";
@@ -596,30 +618,31 @@ void write_field_nodes(const Metadata& gmsh_options, const functionspace::Struct
 }
 // ----------------------------------------------------------------------------
 
-template <typename DATATYPE>
-void write_field_elems(const Metadata& gmsh_options, const functionspace::CellColumns& function_space,
+template <typename DATATYPE, typename FunctionSpace>
+void write_field_elems(const Metadata& gmsh_options, const FunctionSpace& function_space,
                        const Field& field, std::ostream& out) {
 #if 1
-    Log::debug() << "writing CellColumns field " << field.name() << "..." << std::endl;
+    Log::debug() << "writing element field " << field.name() << "..." << std::endl;
 
     bool gather(gmsh_options.get<bool>("gather") && mpi::size() > 1);
     // unused: bool binary( !gmsh_options.get<bool>( "ascii" ) );
     idx_t nlev  = std::max<idx_t>(1, field.levels());
-    idx_t ndata = std::min<idx_t>(function_space.nb_cells(), field.shape(0));
+    idx_t ndata = std::min<idx_t>(function_space.size(), field.shape(0));
     idx_t nvars = std::max<idx_t>(1, field.variables());
-    auto gidx   = array::make_view<gidx_t, 1>(function_space.cells().global_index());
+    Field global_index = function_space.global_index();
+    auto gidx          = array::make_view<gidx_t, 1>(global_index);
     Field mask  = output_mask(function_space, gather);
     Field gidx_glb;
     Field field_glb;
     if (gather) {
-        gidx_glb =
-            function_space.createField<gidx_t>(option::name("gidx_glb") | option::levels(false) | option::global());
-        function_space.gather(function_space.cells().global_index(), gidx_glb);
+        gidx_glb = function_space.template createField<gidx_t>(option::name("gidx_glb") | option::levels(false) |
+                                                               option::global());
+        function_space.gather(global_index, gidx_glb);
         gidx = array::make_view<gidx_t, 1>(gidx_glb);
 
         field_glb = function_space.createField(field, option::global());
         function_space.gather(field, field_glb);
-        ndata = std::min<idx_t>(function_space.nb_cells_global(), field_glb.shape(0));
+        ndata = field_glb.shape(0);
     }
 
     std::vector<int> lev = get_levels(nlev, gmsh_options);
@@ -635,7 +658,7 @@ void write_field_elems(const Metadata& gmsh_options, const functionspace::CellCo
         if ((gather && mpi::rank() == 0) || !gather) {
             out << "$ElementData\n";
             out << "1\n";
-            out << "\"" << field.name() << field_lev(field, jlev) << "\"\n";
+            out << "\"" << output_field_name(field) << field_lev(field, jlev) << "\"\n";
             out << "1\n";
             out << field_time(field) << "\n";
             out << "4\n";
@@ -1361,49 +1384,49 @@ void GmshIO::write(const Mesh& mesh, const PathName& file_path) const {
         PathName mesh_info(file_path);
         mesh_info = mesh_info.dirName() + "/" + mesh_info.baseName(false) + "_info.msh";
 
-        //[next]  make NodesFunctionSpace accept const mesh
-        functionspace::NodeColumns function_space(const_cast<Mesh&>(mesh));
+        const std::vector<std::string> extra_fields = {"partition", "water", "dual_volumes", "dual_delta_sph",
+                                                       "ghost",     "halo",  "remote_index"};
+        {
+            functionspace::NodeColumns function_space(mesh);
+            FieldNamePrefixScope field_name_prefix_scope("nodes.");
+            FieldSet fieldset;
+            auto lat =
+                array::make_view<double, 1>(fieldset.add(Field("lat", array::make_datatype<double>(), {nodes.size()})));
+            auto lon =
+                array::make_view<double, 1>(fieldset.add(Field("lon", array::make_datatype<double>(), {nodes.size()})));
 
-        FieldSet fieldset;
-        auto lat =
-            array::make_view<double, 1>(fieldset.add(Field("lat", array::make_datatype<double>(), {nodes.size()})));
-        auto lon =
-            array::make_view<double, 1>(fieldset.add(Field("lon", array::make_datatype<double>(), {nodes.size()})));
-
-        auto lonlat = array::make_view<double, 2>(nodes.lonlat());
-        for (idx_t n = 0; n < nodes.size(); ++n) {
-            lon(n) = lonlat(n, 0);
-            lat(n) = lonlat(n, 1);
-        }
-        write(fieldset, function_space, mesh_info, std::ios_base::out);
-        std::vector<std::string> extra_fields = {"partition", "water", "dual_volumes", "dual_delta_sph",
-                                                 "ghost",     "halo",  "remote_index"};
-        for (auto& f : extra_fields) {
-            if (nodes.has_field(f)) {
-                write(nodes.field(f), function_space, mesh_info, std::ios_base::app);
+            auto lonlat = array::make_view<double, 2>(nodes.lonlat());
+            for (idx_t n = 0; n < nodes.size(); ++n) {
+                lon(n) = lonlat(n, 0);
+                lat(n) = lonlat(n, 1);
+            }
+            write(fieldset, function_space, mesh_info, std::ios_base::out);
+            for (const auto& field_name : extra_fields) {
+                if (nodes.has_field(field_name)) {
+                    write(nodes.field(field_name), function_space, mesh_info, std::ios_base::app);
+                }
             }
         }
 
+        {
+            functionspace::CellColumns function_space(mesh);
+            FieldNamePrefixScope field_name_prefix_scope("cells.");
+            for (const auto& field_name : extra_fields) {
+                if (mesh.cells().has_field(field_name)) {
+                    write(mesh.cells().field(field_name), function_space, mesh_info, std::ios_base::app);
+                }
+            }
+        }
 
-        //[next] if( mesh.has_function_space("edges") )
-        //[next] {
-        //[next]   FunctionSpace& edges = mesh.function_space( "edges" );
-
-        //[next]   if (edges.has_field("dual_normals"))
-        //[next]   {
-        //[next] write(edges.field("dual_normals"),mesh_info,std::ios_base::app);
-        //[next]   }
-
-        //[next]   if (edges.has_field("skewness"))
-        //[next]   {
-        //[next]     write(edges.field("skewness"),mesh_info,std::ios_base::app);
-        //[next]   }
-
-        //[next]   if (edges.has_field("arc_length"))
-        //[next]   {
-        //[next]     write(edges.field("arc_length"),mesh_info,std::ios_base::app);
-        //[next]   }
-        //[next] }
+        if (mesh.edges().size()) {
+            functionspace::EdgeColumns function_space(mesh);
+            FieldNamePrefixScope field_name_prefix_scope("edges.");
+            for (const auto& field_name : extra_fields) {
+                if (mesh.edges().has_field(field_name)) {
+                    write(mesh.edges().field(field_name), function_space, mesh_info, std::ios_base::app);
+                }
+            }
+        }
     }
     file.close();
 }
@@ -1431,11 +1454,17 @@ void GmshIO::write(const Field& field, const PathName& file_path, openmode mode)
         fieldset.add(field);
         write(fieldset, field.functionspace(), file_path, mode);
     }
+    else if (functionspace::EdgeColumns(field.functionspace())) {
+        FieldSet fieldset;
+        fieldset.add(field);
+        write(fieldset, field.functionspace(), file_path, mode);
+    }
     else {
         std::stringstream msg;
         msg << "Field [" << field.name() << "] has functionspace [" << field.functionspace().type()
             << "] but requires a [functionspace::NodeColumns "
-            << "or functionspace::StructuredColumns]";
+            << "or functionspace::StructuredColumns or functionspace::CellColumns "
+            << "or functionspace::EdgeColumns]";
 
         throw_AssertionFailed(msg.str(), Here());
     }
@@ -1462,6 +1491,14 @@ void GmshIO::write_delegate(const Field& field, const functionspace::NoFunctionS
 // ----------------------------------------------------------------------------
 
 void GmshIO::write_delegate(const Field& field, const functionspace::CellColumns& functionspace,
+                            const eckit::PathName& file_path, GmshIO::openmode mode) const {
+    FieldSet fieldset;
+    fieldset.add(field);
+    write_delegate(fieldset, functionspace, file_path, mode);
+}
+
+// ----------------------------------------------------------------------------
+void GmshIO::write_delegate(const Field& field, const functionspace::EdgeColumns& functionspace,
                             const eckit::PathName& file_path, GmshIO::openmode mode) const {
     FieldSet fieldset;
     fieldset.add(field);
@@ -1593,6 +1630,44 @@ void GmshIO::write_delegate(const FieldSet& fieldset, const functionspace::CellC
 }
 // ----------------------------------------------------------------------------
 
+void GmshIO::write_delegate(const FieldSet& fieldset, const functionspace::EdgeColumns& functionspace,
+                            const eckit::PathName& file_path, GmshIO::openmode mode) const {
+    bool is_new_file = (mode != std::ios_base::app || !file_path.exists());
+    bool binary(!options.get<bool>("ascii"));
+    if (binary) {
+        mode |= std::ios_base::binary;
+    }
+    bool gather = options.has("gather") ? options.get<bool>("gather") : false;
+    GmshFile file(file_path, mode, gather ? -1 : int(mpi::rank()));
+
+    if (is_new_file) {
+        binary ? write_header_binary(file) : write_header_ascii(file);
+    }
+
+    for (idx_t field_idx = 0; field_idx < fieldset.size(); ++field_idx) {
+        const Field& field = fieldset[field_idx];
+        Log::debug() << "writing field " << field.name() << " to gmsh file " << file_path << std::endl;
+
+        if (field.datatype() == array::DataType::int32()) {
+            write_field_elems<int>(options, functionspace, field, file);
+        }
+        else if (field.datatype() == array::DataType::int64()) {
+            write_field_elems<long>(options, functionspace, field, file);
+        }
+        else if (field.datatype() == array::DataType::real32()) {
+            write_field_elems<float>(options, functionspace, field, file);
+        }
+        else if (field.datatype() == array::DataType::real64()) {
+            write_field_elems<double>(options, functionspace, field, file);
+        }
+
+        file << std::flush;
+    }
+    file.close();
+}
+
+// ----------------------------------------------------------------------------
+
 // ----------------------------------------------------------------------------
 void GmshIO::write_delegate(const FieldSet& fieldset, const functionspace::StructuredColumns& functionspace,
                             const PathName& file_path, openmode mode) const {
@@ -1650,6 +1725,9 @@ void GmshIO::write(const FieldSet& fieldset, const FunctionSpace& funcspace, con
     else if (functionspace::CellColumns(funcspace)) {
         write_delegate(fieldset, functionspace::CellColumns(funcspace), file_path, mode);
     }
+    else if (functionspace::EdgeColumns(funcspace)) {
+        write_delegate(fieldset, functionspace::EdgeColumns(funcspace), file_path, mode);
+    }
     else if (not funcspace) {
         write_delegate(fieldset, functionspace::NoFunctionSpace(), file_path, mode);
     }
@@ -1671,6 +1749,9 @@ void GmshIO::write(const Field& field, const FunctionSpace& funcspace, const eck
     }
     else if (functionspace::CellColumns(funcspace)) {
         write_delegate(field, functionspace::CellColumns(funcspace), file_path, mode);
+    }
+    else if (functionspace::EdgeColumns(funcspace)) {
+        write_delegate(field, functionspace::EdgeColumns(funcspace), file_path, mode);
     }
     else {
         ATLAS_NOTIMPLEMENTED;

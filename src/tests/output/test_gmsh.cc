@@ -18,6 +18,7 @@
 #include "atlas/field/Field.h"
 #include "atlas/functionspace/NodeColumns.h"
 #include "atlas/mesh/Mesh.h"
+#include "atlas/mesh/actions/BuildEdges.h"
 #include "atlas/output/Gmsh.h"
 #include "atlas/output/Output.h"
 #include "atlas/util/Config.h"
