@@ -277,16 +277,16 @@ CASE("test_gmsh_output_binary") {
     EXPECT_EQ(latitude, lonlat(0, LAT));
 }
 
-CASE("test_gmsh_preserves_compact_edge_tags") {
+CASE("test_gmsh_preserves_32bit_edge_tags") {
     Mesh mesh = test::generate_mesh(Grid("N16"));
     mesh::actions::build_edges(mesh);
 
     auto edge_global_index = array::make_view<gidx_t, 1>(mesh.edges().global_index());
     for (idx_t edge = 0; edge < mesh.edges().size(); ++edge) {
-        edge_global_index(edge) = 10 + 2 * edge;
+        edge_global_index(edge) = 10 + 1000 * edge;
     }
 
-    output::Gmsh("test_gmsh_output_compact_edges.msh", util::Config("edges", true)).write(mesh);
+    output::Gmsh("test_gmsh_output_compact_edges.msh").write(mesh, util::Config("elements", "edges"));
     auto tags = read_element_tags("test_gmsh_output_compact_edges.msh", 1);
     std::sort(tags.begin(), tags.end());
     EXPECT(tags.size() >= 2);
@@ -294,17 +294,37 @@ CASE("test_gmsh_preserves_compact_edge_tags") {
         return;
     }
 
-    gidx_t max_cell_tag = 0;
-    auto cell_global_index = array::make_view<gidx_t, 1>(mesh.cells().global_index());
-    for (idx_t cell = 0; cell < mesh.cells().size(); ++cell) {
-        max_cell_tag = std::max(max_cell_tag, cell_global_index(cell));
-    }
-    gidx_t edge_tag_offset = 10;
-    while (edge_tag_offset <= max_cell_tag) {
-        edge_tag_offset *= 10;
-    }
-    EXPECT_EQ(tags[0], edge_tag_offset + 1);
-    EXPECT_EQ(tags[1], edge_tag_offset + 3);
+    EXPECT_EQ(tags[0], 1);
+    EXPECT_EQ(tags[1], 1001);
+}
+
+CASE("test_gmsh_selects_cell_or_edge_elements") {
+    Mesh mesh = test::generate_mesh(Grid("N16"));
+    mesh::actions::build_edges(mesh);
+
+    output::Gmsh("test_gmsh_output_auto.msh").write(mesh);
+    EXPECT(!read_element_tags("test_gmsh_output_auto.msh", 2).empty());
+    EXPECT(read_element_tags("test_gmsh_output_auto.msh", 1).empty());
+
+    output::Gmsh("test_gmsh_output_cells.msh").write(mesh, util::Config("elements", "cells"));
+    EXPECT(!read_element_tags("test_gmsh_output_cells.msh", 2).empty());
+    EXPECT(read_element_tags("test_gmsh_output_cells.msh", 1).empty());
+
+    output::Gmsh("test_gmsh_output_edges.msh").write(mesh, util::Config("elements", "edges"));
+    EXPECT(read_element_tags("test_gmsh_output_edges.msh", 2).empty());
+    EXPECT(!read_element_tags("test_gmsh_output_edges.msh", 1).empty());
+
+    mesh.cells().clear();
+    output::Gmsh("test_gmsh_output_auto_edges.msh").write(mesh);
+    EXPECT(read_element_tags("test_gmsh_output_auto_edges.msh", 2).empty());
+    EXPECT(!read_element_tags("test_gmsh_output_auto_edges.msh", 1).empty());
+
+    mesh.edges().clear();
+    output::Gmsh("test_gmsh_output_no_elements.msh").write(mesh);
+    EXPECT(read_element_tags("test_gmsh_output_no_elements.msh", 2).empty());
+    EXPECT(read_element_tags("test_gmsh_output_no_elements.msh", 1).empty());
+
+    EXPECT_THROWS(output::Gmsh("test_gmsh_output_invalid.msh").write(mesh, util::Config("elements", "both")));
 }
 
 CASE("test_gmsh_output_canonical_entities") {

@@ -58,8 +58,6 @@ public:
 public:
     struct Configuration {
         bool binary;
-        bool edges;
-        bool elements;
         bool gather;
         bool ghost;
         bool info;
@@ -70,6 +68,7 @@ public:
         bool water;
 
         std::vector<long> levels;
+        std::string elements;
         std::string nodes;
         std::string file;
         std::string openmode;

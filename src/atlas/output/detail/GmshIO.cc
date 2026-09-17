@@ -551,25 +551,42 @@ Field output_mask(const FunctionSpace& function_space, bool gather) {
     return mask;
 }
 
-Field gmsh_edge_tags(const Mesh& mesh, gidx_t offset) {
+Field gmsh_edge_tags(const Mesh& mesh) {
+    auto& comm = mpi::comm(mesh.mpi_comm());
     const idx_t nb_edges  = mesh.edges().size();
     auto edge_global_index = array::make_view<gidx_t, 1>(mesh.edges().global_index());
+
+    gidx_t max_edge_tag = -std::numeric_limits<gidx_t>::max();
+    for (idx_t edge = 0; edge < nb_edges; ++edge) {
+        max_edge_tag = std::max(max_edge_tag, edge_global_index(edge));
+    }
+    comm.allReduceInPlace(max_edge_tag, eckit::mpi::max());
+
+    if (max_edge_tag <= std::numeric_limits<int>::max()) {
+        return mesh.edges().global_index();
+    }
+
+    Log::warning() << "WARNING: atlas::Gmsh::write(mesh) with edges\n"
+                   "  Maximum global_index of edges exceeds 32-bit integer limit: " << max_edge_tag << "\n"
+                   "  This may cause issues with 32-bit indexing in Gmsh $ElementData fields later.\n"
+                   "  Creating a temporary global_edge_tag array to fit within 32-bit integer range.\n";
 
     std::vector<int> counts(mpi::size());
     std::vector<int> displacements(mpi::size());
     constexpr idx_t root = 0;
-    mpi::comm().gather(nb_edges, counts, root);
+
+    comm.gather(nb_edges, counts, root);
 
     idx_t nb_global_edges = 0;
-    if (mpi::rank() == root) {
-        for (idx_t rank = 0; rank < mpi::size(); ++rank) {
+    if (comm.rank() == root) {
+        for (idx_t rank = 0; rank < comm.size(); ++rank) {
             displacements[rank] = nb_global_edges;
             nb_global_edges += counts[rank];
         }
     }
 
     std::vector<gidx_t> global_edge_tags(nb_global_edges);
-    mpi::comm().gatherv(edge_global_index.data(), nb_edges, global_edge_tags.data(), counts.data(),
+    comm.gatherv(edge_global_index.data(), nb_edges, global_edge_tags.data(), counts.data(),
                         displacements.data(), root);
 
     if (mpi::rank() == root) {
@@ -577,24 +594,15 @@ Field gmsh_edge_tags(const Mesh& mesh, gidx_t offset) {
         std::sort(unique_edge_tags.begin(), unique_edge_tags.end());
         unique_edge_tags.erase(std::unique(unique_edge_tags.begin(), unique_edge_tags.end()),
                                unique_edge_tags.end());
-        const bool approximately_compact =
-            unique_edge_tags.empty() ||
-            unique_edge_tags.back() - unique_edge_tags.front() + 1 <= 2 * unique_edge_tags.size();
         for (gidx_t& tag : global_edge_tags) {
-            if (approximately_compact) {
-                tag = offset + tag - unique_edge_tags.front() + 1;
-            }
-            else {
-                tag = offset + std::distance(unique_edge_tags.begin(),
-                                             std::lower_bound(unique_edge_tags.begin(), unique_edge_tags.end(), tag)) +
-                      1;
-            }
+            tag = std::distance(unique_edge_tags.begin(),
+                    std::lower_bound(unique_edge_tags.begin(), unique_edge_tags.end(), tag)) + 1;
         }
     }
 
     Field tags("gmsh_element_tags", array::make_datatype<gidx_t>(), {nb_edges});
     auto local_tags = array::make_view<gidx_t, 1>(tags);
-    mpi::comm().scatterv(global_edge_tags.data(), counts.data(), displacements.data(), local_tags.data(), nb_edges,
+    comm.scatterv(global_edge_tags.data(), counts.data(), displacements.data(), local_tags.data(), nb_edges,
                          root);
 
     gidx_t local_max_tag = 0;
@@ -602,7 +610,7 @@ Field gmsh_edge_tags(const Mesh& mesh, gidx_t offset) {
         local_max_tag = std::max(local_max_tag, local_tags(edge));
     }
     gidx_t max_tag = 0;
-    mpi::comm().allReduce(local_max_tag, max_tag, eckit::mpi::max());
+    comm.allReduce(local_max_tag, max_tag, eckit::mpi::max());
     if (max_tag > std::numeric_limits<int>::max()) {
         ATLAS_THROW_EXCEPTION("Gmsh element tag exceeds the supported 32-bit ElementData range");
     }
@@ -991,7 +999,7 @@ GmshIO::GmshIO() {
     options.set<bool>("elements", true);
 
     // Output of edges
-    options.set<bool>("edges", true);
+    options.set<bool>("edges", false);
 
     // Use the zero-based element owner as the elementary entity tag
     options.set<bool>("element_partition_as_entity", false);
@@ -1280,22 +1288,13 @@ void GmshIO::write(const Mesh& mesh, const PathName& file_path) const {
     const bool binary                      = !options.get<bool>("ascii");
     const bool element_partition_as_entity = options.get<bool>("element_partition_as_entity");
 
-    gidx_t local_max_cell_tag = 0;
-    auto cell_global_index    = array::make_view<gidx_t, 1>(mesh.cells().global_index());
-    for (idx_t cell = 0; cell < mesh.cells().size(); ++cell) {
-        local_max_cell_tag = std::max(local_max_cell_tag, cell_global_index(cell));
-    }
-    gidx_t max_cell_tag = 0;
-    mpi::comm().allReduce(local_max_cell_tag, max_cell_tag, eckit::mpi::max());
-
-    gidx_t edge_tag_offset = 10;
-    while (edge_tag_offset <= max_cell_tag) {
-        if (edge_tag_offset > std::numeric_limits<int>::max() / 10) {
-            ATLAS_THROW_EXCEPTION("No 32-bit Gmsh element tag range remains above the cell tags");
+    Field edge_element_tags;
+    if (options.get<bool>("edges")) {
+        edge_element_tags = mesh.edges().global_index();
+        if (options.has("info") && options.get<bool>("info")) {
+            edge_element_tags = gmsh_edge_tags(mesh);
         }
-        edge_tag_offset *= 10;
     }
-    Field edge_element_tags = gmsh_edge_tags(mesh, edge_tag_offset);
 
     openmode mode = std::ios::out;
     if (binary) {
@@ -1775,7 +1774,7 @@ void GmshIO::write(const Mesh& mesh, const PathName& file_path) const {
             }
         }
 
-        {
+        if (options.get<bool>("elements")) {
             functionspace::CellColumns function_space(mesh);
             FieldNamePrefixScope field_name_prefix_scope("cells.");
             for (const auto& field_name : extra_fields) {
@@ -1785,7 +1784,7 @@ void GmshIO::write(const Mesh& mesh, const PathName& file_path) const {
             }
         }
 
-        if (mesh.edges().size()) {
+        if (options.get<bool>("edges") && mesh.edges().size()) {
             functionspace::EdgeColumns function_space(mesh);
             FieldNamePrefixScope field_name_prefix_scope("edges.");
             ElementGlobalIndexScope element_global_index_scope(edge_element_tags);

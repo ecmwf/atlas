@@ -357,7 +357,9 @@ int Meshgen2Gmsh::execute(const Args& args) {
         Config gmsh_config;
         gmsh_config.set("binary", gmsh_format == "binary");
         gmsh_config.set("coordinates", coordinates);
-        gmsh_config.set("edges", edges);
+        if (edges) {
+            gmsh_config.set("elements", "edges");
+        }
         gmsh_config.set("gather", args.getBool("gmsh-gather", false));
         gmsh_config.set("ghost", ghost);
         gmsh_config.set("info", info);
