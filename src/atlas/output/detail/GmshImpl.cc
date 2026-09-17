@@ -33,11 +33,11 @@ void GmshImpl::defaults() {
     config_.nodes    = "xy";
     config_.gather   = false;
     config_.ghost    = false;
-    config_.elements = true;
-    config_.edges    = false;
+    config_.elements = "auto";
     config_.levels.clear();
     config_.file                 = "output.msh";
     config_.info                 = false;
+    config_.element_partition_as_entity = false;
     config_.openmode             = "w";
     config_.coordinates          = "xy";
     config_.missing_value_policy = "skip";
@@ -62,10 +62,14 @@ void merge(GmshImpl::Configuration& present, const eckit::Parametrisation& updat
     update.get("gather", present.gather);
     update.get("ghost", present.ghost);
     update.get("elements", present.elements);
-    update.get("edges", present.edges);
+    if (present.elements != "auto" && present.elements != "cells" && present.elements != "edges") {
+        ATLAS_THROW_EXCEPTION("Invalid Gmsh elements='" << present.elements
+                                                        << "': expected 'auto', 'cells' or 'edges'");
+    }
     update.get("levels", present.levels);
     update.get("file", present.file);
     update.get("info", present.info);
+    update.get("element_partition_as_entity", present.element_partition_as_entity);
     update.get("openmode", present.openmode);
     update.get("coordinates", present.coordinates);
     update.get("missing_value.policy", present.missing_value_policy);
@@ -114,10 +118,11 @@ void GmshImpl::setGmshConfiguration(detail::GmshIO& gmsh, const GmshImpl::Config
     gmsh.options.set("nodes", c.nodes);
     gmsh.options.set("gather", c.gather);
     gmsh.options.set("ghost", c.ghost);
-    gmsh.options.set("elements", c.elements);
-    gmsh.options.set("edges", c.edges);
+    gmsh.options.set("elements", c.elements == "cells");
+    gmsh.options.set("edges", c.elements == "edges");
     gmsh.options.set("levels", c.levels);
     gmsh.options.set("info", c.info);
+    gmsh.options.set("element_partition_as_entity", c.element_partition_as_entity);
     gmsh.options.set("nodes", c.coordinates);
     gmsh.options.set("missing_value.policy", c.missing_value_policy);
     gmsh.options.set("missing_value.fill", c.missing_value_fill);
@@ -185,6 +190,10 @@ GmshImpl::~GmshImpl() = default;
 void GmshImpl::write(const Mesh& mesh, const eckit::Parametrisation& config) const {
     GmshImpl::Configuration c = config_;
     merge(c, config);
+
+    if (c.elements == "auto") {
+        c.elements = mesh.cells().size() ? "cells" : mesh.edges().size() ? "edges" : "none";
+    }
 
     if (c.coordinates == "xyz" and not mesh.nodes().has_field("xyz")) {
         Log::debug() << "Building xyz representation for nodes" << std::endl;
