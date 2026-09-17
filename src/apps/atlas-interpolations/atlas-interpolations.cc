@@ -620,15 +620,26 @@ std::pair<FunctionSpace, FunctionSpace> get_fs(const Grid& sgrid, const Grid& tg
 }
 
 
-Config gmsh_field_config(const AtlasTool::Args& args, const std::string& default_policy = "skip") {
-    Config config;
-    config.set("missing_value.policy", args.getString("gmsh.missing_value.policy", default_policy));
-    config.set("masked_value.policy", args.getString("gmsh.masked_value.policy", default_policy));
+Config gmsh_field_config(const AtlasTool::Args& args, const util::Config& default_config = util::Config() ) {
+    Config config(default_config);
+    if (args.has("gmsh.missing_value.policy")) {
+        config.set("missing_value.policy", args.getString("gmsh.missing_value.policy"));
+    }
+    if (args.has("gmsh.masked_value.policy")) {
+        config.set("masked_value.policy", args.getString("gmsh.masked_value.policy"));
+    }
     if (args.has("gmsh.missing_value.fill")) {
         config.set("missing_value.fill", args.getDouble("gmsh.missing_value.fill"));
     }
     if (args.has("gmsh.masked_value.fill")) {
         config.set("masked_value.fill", args.getDouble("gmsh.masked_value.fill"));
+    }
+    std::string default_policy = "skip";
+    if (not config.has("missing_value.policy")) {
+        config.set("missing_value.policy", default_policy);
+    }
+    if (not config.has("masked_value.policy")) {
+        config.set("masked_value.policy", default_policy);
     }
     return config;
 }
@@ -644,15 +655,17 @@ void gmsh_output(const std::string& name, const Grid& grid, const View& field, c
     auto mesh = Mesh(grid);
     gmsh.write(mesh);
     auto fs = gridpoints_are_cells(grid) ? FunctionSpace(CellColumns(mesh)) : FunctionSpace(NodeColumns(mesh));
+
     if (args.has(mask_option)) {
         const std::string mask_name = args.getString(mask_option);
         fs.setMask([mask_name](int* mask, size_t size) { read_mask(mask_name, mdspan<int, dims<1>>(mask, size)); });
     }
     auto f = fs.createField<double>(option::name(name));
-    if (args.has("missing_value")) {
-        f.metadata().set("missing_value", args.getDouble("missing_value"));
-        f.metadata().set("missing_value_type", "equals");
-    }
+    double missing_value = std::numeric_limits<double>::lowest();
+    args.get("missing_value", missing_value);
+    f.metadata().set("missing_value", missing_value);
+    f.metadata().set("missing_value_type", "equals");
+
     auto v          = array::make_view<double, 1>(f);
     auto g          = array::make_view<gidx_t, 1>(fs.global_index());
     size_t min_size = std::min<size_t>(f.size(), field.size());
@@ -660,7 +673,15 @@ void gmsh_output(const std::string& name, const Grid& grid, const View& field, c
         v(i) = field[g(i) - 1];
     }
     fs.haloExchange(f);
-    gmsh.write(f, gmsh_field_config(args));
+
+    // By default, preserve missing values when a mask is present, so we can observe when the
+    // mask is not covering the present missing values
+    util::Config gmsh_field_default_config;
+    if (fs.hasMask()) {
+        gmsh_field_default_config.set("missing_value.policy", "preserve");
+    }
+
+    gmsh.write(f, gmsh_field_config(args, gmsh_field_default_config));
 }
 
 void test_matrix(const Grid& sgrid, const Grid& tgrid, const Matrix& matrix, const AtlasTool::Args& args) {
@@ -702,14 +723,16 @@ void test_matrix(const Grid& sgrid, const Grid& tgrid, const Matrix& matrix, con
         Log::info() << "Serial sparse-matrix non-zero entries\t: " << matrix.nnz() << std::endl;
     }
 
-    if (args.has("missing_value")) {
-        ATLAS_TRACE_SCOPE("Apply missing values to target") {
-            double missing_value = args.getDouble("missing_value");
-            auto m               = atlas::linalg::make_host_view<double>(matrix);
-            for (idx_t r = 0; r < m.rows(); ++r) {
-                if (m.outer()[r + 1] - m.outer()[r] == 0) {
-                    tdata[r] = missing_value;
-                }
+    ATLAS_TRACE_SCOPE("Apply missing values to target") {
+        double missing_value = std::numeric_limits<double>::lowest();
+        args.get("missing_value", missing_value);
+        auto m = atlas::linalg::make_host_view<double>(matrix);
+        auto is_matrix_row_empty = [&m](idx_t r) -> bool {
+            return m.outer()[r + 1] - m.outer()[r] == 0;
+        };
+        for (idx_t r = 0; r < m.rows(); ++r) {
+            if (is_matrix_row_empty(r)) {
+                tdata[r] = missing_value;
             }
         }
     }
