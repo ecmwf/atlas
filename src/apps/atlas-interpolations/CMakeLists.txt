@@ -174,6 +174,9 @@ if (HAVE_TESTS)
     atlas_test_app_atlas_interpolations( ${case} "${nprocs}" )
   endforeach()
 
-
-
 endif()
+
+ecbuild_add_executable( TARGET atlas-mask-diff
+                        SOURCES atlas-mask-diff.cc
+                               AtlasIO.h ATLASIO.cc
+                        LIBS atlas )
