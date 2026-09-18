@@ -22,6 +22,11 @@ system = ["eckit-sys/system"]
 # OpenMP support
 omp = []
 
+# Optional dependencies
+tesselation = []  # Qhull
+eigen = []        # Eigen3
+fftw = []         # FFTW
+
 [dependencies]
 eckit-sys = { workspace = true, default-features = false }
 

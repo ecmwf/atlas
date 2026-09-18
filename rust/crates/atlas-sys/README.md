@@ -15,7 +15,14 @@ This crate has **no Rust API**. It builds (or locates) the atlas C++ library and
 
 ### Optional
 
-- `omp` - Enable OpenMP support. Requires `libomp` (e.g. `libomp-dev` on Ubuntu). Off by default.
+All off by default, and only meaningful for `vendored` builds - a `system` build
+gets whatever the installed atlas was compiled with. Enabling one whose library
+CMake cannot find fails the build rather than silently dropping the feature.
+
+- `omp` - OpenMP support. Requires `libomp` (e.g. `libomp-dev` on Ubuntu).
+- `tesselation` - Unstructured mesh generation. Requires Qhull.
+- `eigen` - Eigen linear algebra backend. Requires Eigen3.
+- `fftw` - FFTW backend for spectral transforms. Requires FFTW with `double`.
 
 ## License
 

@@ -135,6 +135,18 @@ fn build_vendored() {
         .arg(format!(
             "-DENABLE_OMP={}",
             bindman_utils::on_off(cfg!(feature = "omp"))
+        ))
+        .arg(format!(
+            "-DENABLE_TESSELATION={}",
+            bindman_utils::on_off(cfg!(feature = "tesselation"))
+        ))
+        .arg(format!(
+            "-DENABLE_EIGEN={}",
+            bindman_utils::on_off(cfg!(feature = "eigen"))
+        ))
+        .arg(format!(
+            "-DENABLE_FFTW={}",
+            bindman_utils::on_off(cfg!(feature = "fftw"))
         ));
 
     #[cfg(target_os = "macos")]
