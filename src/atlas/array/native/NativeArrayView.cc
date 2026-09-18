@@ -51,7 +51,7 @@ ENABLE_IF_NON_CONST void ArrayView<Value, Rank>::assign(const ArrayView& other) 
 //------------------------------------------------------------------------------------------------------
 
 template <typename Value, int Rank>
-ENABLE_IF_NON_CONST void ArrayView<Value, Rank>::assign(const LocalView<Value, Rank>& other) {
+ENABLE_IF_NON_CONST void ArrayView<Value, Rank>::assign(const LocalView<value_type, Rank>& other) {
     helpers::array_copier<Value, Rank>::apply(other, *this);
 }
 
