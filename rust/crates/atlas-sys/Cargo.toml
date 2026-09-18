@@ -21,6 +21,7 @@ system = ["eckit-sys/system"]
 
 # OpenMP support
 omp = []
+mpi = ["eckit-sys/mpi"]
 
 # Optional dependencies
 tesselation = []  # Qhull
