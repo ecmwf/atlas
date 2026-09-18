@@ -1,0 +1,22 @@
+[workspace]
+resolver = "2"
+members = ["crates/atlas-sys"]
+
+[workspace.package]
+edition = "2024"
+license = "Apache-2.0"
+repository = "https://github.com/ecmwf/atlas"
+rust-version = "1.90"
+readme = "README.md"
+keywords = ["ecmwf", "weather", "meteorology", "geo", "grid"]
+categories = ["science"]
+
+[workspace.dependencies]
+# Internal
+atlas-sys = { path = "crates/atlas-sys" }
+
+# Foundation crates
+eckit-sys = { git = "ssh://git@github.com/ecmwf/eckit.git", branch = "develop", default-features = false }
+
+# Build tools
+bindman-utils = { git = "ssh://git@github.com/ecmwf/bindman.git", rev = "47edf68" }
