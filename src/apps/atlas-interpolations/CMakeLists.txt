@@ -120,6 +120,44 @@ function( atlas_test_app_atlas_interpolations case nprocs )
 endfunction()
 
 if (HAVE_TESTS)
+  ecbuild_add_executable(
+    TARGET atlas-test-interpolate-mask
+    SOURCES test_interpolate_mask.cc AtlasIO.h AtlasIO.cc
+    LIBS atlas
+    NOINSTALL
+  )
+
+  set( interpolate_mask_source test_interpolate_mask_source.atlas )
+  set( interpolate_mask_target test_interpolate_mask_target.atlas )
+
+  ecbuild_add_test(
+    TARGET atlas_test_app_atlas_interpolations_mask_setup
+    COMMAND atlas-test-interpolate-mask
+    ARGS write ${interpolate_mask_source} O8
+    ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
+  )
+  ecbuild_add_test(
+    TARGET atlas_test_app_atlas_interpolations_mask_interpolate
+    COMMAND atlas-interpolations
+    ARGS --interpolate-mask
+         --s.grid=O8
+         --t.grid=O8
+         --s.mask=${interpolate_mask_source}
+         --output-mask=${interpolate_mask_target}
+          --output-gmsh
+    ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
+  )
+  ecbuild_add_test(
+    TARGET atlas_test_app_atlas_interpolations_mask_check
+    COMMAND atlas-test-interpolate-mask
+    ARGS check ${interpolate_mask_target} O8
+    ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
+  )
+  set_tests_properties( atlas_test_app_atlas_interpolations_mask_interpolate PROPERTIES
+                        DEPENDS atlas_test_app_atlas_interpolations_mask_setup )
+  set_tests_properties( atlas_test_app_atlas_interpolations_mask_check PROPERTIES
+                        DEPENDS atlas_test_app_atlas_interpolations_mask_interpolate )
+
   unset(cases)
   list( APPEND cases
     O16/O32/finite-element
