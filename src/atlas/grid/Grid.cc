@@ -65,6 +65,14 @@ idx_t Grid::size() const {
     return get()->size();
 }
 
+int Grid::flags(gidx_t index) const {
+    return get()->flags(index);
+}
+
+gidx_t Grid::masterIndex(gidx_t index) const {
+    return get()->masterIndex(index);
+}
+
 size_t Grid::footprint() const {
     return get()->footprint();
 }
