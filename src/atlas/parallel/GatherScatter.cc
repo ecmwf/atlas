@@ -71,19 +71,25 @@ struct Node {
 
 }  // namespace
 
-GatherScatter::GatherScatter(): name_(), is_setup_(false) {
+GatherScatter::GatherScatter(): name_(), global_field_dof_(0), is_setup_(false) {
 }
 
-GatherScatter::GatherScatter(const std::string& name): name_(name), is_setup_(false) {
+GatherScatter::GatherScatter(const std::string& name): name_(name), global_field_dof_(0), is_setup_(false) {
 }
 
 void GatherScatter::setup(const int part[], const idx_t remote_idx[], const int remote_idx_base, const gidx_t glb_idx[],
                           const int mask[], const idx_t parsize) {
-    setup(mpi::comm().name(), part, remote_idx, remote_idx_base, glb_idx, parsize);
+    setup(mpi::comm().name(), part, remote_idx, remote_idx_base, glb_idx, mask, parsize);
 }
 
 void GatherScatter::setup(const std::string& mpi_comm, const int part[], const idx_t remote_idx[], const int remote_idx_base, const gidx_t glb_idx[],
                           const int mask[], const idx_t parsize) {
+    setup(mpi_comm, part, remote_idx, remote_idx_base, glb_idx, mask, parsize, false);
+}
+
+void GatherScatter::setup(const std::string& mpi_comm, const int part[], const idx_t remote_idx[],
+                          const int remote_idx_base, const gidx_t glb_idx[], const int mask[], const idx_t parsize,
+                          bool preserve_global_indices) {
     ATLAS_TRACE("GatherScatter::setup");
     comm_ = &mpi::comm(mpi_comm);
     myproc = comm().rank();
@@ -198,7 +204,10 @@ void GatherScatter::setup(const std::string& mpi_comm, const int part[], const i
         sendnodes_ridx.clear();
     }
 
-    auto can_use_dense_global_indices_directly = [&]() {
+    auto can_use_global_indices_directly = [&]() {
+        if (preserve_global_indices) {
+            return true;
+        }
         if (nb_recv_nodes == 0) {
             return true;
         }
@@ -214,7 +223,7 @@ void GatherScatter::setup(const std::string& mpi_comm, const int part[], const i
         return true;
     };
 
-    auto normalize_sparse_global_indices = [&]() {
+    auto sort_and_unique_sparse_global_indices = [&]() {
         // Sort on "g" member, and remove duplicates
         ATLAS_TRACE_SCOPE("sorting") {
             //        omp::sort(nodes.begin(), nodes.end());
@@ -225,9 +234,9 @@ void GatherScatter::setup(const std::string& mpi_comm, const int part[], const i
         }
     };
 
-    const bool use_dense_global_indices_directly = can_use_dense_global_indices_directly();
-    if (!use_dense_global_indices_directly) {
-        normalize_sparse_global_indices();
+    const bool use_global_indices_directly = can_use_global_indices_directly();
+    if (!use_global_indices_directly) {
+        sort_and_unique_sparse_global_indices();
     }
 
     glbcounts_.assign(nproc, 0);
@@ -259,7 +268,7 @@ void GatherScatter::setup(const std::string& mpi_comm, const int part[], const i
         }
     };
 
-    if (use_dense_global_indices_directly) {
+    if (use_global_indices_directly) {
         for (const auto& node : nodes) {
             glbmap_[glbdispls_[node.p] + idx[node.p]] = node.g - glb_idx_base;
             update_local_map(node);
@@ -276,6 +285,7 @@ void GatherScatter::setup(const std::string& mpi_comm, const int part[], const i
             ++idx[node.p];
         }
     }
+    global_field_dof_ = glbmap_.empty() ? 0 : *std::max_element(glbmap_.begin(), glbmap_.end()) + 1;
 
     is_setup_ = true;
 }
