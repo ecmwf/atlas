@@ -8,6 +8,7 @@
  * nor does it submit to any jurisdiction.
  */
 
+#include <cmath>
 #include <fstream>
 #include <iomanip>
 
@@ -114,6 +115,8 @@ public:
         add_option(new eckit::option::Separator("Commands"));
         add_option(new SimpleOption<bool>("list", "List available interpolation types"));
         add_option(new SimpleOption<bool>("interpolate", "Test an interpolation type"));
+        add_option(new SimpleOption<bool>(
+            "interpolate-mask", "Interpolate --s.mask as field data to the target grid and write an AtlasIO mask"));
 
         // Configuration
         add_option(new eckit::option::Separator("Interpolation options"));
@@ -144,6 +147,8 @@ public:
         add_option(new SimpleOption<std::string>(
             "matrix.name", "Name of the remapping matrix. If not provided a default unique name will be chosen"));
         add_option(new SimpleOption<std::string>("matrix.format", "Format of the remapping matrix: eckit, scrip"));
+        add_option(new SimpleOption<std::string>(
+            "output-mask", "AtlasIO output mask path [default=mask_<target-grid>.atlas]"));
 
         add_option(new SimpleOption<bool>("output-gmsh", "Set to enable gmsh output for tests"));
         add_option(
@@ -240,7 +245,8 @@ double elapsed_ms(const StopWatch& timer, bool single_rank = false) {
 }
 
 std::string get_interpolation_method(const AtlasTool::Args& args) {
-    std::string method   = args.getString("i.type", "finite-element");
+    const char* default_method = args.getBool("interpolate-mask", false) ? "nearest-neighbour" : "finite-element";
+    std::string method   = args.getString("i.type", default_method);
     auto method_contains = [method](std::string_view substr) { return method.find(substr) != std::string_view::npos; };
     if (method_contains("cons")) {
         return method_contains("2") ? "cons2" : "cons";
@@ -491,6 +497,9 @@ std::pair<FunctionSpace, FunctionSpace> get_fs(const Grid& sgrid, const Grid& tg
         if (args.has("t.fs")) {
             tfs_type = to_fs_type(args.getString("t.fs"));
         }
+        if (args.has("s.fs")) {
+            sfs_type = to_fs_type(args.getString("s.fs"));
+        }
     }
     else {
         sfs_type = fs_type::nodes;
@@ -642,6 +651,88 @@ Config gmsh_field_config(const AtlasTool::Args& args, const util::Config& defaul
         config.set("masked_value.policy", default_policy);
     }
     return config;
+}
+
+std::string get_output_mask_name(const Grid& tgrid, const AtlasTool::Args& args) {
+    std::string output_name = args.getString("output-mask", "mask_" + tgrid.name() + ".atlas");
+    const auto extension    = get_extension(output_name);
+    if (extension.empty()) {
+        output_name += ".atlas";
+    }
+    else if (extension != "atlas") {
+        ATLAS_THROW_EXCEPTION("Output mask must use the AtlasIO '.atlas' extension: " << output_name);
+    }
+    return output_name;
+}
+
+void interpolate_mask(const Grid& sgrid, const Grid& tgrid, const AtlasTool::Args& args) {
+    if (not args.has("s.mask")) {
+        ATLAS_THROW_EXCEPTION("--interpolate-mask requires --s.mask");
+    }
+    if (args.has("t.mask")) {
+        ATLAS_THROW_EXCEPTION("--t.mask cannot be used with --interpolate-mask");
+    }
+    for (const char* incompatible_option :
+         {"interpolate", "read-matrix", "output-matrix", "test-matrix", "test-interpolator"}) {
+        if (args.getBool(incompatible_option, false)) {
+            ATLAS_THROW_EXCEPTION("--" << incompatible_option << " cannot be used with --interpolate-mask");
+        }
+    }
+
+    FunctionSpace src_fs;
+    FunctionSpace tgt_fs;
+    std::tie(src_fs, tgt_fs) = get_fs(sgrid, tgrid, args);
+
+    const auto config = get_interpolation_config(sgrid, tgrid, args);
+    Interpolation interpolator(config, src_fs, tgt_fs);
+
+    std::vector<int> source_mask(sgrid.size());
+    read_mask(args.getString("s.mask"), mdspan<int, dims<1>>(source_mask.data(), source_mask.size()));
+
+    auto src_field        = interpolator.source().createField<double>();
+    auto src_field_view   = array::make_view<double, 1>(src_field);
+    auto src_global_index = array::make_view<gidx_t, 1>(interpolator.source().global_index());
+    ATLAS_ASSERT(source_mask.size() == src_field_view.size());
+    for (idx_t i = 0; i < src_field_view.size(); ++i) {
+        const gidx_t global_index = src_global_index(i) - 1;
+        ATLAS_ASSERT(global_index >= 0 && global_index < source_mask.size());
+        src_field_view(i) = source_mask[global_index];
+    }
+
+    auto tgt_field = interpolator.target().createField<double>();
+    interpolator.execute(src_field, tgt_field);
+
+    if (args.getBool("output-gmsh", false)) {
+        auto output_name = get_output_mask_name(tgrid, args);
+        const std::string gmsh_name = output_name.substr(0, output_name.size() - std::string(".atlas").size()) + ".msh";
+        Log::info() << "Writing Gmsh output to '" << gmsh_name << "'" << std::endl;
+        output::Gmsh gmsh(gmsh_name, Config("coordinates", "lonlat") | Config("ghost", "false"));
+        if (functionspace::NodeColumns fs_nodes = tgt_fs) {
+            gmsh.write(fs_nodes.mesh());
+        }
+        gmsh.write(tgt_field);
+    }
+
+    auto tgt_field_global = interpolator.target().createField(tgt_field, option::global());
+    interpolator.target().gather(tgt_field, tgt_field_global);
+    if (mpi::rank() == 0) {
+        auto tgt_field_view = array::make_view<double, 1>(tgt_field_global);
+        std::vector<int> target_mask(tgt_field_view.size());
+        for (idx_t i = 0; i < tgt_field_view.size(); ++i) {
+            target_mask[i] = static_cast<int>(std::lround(tgt_field_view(i)));
+        }
+
+        const auto output_name = get_output_mask_name(tgrid, args);
+        Log::info() << "Writing interpolated mask to '" << output_name << "'" << std::endl;
+        AtlasIO::write_mask(output_name, tgrid.name(),
+                            mdspan<int, dims<1>>(target_mask.data(), target_mask.size()));
+        // if (args.getBool("output-gmsh", false)) {
+        //     const std::string gmsh_name = output_name.substr(0, output_name.size() - std::string(".atlas").size());
+        //     auto target_mask_view = array::make_view<int, 1>(target_mask.data(), target_mask.size());
+        //     gmsh_output(gmsh_name, tgrid, target_mask_view, "t.mask", args);
+        // }
+    }
+    mpi::comm().barrier();
 }
 
 template <typename View>
@@ -827,6 +918,11 @@ int AtlasInterpolations::execute(const AtlasTool::Args& args) {
     Log::info() << "\tsource grid\t:\t" << sgrid.name() << " (" << sdata_name << ")\n\ttarget grid\t:\t" << tgrid.name()
                 << " (" << tdata_name << ")\n\tinterpolation\t:\t" << interpolation_method << std::endl;
 
+    if (args.getBool("interpolate-mask", false)) {
+        interpolate_mask(sgrid, tgrid, args);
+        return success();
+    }
+
     std::string matrix_format = get_matrix_format(args);
     std::string matrix_name   = get_matrix_name(args);
     bool matrix_tested        = false;
@@ -1001,15 +1097,6 @@ int AtlasInterpolations::execute(const AtlasTool::Args& args) {
                     gmsh.write(tgt_field, gmsh_field_config(args));
                 }
             }
-#if 0
-            // This writes the mask to file, can be used to interpolate masks
-            std::vector<int> output_mask(tgrid.size());
-            auto tview = array::make_view<double,1>(tgt_field);
-            for(size_t i=0; i<output_mask.size(); ++i) {
-                output_mask[i] = (tview(i) != 0 && tview(i) != 9999.) ? 1 : 0;
-            }
-            AtlasIO::write_mask("mask_"+tgrid.name()+".atlas", tgrid.name(), mdspan<int,dims<1>>(output_mask.data(), output_mask.size()));
-#endif
         }
     }
 
