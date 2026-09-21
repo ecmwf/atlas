@@ -134,6 +134,12 @@ public:  // methods
     void setup(const std::string& mpi_comm, const int part[], const idx_t remote_idx[], const int base, const gidx_t glb_idx[], const int mask[],
                const idx_t parsize);
 
+    /// @brief Setup with explicit control over sparse global-index mapping
+    /// @param [in] preserve_global_indices Keep global indices as field positions when true;
+    ///                                     sort, deduplicate, and compact sparse indices when false
+    void setup(const std::string& mpi_comm, const int part[], const idx_t remote_idx[], const int base,
+               const gidx_t glb_idx[], const int mask[], const idx_t parsize, bool preserve_global_indices);
+
     /// @brief Setup
     /// @param [in] part         List of partitions
     /// @param [in] remote_idx   List of local indices on remote partitions
@@ -210,6 +216,7 @@ private:  // data
     std::string name_;
     int loccnt_;
     int glbcnt_;
+    idx_t global_field_dof_;
     std::vector<int> glbcounts_;
     std::vector<int> glbdispls_;
 
@@ -265,7 +272,8 @@ void GatherScatter::gather(parallel::Field<DATA_TYPE const> lfields[], parallel:
 #if !defined(NDEBUG)
         validate_field_and_map("GatherScatter::gather local field", lfields[jfield], locmap_, parsize_, loccnt_, loc_size);
         if (myproc == root) {
-            validate_field_and_map("GatherScatter::gather global field", gfields[jfield], glbmap_, glb_cnt(root), glb_cnt(root), glb_size);
+            validate_field_and_map("GatherScatter::gather global field", gfields[jfield], glbmap_, global_field_dof_,
+                                   glb_cnt(root), glb_size);
         }
 #endif
 
@@ -323,7 +331,8 @@ void GatherScatter::scatter(parallel::Field<DATA_TYPE const> gfields[], parallel
 #if !defined(NDEBUG)
         validate_field_and_map("GatherScatter::scatter local field", lfields[jfield], locmap_, parsize_, loccnt_, loc_size);
         if (myproc == root) {
-            validate_field_and_map("GatherScatter::scatter global field", gfields[jfield], glbmap_, glb_cnt(root), glb_cnt(root), glb_size);
+            validate_field_and_map("GatherScatter::scatter global field", gfields[jfield], glbmap_, global_field_dof_,
+                                   glb_cnt(root), glb_size);
         }
 #endif
 

@@ -148,6 +148,79 @@ struct SparseGlobalIndexFixture {
     int Ng() { return rank == root ? gather_scatter.glb_dof() : 0; }
 };
 
+struct SetupOptionsFixture {
+    SetupOptionsFixture() {
+        rank = static_cast<int>(mpi::comm().rank());
+        EXPECT_EQ(mpi::comm().size(), 3);
+
+        switch (rank) {
+            case 0:
+                part        = {0, 0, 1, 2};
+                remote_idx  = {0, 1, 0, 0};
+                dense_gidx  = {1, 4, 2, 3};
+                break;
+            case 1:
+                part        = {1, 1, 0, 2};
+                remote_idx  = {0, 1, 0, 0};
+                dense_gidx  = {2, 5, 1, 3};
+                break;
+            case 2:
+                part        = {2, 2, 0, 1};
+                remote_idx  = {0, 1, 0, 0};
+                dense_gidx  = {3, 6, 1, 2};
+                break;
+        }
+
+        mask = {0, 0, 1, 1};
+        sparse_gidx.reserve(dense_gidx.size());
+        constexpr gidx_t sparse_indices[] = {0, 2, 4, 7, 9, 11, 13};
+        for (const gidx_t gidx : dense_gidx) {
+            sparse_gidx.emplace_back(sparse_indices[gidx]);
+        }
+    }
+
+    int rank;
+    std::vector<int> part;
+    std::vector<idx_t> remote_idx;
+    std::vector<gidx_t> dense_gidx;
+    std::vector<gidx_t> sparse_gidx;
+    std::vector<int> mask;
+};
+
+void test_mapping(parallel::GatherScatter& gather_scatter, const SetupOptionsFixture& fixture,
+                  const std::vector<gidx_t>& global_index, const std::vector<int>& mask,
+                  const std::vector<POD>& expected_global, gidx_t expected_dof) {
+    EXPECT_EQ(gather_scatter.glb_dof(), expected_dof);
+
+    for (int root = 0; root < 3; ++root) {
+        std::vector<POD> local(global_index.size(), -1.);
+        for (idx_t index = 0; index < local.size(); ++index) {
+            if (!mask[index]) {
+                local[index] = static_cast<POD>(global_index[index] * 10);
+            }
+        }
+
+        std::vector<POD> global(fixture.rank == root ? expected_global.size() : 0, -1.);
+        idx_t strides[] = {1};
+        idx_t extents[] = {1};
+        gather_scatter.gather(local.data(), strides, extents, 1, global.data(), strides, extents, 1, root);
+        if (fixture.rank == root) {
+            EXPECT(global == expected_global);
+        }
+
+        local.assign(local.size(), -1.);
+        gather_scatter.scatter(global.data(), strides, extents, 1, local.data(), strides, extents, 1, root);
+        for (idx_t index = 0; index < local.size(); ++index) {
+            if (!mask[index]) {
+                EXPECT_EQ(local[index], static_cast<POD>(global_index[index] * 10));
+            }
+            else {
+                EXPECT_EQ(local[index], -1.);
+            }
+        }
+    }
+}
+
 //-----------------------------------------------------------------------------
 
 CASE("test_gather") {
@@ -772,6 +845,100 @@ CASE("test_gather_sparse_global_indices") {
 
     Log::warning() << "test_gather_sparse_global_indices: peak memory usage = " << peakMemory() / MB << " MB" << std::endl;
     EXPECT(peakMemory() < sparse_global_index_memory_limit);
+}
+
+CASE("test_gather_setup_options") {
+    SetupOptionsFixture fixture;
+    const idx_t size = static_cast<idx_t>(fixture.part.size());
+    const std::vector<POD> dense_expected{10., 20., 30., 40., 50., 60.};
+    const std::vector<POD> sparse_compacted_expected{20., 40., 70., 90., 110., 130.};
+    const std::vector<POD> sparse_preserved_expected{-1., 20., -1., 40., -1., -1., 70.,
+                                                      -1., 90., -1., 110., -1., 130.};
+
+    SECTION("automatic mask with default communicator") {
+        parallel::GatherScatter gather_scatter;
+        gather_scatter.setup(fixture.part.data(), fixture.remote_idx.data(), 0, fixture.dense_gidx.data(), size);
+        test_mapping(gather_scatter, fixture, fixture.dense_gidx, fixture.mask, dense_expected, 6);
+    }
+
+    SECTION("automatic mask with named communicator") {
+        parallel::GatherScatter gather_scatter;
+        gather_scatter.setup(mpi::comm().name(), fixture.part.data(), fixture.remote_idx.data(), 0,
+                             fixture.dense_gidx.data(), size);
+        test_mapping(gather_scatter, fixture, fixture.dense_gidx, fixture.mask, dense_expected, 6);
+    }
+
+    SECTION("explicit mask with default communicator") {
+        const std::vector<int> mask{0, 1, 1, 1};
+        parallel::GatherScatter gather_scatter;
+        gather_scatter.setup(fixture.part.data(), fixture.remote_idx.data(), 0, fixture.dense_gidx.data(),
+                             mask.data(), size);
+        test_mapping(gather_scatter, fixture, fixture.dense_gidx, mask, {10., 20., 30.}, 3);
+    }
+
+    SECTION("explicit mask with named communicator") {
+        const std::vector<int> mask{0, 1, 1, 1};
+        parallel::GatherScatter gather_scatter;
+        gather_scatter.setup(mpi::comm().name(), fixture.part.data(), fixture.remote_idx.data(), 0,
+                             fixture.dense_gidx.data(), mask.data(), size);
+        test_mapping(gather_scatter, fixture, fixture.dense_gidx, mask, {10., 20., 30.}, 3);
+    }
+
+    SECTION("remote index base one") {
+        auto remote_idx = fixture.remote_idx;
+        for (auto& index : remote_idx) {
+            ++index;
+        }
+        parallel::GatherScatter gather_scatter;
+        gather_scatter.setup(mpi::comm().name(), fixture.part.data(), remote_idx.data(), 1,
+                             fixture.dense_gidx.data(), fixture.mask.data(), size);
+        test_mapping(gather_scatter, fixture, fixture.dense_gidx, fixture.mask, dense_expected, 6);
+    }
+
+    SECTION("sparse global indices are compacted by default") {
+        parallel::GatherScatter gather_scatter;
+        gather_scatter.setup(mpi::comm().name(), fixture.part.data(), fixture.remote_idx.data(), 0,
+                             fixture.sparse_gidx.data(), fixture.mask.data(), size, false);
+        test_mapping(gather_scatter, fixture, fixture.sparse_gidx, fixture.mask, sparse_compacted_expected, 6);
+    }
+
+    SECTION("sparse global indices can be preserved") {
+        parallel::GatherScatter gather_scatter;
+        gather_scatter.setup(mpi::comm().name(), fixture.part.data(), fixture.remote_idx.data(), 0,
+                             fixture.sparse_gidx.data(), fixture.mask.data(), size, true);
+        test_mapping(gather_scatter, fixture, fixture.sparse_gidx, fixture.mask, sparse_preserved_expected, 6);
+    }
+
+    SECTION("duplicate global indices are deduplicated when compacting") {
+        const std::vector<int> mask(size, 0);
+        parallel::GatherScatter gather_scatter;
+        gather_scatter.setup(mpi::comm().name(), fixture.part.data(), fixture.remote_idx.data(), 0,
+                             fixture.dense_gidx.data(), mask.data(), size, false);
+        EXPECT_EQ(gather_scatter.glb_dof(), 6);
+
+        for (int root = 0; root < 3; ++root) {
+            std::vector<POD> local(size);
+            for (idx_t index = 0; index < size; ++index) {
+                local[index] = static_cast<POD>(fixture.dense_gidx[index] * 10);
+            }
+            std::vector<POD> global(fixture.rank == root ? dense_expected.size() : 0, -1.);
+            idx_t strides[] = {1};
+            idx_t extents[] = {1};
+            gather_scatter.gather(local.data(), strides, extents, 1, global.data(), strides, extents, 1, root);
+            if (fixture.rank == root) {
+                EXPECT(global == dense_expected);
+            }
+        }
+    }
+
+    SECTION("all points masked") {
+        std::vector<int> mask(size, 1);
+        parallel::GatherScatter gather_scatter;
+        gather_scatter.setup(mpi::comm().name(), fixture.part.data(), fixture.remote_idx.data(), 0,
+                             fixture.dense_gidx.data(), mask.data(), size);
+        EXPECT_EQ(gather_scatter.glb_dof(), 0);
+        EXPECT_EQ(gather_scatter.loc_dof(), 0);
+    }
 }
 
 //-----------------------------------------------------------------------------
