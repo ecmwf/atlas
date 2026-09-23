@@ -10,6 +10,7 @@
 
 #include "Grid.h"
 
+#include <sstream>
 #include <vector>
 
 #include "eckit/utils/MD5.h"
@@ -66,13 +67,19 @@ const Grid* Grid::create(const Config& config) {
     }
 }
 
-const Grid* Grid::create(const std::string& name) {
-    return create(name, util::NoConfig());
+const Grid* Grid::create(const std::string& from_string) {
+    return create(from_string, util::NoConfig());
 }
 
-const Grid* Grid::create(const std::string& name, const Grid::Config& config) {
+const Grid* Grid::create(const std::string& from_string, const Grid::Config& config) {
+    const auto first = from_string.find_first_not_of(" \t\n\r");
+    if (first != std::string::npos && from_string[first] == '{') {
+        std::istringstream stream(from_string);
+        return create(util::Config(stream, "json"));
+    }
+
     for (const auto& [key, builder]: GridBuilder::nameRegistry()) {
-        const Grid* grid = builder->create(name, config);
+        const Grid* grid = builder->create(from_string, config);
         if (grid) {
             return grid;
         }
@@ -80,7 +87,7 @@ const Grid* Grid::create(const std::string& name, const Grid::Config& config) {
 
     // Throw exception
     std::ostringstream log;
-    log << "Could not construct Grid from the name \"" << name << "\"\n";
+    log << "Could not construct Grid from the name \"" << from_string << "\"\n";
     log << "Accepted names are: \n";
     for (const auto& [key, grid_builder]: GridBuilder::typeRegistry()) {
         for( auto& grid_name: grid_builder->names()) {

@@ -55,6 +55,26 @@ CASE("test_factory") {
     std::cout << "grid.npts() = " << grid.size() << std::endl;
 }
 
+CASE("test_factory_from_json_spec") {
+    const Grid named("O32");
+    EXPECT(not named.spec().has("domain"));
+    const Grid named_from_json("  \n" + named.spec().json());
+    EXPECT(named_from_json.uid() == named.uid());
+
+    const Grid shifted(named, RectangularDomain({-180., 180.}, {-90., 90.}));
+    EXPECT(shifted.spec().has("domain"));
+    const Grid shifted_from_json(shifted.spec().json());
+    EXPECT(shifted_from_json.uid() == shifted.uid());
+
+    const Config configured_spec =
+        Config("type", "structured")
+            ("xspace", Config("type", "linear")("N", 16)("start", 0.)("end", 360.)("endpoint", false))
+            ("yspace", Config("type", "linear")("N", 9)("start", 90.)("end", -90.));
+    const Grid configured(configured_spec);
+    const Grid configured_from_json(configured.spec().json());
+    EXPECT(configured_from_json.uid() == configured.uid());
+}
+
 CASE("test_regular_gg") {
     RegularGrid grid("F32");
 
