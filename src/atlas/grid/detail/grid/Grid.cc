@@ -53,6 +53,13 @@ const Grid* Grid::create(const Config& config) {
         }
     }
 
+    if (config.get("grid", name)) {
+        // This is an eckit::geo grid specification.
+        // For now simply treat it as name and hope for the best...
+        // It should work for all named grids
+        return create(name, config);
+    }
+
     if (name.size()) {
         Log::info() << "name provided: " << name << std::endl;
     }

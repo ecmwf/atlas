@@ -55,6 +55,13 @@ CASE("test_factory") {
     std::cout << "grid.npts() = " << grid.size() << std::endl;
 }
 
+CASE("test_factory_from_grid_key") {
+    const Grid named("O32");
+    const Grid from_grid_key(Config("grid", "O32"));
+
+    EXPECT(from_grid_key.uid() == named.uid());
+}
+
 CASE("test_factory_from_json_spec") {
     const Grid named("O32");
     EXPECT(not named.spec().has("domain"));
