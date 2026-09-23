@@ -159,6 +159,10 @@ use atlas_output_module, only: &
 use atlas_trace_module, only : &
     & atlas_Trace
 use atlas_functions_module
+use atlas_Relayout_module, only: &
+    & copy_blocked_to_blocked, &
+    & copy_blocked_to_nonblocked, &
+    & copy_nonblocked_to_blocked
 use atlas_Redistribution_module, only : &
     & atlas_Redistribution
 use fckit_log_module,  only: atlas_log => fckit_log

@@ -96,30 +96,32 @@ namespace array {
 ///
 /// The ArrayView class is therefore also compiled differently dependening on this feature.
 
-template <typename Value, int Rank>
+template <typename ElementType, int Rank>
 class ArrayView {
     template <typename T>
-    using is_non_const_value_type = typename std::is_same<T, typename std::remove_const<Value>::type>;
+    using is_non_const_value_type = typename std::is_same<T, typename std::remove_const<ElementType>::type>;
 
 #define ENABLE_IF_NON_CONST                                                                             \
     template <bool EnableBool                                                                   = true, \
-              typename std::enable_if<(!std::is_const<Value>::value && EnableBool), int>::type* = nullptr>
+              typename std::enable_if<(!std::is_const<ElementType>::value && EnableBool), int>::type* = nullptr>
 
 #define ENABLE_IF_CONST_WITH_NON_CONST(T)                                                                             \
-    template <typename T, typename std::enable_if<(std::is_const<Value>::value && is_non_const_value_type<T>::value), \
+    template <typename T, typename std::enable_if<(std::is_const<ElementType>::value && is_non_const_value_type<T>::value), \
                                                   int>::type* = nullptr>
 
 public:
     // -- Type definitions
-    using value_type                   = Value;
-    using non_const_value_type         = typename std::remove_const<Value>::type;
-    static constexpr bool is_const     = std::is_const<Value>::value;
-    static constexpr bool is_non_const = !std::is_const<Value>::value;
+    using element_type                 = ElementType;
+    using value_type                   = std::remove_cv_t<element_type>;
+    using data_handle_type             = element_type*;
+    using non_const_value_type         = value_type;
+    static constexpr bool is_const     = std::is_const<element_type>::value;
+    static constexpr bool is_non_const = !std::is_const<element_type>::value;
     static constexpr int RANK{Rank};
 
 private:
-    using slicer_t       = typename helpers::ArraySlicer<ArrayView<Value, Rank>>;
-    using const_slicer_t = typename helpers::ArraySlicer<const ArrayView<const Value, Rank>>;
+    using slicer_t       = typename helpers::ArraySlicer<ArrayView<ElementType, Rank>>;
+    using const_slicer_t = typename helpers::ArraySlicer<const ArrayView<const ElementType, Rank>>;
 
     template <typename... Args>
     struct slice_t {
@@ -133,22 +135,20 @@ private:
 
     using mdspan_extents_type = dextents<size_t,RANK>;
     using mdspan_strides_type = std::array<size_t,RANK>;
-    using mdspan_type         = mdspan<value_type, mdspan_extents_type, layout_stride>;
-    using const_mdspan_type   = mdspan<const value_type, mdspan_extents_type, layout_stride>;
 
 public:
     // -- Constructors
 
-    template <typename ValueTp, typename = std::enable_if_t<std::is_convertible_v<ValueTp*,value_type*>>>
-    ArrayView(const ArrayView<ValueTp, Rank>& other): data_(other.data()), size_(other.size()) {
+    template <typename ElementTypeTp, typename = std::enable_if_t<std::is_convertible_v<ElementTypeTp*,element_type*>>>
+    ArrayView(const ArrayView<ElementTypeTp, Rank>& other): data_(other.data()), size_(other.size()) {
         for (int j = 0; j < Rank; ++j) {
             shape_[j]   = other.shape_[j];
             strides_[j] = other.strides_[j];
         }
     }
 
-    template <typename ValueTp, typename = std::enable_if_t<std::is_convertible_v<ValueTp*,value_type*>>>
-    ArrayView(ArrayView<ValueTp, Rank>&& other):data_(other.data()), size_(other.size()) {
+    template <typename ElementTypeTp, typename = std::enable_if_t<std::is_convertible_v<ElementTypeTp*,element_type*>>>
+    ArrayView(ArrayView<ElementTypeTp, Rank>&& other):data_(other.data()), size_(other.size()) {
         for (int j = 0; j < Rank; ++j) {
             shape_[j]   = other.shape_[j];
             strides_[j] = other.strides_[j];
@@ -157,7 +157,7 @@ public:
 
 #ifndef DOXYGEN_SHOULD_SKIP_THIS
     // This constructor should not be used directly, but only through a array::make_view() function.
-    ArrayView(value_type* data, const ArrayShape& shape, const ArrayStrides& strides): data_(data) {
+    ArrayView(element_type* data, const ArrayShape& shape, const ArrayStrides& strides): data_(data) {
         size_ = 1;
         for (int j = 0; j < Rank; ++j) {
             shape_[j]   = shape[j];
@@ -167,31 +167,24 @@ public:
     }
 #endif
 
-    mdspan_type as_mdspan() {
-        return mdspan_type{this->data(), {mdspan_extents(), mdspan_strides()}};
-    }
-
-    const_mdspan_type as_mdspan() const {
-        return const_mdspan_type{this->data(), {mdspan_extents(), mdspan_strides()}};
-    }
-
-    ENABLE_IF_CONST_WITH_NON_CONST(value_type)
-    operator const ArrayView<value_type, Rank>&() const { return *(const ArrayView<value_type, Rank>*)(this); }
+    ENABLE_IF_CONST_WITH_NON_CONST(element_type)
+    operator const ArrayView<element_type, Rank>&() const { return *(const ArrayView<element_type, Rank>*)(this); }
 
     // -- Access methods
 
     /// @brief Multidimensional index operator: view(i,j,k,...)
     template <typename... Idx, int Rank_ = Rank, typename = std::enable_if_t<sizeof...(Idx) == Rank_>>
-    ATLAS_HOST_DEVICE
-    value_type& operator()(Idx... idx) {
+    inline ATLAS_HOST_DEVICE
+    element_type& operator()(Idx... idx) {
         check_bounds(idx...);
         return data_[index(idx...)];
     }
 
     /// @brief Multidimensional index operator: view(i,j,k,...)
     template <typename... Idx, int Rank_ = Rank, typename = std::enable_if_t<sizeof...(Idx) == Rank_>>
-    ATLAS_HOST_DEVICE
-    const value_type& operator()(Idx... idx) const {
+    inline ATLAS_HOST_DEVICE
+    const element_type& operator()(Idx... idx) const {
+        check_bounds(idx...);
         return data_[index(idx...)];
     }
 
@@ -200,13 +193,13 @@ public:
     /// Note that this function is only present when Rank == 1
 #ifndef DOXYGEN_SHOULD_SKIP_THIS
     template <typename Idx, int Rank_ = Rank, typename = std::enable_if_t<Rank_ == 1>>
-    ATLAS_HOST_DEVICE
-    const value_type& operator[](Idx idx) const {
+    inline ATLAS_HOST_DEVICE
+    const element_type& operator[](Idx idx) const noexcept(!ATLAS_ARRAYVIEW_BOUNDS_CHECKING || !ATLAS_HOST_COMPILE) {
 #else
     // Doxygen API is cleaner!
     template <typename Int>
-    ATLAS_HOST_DEVICE
-    value_type operator[](Int idx) const {
+    inline ATLAS_HOST_DEVICE
+    element_type operator[](Int idx) const {
 #endif
         check_bounds(idx);
         return data_[idx * strides_[0]];
@@ -217,13 +210,13 @@ public:
     /// Note that this function is only present when Rank == 1
 #ifndef DOXYGEN_SHOULD_SKIP_THIS
     template <typename Idx, int Rank_ = Rank, typename = std::enable_if_t<Rank_ == 1>>
-    ATLAS_HOST_DEVICE
-    value_type& operator[](Idx idx) {
+    inline ATLAS_HOST_DEVICE
+    element_type& operator[](Idx idx) noexcept(!ATLAS_ARRAYVIEW_BOUNDS_CHECKING || !ATLAS_HOST_COMPILE) {
 #else
     // Doxygen API is cleaner!
     template <typename Idx>
-    ATLAS_HOST_DEVICE
-    value_type operator[](Idx idx) {
+    inline ATLAS_HOST_DEVICE
+    element_type operator[](Idx idx) {
 #endif
         check_bounds(idx);
         return data_[idx * strides_[0]];
@@ -240,70 +233,73 @@ public:
     /// }
     /// @endcode
     template <unsigned int Dim>
-    ATLAS_HOST_DEVICE
-    idx_t shape() const {
+    inline ATLAS_HOST_DEVICE
+    idx_t shape() const noexcept {
         return shape_[Dim];
     }
 
     /// @brief Return stride for values in dimension **Dim** (template argument)
     template <unsigned int Dim>
-    ATLAS_HOST_DEVICE
-    idx_t stride() const {
+    inline ATLAS_HOST_DEVICE
+    idx_t stride() const noexcept {
         return strides_[Dim];
     }
 
     /// @brief Return total number of values (accumulated over all dimensions)
-    ATLAS_HOST_DEVICE
-    size_t size() const { return size_; }
+    inline ATLAS_HOST_DEVICE
+    size_t size() const noexcept { return size_; }
 
     /// @brief Return the number of dimensions
-    ATLAS_HOST_DEVICE
-    static constexpr idx_t rank() { return Rank; }
+    inline ATLAS_HOST_DEVICE
+    static constexpr idx_t rank() noexcept { return RANK; }
 
-    ATLAS_HOST_DEVICE
-    const idx_t* strides() const { return strides_; }
+    inline ATLAS_HOST_DEVICE
+    const idx_t* strides() const noexcept { return strides_; }
 
-    ATLAS_HOST_DEVICE
-    const idx_t* shape() const { return shape_; }
+    inline ATLAS_HOST_DEVICE
+    const idx_t* shape() const noexcept { return shape_; }
 
     /// @brief Return number of values in dimension idx
     template <typename Int>
-    ATLAS_HOST_DEVICE
-    idx_t shape(Int idx) const {
+    inline ATLAS_HOST_DEVICE
+    idx_t shape(Int idx) const noexcept{
         return shape_[idx];
     }
 
     /// @brief Return number of values in dimension idx, equivalent to shape(idx)
     template <typename Int>
-    ATLAS_HOST_DEVICE
-    idx_t extent(Int idx) const {
+    inline ATLAS_HOST_DEVICE
+    idx_t extent(Int idx) const noexcept {
         return shape(idx);
     }
 
     /// @brief Return stride for values in dimension idx
     template <typename Int>
-    ATLAS_HOST_DEVICE
-    idx_t stride(Int idx) const {
+    inline ATLAS_HOST_DEVICE
+    idx_t stride(Int idx) const noexcept {
         return strides_[idx];
     }
 
     /// @brief Access to internal data. @m_class{m-label m-danger} **dangerous**
-    ATLAS_HOST_DEVICE
-    value_type const* data() const { return data_; }
+    inline ATLAS_HOST_DEVICE
+    element_type const* data() const noexcept { return data_; }
 
     /// @brief Access to internal data. @m_class{m-label m-danger} **dangerous**
-    ATLAS_HOST_DEVICE
-    value_type* data() { return data_; }
+    inline ATLAS_HOST_DEVICE
+    element_type* data() noexcept { return data_; }
 
-    ATLAS_HOST_DEVICE
-    bool valid() const { return true; }
+    inline ATLAS_HOST_DEVICE
+    constexpr data_handle_type data_handle() const noexcept { return data_; }
+
+    inline ATLAS_HOST_DEVICE
+    bool valid() const noexcept { return true; }
 
     /// @brief Return true when all values are contiguous in memory.
     ///
     /// This means that if there is e.g. padding in the fastest dimension, or if
     /// the ArrayView represents a slice, the returned value will be false.
-    ATLAS_HOST_DEVICE
-    bool contiguous() const { return (size_ == size_t(shape_[0]) * size_t(strides_[0]) ? true : false); }
+    inline ATLAS_HOST_DEVICE
+    bool contiguous() const noexcept { return (size_ == size_t(shape_[0]) * size_t(strides_[0]) ? true : false); }
 
     ENABLE_IF_NON_CONST
     void assign(const value_type& value);
@@ -338,7 +334,7 @@ public:
     ///   auto slice3 = view.slice( Range::all(), Range::all(), Range::dummy() );
     /// @endcode
     template <typename... Args>
-    ATLAS_HOST_DEVICE
+    inline ATLAS_HOST_DEVICE
     auto slice(Args... args) {
         return slicer_t(*this).apply(args...);
     }
@@ -346,13 +342,13 @@ public:
 
     /// @brief Obtain a slice from this view:  view.slice( Range, Range, ... )
     template <typename... Args>
-    ATLAS_HOST_DEVICE
+    inline ATLAS_HOST_DEVICE
     auto slice(Args... args) const {
         return const_slicer_t(*this).apply(args...);
     }
 
     template <typename... Ints>
-    ATLAS_HOST_DEVICE
+    inline ATLAS_HOST_DEVICE
     constexpr idx_t index(Ints... idx) const {
         return index_part<0>(idx...);
     }
@@ -361,20 +357,20 @@ private:
     // -- Private methods
 
     template <int Dim, typename Int, typename... Ints>
-    ATLAS_HOST_DEVICE
+    inline ATLAS_HOST_DEVICE
     constexpr idx_t index_part(Int idx, Ints... next_idx) const {
         return idx * strides_[Dim] + index_part<Dim + 1>(next_idx...);
     }
 
     template <int Dim, typename Int>
-    ATLAS_HOST_DEVICE
+    inline ATLAS_HOST_DEVICE
     constexpr idx_t index_part(Int last_idx) const {
         return last_idx * strides_[Dim];
     }
 
 #if ATLAS_ARRAYVIEW_BOUNDS_CHECKING
     template <typename... Ints>
-    ATLAS_HOST_DEVICE
+    inline ATLAS_HOST_DEVICE
     void check_bounds(Ints... idx) const {
         static_assert(sizeof...(idx) == Rank, "Expected number of indices is different from rank of array");
 #if ATLAS_HOST_COMPILE
@@ -383,14 +379,14 @@ private:
     }
 #else
     template <typename... Ints>
-    ATLAS_HOST_DEVICE
-    void check_bounds(Ints... idx) const {
+    inline ATLAS_HOST_DEVICE
+    void check_bounds(Ints... idx) const noexcept {
         static_assert(sizeof...(idx) == Rank, "Expected number of indices is different from rank of array");
     }
 #endif
 
     template <typename... Ints>
-    ATLAS_HOST_DEVICE
+    inline ATLAS_HOST_DEVICE
     void check_bounds_force(Ints... idx) const {
         static_assert(sizeof...(idx) == Rank, "Expected number of indices is different from rank of array");
 #if ATLAS_HOST_COMPILE
@@ -399,7 +395,7 @@ private:
     }
 
     template <int Dim, typename Int, typename... Ints>
-    ATLAS_HOST
+    inline ATLAS_HOST
     void check_bounds_part(Int idx, Ints... next_idx) const {
         if (idx_t(idx) >= shape_[Dim]) {
             throw_OutOfRange("ArrayView", array_dim<Dim>(), idx, shape_[Dim]);
@@ -408,7 +404,7 @@ private:
     }
 
     template <int Dim, typename Int>
-    ATLAS_HOST
+    inline ATLAS_HOST
     void check_bounds_part(Int last_idx) const {
         if (idx_t(last_idx) >= shape_[Dim]) {
             throw_OutOfRange("ArrayView", array_dim<Dim>(), last_idx, shape_[Dim]);
@@ -417,23 +413,23 @@ private:
 
 
     template<int... i>
-    ATLAS_HOST_DEVICE
+    inline ATLAS_HOST_DEVICE
     mdspan_extents_type _get_mdspan_extents(std::integer_sequence<int, i...> = {}) const {
         return mdspan_extents_type{(shape_[i])...};
     }
 
-    ATLAS_HOST_DEVICE
+    inline ATLAS_HOST_DEVICE
     mdspan_extents_type mdspan_extents() const {
         return _get_mdspan_extents(std::make_integer_sequence<int,RANK>{});
     }
 
     template<int... i>
-    ATLAS_HOST_DEVICE
+    inline ATLAS_HOST_DEVICE
     mdspan_strides_type _get_mdspan_strides(std::integer_sequence<int, i...> = {}) const {
         return mdspan_strides_type{(static_cast<typename mdspan_strides_type::value_type>(strides_[i]))...};
     }
 
-    ATLAS_HOST_DEVICE
+    inline ATLAS_HOST_DEVICE
     mdspan_strides_type mdspan_strides() const {
         return _get_mdspan_strides(std::make_integer_sequence<int,RANK>{});
     }
@@ -442,7 +438,7 @@ private:
 
     template<typename,int> friend class ArrayView;
 
-    value_type* data_;
+    data_handle_type data_;
     size_t size_;
     idx_t shape_[Rank];
     idx_t strides_[Rank];

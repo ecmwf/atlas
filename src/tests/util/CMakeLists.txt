@@ -51,15 +51,32 @@ if( HAVE_FCTEST )
     LIBS            atlas_f
     ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
   )
+
+  add_fctest( TARGET atlas_fctest_relayout
+    LINKER_LANGUAGE Fortran
+    SOURCES         fctest_relayout.F90
+    LIBS            atlas_f
+    ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
+  )
 endif()
 
-foreach( test util earth flags polygon point checksum )
+foreach( test util earth flags polygon point checksum relayout )
   ecbuild_add_test( TARGET atlas_test_${test}
     SOURCES test_${test}.cc
     LIBS atlas
     ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
   )
 endforeach()
+
+ecbuild_add_test( TARGET atlas_test_relayout_on_device
+  COMMAND atlas_test_relayout
+  ARGS --on-device=true
+  CONDITION HAVE_GPU
+  ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT} ATLAS_RUN_NGPUS=1
+)
+if( TEST atlas_test_relayout_on_device )
+  set_tests_properties( atlas_test_relayout_on_device PROPERTIES LABELS "gpu" )
+endif()
 
 ecbuild_add_test( TARGET atlas_test_vector
   SOURCES  test_vector.cc
