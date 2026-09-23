@@ -56,17 +56,16 @@ TEST( test_spec )
   implicit none
   type(atlas_Grid) :: grid
   type(atlas_Config) :: spec
-  character(:), allocatable :: json_sorted, json_ordered, json
+  character(:), allocatable :: json_expected, json
 
   grid = atlas_Grid ("O32")
   FCTEST_CHECK_EQUAL( grid%type(), "structured" )
   spec = grid%spec()
 
   FCTEST_CHECK_EQUAL( spec%owners(), 1 )
-  json_sorted  = '{"domain":{"type":"global"},"name":"O32","projection":{"type":"lonlat"}}'
-  json_ordered = '{"name":"O32","domain":{"type":"global"},"projection":{"type":"lonlat"}}'
+  json_expected  = '{"name":"O32"}'
   json = spec%json()
-  FCTEST_CHECK( json == json_sorted .or. json == json_ordered )
+  FCTEST_CHECK( json == json_expected )
 
   grid = atlas_RegularGaussianGrid(8)
   grid = atlas_RegularLonLatGrid(8,8)

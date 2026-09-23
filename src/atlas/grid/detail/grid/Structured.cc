@@ -49,7 +49,7 @@ Structured::Structured(XSpace xspace, YSpace yspace, Projection p, Domain domain
     Structured(Structured::static_type(), xspace, yspace, p, domain) {}
 
 Structured::Structured(const std::string& name, XSpace xspace, YSpace yspace, Projection projection, Domain domain):
-    Grid(), name_(name), xspace_(xspace), yspace_(yspace) {
+    Grid(), name_(name), xspace_(xspace), yspace_(yspace), domain_set_(bool(domain)) {
     // Copy members
     projection_ = projection ? projection : Projection();
 
@@ -711,8 +711,12 @@ Grid::Spec Structured::spec() const {
     else {
         grid_spec.set("name", name());
     }
-    grid_spec.set("domain", domain().spec());
-    grid_spec.set("projection", projection().spec());
+    if (domain_set_) {
+        grid_spec.set("domain", domain().spec());
+    }
+    if (projection()) {
+        grid_spec.set("projection", projection().spec());
+    }
     return grid_spec;
 }
 
