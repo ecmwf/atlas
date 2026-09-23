@@ -498,6 +498,10 @@ void debug_sync(const eckit::CodeLocation& here, const mpi::Comm& comm, std::str
     Log::info() << "DEBUG_SYNC["<<comm.name()<<"](" << what << ") @ " << here << std::endl;
 }
 
+void debug_sync(const eckit::CodeLocation& here, const std::string& what) {
+    debug_sync(here, std::string_view{what});
+}
+
 void debug_sync(const eckit::CodeLocation& here, std::string_view what) {
     debug_sync(here, mpi::comm(), what);
 }
