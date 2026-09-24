@@ -224,4 +224,33 @@ if( HAVE_NETCDF )
   ecbuild_add_executable( TARGET atlas-mask-extract
                           SOURCES atlas-mask-extract.cc MaskIO.h MaskIO.cc
                           LIBS atlas NetCDF::NetCDF_CXX )
+
+  if( HAVE_TESTS )
+    set( extract_field_source test_extract_field_source.atlas )
+    set( extract_field_mask test_extract_field_mask.atlas )
+
+    ecbuild_add_test(
+      TARGET atlas_test_app_atlas_mask_extract_field_setup
+      COMMAND atlas-test-interpolate-mask
+      ARGS write-field ${extract_field_source} O8
+      ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
+    )
+    ecbuild_add_test(
+      TARGET atlas_test_app_atlas_mask_extract_field
+      COMMAND atlas-mask-extract
+      ARGS ${extract_field_source} ${extract_field_mask}
+           --atlas-field --field-index=0 --missing-value=9999
+      ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
+    )
+    ecbuild_add_test(
+      TARGET atlas_test_app_atlas_mask_extract_field_check
+      COMMAND atlas-test-interpolate-mask
+      ARGS check-extracted ${extract_field_mask} O8
+      ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
+    )
+    set_tests_properties( atlas_test_app_atlas_mask_extract_field PROPERTIES
+                          DEPENDS atlas_test_app_atlas_mask_extract_field_setup )
+    set_tests_properties( atlas_test_app_atlas_mask_extract_field_check PROPERTIES
+                          DEPENDS atlas_test_app_atlas_mask_extract_field )
+  endif()
 endif()

@@ -23,7 +23,7 @@
 int main(int argc, char** argv) {
     atlas::initialize(argc, argv);
     if (argc != 4) {
-        std::cerr << "Usage: " << argv[0] << " <write|check> <mask-path> <grid>" << std::endl;
+        std::cerr << "Usage: " << argv[0] << " <write|check|write-field|check-extracted> <path> <grid>" << std::endl;
         atlas::finalize();
         return 1;
     }
@@ -38,6 +38,31 @@ int main(int argc, char** argv) {
             mask[i] = static_cast<int>(i % 2);
         }
         atlas::MaskIO::write(path, atlas::MaskData{grid.name(), mask});
+    }
+    else if (action == "write-field") {
+        std::vector<double> values(grid.size(), 1.);
+        values[1] = 9999.;
+        atlas::io::RecordWriter writer;
+        writer.set("grid.name", grid.name());
+        writer.set("fields[0].array", atlas::io::ref(values));
+        writer.write(path, atlas::io::Mode::write);
+    }
+    else if (action == "check-extracted") {
+        const atlas::MaskData data = atlas::MaskIO::read(path);
+        if (data.grid != grid.name() || data.values.size() != grid.size()) {
+            std::cerr << "Unexpected extracted mask grid or size" << std::endl;
+            atlas::finalize();
+            return 1;
+        }
+        for (size_t i = 0; i < data.values.size(); ++i) {
+            const int expected = i == 1 ? 0 : 1;
+            if (data.values[i] != expected) {
+                std::cerr << "Unexpected extracted mask value at index " << i << ": " << data.values[i]
+                          << std::endl;
+                atlas::finalize();
+                return 1;
+            }
+        }
     }
     else if (action == "check") {
         std::string format;

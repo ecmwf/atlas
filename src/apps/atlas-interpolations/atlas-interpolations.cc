@@ -26,6 +26,7 @@
 #include "atlas/interpolation.h"
 #include "atlas/interpolation/AssembleGlobalMatrix.h"
 #include "atlas/interpolation/method/MethodFactory.h"
+#include "atlas/io/atlas-io.h"
 #include "atlas/linalg/sparse.h"
 
 #include "atlas/mesh/Mesh.h"
@@ -147,6 +148,7 @@ public:
             "matrix.name", "Name of the remapping matrix. If not provided a default unique name will be chosen"));
         add_option(new SimpleOption<std::string>("matrix.format", "Format of the remapping matrix: eckit, scrip"));
         add_option(new SimpleOption<bool>("output-gmsh", "Set to enable gmsh output for tests"));
+        add_option(new SimpleOption<bool>("output-gmsh-source", "Include source field in Gmsh output"));
         add_option(
             new SimpleOption<std::string>("gmsh.coordinates", "Choose the coordinates in gmsh output: {lonlat, xyz}"));
         add_option(new SimpleOption<std::string>("gmsh.missing_value.policy",
@@ -165,7 +167,10 @@ public:
         add_option(new eckit::option::Separator("Initial condition options"));
         add_option(new SimpleOption<std::string>("init",
                                                  "Setup initial source field [ constant, spherical_harmonic, "
-                                                 "vortex_rollup (default), solid_body_rotation_wind_magnitude ]"));
+                                                 "vortex_rollup (default), solid_body_rotation_wind_magnitude, "
+                                                 "atlas-field-magnitude (EXPERIMENTAL) ]"));
+        add_option(new SimpleOption<std::string>(
+            "init-file", "AtlasIO file used by experimental init=atlas-field-magnitude"));
         add_option(
             new SimpleOption<double>("solid_body_rotation.angle", "Angle of solid body rotation (default = 0.)"));
         add_option(new SimpleOption<double>("vortex_rollup.t", "Value that controls vortex rollup (default = 0.5)"));
@@ -230,6 +235,69 @@ std::function<double(const PointLonLat&)> get_init(const AtlasTool::Args& args) 
     }
     ATLAS_THROW_EXCEPTION("Should not be here");
 }
+
+class SourceInitialCondition {
+public:
+    SourceInitialCondition(const AtlasTool::Args& args, const Grid& grid) {
+        const std::string init = args.getString("init", "vortex_rollup");
+        if (init != "atlas-field-magnitude") {
+            function_ = get_init(args);
+            return;
+        }
+
+        Log::warning() << "\n"
+                       << "**************************************************************************\n"
+                       << "* WARNING: --init=atlas-field-magnitude IS EXPERIMENTAL                  *\n"
+                       << "* Its interface and initialisation semantics may change.                 *\n"
+                       << "* It expects two fields in the input file:                               *\n"
+                       << "*   the first and second components of the vector field.                 *\n"
+                       << "* Verify the input fields and missing-value handling before using it.    *\n"
+                       << "**************************************************************************"
+                       << std::endl;
+
+        if (!args.has("init-file")) {
+            ATLAS_THROW_EXCEPTION("--init=atlas-field-magnitude requires --init-file");
+        }
+        const std::string path = args.getString("init-file");
+        std::string record_grid_name;
+        std::vector<double> first;
+        std::vector<double> second;
+        io::RecordReader reader(path);
+        reader.read("grid.name", record_grid_name);
+        reader.read("fields[0].array", first);
+        reader.read("fields[1].array", second);
+        reader.wait();
+
+        if (record_grid_name != grid.name()) {
+            ATLAS_THROW_EXCEPTION("Initial-condition file '" << path << "' is for grid '" << record_grid_name
+                                                               << "', expected '" << grid.name() << "'");
+        }
+        if (first.size() != grid.size() || second.size() != grid.size()) {
+            ATLAS_THROW_EXCEPTION("Initial-condition file '" << path << "' contains field sizes " << first.size()
+                                                               << " and " << second.size() << ", expected "
+                                                               << grid.size());
+        }
+
+        values_ = std::move(first);
+        const double missing_value = args.getDouble("missing_value", std::numeric_limits<double>::lowest());
+        for (std::size_t i = 0; i < values_.size(); ++i) {
+            if (values_[i] == missing_value || second[i] == missing_value) {
+                values_[i] = missing_value;
+            }
+            else {
+                values_[i] = std::hypot(values_[i], second[i]);
+            }
+        }
+    }
+
+    double operator()(gidx_t index, const PointLonLat& point) const {
+        return values_.empty() ? function_(point) : values_.at(static_cast<std::size_t>(index));
+    }
+
+private:
+    std::function<double(const PointLonLat&)> function_;
+    std::vector<double> values_;
+};
 
 double elapsed_ms(const StopWatch& timer, bool single_rank = false) {
     double timer_elapsed = timer.elapsed() * 1000.;
@@ -353,6 +421,29 @@ void read_mask(const std::string& mask_name, mdspan<int, dims<1>> mask) {
     else {
         ATLAS_NOTIMPLEMENTED;
     }
+}
+
+void set_grid_mask(const std::string& mask_name, FunctionSpace& functionspace) {
+    Field global_indices = functionspace.createField(functionspace.global_index(), option::global());
+    array::make_view<gidx_t, 1>(global_indices).assign(0);
+    functionspace.gather(functionspace.global_index(), global_indices);
+
+    functionspace.setMask([&](int* mask, size_t size) {
+        std::vector<int> grid_mask(functionspace.grid().size());
+        read_mask(mask_name, mdspan<int, dims<1>>(grid_mask.data(), grid_mask.size()));
+
+        auto global_index = array::make_view<gidx_t, 1>(global_indices);
+        ATLAS_ASSERT(global_index.size() == size);
+        for (idx_t i = 0; i < global_index.size(); ++i) {
+            if (global_index(i) == 0) {
+                mask[i] = 0;
+                continue;
+            }
+            const gidx_t grid_index = global_index(i) - 1;
+            ATLAS_ASSERT(grid_index >= 0 && grid_index < grid_mask.size());
+            mask[i] = grid_mask[grid_index];
+        }
+    });
 }
 
 Config get_interpolation_config(const Grid& sgrid, const Grid& tgrid, const AtlasTool::Args& args) {
@@ -648,6 +739,15 @@ Config gmsh_field_config(const AtlasTool::Args& args, const util::Config& defaul
     return config;
 }
 
+void set_missing_value_metadata(const AtlasTool::Args& args, Field& field) {
+    double missing_value = std::numeric_limits<double>::lowest();
+    args.get("missing_value", missing_value);
+    field.metadata().set("missing_value", missing_value);
+    field.metadata().set("missing_value_type", "equals");
+    // field.metadata().set("missing_value_type", "approximately-equals");
+    // field.metadata().set("missing_value_epsilon", 1.);
+}
+
 template <typename View>
 void gmsh_output(const std::string& name, const Grid& grid, const View& field, const std::string& mask_option,
                  const AtlasTool::Args& args) {
@@ -662,13 +762,10 @@ void gmsh_output(const std::string& name, const Grid& grid, const View& field, c
 
     if (args.has(mask_option)) {
         const std::string mask_name = args.getString(mask_option);
-        fs.setMask([mask_name](int* mask, size_t size) { read_mask(mask_name, mdspan<int, dims<1>>(mask, size)); });
+        set_grid_mask(mask_name, fs);
     }
     auto f = fs.createField<double>(option::name(name));
-    double missing_value = std::numeric_limits<double>::lowest();
-    args.get("missing_value", missing_value);
-    f.metadata().set("missing_value", missing_value);
-    f.metadata().set("missing_value_type", "equals");
+    set_missing_value_metadata(args, f);
 
     auto v          = array::make_view<double, 1>(f);
     auto g          = array::make_view<gidx_t, 1>(fs.global_index());
@@ -688,7 +785,8 @@ void gmsh_output(const std::string& name, const Grid& grid, const View& field, c
     gmsh.write(f, gmsh_field_config(args, gmsh_field_default_config));
 }
 
-void test_matrix(const Grid& sgrid, const Grid& tgrid, const Matrix& matrix, const AtlasTool::Args& args) {
+void test_matrix(const Grid& sgrid, const Grid& tgrid, const Matrix& matrix, const AtlasTool::Args& args,
+                 const SourceInitialCondition& initial_condition) {
     ATLAS_TRACE();
 
     // Allocate and initialise own memory here to show possibilities
@@ -698,10 +796,10 @@ void test_matrix(const Grid& sgrid, const Grid& tgrid, const Matrix& matrix, con
     ATLAS_TRACE_SCOPE("initialize source") {
         if (args.has("init") || not args.has("s.grib")) {
             ATLAS_DEBUG("using init");
-            auto init = get_init(args);
             idx_t n{0};
             for (auto p : sgrid.lonlat()) {
-                sdata[n++] = init(p);
+                sdata[n] = initial_condition(n, p);
+                ++n;
             }
         }
         else {
@@ -781,9 +879,11 @@ void test_matrix(const Grid& sgrid, const Grid& tgrid, const Matrix& matrix, con
 
     if (args.getBool("output-gmsh", false)) {
         ATLAS_TRACE_SCOPE("Gmsh serial output") {
-            std::string sname = "test_matrix_source_" + get_matrix_name(args);
-            auto sview        = atlas::array::make_view<double, 1>(sdata.data(), matrix.cols());
-            gmsh_output(sname, sgrid, sview, "s.mask", args);
+            if (args.getBool("output-gmsh-source", false)) {
+                std::string sname = "test_matrix_source_" + get_matrix_name(args);
+                auto sview        = atlas::array::make_view<double, 1>(sdata.data(), matrix.cols());
+                gmsh_output(sname, sgrid, sview, "s.mask", args);
+            }
 
             std::string tname = "test_matrix_target_" + get_matrix_name(args);
             auto tview        = atlas::array::make_view<double, 1>(tdata.data(), matrix.rows());
@@ -841,6 +941,7 @@ int AtlasInterpolations::execute(const AtlasTool::Args& args) {
 
     auto sgrid             = get_sgrid(args);
     auto tgrid             = get_tgrid(args);
+    const SourceInitialCondition initial_condition(args, sgrid);
     std::string sdata_name = gridpoints_are_cells(sgrid) ? "cell data" : "node data";
     std::string tdata_name = gridpoints_are_cells(tgrid) ? "cell data" : "node data";
 
@@ -880,7 +981,7 @@ int AtlasInterpolations::execute(const AtlasTool::Args& args) {
         }
         if (args.getBool("test-matrix", false)) {
             if (mpi::comm().rank() == 0) {
-                test_matrix(sgrid, tgrid, matrix, args);
+                test_matrix(sgrid, tgrid, matrix, args, initial_condition);
             }
             matrix_tested = true;
         }
@@ -914,9 +1015,7 @@ int AtlasInterpolations::execute(const AtlasTool::Args& args) {
 
         auto configure_mask = [&](const std::string& mask_option, FunctionSpace& fs) {
             if (args.has(mask_option)) {
-                fs.setMask([&](int* mask, size_t size) {
-                    read_mask(args.getString(mask_option), mdspan<int, dims<1>>(mask, size));
-                });
+                set_grid_mask(args.getString(mask_option), fs);
             }
         };
 
@@ -946,11 +1045,12 @@ int AtlasInterpolations::execute(const AtlasTool::Args& args) {
             auto src_field  = interpolator.source().createField<double>();
             auto tgt_field  = interpolator.target().createField<double>();
             auto src_lonlat = array::make_view<double, 2>(interpolator.source().lonlat());
+            auto src_global_index = array::make_view<gidx_t, 1>(interpolator.source().global_index());
             ATLAS_TRACE_SCOPE("initialize source") {
-                auto init        = get_init(args);
                 auto src_field_v = array::make_view<double, 1>(src_field);
-                for (idx_t i = 0; i < src_fs.size(); ++i) {
-                    src_field_v[i] = init(PointLonLat{src_lonlat(i, 0), src_lonlat(i, 1)});
+                for (idx_t i = 0; i < src_field_v.size(); ++i) {
+                    src_field_v[i] = initial_condition(
+                        src_global_index(i) - 1, PointLonLat{src_lonlat(i, 0), src_lonlat(i, 1)});
                 }
             }
             src_field.set_dirty(false);  // all values are up to date
@@ -1014,6 +1114,7 @@ int AtlasInterpolations::execute(const AtlasTool::Args& args) {
                 }
                 else {
                     tgt_field.haloExchange();
+                    set_missing_value_metadata(args, tgt_field);
                     std::string tgt_name = "test_interpolator_target_" + matrix_name;
                     Log::info() << "Storing field '" << tgt_name << ".msh'." << std::endl;
                     std::string coords = args.getString("gmsh.coordinates", "lonlat");
@@ -1050,7 +1151,7 @@ int AtlasInterpolations::execute(const AtlasTool::Args& args) {
                 }
             }
             if (args.getBool("test-matrix", false) && !matrix_tested) {
-                test_matrix(sgrid, tgrid, matrix, args);
+                test_matrix(sgrid, tgrid, matrix, args, initial_condition);
             }
         }
     }

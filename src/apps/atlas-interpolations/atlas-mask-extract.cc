@@ -18,6 +18,7 @@
 #include <netcdf>
 
 #include "atlas/grid.h"
+#include "atlas/io/atlas-io.h"
 #include "atlas/runtime/AtlasTool.h"
 #include "atlas/runtime/Exception.h"
 #include "atlas/runtime/Log.h"
@@ -266,14 +267,49 @@ MaskData extract_mask_scrip(const std::string& input_path, const std::string& gr
     }
 }
 
+MaskData extract_mask_atlas_field(const std::string& input_path, long field_index, double missing_value) {
+    if (field_index < 0) {
+        ATLAS_THROW_EXCEPTION("--field-index must be non-negative");
+    }
+    if (!std::filesystem::exists(input_path)) {
+        ATLAS_THROW_EXCEPTION("Input file does not exist: '" << input_path << "'");
+    }
+
+    std::string grid_name;
+    std::vector<double> values;
+    const std::string field = "fields[" + std::to_string(field_index) + "].array";
+    try {
+        io::RecordReader reader(input_path);
+        reader.read("grid.name", grid_name);
+        reader.read(field, values);
+        reader.wait();
+    }
+    catch (const std::exception& error) {
+        ATLAS_THROW_EXCEPTION("Could not read AtlasIO field '" << field << "' from '" << input_path
+                                                                 << "': " << error.what());
+    }
+
+    const Grid grid{grid_name};
+    if (values.size() != grid.size()) {
+        ATLAS_THROW_EXCEPTION("AtlasIO field '" << field << "' contains " << values.size() << " values but grid '"
+                                                  << grid_name << "' has " << grid.size() << " points");
+    }
+
+    MaskData data{grid_name, std::vector<int>(values.size())};
+    std::transform(values.begin(), values.end(), data.values.begin(),
+                   [missing_value](double value) { return value == missing_value ? 0 : 1; });
+    return data;
+}
+
 }  // namespace
 
 class AtlasMaskExtract : public AtlasTool {
     int execute(const AtlasTool::Args& args) override;
-    std::string briefDescription() override { return "Extract a SCRIP NetCDF mask into an Atlas mask record"; }
+    std::string briefDescription() override { return "Extract a mask into an Atlas mask record"; }
     std::string usage() override {
         return name() + " INPUT.nc OUTPUT.atlas GRID [--side=src|dst]\n" + name() +
-               " INPUT.nc --list [--side=src|dst]";
+               " INPUT.nc --list [--side=src|dst]\n" + name() +
+             " INPUT.atlas OUTPUT.atlas --atlas-field [--field-index=N] [--missing-value=VALUE] (EXPERIMENTAL)";
     }
     int numberOfPositionalArguments() override { return -1; }
     int minimumPositionalArguments() override { return 1; }
@@ -283,6 +319,9 @@ public:
     AtlasMaskExtract(int argc, char* argv[]): AtlasTool(argc, argv) {
         add_option(new SimpleOption<bool>("list", "List NetCDF metadata and validate SCRIP conventions"));
         add_option(new SimpleOption<std::string>("side", "SCRIP remapping grid to extract: src or dst"));
+        add_option(new SimpleOption<bool>("atlas-field", "EXPERIMENTAL: Extract a mask from an AtlasIO field"));
+        add_option(new SimpleOption<long>("field-index", "AtlasIO field index (default: 0)"));
+        add_option(new SimpleOption<double>("missing-value", "AtlasIO field missing value (default: 9999)"));
     }
 };
 
@@ -291,6 +330,42 @@ int AtlasMaskExtract::execute(const AtlasTool::Args& args) {
 
     const std::string input_path = get_positional_arg(args, 0);
     const std::string side = args.getString("side", "");
+    const bool atlas_field = args.getBool("atlas-field", false);
+
+    if (atlas_field) {
+        Log::warning() << "\n"
+                       << "**********************************************************************\n"
+                       << "* WARNING: --atlas-field IS EXPERIMENTAL                             *\n"
+                       << "* Its interface and mask extraction, semantics,                      *\n"
+                       << "* and the file format itself may change.                             *\n"
+                       << "* Verify the reported zero/one counts before using the output mask.  *\n"
+                       << "**********************************************************************"
+                       << std::endl;
+
+        const std::string output_path = get_positional_arg(args, 1);
+        if (output_path.empty() || !get_positional_arg(args, 2).empty()) {
+            ATLAS_THROW_EXCEPTION("Usage: " << name()
+                                              << " INPUT.atlas OUTPUT.atlas --atlas-field [--field-index=N] "
+                                                 "[--missing-value=VALUE]");
+        }
+        if (args.getBool("list", false) || !side.empty()) {
+            ATLAS_THROW_EXCEPTION("--atlas-field cannot be combined with --list or --side");
+        }
+        if (input_path == output_path) {
+            ATLAS_THROW_EXCEPTION("Input and output paths must be different");
+        }
+
+        const long field_index = args.getLong("field-index", 0);
+        const double missing_value = args.getDouble("missing-value", 9999.);
+        const MaskData data = extract_mask_atlas_field(input_path, field_index, missing_value);
+        MaskIO::write(output_path, data);
+
+        const std::size_t ones = static_cast<std::size_t>(std::count(data.values.begin(), data.values.end(), 1));
+        Log::info() << "Extracted " << data.values.size() << " values from fields[" << field_index
+                    << "].array for grid " << data.grid << "\nZeros: " << data.values.size() - ones
+                    << "\nOnes: " << ones << "\nWrote '" << output_path << "'" << std::endl;
+        return success();
+    }
 
     if (args.getBool("list", false)) {
         if (!get_positional_arg(args, 1).empty()) {
