@@ -222,6 +222,17 @@ CASE("test_functionspace_PointCloud with intrinsic grid ghosts") {
         }
         EXPECT_EQ(global_view(global.size() - 1), -1.);
     }
+
+    pointcloud.setMask([](int* values, size_t size) {
+        for (size_t index = 0; index < size; ++index) {
+            values[index] = index % 3 == 0;
+        }
+    });
+    auto mask = array::make_view<int, 1>(pointcloud.mask());
+    for (idx_t index = 0; index < pointcloud.size(); ++index) {
+        const gidx_t grid_index = global_index(index) - 1;
+        EXPECT_EQ(mask(index), grid.masterIndex(grid_index) % 3 == 0);
+    }
 }
 
 //-----------------------------------------------------------------------------
