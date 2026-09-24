@@ -726,6 +726,9 @@ void Method::adaptMatrixWithFallback() {
         return;
     }
     std::string interpolation_fallback = eckit::Resource<std::string>("$ATLAS_INTERPOLATION_FALLBACK", "");
+    if (interpolation_fallback == "0") {
+        return;
+    }
     if (interpolation_fallback.empty() || hack_recursive_call_detector > 0) {
         return;
     }

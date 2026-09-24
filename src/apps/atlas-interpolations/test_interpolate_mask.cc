@@ -10,6 +10,7 @@
 
 #include <fstream>
 #include <iostream>
+#include <sstream>
 #include <string>
 #include <vector>
 
@@ -17,7 +18,7 @@
 #include "atlas/io/atlas-io.h"
 #include "atlas/library.h"
 
-#include "AtlasIO.h"
+#include "MaskIO.h"
 
 int main(int argc, char** argv) {
     atlas::initialize(argc, argv);
@@ -36,23 +37,29 @@ int main(int argc, char** argv) {
         for (size_t i = 0; i < mask.size(); ++i) {
             mask[i] = static_cast<int>(i % 2);
         }
-        atlas::AtlasIO::write_mask(path, grid.name(), atlas::mdspan<int, atlas::dims<1>>(mask.data(), mask.size()));
+        atlas::MaskIO::write(path, atlas::MaskData{grid.name(), mask});
     }
     else if (action == "check") {
-        std::string grid_name;
-        size_t size = 0;
+        std::string format;
+        int version{0};
+        std::string grid_spec;
         atlas::io::RecordReader reader(path);
-        reader.read("grid", grid_name);
-        reader.read("size", size);
+        reader.read("format", format);
+        reader.read("version", version);
+        reader.read("grid", grid_spec);
         reader.wait();
-        if (grid_name != grid.name() || size != grid.size()) {
-            std::cerr << "Unexpected mask metadata: grid=" << grid_name << ", size=" << size << std::endl;
+
+        std::istringstream stream(grid_spec);
+        const atlas::Grid encoded_grid{atlas::util::Config(stream)};
+        if (format != "atlas-mask" || version != 1 || encoded_grid != grid) {
+            std::cerr << "Unexpected mask metadata: format=" << format << ", version=" << version
+                      << ", grid=" << grid_spec << std::endl;
             atlas::finalize();
             return 1;
         }
 
-        std::vector<int> mask(size);
-        atlas::AtlasIO::read_mask(path, atlas::mdspan<int, atlas::dims<1>>(mask.data(), mask.size()));
+        std::vector<int> mask(grid.size());
+        atlas::MaskIO::read(path, atlas::mdspan<int, atlas::dims<1>>(mask.data(), mask.size()));
         for (size_t i = 0; i < mask.size(); ++i) {
             if (mask[i] != static_cast<int>(i % 2)) {
                 std::cerr << "Unexpected mask value at index " << i << ": " << mask[i] << std::endl;

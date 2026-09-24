@@ -12,8 +12,8 @@ ecbuild_add_executable(
   SOURCES atlas-interpolations.cc
           ScripIO.h
           ScripIO.cc
-          AtlasIO.h
-          AtlasIO.cc
+          MaskIO.h
+          MaskIO.cc
   LIBS    atlas
 )
 
@@ -37,6 +37,10 @@ target_compile_definitions( atlas-interpolations PRIVATE ATLAS_HAVE_GRIB=${HAVE_
 if( HAVE_GRIB )
   target_link_libraries( atlas-interpolations eccodes )
 endif()
+
+ecbuild_add_executable( TARGET atlas-mask-interpolate
+                        SOURCES atlas-mask-interpolate.cc MaskIO.h MaskIO.cc
+                        LIBS atlas )
 
 function( atlas_test_app_atlas_interpolations case nprocs )
 
@@ -122,7 +126,7 @@ endfunction()
 if (HAVE_TESTS)
   ecbuild_add_executable(
     TARGET atlas-test-interpolate-mask
-    SOURCES test_interpolate_mask.cc AtlasIO.h AtlasIO.cc
+    SOURCES test_interpolate_mask.cc MaskIO.h MaskIO.cc
     LIBS atlas
     NOINSTALL
   )
@@ -131,32 +135,30 @@ if (HAVE_TESTS)
   set( interpolate_mask_target test_interpolate_mask_target.atlas )
 
   ecbuild_add_test(
-    TARGET atlas_test_app_atlas_interpolations_mask_setup
+    TARGET atlas_test_app_atlas_mask_interpolate_setup
     COMMAND atlas-test-interpolate-mask
     ARGS write ${interpolate_mask_source} O8
     ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
   )
   ecbuild_add_test(
-    TARGET atlas_test_app_atlas_interpolations_mask_interpolate
-    COMMAND atlas-interpolations
-    ARGS --interpolate-mask
-         --s.grid=O8
-         --t.grid=O8
-         --s.mask=${interpolate_mask_source}
-         --output-mask=${interpolate_mask_target}
-          --output-gmsh
+    TARGET atlas_test_app_atlas_mask_interpolate
+    COMMAND atlas-mask-interpolate
+    ARGS ${interpolate_mask_source}
+         O8
+         --output=${interpolate_mask_target}
+         --output-gmsh
     ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
   )
   ecbuild_add_test(
-    TARGET atlas_test_app_atlas_interpolations_mask_check
+    TARGET atlas_test_app_atlas_mask_interpolate_check
     COMMAND atlas-test-interpolate-mask
     ARGS check ${interpolate_mask_target} O8
     ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
   )
-  set_tests_properties( atlas_test_app_atlas_interpolations_mask_interpolate PROPERTIES
-                        DEPENDS atlas_test_app_atlas_interpolations_mask_setup )
-  set_tests_properties( atlas_test_app_atlas_interpolations_mask_check PROPERTIES
-                        DEPENDS atlas_test_app_atlas_interpolations_mask_interpolate )
+  set_tests_properties( atlas_test_app_atlas_mask_interpolate PROPERTIES
+                        DEPENDS atlas_test_app_atlas_mask_interpolate_setup )
+  set_tests_properties( atlas_test_app_atlas_mask_interpolate_check PROPERTIES
+                        DEPENDS atlas_test_app_atlas_mask_interpolate )
 
   unset(cases)
   list( APPEND cases
@@ -215,6 +217,11 @@ if (HAVE_TESTS)
 endif()
 
 ecbuild_add_executable( TARGET atlas-mask-diff
-                        SOURCES atlas-mask-diff.cc
-                               AtlasIO.h ATLASIO.cc
+                        SOURCES atlas-mask-diff.cc MaskIO.h MaskIO.cc
                         LIBS atlas )
+
+if( HAVE_NETCDF )
+  ecbuild_add_executable( TARGET atlas-mask-extract
+                          SOURCES atlas-mask-extract.cc MaskIO.h MaskIO.cc
+                          LIBS atlas NetCDF::NetCDF_CXX )
+endif()
