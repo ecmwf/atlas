@@ -59,7 +59,7 @@ void NearestNeighbour::do_setup(const Grid& source, const Grid& target, const Ca
             mesh = MeshGenerator("structured", util::Config("3d", true)).generate(grid);
         }
         else {
-            mesh = MeshGenerator("delaunay").generate(grid);
+            mesh = Mesh(grid);
         }
         return functionspace::NodeColumns(mesh);
     };
