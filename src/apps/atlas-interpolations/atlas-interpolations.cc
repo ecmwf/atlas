@@ -12,6 +12,8 @@
 #include <cstdlib>
 #include <fstream>
 #include <iomanip>
+#include <sstream>
+#include <unordered_set>
 
 #include "eckit/filesystem/PathName.h"
 
@@ -28,6 +30,7 @@
 #include "atlas/interpolation/method/MethodFactory.h"
 #include "atlas/io/atlas-io.h"
 #include "atlas/linalg/sparse.h"
+#include "atlas/linalg/sparse/SparseMatrixTriplet.h"
 
 #include "atlas/mesh/Mesh.h"
 #include "atlas/meshgenerator.h"
@@ -36,6 +39,7 @@
 #include "atlas/runtime/AtlasTool.h"
 #include "atlas/util/Checksum.h"
 #include "atlas/util/CoordinateEnums.h"
+#include "atlas/util/KDTree.h"
 #include "atlas/util/function/VortexRollup.h"
 
 
@@ -74,6 +78,10 @@ std::vector<double> tgt_ref;
 //      atlas-interpolations --s.grid=<sgrid> --t.grid=<tgrid> --i.type=<interp> --output-matrix --matrix.format=<fmt>
 // 3) read in a stored global interpolation matrix from the disk:
 //      atlas-interpolations --s.grid=<sgrid> --t.grid=<tgrid> --i.type=<interp> --read-matrix --matrix.format=<fmt>
+// 4) extract the interpolation stencil for a few target points into a lightweight ASCII file for
+//    visualisation/study (see plot_stencil.py), without writing the entire interpolated field:
+//      atlas-interpolations --s.grid=<sgrid> --t.grid=<tgrid> --i.type=<interp> --output-stencil \
+//                           --stencil.target-lonlat=<lon,lat[;lon,lat...]> [--s.mask=<mask> --t.mask=<mask>]
 //
 // Formats <fmt> can be 'eckit' (binary) or 'scrip' (netcdf).
 //
@@ -117,6 +125,11 @@ public:
         add_option(new eckit::option::Separator("Commands"));
         add_option(new SimpleOption<bool>("list", "List available interpolation types"));
         add_option(new SimpleOption<bool>("interpolate", "Test an interpolation type"));
+        add_option(new SimpleOption<bool>(
+            "output-stencil", "Extract interpolation stencil(s) for a few target points into a lightweight ASCII "
+                              "file for visualisation/study (source+target points, weights, masks, and source mesh "
+                              "connectivity when available), without writing the full interpolated field. "
+                              "Configure with the 'stencil.*' options. Best used in serial (1 MPI task)."));
 
         // Configuration
         add_option(new eckit::option::Separator("Interpolation options"));
@@ -162,6 +175,23 @@ public:
 
         add_option(new SimpleOption<bool>("output-checksum", "Compute checksums"));
         add_option(new SimpleOption<std::string>("checksum.file", "Path of files for checksums [default='checksum']"));
+
+        // Stencil extraction options
+        add_option(new eckit::option::Separator("Stencil extraction options (used with --stencil)"));
+        add_option(new SimpleOption<std::string>(
+            "stencil.target-lonlat", "Target location(s) to extract; the nearest target grid point is used. Format: "
+                                     "'lon,lat' or several separated by ';', e.g. --stencil.target-lonlat=10,45;-30,60"));
+        add_option(new SimpleOption<std::string>(
+            "stencil.target-index",
+            "Target grid point(s) to extract, given as 1-based global index/indices, comma-separated, "
+            "e.g. --stencil.target-index=1024,2048"));
+        add_option(new SimpleOption<long>(
+            "stencil.source-context", "Number of nearest source grid points added around each stencil point to give "
+                                      "context (e.g. to see the source mask around the stencil). (default=8)"));
+        add_option(new SimpleOption<long>(
+            "stencil.target-context", "Number of nearest target grid points added around the target point to give "
+                                      "context. (default: same as --stencil.source-context)"));
+        add_option(new SimpleOption<std::string>("stencil.file", "Output ASCII file for stencils [default='stencil.txt']"));
 
         // Initial condition options
         add_option(new eckit::option::Separator("Initial condition options"));
@@ -785,6 +815,314 @@ void gmsh_output(const std::string& name, const Grid& grid, const View& field, c
     gmsh.write(f, gmsh_field_config(args, gmsh_field_default_config));
 }
 
+std::vector<std::string> split_string(const std::string& str, char delim) {
+    std::vector<std::string> out;
+    std::stringstream ss(str);
+    std::string item;
+    while (std::getline(ss, item, delim)) {
+        // trim surrounding whitespace
+        auto b = item.find_first_not_of(" \t");
+        auto e = item.find_last_not_of(" \t");
+        if (b != std::string::npos) {
+            out.push_back(item.substr(b, e - b + 1));
+        }
+    }
+    return out;
+}
+
+std::vector<int> load_grid_mask(const AtlasTool::Args& args, const std::string& mask_option, const Grid& grid) {
+    // Default: everything valid (mask==1). Masks are stored/read in global grid-point order.
+    std::vector<int> mask(grid.size(), 1);
+    if (args.has(mask_option)) {
+        read_mask(args.getString(mask_option), mdspan<int, dims<1>>(mask.data(), mask.size()));
+    }
+    return mask;
+}
+
+util::IndexKDTree build_lonlat_kdtree(const std::vector<PointLonLat>& lonlat) {
+    util::IndexKDTree search;
+    search.reserve(lonlat.size());
+    for (idx_t i = 0; i < static_cast<idx_t>(lonlat.size()); ++i) {
+        search.insert(lonlat[i], i);
+    }
+    search.build();
+    return search;
+}
+
+// Extract the interpolation stencil for a small selection of target points and write it to a
+// lightweight ASCII file, suitable for studying/visualising a single interpolation with a Python tool.
+//
+// The stencil of a target point is the row of the (global) interpolation matrix: the set of source
+// grid points and their weights that contribute to that target point. Around the stencil we also add
+// some 'context' points (nearest neighbours) so that e.g. the source and target masks can be inspected
+// in the neighbourhood of the stencil: context source points around the stencil sources, and context
+// target points around the target point. When a function space is mesh-based, the mesh cells touching
+// the stencil/context are written as well, to visualise the connectivity.
+void extract_stencils(const Grid& sgrid, const Grid& tgrid, const Matrix& matrix, const FunctionSpace& src_fs,
+                      const FunctionSpace& tgt_fs, const AtlasTool::Args& args) {
+    ATLAS_TRACE();
+
+    if (matrix.rows() == 0 || matrix.cols() == 0) {
+        Log::warning() << "Stencil extraction skipped: interpolation matrix is empty." << std::endl;
+        return;
+    }
+    ATLAS_ASSERT(static_cast<gidx_t>(matrix.rows()) == static_cast<gidx_t>(tgrid.size()),
+                 "Stencil extraction requires the global matrix (rows == target grid size)");
+    ATLAS_ASSERT(static_cast<gidx_t>(matrix.cols()) == static_cast<gidx_t>(sgrid.size()),
+                 "Stencil extraction requires the global matrix (cols == source grid size)");
+
+    // --- Coordinates (global grid-point order) ---
+    std::vector<PointLonLat> src_lonlat(sgrid.size());
+    std::vector<PointLonLat> tgt_lonlat(tgrid.size());
+    ATLAS_TRACE_SCOPE("Load coordinates") {
+        idx_t n = 0;
+        for (auto p : sgrid.lonlat()) {
+            src_lonlat[n++] = p;
+        }
+        n = 0;
+        for (auto p : tgrid.lonlat()) {
+            tgt_lonlat[n++] = p;
+        }
+    }
+
+    // --- Masks (global grid-point order; default all valid) ---
+    const bool has_src_mask = args.has("s.mask");
+    const bool has_tgt_mask = args.has("t.mask");
+    std::vector<int> src_mask = load_grid_mask(args, "s.mask", sgrid);
+    std::vector<int> tgt_mask = load_grid_mask(args, "t.mask", tgrid);
+
+    // --- Context configuration and KDTrees ---
+    const long source_context_k = std::max<long>(0, args.getLong("stencil.source-context", 8));
+    // Target context defaults to the same amount as the source context when not given explicitly.
+    const long target_context_k = std::max<long>(0, args.getLong("stencil.target-context", source_context_k));
+
+    // The target KDTree is needed to select targets by lonlat and to gather target context points.
+    util::IndexKDTree tsearch;
+    if (target_context_k > 0 || args.has("stencil.target-lonlat")) {
+        ATLAS_TRACE_SCOPE("Build target KDTree") {
+            tsearch = build_lonlat_kdtree(tgt_lonlat);
+        }
+    }
+
+    // --- Select target points (result: 0-based row indices) ---
+    std::vector<gidx_t> targets;
+    if (args.has("stencil.target-index")) {
+        for (const auto& s : split_string(args.getString("stencil.target-index"), ',')) {
+            gidx_t idx1 = static_cast<gidx_t>(std::stol(s));
+            if (idx1 < 1 || idx1 > static_cast<gidx_t>(tgrid.size())) {
+                ATLAS_THROW_EXCEPTION("--stencil.target-index=" << idx1 << " is out of range [1," << tgrid.size()
+                                                                << "]");
+            }
+            targets.push_back(idx1 - 1);
+        }
+    }
+    if (args.has("stencil.target-lonlat")) {
+        for (const auto& pt : split_string(args.getString("stencil.target-lonlat"), ';')) {
+            auto ll = split_string(pt, ',');
+            if (ll.size() != 2) {
+                ATLAS_THROW_EXCEPTION("--stencil.target-lonlat expects 'lon,lat' pairs separated by ';', got '" << pt
+                                                                                                             << "'");
+            }
+            PointLonLat p{std::stod(ll[0]), std::stod(ll[1])};
+            targets.push_back(tsearch.closestPoint(p).payload());
+        }
+    }
+    if (targets.empty()) {
+        targets.push_back(tgrid.size() / 2);
+        Log::warning() << "Stencil: neither --stencil.target-lonlat nor --stencil.target-index given; defaulting to "
+                          "target global index "
+                       << (targets.front() + 1) << std::endl;
+    }
+    // De-duplicate while preserving order
+    {
+        std::unordered_set<gidx_t> seen;
+        std::vector<gidx_t> unique_targets;
+        for (auto t : targets) {
+            if (seen.insert(t).second) {
+                unique_targets.push_back(t);
+            }
+        }
+        targets.swap(unique_targets);
+    }
+
+    // --- KDTree over source grid points for context lookup ---
+    util::IndexKDTree ssearch;
+    if (source_context_k > 0) {
+        ATLAS_TRACE_SCOPE("Build source KDTree") {
+            ssearch = build_lonlat_kdtree(src_lonlat);
+        }
+    }
+
+    // --- Optional source/target mesh connectivity ---
+    auto mesh_of = [](const FunctionSpace& fs) -> Mesh {
+        if (auto nc = NodeColumns(fs)) {
+            return nc.mesh();
+        }
+        if (auto cc = CellColumns(fs)) {
+            return cc.mesh();
+        }
+        return Mesh();
+    };
+    Mesh src_mesh = mesh_of(src_fs);
+    Mesh tgt_mesh = mesh_of(tgt_fs);
+
+    auto matrix_view = linalg::make_host_view<double, int>(matrix);
+
+    const std::string filename = args.getString("stencil.file", "stencil.txt");
+    std::ofstream out(filename);
+    if (!out) {
+        ATLAS_THROW_EXCEPTION("Could not open stencil output file '" << filename << "'");
+    }
+    out << std::setprecision(10);
+
+    // --- Header ---
+    out << "# tool=atlas-interpolation-stencil\n";
+    out << "# format=1\n";
+    out << "# source_grid=" << sgrid.name() << "\n";
+    out << "# target_grid=" << tgrid.name() << "\n";
+    out << "# interpolation=" << get_interpolation_method(args) << "\n";
+    out << "# source_mask=" << (has_src_mask ? "present" : "none") << "\n";
+    out << "# target_mask=" << (has_tgt_mask ? "present" : "none") << "\n";
+    out << "# source_context=" << source_context_k << "\n";
+    out << "# target_context=" << target_context_k << "\n";
+    out << "# source_mesh=" << (src_mesh ? "present" : "none") << "\n";
+    out << "# target_mesh=" << (tgt_mesh ? "present" : "none") << "\n";
+    out << "# n_stencils=" << targets.size() << "\n";
+    out << "#\n";
+    out << "# Record types (whitespace-separated, first token identifies the record):\n";
+    out << "#   T gidx lon lat mask                    : target point\n";
+    out << "#   S gidx lon lat weight mask             : source point in the stencil (has a weight)\n";
+    out << "#   X gidx lon lat mask                    : context source point (no weight, for context only)\n";
+    out << "#   Y gidx lon lat mask                    : context target point (target neighbour, for context)\n";
+    out << "#   C n gidx0 gidx1 ... gidx{n-1}          : source mesh cell (source node global indices)\n";
+    out << "#   D n gidx0 gidx1 ... gidx{n-1}          : target mesh cell (target node global indices)\n";
+    out << "# Global indices (gidx) are 1-based, within their own (source or target) grid.\n";
+    out << "# Each stencil is delimited by 'BEGIN <i>' / 'END <i>'.\n";
+    out << "#\n";
+
+    // Emit the mesh cells that touch any of the 'involved' node global indices (1-based) as records
+    // with the given tag ('C' for source, 'D' for target).
+    auto emit_mesh_cells = [&out](char tag, const Mesh& mesh, const std::unordered_set<gidx_t>& involved) {
+        if (!mesh || involved.empty()) {
+            return;
+        }
+        const auto& conn = mesh.cells().node_connectivity();
+        auto node_gidx   = array::make_view<gidx_t, 1>(mesh.nodes().global_index());
+        for (idx_t e = 0; e < mesh.cells().size(); ++e) {
+            const idx_t nb_cell_nodes = conn.cols(e);
+            bool touches              = false;
+            for (idx_t ni = 0; ni < nb_cell_nodes; ++ni) {
+                if (involved.count(node_gidx(conn(e, ni)))) {
+                    touches = true;
+                    break;
+                }
+            }
+            if (!touches) {
+                continue;
+            }
+            out << tag << " " << nb_cell_nodes;
+            for (idx_t ni = 0; ni < nb_cell_nodes; ++ni) {
+                out << " " << node_gidx(conn(e, ni));
+            }
+            out << "\n";
+        }
+    };
+
+    for (std::size_t is = 0; is < targets.size(); ++is) {
+        const gidx_t row = targets[is];  // 0-based target grid index
+
+        // Stencil: source columns + weights for this target row
+        std::vector<gidx_t> stencil_cols;  // 0-based source grid indices
+        std::vector<double> stencil_wgts;
+        linalg::sparse_matrix_for_each_row(static_cast<std::size_t>(row), matrix_view,
+                                           [&](int /*r*/, int col, double val) {
+                                               stencil_cols.push_back(col);
+                                               stencil_wgts.push_back(val);
+                                           });
+
+        // Members of stencil (1-based gidx) for quick lookup
+        std::unordered_set<gidx_t> stencil_set;
+        for (auto c : stencil_cols) {
+            stencil_set.insert(c + 1);
+        }
+
+        // Context: union of nearest source neighbours around each stencil point, excluding stencil points
+        std::vector<gidx_t> context_cols;  // 0-based
+        std::unordered_set<gidx_t> context_set;
+        if (source_context_k > 0) {
+            for (auto c : stencil_cols) {
+                auto neighbours = ssearch.closestPoints(src_lonlat[c], source_context_k).payloads();
+                for (auto nb : neighbours) {
+                    const gidx_t g = nb + 1;
+                    if (stencil_set.count(g) == 0 && context_set.insert(g).second) {
+                        context_cols.push_back(nb);
+                    }
+                }
+            }
+        }
+
+        // All source global indices (1-based) involved in this stencil (for cell filtering)
+        std::unordered_set<gidx_t> involved = stencil_set;
+        involved.insert(context_set.begin(), context_set.end());
+
+        // Context: nearest target neighbours around the target point (excluding the target itself)
+        std::vector<gidx_t> tgt_context;  // 0-based target grid indices
+        if (target_context_k > 0) {
+            auto neighbours = tsearch.closestPoints(tgt_lonlat[row], target_context_k + 1).payloads();
+            for (auto nb : neighbours) {
+                if (nb != row) {
+                    tgt_context.push_back(nb);
+                }
+            }
+        }
+        // Target global indices (1-based) involved (target + its context) for target-cell filtering
+        std::unordered_set<gidx_t> tgt_involved;
+        tgt_involved.insert(row + 1);
+        for (auto t : tgt_context) {
+            tgt_involved.insert(t + 1);
+        }
+
+        out << "BEGIN " << is << "\n";
+
+        // Target
+        out << "T " << (row + 1) << " " << tgt_lonlat[row].lon() << " " << tgt_lonlat[row].lat() << " "
+            << tgt_mask[row] << "\n";
+
+        // Context target points (no weight)
+        for (auto t : tgt_context) {
+            out << "Y " << (t + 1) << " " << tgt_lonlat[t].lon() << " " << tgt_lonlat[t].lat() << " " << tgt_mask[t]
+                << "\n";
+        }
+
+        if (stencil_cols.empty()) {
+            out << "# (empty stencil: target has no source contributions / missing value)\n";
+        }
+
+        // Stencil source points (with weights)
+        for (std::size_t k = 0; k < stencil_cols.size(); ++k) {
+            const gidx_t c = stencil_cols[k];
+            out << "S " << (c + 1) << " " << src_lonlat[c].lon() << " " << src_lonlat[c].lat() << " " << stencil_wgts[k]
+                << " " << src_mask[c] << "\n";
+        }
+
+        // Context source points (no weight)
+        for (auto c : context_cols) {
+            out << "X " << (c + 1) << " " << src_lonlat[c].lon() << " " << src_lonlat[c].lat() << " " << src_mask[c]
+                << "\n";
+        }
+
+        // Source mesh cells touching any involved source point
+        emit_mesh_cells('C', src_mesh, involved);
+
+        // Target mesh cells touching the target point or its context
+        emit_mesh_cells('D', tgt_mesh, tgt_involved);
+
+        out << "END " << is << "\n";
+    }
+
+    Log::info() << "Stencil extraction: wrote " << targets.size() << " stencil(s) to '" << filename << "'" << std::endl;
+}
+
 void test_matrix(const Grid& sgrid, const Grid& tgrid, const Matrix& matrix, const AtlasTool::Args& args,
                  const SourceInitialCondition& initial_condition) {
     ATLAS_TRACE();
@@ -1011,7 +1349,8 @@ int AtlasInterpolations::execute(const AtlasTool::Args& args) {
     matrix.clear();
 
     if (args.getBool("interpolate", false) || args.getBool("output-matrix", false) ||
-        args.getBool("test-interpolator", false) || (args.getBool("test-matrix", false) && !matrix_tested)) {
+        args.getBool("test-interpolator", false) || args.getBool("output-stencil", false) ||
+        (args.getBool("test-matrix", false) && !matrix_tested)) {
 
         auto configure_mask = [&](const std::string& mask_option, FunctionSpace& fs) {
             if (args.has(mask_option)) {
@@ -1126,12 +1465,16 @@ int AtlasInterpolations::execute(const AtlasTool::Args& args) {
         }
     }
 
-    if (args.getBool("output-matrix", false) || (args.getBool("test-matrix", false) && !matrix_tested)) {
+    if (args.getBool("output-matrix", false) || args.getBool("output-stencil", false) ||
+        (args.getBool("test-matrix", false) && !matrix_tested)) {
         ATLAS_TRACE("Matrix operations");
         ATLAS_TRACE_SCOPE("assemble_global_matrix") {
             matrix = interpolation::assemble_global_matrix(tgrid.size(), sgrid.size(), interpolator);
         }
         if (mpi::comm().rank() == 0) {
+            if (args.getBool("output-stencil", false)) {
+                extract_stencils(sgrid, tgrid, matrix, src_fs, tgt_fs, args);
+            }
             if (args.getBool("output-matrix", false)) {
                 write_matrix(matrix, matrix_name, matrix_format);
                 print_matrix(matrix, Log::info());
