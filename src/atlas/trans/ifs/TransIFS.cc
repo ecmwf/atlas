@@ -53,11 +53,25 @@ static TransBuilderGrid<TransIFS> builder_ifs("ifs", "ifs");  // deprecated
 static TransBuilderGrid<TransIFS> builder_ectrans("ectrans", "ectrans");
 
 template <typename Value>
+static constexpr Value invalid_value() {
+    return std::numeric_limits<Value>::has_signaling_NaN ? std::numeric_limits<Value>::signaling_NaN()
+           : std::numeric_limits<Value>::has_quiet_NaN   ? std::numeric_limits<Value>::quiet_NaN()
+           : std::numeric_limits<Value>::has_infinity    ? std::numeric_limits<Value>::infinity()
+                                                         : std::numeric_limits<Value>::max();
+}
+
+
+template <typename Value>
 class PooledBuffer {
 public:
     explicit PooledBuffer(const std::size_t size): size_(size), allocator_(pluto::host_pool_resource()), data_(nullptr) {
         if (size_) {
             data_ = allocator_.allocate(size_);
+            #if ATLAS_INIT_SNAN
+            for (std::size_t i = 0; i < size_; ++i) {
+                data_[i] = invalid_value<Value>();
+            } 
+            #endif
         }
     }
 
@@ -1578,7 +1592,6 @@ void TransIFS::__dirtrans_adj(const Spectral& sp, const FieldSet& spfields,
     PooledBuffer<double> rsp(nspec2() * nfld);
     auto rgpview = LocalView<double, 2>(rgp.data(), make_shape(nfld, ngptot()));
     auto rspview = LocalView<double, 2>(rsp.data(), make_shape(nspec2(), nfld));
-    //rgpview.assign(0);
     rspview.assign(0);
 
     // Pack spectral fields
@@ -1635,7 +1648,6 @@ void TransIFS::__dirtrans_adj( const Spectral& sp, const Field& spfield,
     PooledBuffer<double> rsp(nspec2() * nfld);
     auto rgpview = LocalView<double, 2>(rgp.data(), make_shape(nfld, ngptot()));
     auto rspview = LocalView<double, 2>(rsp.data(), make_shape(nspec2(), nfld));
-    //rgpview.assign(0);
     rspview.assign(0);
 
     // Pack spectral fields
@@ -1687,7 +1699,6 @@ void TransIFS::__dirtrans_adj( const Spectral& sp, const Field& spfield,
     PooledBuffer<double> rsp(nspec2() * nfld);
     auto rgpview = LocalView<double, 2>(rgp.data(), make_shape(nfld, ngptot()));
     auto rspview = LocalView<double, 2>(rsp.data(), make_shape(nspec2(), nfld));
-    //rgpview.assign(0);
     rspview.assign(0);
 
     // Pack spectral fields
@@ -1741,7 +1752,6 @@ void TransIFS::__dirtrans_adj(const Spectral& sp, const FieldSet& spfields,
     PooledBuffer<double> rsp(nspec2() * nfld);
     auto rgpview = LocalView<double, 2>(rgp.data(), make_shape(nfld, ngptot()));
     auto rspview = LocalView<double, 2>(rsp.data(), make_shape(nspec2(), nfld));
-    //rgpview.assign(0);
     rspview.assign(0);
 
     // Pack spectral fields
@@ -1817,7 +1827,6 @@ void TransIFS::__dirtrans_wind2vordiv_adj(const Spectral& sp, const Field& spvor
     auto rgpview    = LocalView<double, 2>(rgp.data(), make_shape(2 * nfld, ngptot()));
     auto rspvorview = LocalView<double, 2>(rspvor.data(), make_shape(nspec2(), nfld));
     auto rspdivview = LocalView<double, 2>(rspdiv.data(), make_shape(nspec2(), nfld));
-    rgpview.assign(0);
     rspvorview.assign(0);
     rspdivview.assign(0);
 
@@ -1894,7 +1903,6 @@ void TransIFS::__dirtrans_wind2vordiv_adj(const Spectral& sp, const Field& spvor
     auto rgpview    = LocalView<double, 2>(rgp.data(), make_shape(2 * nfld, ngptot()));
     auto rspvorview = LocalView<double, 2>(rspvor.data(), make_shape(nspec2(), nfld));
     auto rspdivview = LocalView<double, 2>(rspdiv.data(), make_shape(nspec2(), nfld));
-    rgpview.assign(0);
     rspvorview.assign(0);
     rspdivview.assign(0);
 
@@ -1952,6 +1960,7 @@ void TransIFS::__invtrans(const functionspace::Spectral& sp, const Field& spfiel
     PooledBuffer<double> rsp(nspec2() * nfld);
     auto rgpview = LocalView<double, 2>(rgp.data(), make_shape(nfld, ngptot()));
     auto rspview = LocalView<double, 2>(rsp.data(), make_shape(nspec2(), nfld));
+    rspview.assign(0);
 
     // Pack spectral fields
     {
@@ -2014,6 +2023,7 @@ void TransIFS::__invtrans(const functionspace::Spectral& sp, const FieldSet& spf
     PooledBuffer<double> rsp(nspec2() * nfld);
     auto rgpview = LocalView<double, 2>(rgp.data(), make_shape(nfld, ngptot()));
     auto rspview = LocalView<double, 2>(rsp.data(), make_shape(nspec2(), nfld));
+    rspview.assign(0);
 
     // Pack spectral fields
     {
@@ -2062,6 +2072,7 @@ void TransIFS::__invtrans(const Spectral& sp, const FieldSet& spfields, const fu
     PooledBuffer<double> rsp(nspec2() * nfld);
     auto rgpview = LocalView<double, 2>(rgp.data(), make_shape(nfld, ngptot()));
     auto rspview = LocalView<double, 2>(rsp.data(), make_shape(nspec2(), nfld));
+    rspview.assign(0);
 
     // Pack spectral fields
     {
@@ -2424,7 +2435,6 @@ void TransIFS::__invtrans_adj(const functionspace::Spectral& sp, Field& spfield,
     PooledBuffer<double> rsp(nspec2() * nfld);
     auto rgpview = LocalView<double, 2>(rgp.data(), make_shape(nfld, ngptot()));
     auto rspview = LocalView<double, 2>(rsp.data(), make_shape(nspec2(), nfld));
-    //rgpview.assign(0);
     rspview.assign(0);
 
     // Pack gridpoints
@@ -2491,7 +2501,6 @@ void TransIFS::__invtrans_adj(const functionspace::Spectral& sp, FieldSet& spfie
     PooledBuffer<double> rsp(nspec2() * nfld);
     auto rgpview = LocalView<double, 2>(rgp.data(), make_shape(nfld, ngptot()));
     auto rspview = LocalView<double, 2>(rsp.data(), make_shape(nspec2(), nfld));
-    //rgpview.assign(0);
     rspview.assign(0);
 
     // Pack gridpoints
@@ -2550,7 +2559,6 @@ void TransIFS::__invtrans_adj(const Spectral& sp, FieldSet& spfields, const func
     PooledBuffer<double> rsp(nspec2() * nfld);
     auto rgpview = LocalView<double, 2>(rgp.data(), make_shape(nfld, ngptot()));
     auto rspview = LocalView<double, 2>(rsp.data(), make_shape(nspec2(), nfld));
-    //rgpview.assign(0);
     rspview.assign(0);
 
     // Pack gridpoints
@@ -2629,8 +2637,6 @@ void TransIFS::__invtrans_grad_adj(const Spectral& sp, FieldSet& spfields, const
     PooledBuffer<double> rsp(nspec2() * nfld);
     auto rgpview = LocalView<double, 2>(rgp.data(), make_shape(nfld, ngptot()));
     auto rspview = LocalView<double, 2>(rsp.data(), make_shape(nspec2(), nfld));
-    //rgpview.assign(0);
-    rspview.assign(0);
 
     // Pack gridpoints
     {
@@ -2687,8 +2693,6 @@ void TransIFS::__invtrans_grad_adj(const Spectral& sp, FieldSet& spfields, const
     PooledBuffer<double> rsp(nspec2() * nfld);
     auto rgpview = LocalView<double, 2>(rgp.data(), make_shape(nfld, ngptot()));
     auto rspview = LocalView<double, 2>(rsp.data(), make_shape(nspec2(), nfld));
-    //rgpview.assign(0);
-    rspview.assign(0);
 
     // Pack gridpoints
     {
