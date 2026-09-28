@@ -9,7 +9,10 @@
  */
 
 
+#include <algorithm>
+#include <array>
 #include <cmath>
+#include <limits>
 
 #include "eckit/geometry/Sphere.h"
 #include "eckit/types/FloatCompare.h"
@@ -17,6 +20,7 @@
 #include "atlas/array.h"
 #include "atlas/array/MakeView.h"
 #include "atlas/field.h"
+#include "atlas/functionspace/CellColumns.h"
 #include "atlas/grid.h"
 #include "atlas/interpolation.h"
 #include "atlas/interpolation/method/unstructured/ConservativeSphericalPolygonInterpolation.h"
@@ -230,6 +234,51 @@ CASE("test_interpolation_conservative") {
         tgt_cell_data = false;
         do_remapping_test(Grid("O16"), Grid("H12"), func, remap_stat_1, remap_stat_2, src_cell_data, tgt_cell_data);
         check(remap_stat_1, remap_stat_2, {1.0e-12, 1.0e-12, 0.0064164, 0.0030295, 1.0e-15, 1.0e-12});
+    }
+
+    SECTION("regression_halo_periodic_source_nodecolumns") {
+        util::Config config("type", "conservative-spherical-polygon");
+        config.set("order", 1);
+        config.set("src_cell_data", false);
+        config.set("tgt_cell_data", true);
+
+        auto interpolation = Interpolation(config, Grid("H32"), Grid("H64"));
+        auto src_field     = interpolation.source().createField<double>();
+        auto tgt_field     = interpolation.target().createField<double>();
+        auto tgt_fs = interpolation.target();
+        Mesh tgt_mesh;
+        if (functionspace::CellColumns(tgt_fs)) {
+            tgt_mesh = functionspace::CellColumns(tgt_fs).mesh();
+        }
+        else if (functionspace::NodeColumns(tgt_fs)) {
+            tgt_mesh = functionspace::NodeColumns(tgt_fs).mesh();
+        }
+        auto src_vals      = array::make_view<double, 1>(src_field);
+        auto tgt_halo      = array::make_view<int, 1>(tgt_mesh.cells().halo());
+
+        for (double constant_value : std::array<double, 3>{0., -2.5, 1.}) {
+            for (idx_t spt = 0; spt < src_vals.size(); ++spt) {
+                src_vals(spt) = constant_value;
+            }
+
+            interpolation.execute(src_field, tgt_field);
+            tgt_field.haloExchange();
+
+            auto tgt_vals = array::make_view<double, 1>(tgt_field);
+            double min_v  = std::numeric_limits<double>::max();
+            double max_v  = std::numeric_limits<double>::lowest();
+
+            for (idx_t tpt = 0; tpt < tgt_vals.size(); ++tpt) {
+                if (tgt_halo(tpt)) {
+                    continue;
+                }
+                min_v = std::min(min_v, tgt_vals(tpt));
+                max_v = std::max(max_v, tgt_vals(tpt));
+            }
+
+            EXPECT_APPROX_EQ(min_v, constant_value, 1.e-12);
+            EXPECT_APPROX_EQ(max_v, constant_value, 1.e-12);
+        }
     }
 }
 
