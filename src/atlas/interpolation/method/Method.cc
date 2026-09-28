@@ -571,6 +571,16 @@ void Method::adaptMatrixWithSourceMask() {
         return;
     }
 
+    for (const auto& env : std::vector<std::string>{"$ATLAS_INTERPOLATION_SOURCE_MASK", "$ATLAS_INTERPOLATION_MASK"}) {
+        std::string apply_source_mask = eckit::Resource<std::string>(env, "");
+        if (apply_source_mask == "0") {
+            return;
+        }
+        if (!apply_source_mask.empty()) {
+            break;
+        }
+    }
+
     ATLAS_DEBUG_VAR(matrix_->nnz());
     ATLAS_DEBUG_VAR(missing_.size());
 
@@ -801,6 +811,17 @@ void Method::adaptMatrixWithTargetMask() {
     if (not target().hasMask()) {
         return;
     }
+
+    for (const auto& env : std::vector<std::string>{"$ATLAS_INTERPOLATION_TARGET_MASK", "$ATLAS_INTERPOLATION_MASK"}) {
+        std::string apply_source_mask = eckit::Resource<std::string>(env, "");
+        if (apply_source_mask == "0") {
+            return;
+        }
+        if (!apply_source_mask.empty()) {
+            break;
+        }
+    }
+
 
     ATLAS_DEBUG_VAR(matrix_->nnz());
     ATLAS_DEBUG_VAR(missing_.size());
