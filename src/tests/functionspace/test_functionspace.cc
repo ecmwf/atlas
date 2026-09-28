@@ -659,7 +659,7 @@ CASE("test_SpectralFunctionSpace_trans_dist") {
     trans::Trans trans(Grid("F80"), 159);
     idx_t nb_levels(10);
 
-    Spectral spectral_fs(trans);
+    Spectral spectral_fs = trans.spectral();
     idx_t nspec2 = spectral_fs.nb_spectral_coefficients();
 
     Field surface_scalar_field = spectral_fs.createField<double>(option::name("scalar"));
@@ -745,7 +745,7 @@ CASE("test_SpectralFunctionSpace_norm") {
     trans::Trans trans(Grid("F80"), 159);
     size_t nb_levels(10);
 
-    Spectral spectral_fs(trans);
+    Spectral spectral_fs = trans.spectral();
 
     Field twoD_field   = spectral_fs.createField<double>(option::name("2d"));
     Field threeD_field = spectral_fs.createField<double>(option::name("3d") | option::levels(nb_levels));

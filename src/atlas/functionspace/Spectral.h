@@ -98,7 +98,9 @@ class Spectral : public functionspace::FunctionSpaceImpl {
 public:
     Spectral(const eckit::Configuration&);
 
-    explicit Spectral(const int truncation, const eckit::Configuration& = util::NoConfig());
+    Spectral(const int truncation, const eckit::Configuration& = util::NoConfig());
+    Spectral(const long truncation, const eckit::Configuration& = util::NoConfig());
+    Spectral(const size_t truncation, const eckit::Configuration& = util::NoConfig());
 
     explicit Spectral(bool) = delete;
 
@@ -289,7 +291,9 @@ public:
     Spectral();
     Spectral(const FunctionSpace&);
     Spectral(const eckit::Configuration&);
-    explicit Spectral(const int truncation, const eckit::Configuration& = util::NoConfig());
+    Spectral(const int truncation, const eckit::Configuration& = util::NoConfig());
+    Spectral(const long truncation, const eckit::Configuration& = util::NoConfig());
+    Spectral(const size_t truncation, const eckit::Configuration& = util::NoConfig());
     explicit Spectral(bool) = delete;
 
     operator bool() const { return valid(); }
