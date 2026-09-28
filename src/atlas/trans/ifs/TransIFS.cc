@@ -558,7 +558,7 @@ namespace {
 struct PackNodeColumns {
     LocalView<double, 2>& rgpview_;
     IsGhostNode is_ghost;
-    size_t f = 0;
+    size_t f;
 
     PackNodeColumns(LocalView<double, 2>& rgpview, const NodeColumns& fs):
         rgpview_(rgpview), is_ghost(fs.nodes()), f(0) {}
@@ -628,7 +628,7 @@ struct PackNodeColumns {
 
 struct PackStructuredColumns {
     LocalView<double, 2>& rgpview_;
-    size_t f = 0;
+    size_t f;
 
     PackStructuredColumns(LocalView<double, 2>& rgpview): rgpview_(rgpview), f(0) {}
 
@@ -1578,7 +1578,7 @@ void TransIFS::__dirtrans_adj(const Spectral& sp, const FieldSet& spfields,
     PooledBuffer<double> rsp(nspec2() * nfld);
     auto rgpview = LocalView<double, 2>(rgp.data(), make_shape(nfld, ngptot()));
     auto rspview = LocalView<double, 2>(rsp.data(), make_shape(nspec2(), nfld));
-    rgpview.assign(0);
+    //rgpview.assign(0);
     rspview.assign(0);
 
     // Pack spectral fields
@@ -1634,8 +1634,8 @@ void TransIFS::__dirtrans_adj( const Spectral& sp, const Field& spfield,
     PooledBuffer<double> rgp(nfld * ngptot());
     PooledBuffer<double> rsp(nspec2() * nfld);
     auto rgpview = LocalView<double, 2>(rgp.data(), make_shape(nfld, ngptot()));
-    rgpview.assign(0);
     auto rspview = LocalView<double, 2>(rsp.data(), make_shape(nspec2(), nfld));
+    //rgpview.assign(0);
     rspview.assign(0);
 
     // Pack spectral fields
@@ -1687,7 +1687,7 @@ void TransIFS::__dirtrans_adj( const Spectral& sp, const Field& spfield,
     PooledBuffer<double> rsp(nspec2() * nfld);
     auto rgpview = LocalView<double, 2>(rgp.data(), make_shape(nfld, ngptot()));
     auto rspview = LocalView<double, 2>(rsp.data(), make_shape(nspec2(), nfld));
-    rgpview.assign(0);
+    //rgpview.assign(0);
     rspview.assign(0);
 
     // Pack spectral fields
@@ -1741,7 +1741,7 @@ void TransIFS::__dirtrans_adj(const Spectral& sp, const FieldSet& spfields,
     PooledBuffer<double> rsp(nspec2() * nfld);
     auto rgpview = LocalView<double, 2>(rgp.data(), make_shape(nfld, ngptot()));
     auto rspview = LocalView<double, 2>(rsp.data(), make_shape(nspec2(), nfld));
-    rgpview.assign(0);
+    //rgpview.assign(0);
     rspview.assign(0);
 
     // Pack spectral fields
@@ -2424,7 +2424,7 @@ void TransIFS::__invtrans_adj(const functionspace::Spectral& sp, Field& spfield,
     PooledBuffer<double> rsp(nspec2() * nfld);
     auto rgpview = LocalView<double, 2>(rgp.data(), make_shape(nfld, ngptot()));
     auto rspview = LocalView<double, 2>(rsp.data(), make_shape(nspec2(), nfld));
-    rgpview.assign(0);
+    //rgpview.assign(0);
     rspview.assign(0);
 
     // Pack gridpoints
@@ -2491,7 +2491,7 @@ void TransIFS::__invtrans_adj(const functionspace::Spectral& sp, FieldSet& spfie
     PooledBuffer<double> rsp(nspec2() * nfld);
     auto rgpview = LocalView<double, 2>(rgp.data(), make_shape(nfld, ngptot()));
     auto rspview = LocalView<double, 2>(rsp.data(), make_shape(nspec2(), nfld));
-    rgpview.assign(0);
+    //rgpview.assign(0);
     rspview.assign(0);
 
     // Pack gridpoints
@@ -2550,7 +2550,7 @@ void TransIFS::__invtrans_adj(const Spectral& sp, FieldSet& spfields, const func
     PooledBuffer<double> rsp(nspec2() * nfld);
     auto rgpview = LocalView<double, 2>(rgp.data(), make_shape(nfld, ngptot()));
     auto rspview = LocalView<double, 2>(rsp.data(), make_shape(nspec2(), nfld));
-    rgpview.assign(0);
+    //rgpview.assign(0);
     rspview.assign(0);
 
     // Pack gridpoints
@@ -2629,7 +2629,7 @@ void TransIFS::__invtrans_grad_adj(const Spectral& sp, FieldSet& spfields, const
     PooledBuffer<double> rsp(nspec2() * nfld);
     auto rgpview = LocalView<double, 2>(rgp.data(), make_shape(nfld, ngptot()));
     auto rspview = LocalView<double, 2>(rsp.data(), make_shape(nspec2(), nfld));
-    rgpview.assign(0);
+    //rgpview.assign(0);
     rspview.assign(0);
 
     // Pack gridpoints
@@ -2687,7 +2687,7 @@ void TransIFS::__invtrans_grad_adj(const Spectral& sp, FieldSet& spfields, const
     PooledBuffer<double> rsp(nspec2() * nfld);
     auto rgpview = LocalView<double, 2>(rgp.data(), make_shape(nfld, ngptot()));
     auto rspview = LocalView<double, 2>(rsp.data(), make_shape(nspec2(), nfld));
-    rgpview.assign(0);
+    //rgpview.assign(0);
     rspview.assign(0);
 
     // Pack gridpoints
