@@ -169,6 +169,7 @@ PointCloud::PointCloud(const Grid& grid, const grid::Distribution& distribution,
     size_owned_ = size_owned;
 
     size_global_ = grid.size();
+    max_glb_idx_ = grid.size();
 
     if (halo_radius == 0. || nb_partitions_ == 1) {
         idx_t size_halo = size_owned;
@@ -182,23 +183,31 @@ PointCloud::PointCloud(const Grid& grid, const grid::Distribution& distribution,
         auto lonlat = array::make_view<double, 2>(lonlat_);
         auto ridx = array::make_indexview<idx_t,1>(remote_index_);
         auto gidx = array::make_view<gidx_t,1>(global_index_);
-        array::make_view<int,1>(ghost_).assign(0);
-        array::make_view<int,1>(partition_).assign(part_);
+        auto ghost = array::make_view<int,1>(ghost_);
+        auto partition = array::make_view<int,1>(partition_);
 
         ATLAS_ASSERT(grid.size() == distribution.size());
 
         idx_t j{0};
         gidx_t g{0};
+        bool has_intrinsic_ghosts{false};
         for (auto p : grid.lonlat()) {
             if( distribution.partition(g) == part_ ) {
                 ATLAS_ASSERT(j < size_halo);
                 gidx(j) = g+1;
                 ridx(j) = j;
+                ghost(j) = GridPointFlags{grid.flags(g)}.has(GridPointFlags::duplicate);
+                const auto master = grid.masterIndex(g);
+                partition(j) = distribution.partition(master);
                 lonlat(j, 0) = p.lon();
                 lonlat(j, 1) = p.lat();
+                has_intrinsic_ghosts = has_intrinsic_ghosts || ghost(j);
                 ++j;
             }
             ++g;
+        }
+        if (has_intrinsic_ghosts) {
+            remote_index_ = Field();
         }
     }
     else {
@@ -247,7 +256,6 @@ PointCloud::PointCloud(const Grid& grid, const grid::Distribution& distribution,
             partition_      = Field("partition", array::make_datatype<int>(), array::make_shape(size_halo));
             ghost_          = Field("ghost", array::make_datatype<int>(), array::make_shape(size_halo));
             global_index_   = Field("global_index", array::make_datatype<gidx_t>(), array::make_shape(size_halo));
-            max_glb_idx_    = grid.size();
             auto lonlat     = array::make_view<double,2>(lonlat_);
             auto partition  = array::make_view<int,1>(partition_);
             auto ghost      = array::make_view<int,1>(ghost_);
@@ -257,10 +265,11 @@ PointCloud::PointCloud(const Grid& grid, const grid::Distribution& distribution,
             idx_t j = 0;
             for (auto p : grid.lonlat()) {
                 if (keep[g]) {
+                    const auto master = grid.masterIndex(g);
                     lonlat(j, 0) = p.lon();
                     lonlat(j, 1) = p.lat();
-                    partition(j) = distribution.partition(g);
-                    ghost(j) = partition(j) != part_;
+                    partition(j) = distribution.partition(master);
+                    ghost(j) = GridPointFlags{grid.flags(g)}.has(GridPointFlags::duplicate) || partition(j) != part_;
                     glb_idx(j) = g+1;
                     ++j;
                 }
@@ -735,6 +744,9 @@ void PointCloud::create_remote_index() const {
     ATLAS_TRACE_SCOPE("Setup remote_index fields...") {
         auto p = array::make_view<int, 1>(partition_);
         auto g = array::make_view<gidx_t, 1>(global_index_);
+        auto master_global_index = [this, &g](idx_t index) {
+            return grid_ ? grid_.masterIndex(g(index) - 1) + 1 : g(index);
+        };
 
         auto neighbours           = graph.nearestNeighbours(mpi_rank);
         const idx_t nb_neighbours = static_cast<idx_t>(neighbours.size());
@@ -761,7 +773,7 @@ void PointCloud::create_remote_index() const {
             }
             for( idx_t j = 0; j<size_halo; ++j) {
                 if (ghost(j)) {
-                    g_per_neighbour[part_to_neighbour[p(j)]].emplace_back(g(j));
+                    g_per_neighbour[part_to_neighbour[p(j)]].emplace_back(master_global_index(j));
                 }
             }
         }
@@ -1079,7 +1091,8 @@ void PointCloud::setupGatherScatter() {
                             REMOTE_IDX_BASE,
                             array::make_view<gidx_t, 1>(global_index_).data(),
                             array::make_view<int, 1>(ghost_).data(),
-                            ghost_.size());
+                            ghost_.size(),
+                            bool(grid_));
     }
 }
 

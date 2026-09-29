@@ -155,7 +155,7 @@ CASE("test_invtrans_grad") {
     idx_t N   = g.ny() / 2;
     trans::Trans trans(g, 2 * N - 1);
     functionspace::NodeColumns gp(mesh);
-    functionspace::Spectral sp(trans);
+    functionspace::Spectral sp = trans.spectral();
 
     Field scalar_sp = sp.createField<double>(option::name("scalar_sp"));
     Field scalar    = gp.createField<double>(option::name("scalar"));
