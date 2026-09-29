@@ -53,6 +53,9 @@ CASE("test_factory") {
 
     std::cout << "structured.ny() = " << structured.ny() << std::endl;
     std::cout << "grid.npts() = " << grid.size() << std::endl;
+
+    EXPECT(grid.flags(0) == GridPointFlags::none);
+    EXPECT(grid.masterIndex(0) == 0);
 }
 
 CASE("test_factory_from_grid_key") {
