@@ -29,7 +29,7 @@ namespace test {
 /// Helper functions -----------------------------------------------------------
 
 // Dot product of atlas fields
-double dotProd(const Field& a, const Field& b, int gridNumber = 0) {
+double dotProd(const Field& a, const Field& b) {
     const auto ghost = [&] {
         ATLAS_ASSERT(a.functionspace().type() == b.functionspace().type());
         if (a.functionspace().type() == "Spectral") {
@@ -89,7 +89,7 @@ void testFunction(const GaussianGrid& gaussGrid) {
     // Construct spectral field by applying TL to Gauss. Compute dot product.
     Field spectralField = spectralFunctionSpace.createField<double>(option::name("y"));
     trans_.dirtrans(gaussField, spectralField);
-    double yDotY = dotProd(spectralField, spectralField, gaussGrid.N());
+    double yDotY = dotProd(spectralField, spectralField);
 
     // Construct adjoint spectral field. Compute dot product (dirtrans_adj)
     Field adjointSpectralField = gaussFunctionSpace.createField<double>(option::name("T*y"));
@@ -110,7 +110,7 @@ void testFunction(const GaussianGrid& gaussGrid) {
     // Construct adjoint Gauss field. Compute dot product (invtrans_adj)
     Field adjointGaussField = spectralFunctionSpace.createField<double>(option::name("T*x"));
     trans_.invtrans_adj(secondGaussField, adjointGaussField);
-    double AdjXDotY = dotProd(adjointGaussField, spectralField, gaussGrid.N());
+    double AdjXDotY = dotProd(adjointGaussField, spectralField);
 
     // Adjoint test
     Log::error() << "invtrans test" << std::endl;
