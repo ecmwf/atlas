@@ -29,7 +29,7 @@ namespace test {
 /// Helper functions -----------------------------------------------------------
 
 // Dot product of atlas fields
-double dotProd(const Field& a, const Field& b) {
+double dotProd(const Field& a, const Field& b, int gridNumber = 0) {
     const auto ghost = [&] {
         ATLAS_ASSERT(a.functionspace().type() == b.functionspace().type());
         if (a.functionspace().type() == "Spectral") {
@@ -37,9 +37,8 @@ double dotProd(const Field& a, const Field& b) {
         }
         return std::function<int(idx_t)>(array::make_view<int, 1>(a.functionspace().ghost()));
     }();
-    
-    double prod{};
 
+    double prod{};
     const auto aView = array::make_view<double, 1>(a);
     const auto bView = array::make_view<double, 1>(b);
 
@@ -47,7 +46,13 @@ double dotProd(const Field& a, const Field& b) {
         if (ghost(i)) {
             continue;
         }
-        prod += aView(i) * bView(i);
+        double preprod = aView(i) * bView(i);
+
+        // Double up terms not in the first two lat levels in spectral inner product
+        if (a.functionspace().type() == "Spectral" && i >= 2 * gridNumber) {
+            preprod *=2;
+        }
+        prod += preprod;
     }
     mpi::comm().allReduceInPlace(prod, eckit::mpi::Operation::SUM);
     return prod;
@@ -71,7 +76,7 @@ Field createVortexRollup(const FunctionSpace& gaussFunctionSpace) {
 void testFunction(const GaussianGrid& gaussGrid) {
     // Construct initial gauss field and spectral function space.
     functionspace::StructuredColumns gaussFunctionSpace = functionspace::StructuredColumns(gaussGrid);
-    Field gaussField                                    = createVortexRollup(gaussFunctionSpace);
+    Field gaussField = createVortexRollup(gaussFunctionSpace);
     functionspace::Spectral spectralFunctionSpace = functionspace::Spectral(gaussGrid.N()-1);
     trans::Trans trans_(gaussFunctionSpace, spectralFunctionSpace);
 
@@ -79,7 +84,7 @@ void testFunction(const GaussianGrid& gaussGrid) {
     // Construct spectral field by applying TL to Gauss. Compute dot product.
     Field spectralField = spectralFunctionSpace.createField<double>(option::name("y"));
     trans_.dirtrans(gaussField, spectralField);
-    double yDotY = dotProd(spectralField, spectralField);
+    double yDotY = dotProd(spectralField, spectralField, gaussGrid.N());
 
     // Construct adjoint spectral field. Compute dot product (dirtrans_adj)
     Field adjointSpectralField = gaussFunctionSpace.createField<double>(option::name("T*y"));
@@ -100,7 +105,7 @@ void testFunction(const GaussianGrid& gaussGrid) {
     // Construct adjoint Gauss field. Compute dot product (invtrans_adj)
     Field adjointGaussField = spectralFunctionSpace.createField<double>(option::name("T*x"));
     trans_.invtrans_adj(secondGaussField, adjointGaussField);
-    double AdjXDotY = dotProd(adjointGaussField, spectralField);
+    double AdjXDotY = dotProd(adjointGaussField, spectralField, gaussGrid.N());
 
     // Adjoint test
     Log::error() << "invtrans test" << std::endl;
