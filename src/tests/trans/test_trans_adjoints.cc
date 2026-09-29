@@ -42,15 +42,20 @@ double dotProd(const Field& a, const Field& b, int gridNumber = 0) {
     const auto aView = array::make_view<double, 1>(a);
     const auto bView = array::make_view<double, 1>(b);
 
+    functionspace::Spectral spectral = functionspace::Spectral{a.functionspace()};
+    bool isSpectral = bool(spectral);
+    int truncation = isSpectral ? spectral.truncation() : -1;
+
     for (size_t i = 0; i < a.size(); ++i) {
         if (ghost(i)) {
             continue;
         }
         double preprod = aView(i) * bView(i);
 
-        // Double up terms not in the first two lat levels in spectral inner product
-        if (a.functionspace().type() == "Spectral" && i >= 2 * gridNumber) {
-            preprod *=2;
+        // Double the m>0 zonal wave number contribution for spectral fields
+        bool non_zero_m = static_cast<int>(i) >= 2*(truncation+1);
+        if (isSpectral && non_zero_m) {
+            preprod *= 2.0;
         }
         prod += preprod;
     }
