@@ -29,8 +29,6 @@ namespace test {
 /// Helper functions -----------------------------------------------------------
 
 // Dot product of atlas fields
-// Note this works for any two Gauss grid-point fields as they are real
-// but only works for taking the dot of a spectral field with itself as they are complex
 double dotProd(const Field& a, const Field& b) {
     const auto ghost = [&] {
         ATLAS_ASSERT(a.functionspace().type() == b.functionspace().type());
@@ -73,10 +71,9 @@ Field createVortexRollup(const FunctionSpace& gaussFunctionSpace) {
 void testFunction(const GaussianGrid& gaussGrid) {
     // Construct initial gauss field and spectral function space.
     functionspace::StructuredColumns gaussFunctionSpace = functionspace::StructuredColumns(gaussGrid);
-    Field gaussField = createVortexRollup(gaussFunctionSpace); 
-
-    trans::Trans trans_(gaussGrid, gaussGrid.N() - 1);
-    functionspace::Spectral spectralFunctionSpace(trans_);
+    Field gaussField                                    = createVortexRollup(gaussFunctionSpace);
+    functionspace::Spectral spectralFunctionSpace = functionspace::Spectral(gaussGrid.N()-1);
+    trans::Trans trans_(gaussFunctionSpace, spectralFunctionSpace);
 
     /// Test dirtrans ----------------------------
     // Construct spectral field by applying TL to Gauss. Compute dot product.
