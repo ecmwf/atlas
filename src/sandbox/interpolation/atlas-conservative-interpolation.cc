@@ -34,7 +34,9 @@
 #include "atlas/output/Gmsh.h"
 #include "atlas/runtime/AtlasTool.h"
 #include "atlas/util/Config.h"
-#include "atlas/util/function/MDPI_functions.h"
+#include "atlas/util/function/XStep.h"
+#include "atlas/util/function/MDPI.h"
+#include "atlas/util/function/SlottedCylinder.h"
 #include "atlas/util/function/SolidBodyRotation.h"
 #include "atlas/util/function/SphericalHarmonic.h"
 #include "atlas/util/function/VortexRollup.h"
@@ -61,9 +63,9 @@ public:
         // Grid options
         add_option(new eckit::option::Separator("Grid options"));
         add_option(new SimpleOption<std::string>("source.grid", "source gridname"));
-        add_option(new SimpleOption<std::string>("source.partitioner", "source partitioner name (spherical-polygon, lonlat-polygon, brute-force)"));
+        add_option(new SimpleOption<std::string>("source.partitioner", "source partitioner name [spherical-polygon, lonlat-polygon, brute-force]"));
         add_option(new SimpleOption<std::string>("target.grid", "target gridname"));
-        add_option(new SimpleOption<std::string>("target.partitioner", "target partitioner name (equal_regions, regular_bands, equal_bands)"));
+        add_option(new SimpleOption<std::string>("target.partitioner", "target partitioner name [equal_regions, regular_bands, equal_bands]"));
         add_option(new SimpleOption<std::string>("source.functionspace",
                                                  "source functionspace, to override source grid default"));
         add_option(new SimpleOption<std::string>("target.functionspace",
@@ -73,9 +75,18 @@ public:
 
         // Interpolation options
         add_option(new eckit::option::Separator("Interpolation options"));
-        add_option(new SimpleOption<long>("order", "Interpolation order. Supported: 1, 2 (default=1)"));
+        add_option(new SimpleOption<long>("order", "Interpolation order [1, 2] (default=1)"));
         add_option(new SimpleOption<bool>("normalise_intersections",
                                           "Normalize polygon intersections so that interpolation weights sum to 1."));
+
+        add_option(new SimpleOption<std::string>("limiter",
+                                          "Use conservative limiter to prevent under-/overshoots of the 2nd order interpolation [none, zeroslope, clip]"));
+        add_option(new SimpleOption<std::string>("limiter-output",
+                                          "Write mode in the target field [target, points, contribution]"));
+        add_option(new SimpleOption<long>("limiter-detector-size",
+                                          "Control the size of the detector stencil before including neighbours source values [default 1 -> at least two source cells]"));
+        add_option(new SimpleOption<long>("limiter-iterations",
+                                          "Control the number of iterations for the ILMC limiter [default: 3]"));
         add_option(new SimpleOption<bool>("validate",
                                           "Enable extra validations at cost of performance. For debugging purpose."));
         add_option(new SimpleOption<bool>("matrix_free", "Do not store matrix for consecutive interpolations"));
@@ -96,7 +107,7 @@ public:
         add_option(new eckit::option::Separator("Output options"));
         add_option(new SimpleOption<bool>(
             "output-gmsh", "Output gmsh files src_mesh.msh, tgt_mesh.msh, src_field.msh, tgt_field.msh"));
-        add_option(new SimpleOption<std::string>("gmsh.coordinates", "Mesh coordinates [xy,lonlat,xyz]"));
+        add_option(new SimpleOption<std::string>("gmsh.coordinates", "Mesh coordinates [xy, lonlat, xyz]"));
         add_option(new SimpleOption<bool>("gmsh.ghost", "output of ghost"));
 
         add_option(new SimpleOption<bool>("output-json", "Output json file with run information"));
@@ -105,12 +116,13 @@ public:
         // Initial condition options
         add_option(new eckit::option::Separator("Initial condition options"));
         add_option(new SimpleOption<std::string>(
-            "init", "Setup initial source field [ constant, spherical_harmonic, vortex_rollup (default), solid_body_rotation_wind_magnitude ]"));
-        add_option(new SimpleOption<double>("solid_body_rotation.angle", "Angle of solid body rotation (default = 0.)"));
-        add_option(new SimpleOption<double>("vortex_rollup.t", "Value that controls vortex rollup (default = 0.5)"));
+            "init", "Setup initial source field [constant, slotted_cylinder, solid_body_rotation_wind_magnitude, spherical_harmonic, vortex_rollup (default), xstep ]"));
         add_option(new SimpleOption<double>("constant.value", "Value that is assigned in case init==constant)"));
-        add_option(new SimpleOption<long>("spherical_harmonic.n", "total wave number 'n' of a spherical harmonic"));
+        add_option(new SimpleOption<double>("slotted_cylinder.scale", "scaling of the slotted cylinder size"));
+        add_option(new SimpleOption<double>("solid_body_rotation.angle", "Angle of solid body rotation (default = 0.)"));
         add_option(new SimpleOption<long>("spherical_harmonic.m", "zonal wave number 'm' of a spherical harmonic"));
+        add_option(new SimpleOption<long>("spherical_harmonic.n", "total wave number 'n' of a spherical harmonic"));
+        add_option(new SimpleOption<double>("vortex_rollup.t", "Value that controls vortex rollup (default = 0.5)"));
     }
 
     struct Timers {
@@ -167,6 +179,16 @@ std::function<double(const PointLonLat&)> get_init(const eckit::LocalConfigurati
         auto sbr = util::function::MDPI_gulfstream;
         return [sbr](const PointLonLat& p) { return sbr(p.lon(), p.lat()); };
     }
+    else if (init == "xstep") {
+        auto sbr = util::function::XStep;
+        return [sbr](const PointLonLat& p) { return sbr(p.lon(), p.lat()); };
+    }
+    else if (init == "slotted_cylinder") {
+        auto sbr = util::function::SlottedCylinder;
+        double scale;
+        args.get("slotted_cylinder.scale", scale = 1.);
+        return [sbr, scale](const PointLonLat& p) { return sbr(p.lon(), p.lat(), scale); };
+    }
     else {
         if (args.has("init")) {
             Log::error() << "Bad value for \"init\": \"" << init << "\" not recognised." << std::endl;
@@ -176,7 +198,7 @@ std::function<double(const PointLonLat&)> get_init(const eckit::LocalConfigurati
     ATLAS_THROW_EXCEPTION("Should not be here");
 }
 
-int AtlasParallelInterpolation::execute(const AtlasTool::Args& args) {\
+int AtlasParallelInterpolation::execute(const AtlasTool::Args& args) {
     eckit::LocalConfiguration config(args);
 
     auto get_grid = [](std::string grid_name) {
@@ -300,6 +322,10 @@ int AtlasParallelInterpolation::execute(const AtlasTool::Args& args) {\
         output.set("setup.target.halo", config.getLong("target.halo", 0));
         output.set("setup.interpolation.order", config.getInt("order", 1));
         output.set("setup.interpolation.normalise_intersections", config.getBool("normalise_intersections", false));
+        output.set("setup.interpolation.limiter", config.getString("limiter", "none"));
+        output.set("setup.interpolation.limiter.output", config.getString("limiter-output", "target"));
+        output.set("setup.interpolation.limiter.detector_size", config.getString("limiter-detector-size", "target"));
+        output.set("setup.interpolation.limiter.iterations", config.getString("limiter-iterations", "3"));
         output.set("setup.interpolation.validate", config.getBool("validate", false));
         output.set("setup.interpolation.matrix_free", config.getBool("matrix-free", false));
         output.set("setup.init", config.getString("init", "vortex_rollup"));

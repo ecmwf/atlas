@@ -13,7 +13,7 @@
 #include "atlas/util/Constants.h"
 #include "atlas/util/Earth.h"
 
-#include "atlas/util/function/MDPI_functions.h"
+#include "atlas/util/function/MDPI.h"
 
 namespace atlas {
 
