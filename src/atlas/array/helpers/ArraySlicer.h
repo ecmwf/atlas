@@ -129,7 +129,7 @@ public:
 
     template <typename... Args>
     struct Slice {
-        using type = typename get_slice_type<typename View::value_type, SliceRank<Args...>::value>::type;
+        using type = typename get_slice_type<typename View::element_type, SliceRank<Args...>::value>::type;
     };
 
     template <typename... Args>

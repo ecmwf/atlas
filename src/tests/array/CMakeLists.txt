@@ -52,6 +52,12 @@ ecbuild_add_test( TARGET atlas_test_array_view_util
   ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
 )
 
+ecbuild_add_test( TARGET atlas_test_array_make_mdspan
+  SOURCES  test_array_make_mdspan.cc
+  LIBS     atlas
+  ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
+)
+
 ecbuild_add_test( TARGET atlas_test_array_indexview
   SOURCES  test_indexview.cc
   LIBS     atlas
