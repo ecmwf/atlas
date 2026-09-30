@@ -48,7 +48,7 @@ CASE("test variant assignment") {
         [](auto view) {
           EXPECT((is_rank<1>(view)));
           EXPECT((is_value_type<float>(view)));
-          EXPECT((is_non_const_value_type<float>(view)));
+          EXPECT((is_element_type<float>(view)));
         },
         var1);
 
@@ -56,7 +56,7 @@ CASE("test variant assignment") {
         [](auto view) {
           EXPECT((is_rank<2>(view)));
           EXPECT((is_value_type<double>(view)));
-          EXPECT((is_non_const_value_type<double>(view)));
+          EXPECT((is_element_type<double>(view)));
         },
         var2);
 
@@ -64,15 +64,15 @@ CASE("test variant assignment") {
         [](auto view) {
           EXPECT((is_rank<3>(view)));
           EXPECT((is_value_type<int>(view)));
-          EXPECT((is_non_const_value_type<int>(view)));
+          EXPECT((is_element_type<int>(view)));
         },
         var3);
 
     std::visit(
         [](auto view) {
           EXPECT((is_rank<1>(view)));
-          EXPECT((is_value_type<const float>(view)));
-          EXPECT((is_non_const_value_type<float>(view)));
+          EXPECT((is_value_type<float>(view)));
+          EXPECT((is_element_type<const float>(view)));
         },
         var4);
   };

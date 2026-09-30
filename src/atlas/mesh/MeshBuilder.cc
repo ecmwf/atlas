@@ -147,9 +147,9 @@ Mesh MeshBuilder::operator()(const std::vector<double>& lon, const std::vector<d
         span<const int>{ghost.data(), ghost.size()}, span<const int>{partition.data(), partition.size()},
         span<const idx_t>{remote_index.data(), remote_index.size()}, remote_index_base,
         span<const gidx_t>{triag_global_index.data(), triag_global_index.size()},
-        mdspan<const gidx_t,extents<size_t,dynamic_extent,3>>{reinterpret_cast<const gidx_t*>(triag_nodes_global.data()),triag_nodes_global.size()},
+        mdspan<const gidx_t,array::extents<size_t,array::dynamic_extent,3>>{reinterpret_cast<const gidx_t*>(triag_nodes_global.data()),triag_nodes_global.size()},
         span<const gidx_t>{quad_global_index.data(), quad_global_index.size()},
-        mdspan<const gidx_t,extents<size_t,dynamic_extent,4>>{reinterpret_cast<const gidx_t*>(quad_nodes_global.data()),quad_nodes_global.size()},
+        mdspan<const gidx_t,array::extents<size_t,array::dynamic_extent,4>>{reinterpret_cast<const gidx_t*>(quad_nodes_global.data()),quad_nodes_global.size()},
         global_index_base,
         config);
 }
@@ -337,8 +337,8 @@ Mesh MeshBuilder::operator()(
     strided_span<const double> lon, strided_span<const double> lat,
     span<const int> ghost, span<const int> partition,
     span<const idx_t> remote_index, const idx_t remote_index_base,
-    span<const gidx_t> triag_global_index, mdspan<const gidx_t, extents<size_t,dynamic_extent,3>> triag_nodes_global,
-    span<const gidx_t> quad_global_index,  mdspan<const gidx_t, extents<size_t,dynamic_extent,4>> quad_nodes_global,
+    span<const gidx_t> triag_global_index, mdspan<const gidx_t, array::extents<size_t,array::dynamic_extent,3>> triag_nodes_global,
+    span<const gidx_t> quad_global_index,  mdspan<const gidx_t, array::extents<size_t,array::dynamic_extent,4>> quad_nodes_global,
     const gidx_t global_index_base,
     const eckit::Configuration& config) const {
 

@@ -73,7 +73,12 @@ parallel/omp/sort.h
 util/Config.cc
 util/Config.h
 
-mdspan.h
+array/mdspan.h
+array/mdspan/make_mdspan.h
+array/mdspan/make_mdspan_helpers.h
+array/mdspan/mdspan.h
+array/introspection.h
+array/detail/introspection_detail.h
 )
 
 list( APPEND atlas_grid_srcs

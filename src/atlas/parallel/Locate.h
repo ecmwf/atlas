@@ -15,7 +15,7 @@
 #include <vector>
 #include <functional>
 
-#include "atlas/mdspan.h"
+#include "atlas/array/mdspan.h"
 #include "atlas/util/vector.h"
 
 namespace atlas::parallel {
@@ -39,8 +39,8 @@ public:
         std::size_t size_{0};
     };
 
-    template<class T, std::size_t Extents = dynamic_extent, class Layout = layout_right, class Accessor = default_accessor<T>>
-    using span = mdspan<T, extents<size_t,Extents>, Layout, Accessor>;
+    template<class T, std::size_t Extents = array::dynamic_extent, class Layout = array::layout_right, class Accessor = array::restrict_accessor<T>>
+    using span = array::mdspan<T, array::extents<size_t,Extents>, Layout, Accessor>;
 
     static void locate_partition(
         // context

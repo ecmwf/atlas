@@ -35,9 +35,13 @@
 namespace atlas {
 namespace {
 
-using mdspan_xy = mdspan<const double, extents<size_t, dynamic_extent, 2>>;
+using mdspan_xy = array::mdspan<const double, array::dims<2>>;
 mdspan_xy make_mdspan(const atlas::Field& xy) {
     return mdspan_xy{xy.array().host_data<const double>(), xy.shape(0), 2 };
+}
+
+mdspan_xy make_mdspan(atlas::Field& xy) {
+    return make_mdspan(static_cast<const atlas::Field&>(xy));
 }
 
 }
