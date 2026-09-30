@@ -70,6 +70,13 @@ ecbuild_add_test( TARGET atlas_test_trans_invtrans_grad
   ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
 )
 
+ecbuild_add_test( TARGET atlas_test_trans_adjoints
+  SOURCES   test_trans_adjoints.cc
+  CONDITION atlas_HAVE_ECTRANS
+  LIBS      atlas transi
+  ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
+)
+
 # Note: This duplication is needed because transi is a private library of atlas,
 #       and this tests needs access to the transi include directories.
 # ToDo: Fix this inside the test code so that we don't directly need to include transi headers.
