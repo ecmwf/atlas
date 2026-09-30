@@ -36,6 +36,13 @@ if( CMAKE_Fortran_COMPILER_ID MATCHES "Intel" )
   ecbuild_remove_fortran_flags( "-g" )
 endif()
 
+if( CMAKE_Fortran_COMPILER_ID MATCHES "NVHPC" )
+  ## Avoid following warning (tested with nvhpc 24.5)
+  #    NVFORTRAN-W-0268-Cannot inline subprogram; common block mismatch (projection/fctest_projection_main.F90: 21)
+  #  Inlining of TEST subroutines should not be needed anyway.
+  ecbuild_add_fortran_flags("-Mnoinline")
+endif()
+
 ######################################################
 
 # Macro atlas_add_hic_test

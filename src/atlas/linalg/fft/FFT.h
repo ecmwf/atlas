@@ -15,7 +15,7 @@
 #include <map>
 #include <memory>
 
-#include "atlas/mdspan.h"
+#include "atlas/array/mdspan.h"
 
 namespace atlas::linalg {
 
@@ -28,8 +28,8 @@ public:
         do_plan_inverse_c2r_many(howmany, size_in, size_out, dist_in, dist_out, in, out);
     }
     void plan_inverse_c2r_many(
-        mdspan<std::complex<double>,dims<2>,layout_stride> in,
-        mdspan<double,dims<2>,layout_stride> out) {
+        array::mdspan<std::complex<double>,array::dims<2>,array::layout_stride> in,
+        array::mdspan<double,array::dims<2>,array::layout_stride> out) {
             auto howmany = in.extent(0);
             auto size_in = in.extent(1);
             auto size_out = out.extent(1);
@@ -48,8 +48,8 @@ public:
         do_inverse_c2r_many(howmany, size_in, size_out, dist_in, dist_out, in, out);
     }
     void inverse_c2r_many(
-        mdspan<std::complex<double>,dims<2>,layout_stride> in,
-        mdspan<double,dims<2>,layout_stride> out) {
+        array::mdspan<std::complex<double>,array::dims<2>,array::layout_stride> in,
+        array::mdspan<double,array::dims<2>,array::layout_stride> out) {
             auto howmany = in.extent(0);
             auto size_in = in.extent(1);
             auto size_out = out.extent(1);

@@ -12,12 +12,16 @@
 
 #include "pluto/mdspan.h"
 
-namespace atlas {
+namespace atlas::array {
 using ::pluto::dynamic_extent;
 using ::pluto::layout_left;
 using ::pluto::layout_right;
 using ::pluto::layout_stride;
 using ::pluto::default_accessor;
+using ::pluto::aligned_accessor;
+using ::pluto::restrict_accessor;
+using ::pluto::restrict_aligned_accessor;
+using ::pluto::is_sufficiently_aligned;
 using ::pluto::extents;
 using ::pluto::dextents;
 using ::pluto::dims;
@@ -28,43 +32,63 @@ using ::pluto::mdspan;
 
 #include <type_traits>
 
-namespace atlas {
+namespace atlas::array {
 
 template <typename T, size_t Base>
 class index_reference {
 public:
     using value_type = T;
+
+    inline PLUTO_MDSPAN_HOST_DEVICE
     constexpr index_reference(value_type& idx): idx_(idx) {
     }
+
+    inline PLUTO_MDSPAN_HOST_DEVICE
     constexpr void set(const value_type& value) {
         idx_ = value + base_;
     }
+
+    inline PLUTO_MDSPAN_HOST_DEVICE
     constexpr value_type get() const {
         return idx_ - base_;
     }
+
+    inline PLUTO_MDSPAN_HOST_DEVICE
     constexpr void operator =(const value_type& value) {
         set(value);
     }
+
+    inline PLUTO_MDSPAN_HOST_DEVICE
     constexpr index_reference& operator=(const index_reference& other) noexcept {
         set(other.get());
         return *this;
     }
+
+    inline PLUTO_MDSPAN_HOST_DEVICE
     constexpr index_reference& operator--() noexcept {
         --idx_;
         return *this;
     }
+
+    inline PLUTO_MDSPAN_HOST_DEVICE
     constexpr index_reference& operator++() noexcept {
         ++idx_;
         return *this;
     }
+
+    inline PLUTO_MDSPAN_HOST_DEVICE
     constexpr index_reference& operator+=(value_type v) noexcept {
         idx_ += v;
         return *this;
     }
+
+    inline PLUTO_MDSPAN_HOST_DEVICE
     constexpr index_reference& operator-=(value_type v) noexcept {
         idx_ -= v;
         return *this;
     }
+
+    inline PLUTO_MDSPAN_HOST_DEVICE
     constexpr operator value_type() const noexcept{
         return get();
     }
@@ -85,30 +109,39 @@ struct index_accessor {
     using data_handle_type = ElementType*;
     using offset_policy    = index_accessor;
 
-    constexpr index_accessor() = default;
+    inline PLUTO_MDSPAN_HOST_DEVICE
+    constexpr index_accessor() {}
 
     template<class OtherAccessor, typename = typename std::enable_if_t<
           (!std::is_const_v<ElementType> && std::is_same_v<ElementType, std::remove_const_t<typename OtherAccessor::element_type>>)
         ||( std::is_const_v<ElementType> && std::is_same_v<ElementType, std::add_const_t<typename OtherAccessor::element_type>>)>>
+    inline PLUTO_MDSPAN_HOST_DEVICE
     constexpr index_accessor(const OtherAccessor&) {}
 
     template<size_t B=Base, typename = std::enable_if_t<B == 0>>
+    inline PLUTO_MDSPAN_HOST_DEVICE
     constexpr ElementType& access(data_handle_type p, size_t i) const noexcept {
         return p[i];
     }
+
     template<size_t B=Base, typename = std::enable_if_t<B != 0 && !std::is_const_v<ElementType>>>
+    inline PLUTO_MDSPAN_HOST_DEVICE
     constexpr index_reference<ElementType,Base> access(data_handle_type p, size_t i) const noexcept {
         return p[i];
     }
+
     template<size_t B=Base, typename = std::enable_if_t<B != 0 && std::is_const_v<ElementType>>>
+    inline PLUTO_MDSPAN_HOST_DEVICE
     constexpr ElementType access(data_handle_type p, size_t i) const noexcept {
         return p[i] - base_;
     }
 
+    inline PLUTO_MDSPAN_HOST_DEVICE
     constexpr data_handle_type offset(data_handle_type p, size_t i) const noexcept {
         return p + i;
     }
 
+    inline PLUTO_MDSPAN_HOST_DEVICE
     constexpr operator default_accessor<element_type>() const noexcept {
         return default_accessor<element_type>();
     }
@@ -116,6 +149,36 @@ struct index_accessor {
     static constexpr ElementType base_{Base};
 };
 
-} // namespace atlas
+template <std::size_t Dim, std::size_t N>
+struct fixed_dim {};
+
+template <std::size_t N>
+struct fixed_last_dim {};
+
+struct default_accessor_policy {
+    template <typename ElementType>
+    using type = default_accessor<ElementType>;
+};
+
+template <std::size_t ByteAlignment>
+struct aligned_accessor_policy {
+    template <typename ElementType>
+    using type = aligned_accessor<ElementType, ByteAlignment>;
+};
+
+
+struct restrict_accessor_policy {
+    template <typename ElementType>
+    using type = restrict_accessor<ElementType>;
+};
+
+template <std::size_t ByteAlignment>
+struct restrict_aligned_accessor_policy {
+    template <typename ElementType>
+    using type = restrict_aligned_accessor<ElementType, ByteAlignment>;
+};
+
+
+} // namespace atlas::array
 
 // ------------------------------------------------------------------------------------------------
