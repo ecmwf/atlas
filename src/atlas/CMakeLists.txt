@@ -269,6 +269,9 @@ grid/Vertical.cc
 
 list( APPEND atlas_grid_partitioning_srcs
 
+grid/SpaceFillingCurve.h
+grid/SpaceFillingCurve.cc
+
 grid/StructuredPartitionPolygon.h
 grid/StructuredPartitionPolygon.cc
 
@@ -322,6 +325,8 @@ grid/detail/partitioner/RegularBandsPartitioner.cc
 grid/detail/partitioner/RegularBandsPartitioner.h
 grid/detail/partitioner/SerialPartitioner.cc
 grid/detail/partitioner/SerialPartitioner.h
+grid/detail/partitioner/SpaceFillingCurvePartitioner.cc
+grid/detail/partitioner/SpaceFillingCurvePartitioner.h
 )
 
 if( atlas_HAVE_ECTRANS )
