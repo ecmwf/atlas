@@ -28,39 +28,70 @@ namespace test {
 
 /// Helper functions -----------------------------------------------------------
 
-// Dot product of atlas fields
-double dotProd(const Field& a, const Field& b) {
-    const auto ghost = [&] {
-        ATLAS_ASSERT(a.functionspace().type() == b.functionspace().type());
-        if (a.functionspace().type() == "Spectral") {
-            return std::function<int(idx_t)>([](idx_t ){return 0;});
-        }
-        return std::function<int(idx_t)>(array::make_view<int, 1>(a.functionspace().ghost()));
-    }();
+
+double dotProdGridPoint(const Field& a, const Field& b) {
+    auto ghost = array::make_view<const int, 1>(a.functionspace().ghost());
 
     double prod{};
     const auto aView = array::make_view<double, 1>(a);
     const auto bView = array::make_view<double, 1>(b);
 
-    functionspace::Spectral spectral = functionspace::Spectral{a.functionspace()};
-    bool isSpectral = bool(spectral);
-    int truncation = isSpectral ? spectral.truncation() : -1;
-
     for (size_t i = 0; i < a.size(); ++i) {
         if (ghost(i)) {
             continue;
         }
-        double preprod = aView(i) * bView(i);
-
-        // Double the m>0 zonal wave number contribution for spectral fields
-        bool non_zero_m = static_cast<int>(i) >= 2*(truncation+1);
-        if (isSpectral && non_zero_m) {
-            preprod *= 2.0;
-        }
-        prod += preprod;
+        prod += aView(i) * bView(i);
     }
     mpi::comm().allReduceInPlace(prod, eckit::mpi::Operation::SUM);
     return prod;
+}
+
+double dotProdSpectral(const Field& a, const Field& b) {
+   /* Because the input fields are real-valued in the spatial domain,
+    * their spectral coefficients exhibit conjugate symmetry: F(n, -m) = (-1)^m * F(n, m)^*.
+    *
+    * To optimize storage, the layout omits negative azimuthal orders (m < 0).
+    * To reconstruct the full global energy integral from this half-spectrum:
+    *  - Zonal modes (m = 0) are counted once (weight = 1.0).
+    *  - Non-zonal modes (m > 0) are doubled (weight = 2.0) to account for the missing
+    *    negative m counterparts.
+    */
+    double prod{};
+    const auto aView = array::make_view<double, 1>(a);
+    const auto bView = array::make_view<double, 1>(b);
+
+    functionspace::Spectral spectral = functionspace::Spectral{a.functionspace()};
+    ATLAS_ASSERT(spectral);
+
+    const auto zonal_wavenumbers = spectral.zonal_wavenumbers();
+    const int truncation = spectral.truncation();
+    idx_t index = 0;
+    for( idx_t jm=0; jm<zonal_wavenumbers.size(); ++jm ) {
+        const int m = zonal_wavenumbers(jm);
+        for( int n=m; n<=truncation; ++n ) {
+            for (int c=0; c<2; ++c) { // 2 complex components (real, imag)
+                if (m == 0) {
+                    prod += aView(index) * bView(index);
+                }
+                else {
+                    prod += 2.0 * aView(index) * bView(index);
+                }
+                ++index;
+            }
+        }
+    }
+    ATLAS_ASSERT(index == a.size());
+    mpi::comm().allReduceInPlace(prod, eckit::mpi::Operation::SUM);
+    return prod;
+}
+
+// Dot product of atlas fields
+double dotProd(const Field& a, const Field& b) {
+    ATLAS_ASSERT(a.functionspace().type() == b.functionspace().type());
+    if (a.functionspace().type() == "Spectral") {
+        return dotProdSpectral(a, b);
+    }
+    return dotProdGridPoint(a, b);
 }
 
 Field createVortexRollup(const FunctionSpace& gaussFunctionSpace) {
