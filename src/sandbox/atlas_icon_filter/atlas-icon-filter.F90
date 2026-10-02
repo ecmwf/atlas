@@ -370,8 +370,8 @@ end subroutine write_field_to_netcdf
 
   function wall_time() result(time)
     real(kind=8) :: time
-    integer :: clock_count
-    integer :: clock_rate
+    integer(kind=8) :: clock_count
+    integer(kind=8) :: clock_rate
 
     call system_clock(clock_count, clock_rate)
     time = real(clock_count, kind=8) / real(clock_rate, kind=8)
@@ -384,6 +384,13 @@ end subroutine write_field_to_netcdf
 
     write(*,'(A,I0,A,A,A,F12.6,A)') '    Timing step ', step, ': ', trim(label), ' = ', elapsed, ' s'
   end subroutine report_timing
+
+  subroutine report_setup_timing(label, elapsed)
+    character(len=*), intent(in) :: label
+    real(kind=8), intent(in) :: elapsed
+
+    write(*,'(A,A,A,F12.6,A)') '    Timing setup: ', trim(label), ' = ', elapsed, ' s'
+  end subroutine report_setup_timing
 
 end module atlas_icon_filter_mod
 
@@ -427,6 +434,8 @@ program atlas_icon_filter
   integer :: nsteps
   integer :: istep
   integer :: spectral_cutoff
+  real(kind=8) :: setup_start
+  real(kind=8) :: setup_timer
 
   call atlas_initialize()
 
@@ -493,12 +502,17 @@ end do
 
   print *, 'netCDF file = ', trim(netcdf_path)
 
+  setup_start = wall_time()
+  setup_timer = wall_time()
   call read_grid_from_netcdf(icon_grid, netcdf_path)
   call read_info_from_netcdf(nsteps, levels, netcdf_path)
+  call report_setup_timing('read_grid_from_netcdf', wall_time() - setup_timer)
 
   if (output_netcdf) then
     print *, 'netCDF output file = ', trim(netcdf_output_path)
+    setup_timer = wall_time()
     call copy_file(netcdf_path, netcdf_output_path)
+    call report_setup_timing('copy_file (output I/O, included in Total setup)', wall_time() - setup_timer)
   end if
 
   print *, 'icon grid size = ', icon_grid%size()
@@ -514,30 +528,45 @@ end do
   end if
   print *, 'spectral cutoff = ', spectral_cutoff
 
+  setup_timer = wall_time()
   gaussian_grid = atlas_RegularGaussianGrid(gaussian_N)
   print *, 'gaussian grid size = ', gaussian_grid%size()
   print *, 'gaussian equatorial resolution [km] = ', 2. * pi * radius / ( 4. * gaussian_N ) / 1000.0d0
 
   gaussian_fs = atlas_functionspace_StructuredColumns(grid=gaussian_grid, halo=1) ! halo=1 is needed for interpolation back
   spectral_fs = atlas_functionspace_Spectral(truncation=spectral_truncation)
+  call report_setup_timing('gaussian_grid_and_functionspaces', wall_time() - setup_timer)
+  setup_timer = wall_time()
   trans = atlas_Trans(gaussian_grid, spectral_truncation)
+  call report_setup_timing('trans_setup', wall_time() - setup_timer)
 
+  setup_timer = wall_time()
   icon_mesh = atlas_Mesh(icon_grid)
+  call report_setup_timing('icon_mesh (Delaunay)', wall_time() - setup_timer)
 
   if (output_gmsh) then
     call output_mesh(icon_mesh, 'icon_mesh.msh')
   endif
 
+  setup_timer = wall_time()
   icon_fs = atlas_functionspace_NodeColumns(mesh=icon_mesh)
+  call report_setup_timing('icon_functionspace', wall_time() - setup_timer)
   config = atlas_Config()
+  setup_timer = wall_time()
   call config%set('type', 'finite-element')
   interpolation_icon_to_gaussian = atlas_Interpolation(config, source=icon_fs, target=gaussian_fs)
+  call report_setup_timing('interpolation_setup_icon_to_gaussian', wall_time() - setup_timer)
+  setup_timer = wall_time()
   call config%set('type', 'structured-bilinear')
   interpolation_gaussian_to_icon = atlas_Interpolation(config, source=gaussian_fs, target=icon_fs)
+  call report_setup_timing('interpolation_setup_gaussian_to_icon', wall_time() - setup_timer)
 
+  setup_timer = wall_time()
   icon_field = icon_fs%create_field(name='temp', kind=atlas_real(8), levels=levels)
   gaussian_field = gaussian_fs%create_field(name='temp', kind=atlas_real(8), levels=levels)
   spectral_field = spectral_fs%create_field(name='temp', kind=atlas_real(8), levels=levels)
+  call report_setup_timing('create_fields', wall_time() - setup_timer)
+  call report_setup_timing('Total setup', wall_time() - setup_start)
 
   do istep=1,nsteps; block
     character(len=4) :: istep_str
