@@ -69,15 +69,12 @@ public:
                 std::ofstream par_file(par_path.localPath(), std::ios_base::out);
                 for (int p = 0; p < mpi_size; ++p) {
                     PathName loc_path(file_path);
-                    // loc_path = loc_path.baseName(false) + "_p" + to_str(p) + ".msh";
                     loc_path = loc_path.baseName(false) + ".msh.p" + std::to_string(p);
                     par_file << "Merge \"" << loc_path << "\";" << std::endl;
                 }
                 par_file.close();
             }
             PathName path(file_path);
-            // path = path.dirName() + "/" + path.baseName(false) + "_p" +
-            // to_str(part) + ".msh";
             path = path.dirName() + "/" + path.baseName(false) + ".msh.p" + std::to_string(part);
             std::ofstream::open(path.localPath(), mode);
         }
@@ -725,22 +722,10 @@ void write_field_nodes(const Metadata& gmsh_options, const functionspace::NoFunc
 // ----------------------------------------------------------------------------
 
 
-// ----------------------------------------------------------------------------
-
 void print_field_lev(char field_lev[], size_t size, int jlev) {
     ATLAS_ASSERT(size > 5);
     std::snprintf(field_lev, size, "[%03d]", jlev);
 }
-
-/* unused
-void print_field_lev( char field_lev[], long jlev ) {
-    std::sprintf( field_lev, "[%03ld]", jlev );
-}
-
-void print_field_lev( char field_lev[], unsigned long jlev ) {
-    std::sprintf( field_lev, "[%03lu]", jlev );
-}
-**/
 
 // ----------------------------------------------------------------------------
 template <typename DATATYPE>
@@ -865,124 +850,6 @@ void write_field_elems(const Metadata& gmsh_options, const FunctionSpace& functi
     }
 #endif
 }
-
-// ----------------------------------------------------------------------------
-#if 0
-template< typename DATA_TYPE >
-void write_field_elems(const Metadata& gmsh_options, const FunctionSpace& function_space, const Field& field, std::ostream& out)
-{
-  Log::info() << "writing field " << field.name() << "..." << std::endl;
-  bool gather( gmsh_options.get<bool>("gather") );
-  bool binary( !gmsh_options.get<bool>("ascii") );
-  int nlev = field.metadata().has("nb_levels") ? field.metadata().get<size_t>("nb_levels") : 1;
-  int ndata = field.shape(0);
-  int nvars = field.shape(1)/nlev;
-  array::ArrayView<gidx_t,1    > gidx ( function_space.field( "glb_idx" ) );
-  array::ArrayView<DATA_TYPE> data ( field );
-  array::ArrayT<DATA_TYPE> field_glb_arr;
-  array::ArrayT<gidx_t   > gidx_glb_arr;
-  if( gather )
-  {
-    mpl::GatherScatter& fullgather = function_space.fullgather();
-    ndata = fullgather.glb_dof();
-    field_glb_arr.resize(ndata,field.shape(1));
-    gidx_glb_arr.resize(ndata);
-    array::ArrayView<DATA_TYPE> data_glb( field_glb_arr );
-    array::ArrayView<gidx_t,1> gidx_glb( gidx_glb_arr );
-    fullgather.gather( gidx, gidx_glb );
-    fullgather.gather( data, data_glb );
-    gidx = array::ArrayView<gidx_t,1>( gidx_glb_arr );
-    data = data_glb;
-  }
-
-  double time = field.metadata().has("time") ? field.metadata().get<double>("time") : 0.;
-  size_t step = field.metadata().has("step") ? field.metadata().get<size_t>("step") : 0 ;
-
-  int nnodes = IndexView<int,2>( function_space.field("nodes") ).shape(1);
-
-  for (int jlev=0; jlev<nlev; ++jlev)
-  {
-    char field_lev[6] = {0, 0, 0, 0, 0, 0};
-    if( field.metadata().has("nb_levels") )
-      std::sprintf(field_lev, "[%03d]",jlev);
-
-    out << "$ElementNodeData\n";
-    out << "1\n";
-    out << "\"" << field.name() << field_lev << "\"\n";
-    out << "1\n";
-    out << time << "\n";
-    out << "4\n";
-    out << step << "\n";
-    if     ( nvars == 1 ) out << nvars << "\n";
-    else if( nvars <= 3 ) out << 3     << "\n";
-    out << ndata << "\n";
-    out << mpi::rank() << "\n";
-
-    if( binary )
-    {
-      if( nvars == 1)
-      {
-        double value;
-        for (size_t jelem=0; jelem<ndata; ++jelem)
-        {
-          out.write(reinterpret_cast<const char*>(&gidx(jelem)),sizeof(int));
-          out.write(reinterpret_cast<const char*>(&nnodes),sizeof(int));
-          for (size_t n=0; n<nnodes; ++n)
-          {
-            value = data(jelem,jlev);
-            out.write(reinterpret_cast<const char*>(&value),sizeof(double));
-          }
-        }
-      }
-      else if( nvars <= 3 )
-      {
-        double value[3] = {0,0,0};
-        for (size_t jelem=0; jelem<ndata; ++jelem)
-        {
-          out << gidx(jelem) << " " << nnodes;
-          for (size_t n=0; n<nnodes; ++n)
-          {
-            for( int v=0; v<nvars; ++v)
-              value[v] = data(jelem,jlev*nvars+v);
-            out.write(reinterpret_cast<const char*>(&value),sizeof(double)*3);
-          }
-        }
-      }
-      out <<"\n";
-    }
-    else
-    {
-      if( nvars == 1)
-      {
-        for (size_t jelem=0; jelem<ndata; ++jelem)
-        {
-          out << gidx(jelem) << " " << nnodes;
-          for (size_t n=0; n<nnodes; ++n)
-            out << " " << data(jelem,jlev);
-          out <<"\n";
-        }
-      }
-      else if( nvars <= 3 )
-      {
-        std::vector<DATA_TYPE> data_vec(3,0.);
-        for (size_t jelem=0; jelem<ndata; ++jelem)
-        {
-          out << gidx(jelem) << " " << nnodes;
-          for (size_t n=0; n<nnodes; ++n)
-          {
-            for( int v=0; v<nvars; ++v)
-              data_vec[v] = data(jelem,jlev*nvars+v);
-            for( int v=0; v<3; ++v)
-              out << " " << data_vec[v];
-          }
-          out <<"\n";
-        }
-      }
-    }
-    out << "$EndElementNodeData\n";
-  }
-}
-#endif
 
 // ----------------------------------------------------------------------------
 
