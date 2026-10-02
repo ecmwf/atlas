@@ -5,6 +5,7 @@
 !   atlas-icon-filter <netcdf-file> \
 !                     [--output-netcdf <filename>] \
 !                     [--spectral-cutoff <cutoff>] \
+!                     [--transform-truncation <truncation>] \
 !                     [--output-spectrum] [--output-gmsh] 
 !
 ! Required input:
@@ -18,6 +19,13 @@
 !   --spectral-cutoff <cutoff>
 !     Spectral total-wavenumber cutoff used by filter_spectral_cutoff. If this
 !     option is omitted, the cutoff defaults to spectral_truncation/10.
+!
+!   --transform-truncation <truncation>
+!     Spectral truncation of the transform on the Gaussian grid (DWD addition).
+!     If this option is omitted, the transform uses the full truncation of the
+!     grid, 2*N-1, as delivered. A smaller value (e.g. equal to the cutoff) only
+!     computes the retained coefficients, on the same Gaussian grid. The default
+!     cutoff is always derived from 2*N-1, independent of this option.
 !
 !   --output-netcdf <filename>
 !     Create a copy of the input NetCDF file, then incrementally overwrite the
@@ -434,6 +442,7 @@ program atlas_icon_filter
   integer :: nsteps
   integer :: istep
   integer :: spectral_cutoff
+  integer :: transform_truncation
   real(kind=8) :: setup_start
   real(kind=8) :: setup_timer
 
@@ -445,9 +454,10 @@ program atlas_icon_filter
   netcdf_path = ''
   netcdf_output_path = ''
   spectral_cutoff = -1
+  transform_truncation = -1
 
   if (command_argument_count() < 1) then
-    print *, 'Usage: atlas-icon-filter [--output-spectrum] [--output-gmsh] [--output-netcdf <filename>] [--spectral-cutoff <cutoff>] <netcdf-file>'
+    print *, 'Usage: atlas-icon-filter [--output-spectrum] [--output-gmsh] [--output-netcdf <filename>] [--spectral-cutoff <cutoff>] [--transform-truncation <truncation>] <netcdf-file>'
     error stop 1
   end if
 
@@ -462,28 +472,40 @@ do while (iarg <= command_argument_count())
   case ('--output-netcdf')
     iarg = iarg + 1
     if (iarg > command_argument_count()) then
-      print *, 'Usage: atlas-icon-filter [--output-spectrum] [--output-gmsh] [--output-netcdf <filename>] [--spectral-cutoff <cutoff>] <netcdf-file>'
+      print *, 'Usage: atlas-icon-filter [--output-spectrum] [--output-gmsh] [--output-netcdf <filename>] [--spectral-cutoff <cutoff>] [--transform-truncation <truncation>] <netcdf-file>'
       error stop 1
     end if
     call get_command_argument(iarg, netcdf_output_path)
     if (len_trim(netcdf_output_path) == 0) then
-      print *, 'Usage: atlas-icon-filter [--output-spectrum] [--output-gmsh] [--output-netcdf <filename>] [--spectral-cutoff <cutoff>] <netcdf-file>'
+      print *, 'Usage: atlas-icon-filter [--output-spectrum] [--output-gmsh] [--output-netcdf <filename>] [--spectral-cutoff <cutoff>] [--transform-truncation <truncation>] <netcdf-file>'
       error stop 1
     end if
     output_netcdf = .true.
   case ('--spectral-cutoff')
     iarg = iarg + 1
     if (iarg > command_argument_count()) then
-      print *, 'Usage: atlas-icon-filter [--output-spectrum] [--output-gmsh] [--output-netcdf <filename>] [--spectral-cutoff <cutoff>] <netcdf-file>'
+      print *, 'Usage: atlas-icon-filter [--output-spectrum] [--output-gmsh] [--output-netcdf <filename>] [--spectral-cutoff <cutoff>] [--transform-truncation <truncation>] <netcdf-file>'
       error stop 1
     end if
     call get_command_argument(iarg, argument)
     read(argument, *, err=100) spectral_cutoff
+  case ('--transform-truncation')
+    iarg = iarg + 1
+    if (iarg > command_argument_count()) then
+      print *, 'Usage: atlas-icon-filter [--output-spectrum] [--output-gmsh] [--output-netcdf <filename>] [--spectral-cutoff <cutoff>] [--transform-truncation <truncation>] <netcdf-file>'
+      error stop 1
+    end if
+    call get_command_argument(iarg, argument)
+    read(argument, *, err=101) transform_truncation
+    if (transform_truncation < 0) then
+      print *, 'Transform truncation must be non-negative: ', transform_truncation
+      error stop 1
+    end if
   case default
     if (len_trim(netcdf_path) == 0) then
       netcdf_path = argument
     else
-      print *, 'Usage: atlas-icon-filter [--output-spectrum] [--output-gmsh] [--output-netcdf <filename>] [--spectral-cutoff <cutoff>] <netcdf-file>'
+      print *, 'Usage: atlas-icon-filter [--output-spectrum] [--output-gmsh] [--output-netcdf <filename>] [--spectral-cutoff <cutoff>] [--transform-truncation <truncation>] <netcdf-file>'
       error stop 1
     end if
   end select
@@ -491,7 +513,7 @@ do while (iarg <= command_argument_count())
 end do
 
   if (len_trim(netcdf_path) == 0) then
-    print *, 'Usage: atlas-icon-filter [--output-spectrum] [--output-gmsh] [--output-netcdf <filename>] [--spectral-cutoff <cutoff>] <netcdf-file>'
+    print *, 'Usage: atlas-icon-filter [--output-spectrum] [--output-gmsh] [--output-netcdf <filename>] [--spectral-cutoff <cutoff>] [--transform-truncation <truncation>] <netcdf-file>'
     error stop 1
   end if
 
@@ -527,6 +549,17 @@ end do
     spectral_cutoff = spectral_truncation/10
   end if
   print *, 'spectral cutoff = ', spectral_cutoff
+  if (transform_truncation /= -1) then
+    if (transform_truncation > spectral_truncation) then
+      print *, 'Transform truncation must not exceed 2*N-1 = ', spectral_truncation
+      error stop 1
+    end if
+    if (spectral_cutoff >= transform_truncation) then
+      print *, 'Note: cutoff >= transform truncation: the truncation itself removes n > cutoff'
+    end if
+    spectral_truncation = transform_truncation
+    print *, 'transform truncation (--transform-truncation) = ', spectral_truncation
+  end if
 
   setup_timer = wall_time()
   gaussian_grid = atlas_RegularGaussianGrid(gaussian_N)
@@ -648,6 +681,9 @@ end do
   stop
 
 100 print *, 'Invalid value for --spectral-cutoff: ', trim(argument)
+  error stop 1
+
+101 print *, 'Invalid value for --transform-truncation: ', trim(argument)
   error stop 1
 
 end program atlas_icon_filter

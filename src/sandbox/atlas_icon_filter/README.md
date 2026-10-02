@@ -36,6 +36,7 @@ cmake --build <build-dir> --target atlas-icon-filter
 atlas-icon-filter <netcdf-file> \
                   [--output-netcdf <filename>] \
                   [--spectral-cutoff <cutoff>] \
+                  [--transform-truncation <truncation>] \
                   [--output-spectrum] [--output-gmsh]
 ```
 
@@ -44,6 +45,7 @@ The input NetCDF file must contain ICON cell-center coordinates `clon` and `clat
 Options:
 
 - `--spectral-cutoff <cutoff>`: Total-wavenumber cutoff used by `filter_spectral_cutoff`. If omitted, the executable uses `spectral_truncation/10`.
+- `--transform-truncation <truncation>` (DWD addition): Spectral truncation of the transform on the same Gaussian grid. If omitted, the full truncation `2*N-1` is used, as delivered. Setting it equal to the cutoff computes only the retained coefficients. The default cutoff is always derived from `2*N-1`.
 - `--output-netcdf <filename>`: Copy the input NetCDF file and incrementally overwrite each `temp` time slice with the filtered field values. The output filename must be different from the input filename.
 - `--output-spectrum`: Write ASCII power-spectrum files before and after filtering for each time step.
 - `--output-gmsh`: Write Gmsh diagnostics for the ICON mesh and unfiltered/filtered fields.
