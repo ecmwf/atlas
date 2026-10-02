@@ -5,19 +5,29 @@
 !   atlas-icon-filter <netcdf-file> \
 !                     [--output-netcdf <filename>] \
 !                     [--spectral-cutoff <cutoff>] \
+!                     [--transform-truncation <truncation>] \
 !                     [--output-spectrum] [--output-gmsh] 
 !
 ! Required input:
 !   <netcdf-file>
 !     ICON NetCDF input file containing the grid coordinates clon/clat and the
-!     field variable temp with dimensions (ncells, plev, time). The executable
-!     reads every time step of temp and writes filtered values only when an
-!     output option is requested.
+!     field variable temp with dimensions (ncells, plev, time) in Fortran order
+!     (temp(time, plev, ncells) in C/CDL notation); other dimension orders are
+!     rejected. The (ncells, plev) slice of each time step is transposed to and
+!     from the (levels, nodes) Atlas field. The executable reads every time step
+!     of temp and writes filtered values only when an output option is requested.
 !
 ! Optional arguments:
 !   --spectral-cutoff <cutoff>
 !     Spectral total-wavenumber cutoff used by filter_spectral_cutoff. If this
 !     option is omitted, the cutoff defaults to spectral_truncation/10.
+!
+!   --transform-truncation <truncation>
+!     Spectral truncation of the transform on the Gaussian grid (DWD addition).
+!     If this option is omitted, the transform uses the full truncation of the
+!     grid, 2*N-1, as delivered. A smaller value (e.g. equal to the cutoff) only
+!     computes the retained coefficients, on the same Gaussian grid. The default
+!     cutoff is always derived from 2*N-1, independent of this option.
 !
 !   --output-netcdf <filename>
 !     Create a copy of the input NetCDF file, then incrementally overwrite the
@@ -142,8 +152,11 @@ module atlas_icon_filter_mod
     integer :: nsteps
     integer :: start(3)
     integer :: count(3)
+    integer :: temp_ndims
+    integer :: temp_dimids(nf90_max_var_dims)
 
     real(kind=8), pointer :: field_data(:,:)
+    real(kind=8), allocatable :: buffer(:,:)
 
     logical :: file_exists
 
@@ -161,6 +174,20 @@ module atlas_icon_filter_mod
     call check_nf90(nf90_inq_dimid(ncid, 'ncells', ncells_dimid), 'nf90_inq_dimid(ncells)')
     call check_nf90(nf90_inquire_dimension(ncid, ncells_dimid, len=ncells), 'nf90_inquire_dimension(ncells)')
     call check_nf90(nf90_inq_varid(ncid, 'temp', temp_varid), 'nf90_inq_varid(temp)')
+
+    ! The slice is transposed below on the assumption that temp is (ncells, plev, time)
+    ! in Fortran order; any other order must fail here instead of being scrambled.
+    call check_nf90(nf90_inquire_variable(ncid, temp_varid, ndims=temp_ndims, dimids=temp_dimids), &
+                    'nf90_inquire_variable(temp)')
+    if (temp_ndims /= 3) then
+      print *, 'Variable temp must have 3 dimensions (ncells, plev, time), got ', temp_ndims
+      error stop 1
+    end if
+    if (temp_dimids(1) /= ncells_dimid .or. temp_dimids(2) /= plev_dimid .or. temp_dimids(3) /= time_dimid) then
+      print *, 'Variable temp must have dimensions (ncells, plev, time) in Fortran order,'
+      print *, 'i.e. temp(time, plev, ncells) in C/CDL notation; found a different order in ', trim(netcdf_path)
+      error stop 1
+    end if
 
     if (nsteps < 1) then
       print *, 'Variable temp has no time steps'
@@ -182,7 +209,11 @@ module atlas_icon_filter_mod
     call field%data(field_data)
     start = [1, 1, tstep]
     count = [ncells, nlev, 1]
-    call check_nf90(nf90_get_var(ncid, temp_varid, field_data(1:nlev,1:ncells), start=start, count=count), 'nf90_get_var(temp)')
+    ! file slice (ncells, nlev), cell index fastest -> Atlas field (nlev, ncells), level fastest
+    allocate(buffer(ncells, nlev))
+    call check_nf90(nf90_get_var(ncid, temp_varid, buffer, start=start, count=count), 'nf90_get_var(temp)')
+    field_data(1:nlev,1:ncells) = transpose(buffer)
+    deallocate(buffer)
     call check_nf90(nf90_close(ncid), 'nf90_close')
     call field%set_dirty()
   end subroutine
@@ -299,7 +330,8 @@ subroutine write_field_to_netcdf(field, tstep, netcdf_path)
   call field%data(field_data)
   start = [1, 1, tstep]
   count = [ncells, nlev, 1]
-  call check_nf90(nf90_put_var(ncid, temp_varid, field_data(1:nlev,1:ncells), start=start, count=count), 'nf90_put_var(temp)')
+  ! Atlas field (nlev, ncells) -> file slice (ncells, nlev), the inverse of read_field_from_netcdf
+  call check_nf90(nf90_put_var(ncid, temp_varid, transpose(field_data(1:nlev,1:ncells)), start=start, count=count), 'nf90_put_var(temp)')
   call check_nf90(nf90_close(ncid), 'nf90_close(output)')
 end subroutine write_field_to_netcdf
 
@@ -370,8 +402,8 @@ end subroutine write_field_to_netcdf
 
   function wall_time() result(time)
     real(kind=8) :: time
-    integer :: clock_count
-    integer :: clock_rate
+    integer(kind=8) :: clock_count
+    integer(kind=8) :: clock_rate
 
     call system_clock(clock_count, clock_rate)
     time = real(clock_count, kind=8) / real(clock_rate, kind=8)
@@ -384,6 +416,13 @@ end subroutine write_field_to_netcdf
 
     write(*,'(A,I0,A,A,A,F12.6,A)') '    Timing step ', step, ': ', trim(label), ' = ', elapsed, ' s'
   end subroutine report_timing
+
+  subroutine report_setup_timing(label, elapsed)
+    character(len=*), intent(in) :: label
+    real(kind=8), intent(in) :: elapsed
+
+    write(*,'(A,A,A,F12.6,A)') '    Timing setup: ', trim(label), ' = ', elapsed, ' s'
+  end subroutine report_setup_timing
 
 end module atlas_icon_filter_mod
 
@@ -427,6 +466,9 @@ program atlas_icon_filter
   integer :: nsteps
   integer :: istep
   integer :: spectral_cutoff
+  integer :: transform_truncation
+  real(kind=8) :: setup_start
+  real(kind=8) :: setup_timer
 
   call atlas_initialize()
 
@@ -436,9 +478,10 @@ program atlas_icon_filter
   netcdf_path = ''
   netcdf_output_path = ''
   spectral_cutoff = -1
+  transform_truncation = -1
 
   if (command_argument_count() < 1) then
-    print *, 'Usage: atlas-icon-filter [--output-spectrum] [--output-gmsh] [--output-netcdf <filename>] [--spectral-cutoff <cutoff>] <netcdf-file>'
+    print *, 'Usage: atlas-icon-filter [--output-spectrum] [--output-gmsh] [--output-netcdf <filename>] [--spectral-cutoff <cutoff>] [--transform-truncation <truncation>] <netcdf-file>'
     error stop 1
   end if
 
@@ -453,28 +496,40 @@ do while (iarg <= command_argument_count())
   case ('--output-netcdf')
     iarg = iarg + 1
     if (iarg > command_argument_count()) then
-      print *, 'Usage: atlas-icon-filter [--output-spectrum] [--output-gmsh] [--output-netcdf <filename>] [--spectral-cutoff <cutoff>] <netcdf-file>'
+      print *, 'Usage: atlas-icon-filter [--output-spectrum] [--output-gmsh] [--output-netcdf <filename>] [--spectral-cutoff <cutoff>] [--transform-truncation <truncation>] <netcdf-file>'
       error stop 1
     end if
     call get_command_argument(iarg, netcdf_output_path)
     if (len_trim(netcdf_output_path) == 0) then
-      print *, 'Usage: atlas-icon-filter [--output-spectrum] [--output-gmsh] [--output-netcdf <filename>] [--spectral-cutoff <cutoff>] <netcdf-file>'
+      print *, 'Usage: atlas-icon-filter [--output-spectrum] [--output-gmsh] [--output-netcdf <filename>] [--spectral-cutoff <cutoff>] [--transform-truncation <truncation>] <netcdf-file>'
       error stop 1
     end if
     output_netcdf = .true.
   case ('--spectral-cutoff')
     iarg = iarg + 1
     if (iarg > command_argument_count()) then
-      print *, 'Usage: atlas-icon-filter [--output-spectrum] [--output-gmsh] [--output-netcdf <filename>] [--spectral-cutoff <cutoff>] <netcdf-file>'
+      print *, 'Usage: atlas-icon-filter [--output-spectrum] [--output-gmsh] [--output-netcdf <filename>] [--spectral-cutoff <cutoff>] [--transform-truncation <truncation>] <netcdf-file>'
       error stop 1
     end if
     call get_command_argument(iarg, argument)
     read(argument, *, err=100) spectral_cutoff
+  case ('--transform-truncation')
+    iarg = iarg + 1
+    if (iarg > command_argument_count()) then
+      print *, 'Usage: atlas-icon-filter [--output-spectrum] [--output-gmsh] [--output-netcdf <filename>] [--spectral-cutoff <cutoff>] [--transform-truncation <truncation>] <netcdf-file>'
+      error stop 1
+    end if
+    call get_command_argument(iarg, argument)
+    read(argument, *, err=101) transform_truncation
+    if (transform_truncation < 0) then
+      print *, 'Transform truncation must be non-negative: ', transform_truncation
+      error stop 1
+    end if
   case default
     if (len_trim(netcdf_path) == 0) then
       netcdf_path = argument
     else
-      print *, 'Usage: atlas-icon-filter [--output-spectrum] [--output-gmsh] [--output-netcdf <filename>] [--spectral-cutoff <cutoff>] <netcdf-file>'
+      print *, 'Usage: atlas-icon-filter [--output-spectrum] [--output-gmsh] [--output-netcdf <filename>] [--spectral-cutoff <cutoff>] [--transform-truncation <truncation>] <netcdf-file>'
       error stop 1
     end if
   end select
@@ -482,7 +537,7 @@ do while (iarg <= command_argument_count())
 end do
 
   if (len_trim(netcdf_path) == 0) then
-    print *, 'Usage: atlas-icon-filter [--output-spectrum] [--output-gmsh] [--output-netcdf <filename>] [--spectral-cutoff <cutoff>] <netcdf-file>'
+    print *, 'Usage: atlas-icon-filter [--output-spectrum] [--output-gmsh] [--output-netcdf <filename>] [--spectral-cutoff <cutoff>] [--transform-truncation <truncation>] <netcdf-file>'
     error stop 1
   end if
 
@@ -493,12 +548,17 @@ end do
 
   print *, 'netCDF file = ', trim(netcdf_path)
 
+  setup_start = wall_time()
+  setup_timer = wall_time()
   call read_grid_from_netcdf(icon_grid, netcdf_path)
   call read_info_from_netcdf(nsteps, levels, netcdf_path)
+  call report_setup_timing('read_grid_from_netcdf', wall_time() - setup_timer)
 
   if (output_netcdf) then
     print *, 'netCDF output file = ', trim(netcdf_output_path)
+    setup_timer = wall_time()
     call copy_file(netcdf_path, netcdf_output_path)
+    call report_setup_timing('copy_file (output I/O, included in Total setup)', wall_time() - setup_timer)
   end if
 
   print *, 'icon grid size = ', icon_grid%size()
@@ -513,31 +573,57 @@ end do
     spectral_cutoff = spectral_truncation/10
   end if
   print *, 'spectral cutoff = ', spectral_cutoff
+  if (transform_truncation /= -1) then
+    if (transform_truncation > spectral_truncation) then
+      print *, 'Transform truncation must not exceed 2*N-1 = ', spectral_truncation
+      error stop 1
+    end if
+    if (spectral_cutoff >= transform_truncation) then
+      print *, 'Note: cutoff >= transform truncation: the truncation itself removes n > cutoff'
+    end if
+    spectral_truncation = transform_truncation
+    print *, 'transform truncation (--transform-truncation) = ', spectral_truncation
+  end if
 
+  setup_timer = wall_time()
   gaussian_grid = atlas_RegularGaussianGrid(gaussian_N)
   print *, 'gaussian grid size = ', gaussian_grid%size()
   print *, 'gaussian equatorial resolution [km] = ', 2. * pi * radius / ( 4. * gaussian_N ) / 1000.0d0
 
   gaussian_fs = atlas_functionspace_StructuredColumns(grid=gaussian_grid, halo=1) ! halo=1 is needed for interpolation back
   spectral_fs = atlas_functionspace_Spectral(truncation=spectral_truncation)
+  call report_setup_timing('gaussian_grid_and_functionspaces', wall_time() - setup_timer)
+  setup_timer = wall_time()
   trans = atlas_Trans(gaussian_grid, spectral_truncation)
+  call report_setup_timing('trans_setup', wall_time() - setup_timer)
 
+  setup_timer = wall_time()
   icon_mesh = atlas_Mesh(icon_grid)
+  call report_setup_timing('icon_mesh (Delaunay)', wall_time() - setup_timer)
 
   if (output_gmsh) then
     call output_mesh(icon_mesh, 'icon_mesh.msh')
   endif
 
+  setup_timer = wall_time()
   icon_fs = atlas_functionspace_NodeColumns(mesh=icon_mesh)
+  call report_setup_timing('icon_functionspace', wall_time() - setup_timer)
   config = atlas_Config()
+  setup_timer = wall_time()
   call config%set('type', 'finite-element')
   interpolation_icon_to_gaussian = atlas_Interpolation(config, source=icon_fs, target=gaussian_fs)
+  call report_setup_timing('interpolation_setup_icon_to_gaussian', wall_time() - setup_timer)
+  setup_timer = wall_time()
   call config%set('type', 'structured-bilinear')
   interpolation_gaussian_to_icon = atlas_Interpolation(config, source=gaussian_fs, target=icon_fs)
+  call report_setup_timing('interpolation_setup_gaussian_to_icon', wall_time() - setup_timer)
 
+  setup_timer = wall_time()
   icon_field = icon_fs%create_field(name='temp', kind=atlas_real(8), levels=levels)
   gaussian_field = gaussian_fs%create_field(name='temp', kind=atlas_real(8), levels=levels)
   spectral_field = spectral_fs%create_field(name='temp', kind=atlas_real(8), levels=levels)
+  call report_setup_timing('create_fields', wall_time() - setup_timer)
+  call report_setup_timing('Total setup', wall_time() - setup_start)
 
   do istep=1,nsteps; block
     character(len=4) :: istep_str
@@ -619,6 +705,9 @@ end do
   stop
 
 100 print *, 'Invalid value for --spectral-cutoff: ', trim(argument)
+  error stop 1
+
+101 print *, 'Invalid value for --transform-truncation: ', trim(argument)
   error stop 1
 
 end program atlas_icon_filter
