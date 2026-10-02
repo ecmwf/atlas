@@ -40,7 +40,7 @@ atlas-icon-filter <netcdf-file> \
                   [--output-spectrum] [--output-gmsh]
 ```
 
-The input NetCDF file must contain ICON cell-center coordinates `clon` and `clat`, and a `temp` variable with dimensions `(ncells, plev, time)`.
+The input NetCDF file must contain ICON cell-center coordinates `clon` and `clat`, and a `temp` variable with dimensions `(ncells, plev, time)` in Fortran order (`temp(time, plev, ncells)` in C/CDL notation, as written by CDO for ICON output). Other dimension orders are rejected with an error. The `(ncells, plev)` slice of each time step is transposed to and from the `(levels, nodes)` Atlas field.
 
 Options:
 

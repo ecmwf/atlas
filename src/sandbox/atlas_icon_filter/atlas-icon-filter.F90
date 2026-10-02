@@ -11,9 +11,11 @@
 ! Required input:
 !   <netcdf-file>
 !     ICON NetCDF input file containing the grid coordinates clon/clat and the
-!     field variable temp with dimensions (ncells, plev, time). The executable
-!     reads every time step of temp and writes filtered values only when an
-!     output option is requested.
+!     field variable temp with dimensions (ncells, plev, time) in Fortran order
+!     (temp(time, plev, ncells) in C/CDL notation); other dimension orders are
+!     rejected. The (ncells, plev) slice of each time step is transposed to and
+!     from the (levels, nodes) Atlas field. The executable reads every time step
+!     of temp and writes filtered values only when an output option is requested.
 !
 ! Optional arguments:
 !   --spectral-cutoff <cutoff>
@@ -150,8 +152,11 @@ module atlas_icon_filter_mod
     integer :: nsteps
     integer :: start(3)
     integer :: count(3)
+    integer :: temp_ndims
+    integer :: temp_dimids(nf90_max_var_dims)
 
     real(kind=8), pointer :: field_data(:,:)
+    real(kind=8), allocatable :: buffer(:,:)
 
     logical :: file_exists
 
@@ -169,6 +174,20 @@ module atlas_icon_filter_mod
     call check_nf90(nf90_inq_dimid(ncid, 'ncells', ncells_dimid), 'nf90_inq_dimid(ncells)')
     call check_nf90(nf90_inquire_dimension(ncid, ncells_dimid, len=ncells), 'nf90_inquire_dimension(ncells)')
     call check_nf90(nf90_inq_varid(ncid, 'temp', temp_varid), 'nf90_inq_varid(temp)')
+
+    ! The slice is transposed below on the assumption that temp is (ncells, plev, time)
+    ! in Fortran order; any other order must fail here instead of being scrambled.
+    call check_nf90(nf90_inquire_variable(ncid, temp_varid, ndims=temp_ndims, dimids=temp_dimids), &
+                    'nf90_inquire_variable(temp)')
+    if (temp_ndims /= 3) then
+      print *, 'Variable temp must have 3 dimensions (ncells, plev, time), got ', temp_ndims
+      error stop 1
+    end if
+    if (temp_dimids(1) /= ncells_dimid .or. temp_dimids(2) /= plev_dimid .or. temp_dimids(3) /= time_dimid) then
+      print *, 'Variable temp must have dimensions (ncells, plev, time) in Fortran order,'
+      print *, 'i.e. temp(time, plev, ncells) in C/CDL notation; found a different order in ', trim(netcdf_path)
+      error stop 1
+    end if
 
     if (nsteps < 1) then
       print *, 'Variable temp has no time steps'
@@ -190,7 +209,11 @@ module atlas_icon_filter_mod
     call field%data(field_data)
     start = [1, 1, tstep]
     count = [ncells, nlev, 1]
-    call check_nf90(nf90_get_var(ncid, temp_varid, field_data(1:nlev,1:ncells), start=start, count=count), 'nf90_get_var(temp)')
+    ! file slice (ncells, nlev), cell index fastest -> Atlas field (nlev, ncells), level fastest
+    allocate(buffer(ncells, nlev))
+    call check_nf90(nf90_get_var(ncid, temp_varid, buffer, start=start, count=count), 'nf90_get_var(temp)')
+    field_data(1:nlev,1:ncells) = transpose(buffer)
+    deallocate(buffer)
     call check_nf90(nf90_close(ncid), 'nf90_close')
     call field%set_dirty()
   end subroutine
@@ -307,7 +330,8 @@ subroutine write_field_to_netcdf(field, tstep, netcdf_path)
   call field%data(field_data)
   start = [1, 1, tstep]
   count = [ncells, nlev, 1]
-  call check_nf90(nf90_put_var(ncid, temp_varid, field_data(1:nlev,1:ncells), start=start, count=count), 'nf90_put_var(temp)')
+  ! Atlas field (nlev, ncells) -> file slice (ncells, nlev), the inverse of read_field_from_netcdf
+  call check_nf90(nf90_put_var(ncid, temp_varid, transpose(field_data(1:nlev,1:ncells)), start=start, count=count), 'nf90_put_var(temp)')
   call check_nf90(nf90_close(ncid), 'nf90_close(output)')
 end subroutine write_field_to_netcdf
 
