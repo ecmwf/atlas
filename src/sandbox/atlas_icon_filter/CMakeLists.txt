@@ -21,4 +21,10 @@ if( HAVE_FORTRAN )
     NOINSTALL
   )
 
+  # The usage strings are longer than gfortran's default free-form line limit of 132
+  # characters (fatal with -Werror=line-truncation, gfortran's default for free form).
+  if( CMAKE_Fortran_COMPILER_ID MATCHES "GNU" )
+    target_compile_options( atlas-icon-filter PRIVATE -ffree-line-length-none )
+  endif()
+
 endif()
