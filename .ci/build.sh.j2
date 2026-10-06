@@ -1,0 +1,6 @@
+{% extends "ci-infrastructure/cmake-all-lanes.sh.j2" %}
+{% block cmake_args %}
+{% if not fortran_compiler_binary %}
+  -DENABLE_FORTRAN=OFF \
+{% endif %}
+{% endblock %}
