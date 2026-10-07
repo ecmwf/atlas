@@ -8,6 +8,7 @@
  * nor does it submit to any jurisdiction.
  */
 
+#include <string>
 #include "eckit/log/JSON.h"
 
 #include "atlas/library/config.h"
@@ -142,7 +143,7 @@ std::string fieldset_functionspace(const FieldSet& fields) {
             functionspace = fields[jfld].functionspace().type();
         }
         if (fields[jfld].functionspace().type() != functionspace) {
-            throw_Exception(": fielset has fields with different functionspaces", Here());
+            throw_Exception(": fieldset has fields with different functionspaces", Here());
         }
     }
     return functionspace;
@@ -384,7 +385,6 @@ void TransIFS::invtrans_grad(const FieldSet& spfields, FieldSet& gradfields, con
 
 void TransIFS::invtrans_grad_adj(const Field& gradfield, Field& spfield, const eckit::Configuration& config) const {
     ATLAS_ASSERT(Spectral(spfield.functionspace()));
-    ATLAS_ASSERT(NodeColumns(gradfield.functionspace()));
     if (StructuredColumns(gradfield.functionspace())) {
         __invtrans_grad_adj(Spectral(spfield.functionspace()), spfield, StructuredColumns(gradfield.functionspace()),
                             gradfield, config);
@@ -1437,30 +1437,37 @@ void TransIFS::__dirtrans_wind2vordiv(const functionspace::StructuredColumns& gp
 
     // Count total number of fields and do sanity checks
     const size_t nfld = compute_nfld(spvor);
-    if (spdiv.shape(0) != spvor.shape(0)) {
-        throw_Exception("dirtrans:vorticity not compatible with divergence for 1st dimension", Here());
-    }
-    if (spdiv.shape(1) != spvor.shape(1)) {
-        throw_Exception("dirtrans:vorticity not compatible with divergence for 2nd dimension", Here());
+    if (spdiv.shape() != spvor.shape()) {
+        std::string vorDims;
+        for (int item : spvor.shape()) {
+            vorDims += std::to_string(item) + " ";
+        }
+        std::string divDims;
+        for (int item : spdiv.shape()) {
+            divDims += std::to_string(item) + " ";
+        }
+
+        std::string msg = "dirtrans_wind2vordiv: vorticity not compatible with divergence. Vorticity dimensions: " + vorDims + ", Divergence dimensions: " + divDims;
+        throw_Exception(msg, Here());
     }
     const size_t nwindfld = compute_nfld(gpwind);
     if (nwindfld != 2 * nfld && nwindfld != 3 * nfld) {
-        throw_Exception("dirtrans:wind field is not compatible with vorticity, divergence.", Here());
+        throw_Exception("dirtrans_wind2vordiv:wind field is not compatible with vorticity, divergence.", Here());
     }
 
     if (spdiv.shape(0) != nspec2()) {
         std::stringstream msg;
-        msg << "dirtrans: Spectral vorticity and divergence have wrong dimension: "
+        msg << "dirtrans_wind2vordiv: Spectral vorticity and divergence have wrong dimension: "
                "nspec2 "
             << spdiv.shape(0) << " should be " << nspec2();
         throw_Exception(msg.str(), Here());
     }
 
     if (spvor.size() == 0) {
-        throw_Exception("dirtrans: spectral vorticity field is empty.");
+        throw_Exception("dirtrans_wind2vordiv: spectral vorticity field is empty.", Here());
     }
     if (spdiv.size() == 0) {
-        throw_Exception("dirtrans: spectral divergence field is empty.");
+        throw_Exception("dirtrans_wind2vordiv: spectral divergence field is empty.", Here());
     }
 
     // Arrays Trans expects
@@ -1506,30 +1513,39 @@ void TransIFS::__dirtrans_wind2vordiv(const functionspace::NodeColumns& gp, cons
 
     // Count total number of fields and do sanity checks
     const size_t nfld = compute_nfld(spvor);
-    if (spdiv.shape(0) != spvor.shape(0)) {
-        throw_Exception("dirtrans: vorticity not compatible with divergence for 1st dimension.", Here());
-    }
-    if (spdiv.shape(1) != spvor.shape(1)) {
-        throw_Exception("dirtrans: vorticity not compatible with divergence for 2nd dimension.", Here());
+    if (spdiv.shape() != spvor.shape()) {
+        std::string vorDims;
+        for (int item : spvor.shape()) {
+            vorDims += std::to_string(item) + " ";
+        }
+        std::string divDims;
+        for (int item : spdiv.shape()) {
+            divDims += std::to_string(item) + " ";
+        }
+
+        std::string msg =
+            "dirtrans_wind2vordiv: vorticity not compatible with divergence. Vorticity dimensions: " + vorDims +
+            ", Divergence dimensions: " + divDims;
+        throw_Exception(msg, Here());
     }
     const size_t nwindfld = compute_nfld(gpwind);
     if (nwindfld != 2 * nfld && nwindfld != 3 * nfld) {
-        throw_Exception("dirtrans: wind field is not compatible with vorticity, divergence.", Here());
+        throw_Exception("dirtrans_wind2vordiv: wind field is not compatible with vorticity, divergence.", Here());
     }
 
     if (spdiv.shape(0) != nspec2()) {
         std::stringstream msg;
-        msg << "dirtrans: Spectral vorticity and divergence have wrong dimension: "
+        msg << "dirtrans_wind2vordiv: Spectral vorticity and divergence have wrong dimension: "
                "nspec2 "
             << spdiv.shape(0) << " should be " << nspec2();
         throw_Exception(msg.str(), Here());
     }
 
     if (spvor.size() == 0) {
-        throw_Exception("dirtrans: spectral vorticity field is empty.");
+        throw_Exception("dirtrans_wind2vordiv: spectral vorticity field is empty.", Here());
     }
     if (spdiv.size() == 0) {
-        throw_Exception("dirtrans: spectral divergence field is empty.");
+        throw_Exception("dirtrans_wind2vordiv: spectral divergence field is empty.", Here());
     }
 
     // Arrays Trans expects
@@ -1636,10 +1652,10 @@ void TransIFS::__dirtrans_adj( const Spectral& sp, const Field& spfield,
     assertCompatibleDistributions(gp, sp);
 
     if (compute_nfld(gpfield) != compute_nfld(spfield)) {
-        throw_Exception("dirtrans: different number of gridpoint fields than spectral fields", Here());
+        throw_Exception("dirtrans_adj: different number of gridpoint fields than spectral fields", Here());
     }
     if ((int)gpfield.shape(0) < ngptot()) {
-        throw_Exception("dirtrans: slowest moving index must be >= ngptot", Here());
+        throw_Exception("dirtrans_adj: slowest moving index must be >= ngptot", Here());
     }
     const int nfld = compute_nfld(gpfield);
 
@@ -1687,10 +1703,10 @@ void TransIFS::__dirtrans_adj( const Spectral& sp, const Field& spfield,
     assertCompatibleDistributions(gp, sp);
 
     if (compute_nfld(gpfield) != compute_nfld(spfield)) {
-        throw_Exception("dirtrans: different number of gridpoint fields than spectral fields", Here());
+        throw_Exception("dirtrans_adj: different number of gridpoint fields than spectral fields", Here());
     }
     if ((int)gpfield.shape(0) < ngptot()) {
-        throw_Exception("dirtrans: slowest moving index must be >= ngptot", Here());
+        throw_Exception("dirtrans_adj: slowest moving index must be >= ngptot", Here());
     }
     const int nfld = compute_nfld(gpfield);
 
@@ -1794,30 +1810,39 @@ void TransIFS::__dirtrans_wind2vordiv_adj(const Spectral& sp, const Field& spvor
 
     // Count total number of fields and do sanity checks
     const size_t nfld = compute_nfld(spvor);
-    if (spdiv.shape(0) != spvor.shape(0)) {
-        throw_Exception("dirtrans_adj:vorticity not compatible with divergence for 1st dimension", Here());
-    }
-    if (spdiv.shape(1) != spvor.shape(1)) {
-        throw_Exception("dirtrans_adj:vorticity not compatible with divergence for 2st dimension", Here());
+    if (spdiv.shape() != spvor.shape()) {
+        std::string vorDims;
+        for (int item : spvor.shape()) {
+            vorDims += std::to_string(item) + " ";
+        }
+        std::string divDims;
+        for (int item : spdiv.shape()) {
+            divDims += std::to_string(item) + " ";
+        }
+
+        std::string msg =
+            "dirtrans_wind2vordiv_adj: vorticity not compatible with divergence. Vorticity dimensions: " + vorDims +
+            ", Divergence dimensions: " + divDims;
+        throw_Exception(msg, Here());
     }
     const size_t nwindfld = compute_nfld(gpwind);
     if (nwindfld != 2 * nfld && nwindfld != 3 * nfld) {
-        throw_Exception("dirtrans_adj:wind field is not compatible with vorticity, divergence.", Here());
+        throw_Exception("dirtrans_wind2vordiv_adj:wind field is not compatible with vorticity, divergence.", Here());
     }
 
     if (spdiv.shape(0) != nspec2()) {
         std::stringstream msg;
-        msg << "dirtrans_adj: Spectral vorticity and divergence have wrong dimension: "
+        msg << "dirtrans_wind2vordiv_adj: Spectral vorticity and divergence have wrong dimension: "
                "nspec2 "
             << spdiv.shape(0) << " should be " << nspec2();
         throw_Exception(msg.str(), Here());
     }
 
     if (spvor.size() == 0) {
-        throw_Exception("dirtrans_adj: spectral vorticity field is empty.");
+        throw_Exception("dirtrans_wind2vordiv_adj: spectral vorticity field is empty.", Here());
     }
     if (spdiv.size() == 0) {
-        throw_Exception("dirtrans_adj: spectral divergence field is empty.");
+        throw_Exception("dirtrans_wind2vordiv_adj: spectral divergence field is empty.", Here());
     }
 
     // Arrays Trans expects
@@ -1870,30 +1895,39 @@ void TransIFS::__dirtrans_wind2vordiv_adj(const Spectral& sp, const Field& spvor
 
     // Count total number of fields and do sanity checks
     const size_t nfld = compute_nfld(spvor);
-    if (spdiv.shape(0) != spvor.shape(0)) {
-        throw_Exception("dirtrans_adj:vorticity not compatible with divergence for 1st dimension", Here());
-    }
-    if (spdiv.shape(1) != spvor.shape(1)) {
-        throw_Exception("dirtrans_adj:vorticity not compatible with divergence for 2st dimension", Here());
+    if (spdiv.shape() != spvor.shape()) {
+        std::string vorDims;
+        for (int item : spvor.shape()) {
+            vorDims += std::to_string(item) + " ";
+        }
+        std::string divDims;
+        for (int item : spdiv.shape()) {
+            divDims += std::to_string(item) + " ";
+        }
+
+        std::string msg =
+            "dirtrans_wind2vordiv_adj: vorticity not compatible with divergence. Vorticity dimensions: " + vorDims +
+            ", Divergence dimensions: " + divDims;
+        throw_Exception(msg, Here());
     }
     const size_t nwindfld = compute_nfld(gpwind);
     if (nwindfld != 2 * nfld && nwindfld != 3 * nfld) {
-        throw_Exception("dirtrans_adj:wind field is not compatible with vorticity, divergence.", Here());
+        throw_Exception("dirtrans_wind2vordiv_adj:wind field is not compatible with vorticity, divergence.", Here());
     }
 
     if (spdiv.shape(0) != nspec2()) {
         std::stringstream msg;
-        msg << "dirtrans_adj: Spectral vorticity and divergence have wrong dimension: "
+        msg << "dirtrans_wind2vordiv_adj: Spectral vorticity and divergence have wrong dimension: "
                "nspec2 "
             << spdiv.shape(0) << " should be " << nspec2();
         throw_Exception(msg.str(), Here());
     }
 
     if (spvor.size() == 0) {
-        throw_Exception("dirtrans_adj: spectral vorticity field is empty.");
+        throw_Exception("dirtrans_wind2vordiv_adj: spectral vorticity field is empty.", Here());
     }
     if (spdiv.size() == 0) {
-        throw_Exception("dirtrans_adj: spectral divergence field is empty.");
+        throw_Exception("dirtrans_wind2vordiv_adj: spectral divergence field is empty.", Here());
     }
 
     // Arrays Trans expects
@@ -1960,7 +1994,7 @@ void TransIFS::__invtrans(const functionspace::Spectral& sp, const Field& spfiel
     PooledBuffer<double> rsp(nspec2() * nfld);
     auto rgpview = LocalView<double, 2>(rgp.data(), make_shape(nfld, ngptot()));
     auto rspview = LocalView<double, 2>(rsp.data(), make_shape(nspec2(), nfld));
-    rspview.assign(0);
+
 
     // Pack spectral fields
     {
@@ -2023,7 +2057,6 @@ void TransIFS::__invtrans(const functionspace::Spectral& sp, const FieldSet& spf
     PooledBuffer<double> rsp(nspec2() * nfld);
     auto rgpview = LocalView<double, 2>(rgp.data(), make_shape(nfld, ngptot()));
     auto rspview = LocalView<double, 2>(rsp.data(), make_shape(nspec2(), nfld));
-    rspview.assign(0);
 
     // Pack spectral fields
     {
@@ -2072,7 +2105,6 @@ void TransIFS::__invtrans(const Spectral& sp, const FieldSet& spfields, const fu
     PooledBuffer<double> rsp(nspec2() * nfld);
     auto rgpview = LocalView<double, 2>(rgp.data(), make_shape(nfld, ngptot()));
     auto rspview = LocalView<double, 2>(rsp.data(), make_shape(nspec2(), nfld));
-    rspview.assign(0);
 
     // Pack spectral fields
     {
@@ -2283,28 +2315,40 @@ void TransIFS::__invtrans_vordiv2wind(const Spectral& sp, const Field& spvor, co
 
     // Count total number of fields and do sanity checks
     const int nfld = compute_nfld(spvor);
-    if (spdiv.rank() != spvor.rank() || spdiv.shape() != spvor.shape()) {
-        throw_Exception("invtrans: vorticity not compatible with divergence.", Here());
+    if (spdiv.shape() != spvor.shape()) {
+        std::string vorDims;
+        for (int item : spvor.shape()) {
+            vorDims += std::to_string(item) + " ";
+        }
+        std::string divDims;
+        for (int item : spdiv.shape()) {
+            divDims += std::to_string(item) + " ";
+        }
+
+        std::string msg =
+            "invtrans_vordiv2wind: vorticity not compatible with divergence. Vorticity dimensions: " + vorDims +
+            ", Divergence dimensions: " + divDims;
+        throw_Exception(msg, Here());
     }
     ATLAS_ASSERT(spvor.rank() == 1 || spvor.rank() == 2, "Only rank-1 and rank-2 spectral fields are supported");
     const int nwindfld = compute_nfld(gpwind);
     if (nwindfld != 2 * nfld && nwindfld != 3 * nfld) {
-        throw_Exception("invtrans: wind field is not compatible with vorticity, divergence.", Here());
+        throw_Exception("invtrans_vordiv2wind: wind field is not compatible with vorticity, divergence.", Here());
     }
 
     if (spdiv.shape(0) != nspec2()) {
         std::stringstream msg;
-        msg << "invtrans: Spectral vorticity and divergence have wrong dimension: "
+        msg << "invtrans_vordiv2wind: Spectral vorticity and divergence have wrong dimension: "
                "nspec2 "
             << spdiv.shape(0) << " should be " << nspec2();
         throw_Exception(msg.str(), Here());
     }
 
     if (spvor.size() == 0) {
-        throw_Exception("invtrans: spectral vorticity field is empty.");
+        throw_Exception("invtrans_vordiv2wind: spectral vorticity field is empty.", Here());
     }
     if (spdiv.size() == 0) {
-        throw_Exception("invtrans: spectral divergence field is empty.");
+        throw_Exception("invtrans_vordiv2wind: spectral divergence field is empty.", Here());
     }
 
     // Arrays Trans expects
@@ -2351,28 +2395,40 @@ void TransIFS::__invtrans_vordiv2wind(const Spectral& sp, const Field& spvor, co
 
     // Count total number of fields and do sanity checks
     const int nfld = compute_nfld(spvor);
-    if (spdiv.rank() != spvor.rank() || spdiv.shape() != spvor.shape()) {
-        throw_Exception("invtrans: vorticity not compatible with divergence.", Here());
+    if (spdiv.shape() != spvor.shape()) {
+        std::string vorDims;
+        for (int item : spvor.shape()) {
+            vorDims += std::to_string(item) + " ";
+        }
+        std::string divDims;
+        for (int item : spdiv.shape()) {
+            divDims += std::to_string(item) + " ";
+        }
+
+        std::string msg =
+            "invtrans_vordiv2wind: vorticity not compatible with divergence. Vorticity dimensions: " + vorDims +
+            ", Divergence dimensions: " + divDims;
+        throw_Exception(msg, Here());
     }
     ATLAS_ASSERT(spvor.rank() == 1 || spvor.rank() == 2, "Only rank-1 and rank-2 spectral fields are supported");
     const int nwindfld = compute_nfld(gpwind);
     if (nwindfld != 2 * nfld && nwindfld != 3 * nfld) {
-        throw_Exception("invtrans: wind field is not compatible with vorticity, divergence.", Here());
+        throw_Exception("invtrans_vordiv2wind: wind field is not compatible with vorticity, divergence.", Here());
     }
 
     if (spdiv.shape(0) != nspec2()) {
         std::stringstream msg;
-        msg << "invtrans: Spectral vorticity and divergence have wrong dimension: "
+        msg << "invtrans_vordiv2wind: Spectral vorticity and divergence have wrong dimension: "
                "nspec2 "
             << spdiv.shape(0) << " should be " << nspec2();
         throw_Exception(msg.str(), Here());
     }
 
     if (spvor.size() == 0) {
-        throw_Exception("invtrans: spectral vorticity field is empty.");
+        throw_Exception("invtrans_vordiv2wind: spectral vorticity field is empty.", Here());
     }
     if (spdiv.size() == 0) {
-        throw_Exception("invtrans: spectral divergence field is empty.");
+        throw_Exception("invtrans_vordiv2wind: spectral divergence field is empty.", Here());
     }
 
     // Arrays Trans expects
@@ -2423,10 +2479,10 @@ void TransIFS::__invtrans_adj(const functionspace::Spectral& sp, Field& spfield,
     assertCompatibleDistributions(gp, sp);
 
     if (compute_nfld(gpfield) != compute_nfld(spfield)) {
-        throw_Exception("dirtrans: different number of gridpoint fields than spectral fields", Here());
+        throw_Exception("invtrans_adj: different number of gridpoint fields than spectral fields", Here());
     }
     if ((int)gpfield.shape(0) < ngptot()) {
-        throw_Exception("dirtrans: slowest moving index must be >= ngptot", Here());
+        throw_Exception("invtrans_adj: slowest moving index must be >= ngptot", Here());
     }
     const int nfld = compute_nfld(gpfield);
 
@@ -2686,7 +2742,7 @@ void TransIFS::__invtrans_grad_adj(const Spectral& sp, FieldSet& spfields, const
     const int trans_sp_nfld = compute_nfld(spfields);
 
     if (nfld != trans_sp_nfld) {
-        throw_Exception("dirtrans: different number of gridpoint fields than spectral fields", Here());
+        throw_Exception("invtrans_grad_adj: different number of gridpoint fields than spectral fields", Here());
     }
     // Arrays Trans expects
     PooledBuffer<double> rgp(nfld * ngptot());
@@ -2736,15 +2792,24 @@ void TransIFS::__invtrans_vordiv2wind_adj(const Spectral& sp, Field& spvor, Fiel
 
     // Count total number of fields and do sanity checks
     const size_t nfld = compute_nfld(spvor);
-    if (spdiv.shape(0) != spvor.shape(0)) {
-        throw_Exception("invtrans_vordiv2wind_adj: vorticity not compatible with divergence.", Here());
-    }
-    if (spdiv.shape(1) != spvor.shape(1)) {
-        throw_Exception("invtrans_vordiv2wind_adj: vorticity not compatible with divergence.", Here());
+    if (spdiv.shape() != spvor.shape()) {
+        std::string vorDims;
+        for (int item : spvor.shape()) {
+            vorDims += std::to_string(item) + " ";
+        }
+        std::string divDims;
+        for (int item : spdiv.shape()) {
+            divDims += std::to_string(item) + " ";
+        }
+
+        std::string msg =
+            "invtrans_vordiv2wind_adj: vorticity not compatible with divergence. Vorticity dimensions: " + vorDims +
+            ", Divergence dimensions: " + divDims;
+        throw_Exception(msg, Here());
     }
     const size_t nwindfld = compute_nfld(gpwind);
     if (nwindfld != 2 * nfld && nwindfld != 3 * nfld) {
-        throw_Exception("dirtrans: wind field is not compatible with vorticity, divergence.", Here());
+        throw_Exception("invtrans_vordiv2wind_adj: wind field is not compatible with vorticity, divergence.", Here());
     }
 
     if (spdiv.shape(0) != nspec2()) {
@@ -2756,10 +2821,10 @@ void TransIFS::__invtrans_vordiv2wind_adj(const Spectral& sp, Field& spvor, Fiel
     }
 
     if (spvor.size() == 0) {
-        throw_Exception("invtrans_vordiv2wind_adj: spectral vorticity field is empty.");
+        throw_Exception("invtrans_vordiv2wind_adj: spectral vorticity field is empty.", Here());
     }
     if (spdiv.size() == 0) {
-        throw_Exception("invtrans_vordiv2wind_adj: spectral divergence field is empty.");
+        throw_Exception("invtrans_vordiv2wind_adj: spectral divergence field is empty.", Here());
     }
 
     // Arrays Trans expects
@@ -2769,7 +2834,6 @@ void TransIFS::__invtrans_vordiv2wind_adj(const Spectral& sp, Field& spvor, Fiel
     auto rgpview    = LocalView<double, 2>(rgp.data(), make_shape(2 * nfld, ngptot()));
     auto rspvorview = LocalView<double, 2>(rspvor.data(), make_shape(nspec2(), nfld));
     auto rspdivview = LocalView<double, 2>(rspdiv.data(), make_shape(nspec2(), nfld));
-    rgpview.assign(0);
     rspvorview.assign(0);
     rspdivview.assign(0);
 
@@ -2813,15 +2877,24 @@ void TransIFS::__invtrans_vordiv2wind_adj(const Spectral& sp, Field& spvor, Fiel
 
     // Count total number of fields and do sanity checks
     const size_t nfld = compute_nfld(spvor);
-    if (spdiv.shape(0) != spvor.shape(0)) {
-        throw_Exception("invtrans_vordiv2wind_adj: vorticity not compatible with divergence.", Here());
-    }
-    if (spdiv.shape(1) != spvor.shape(1)) {
-        throw_Exception("invtrans_vordiv2wind_adj: vorticity not compatible with divergence.", Here());
+    if (spdiv.shape() != spvor.shape()) {
+        std::string vorDims;
+        for (int item : spvor.shape()) {
+            vorDims += std::to_string(item) + " ";
+        }
+        std::string divDims;
+        for (int item : spdiv.shape()) {
+            divDims += std::to_string(item) + " ";
+        }
+
+        std::string msg =
+            "invtrans_vordiv2wind_adj: vorticity not compatible with divergence. Vorticity dimensions: " + vorDims +
+            ", Divergence dimensions: " + divDims;
+        throw_Exception(msg, Here());
     }
     const size_t nwindfld = compute_nfld(gpwind);
     if (nwindfld != 2 * nfld && nwindfld != 3 * nfld) {
-        throw_Exception("dirtrans: wind field is not compatible with vorticity, divergence.", Here());
+        throw_Exception("invtrans_vordiv2wind_adj: wind field is not compatible with vorticity, divergence.", Here());
     }
 
     if (spdiv.shape(0) != nspec2()) {
@@ -2833,10 +2906,10 @@ void TransIFS::__invtrans_vordiv2wind_adj(const Spectral& sp, Field& spvor, Fiel
     }
 
     if (spvor.size() == 0) {
-        throw_Exception("invtrans_vordiv2wind_adj: spectral vorticity field is empty.");
+        throw_Exception("invtrans_vordiv2wind_adj: spectral vorticity field is empty.", Here());
     }
     if (spdiv.size() == 0) {
-        throw_Exception("invtrans_vordiv2wind_adj: spectral divergence field is empty.");
+        throw_Exception("invtrans_vordiv2wind_adj: spectral divergence field is empty.", Here());
     }
 
     // Arrays Trans expects
@@ -2846,7 +2919,6 @@ void TransIFS::__invtrans_vordiv2wind_adj(const Spectral& sp, Field& spvor, Fiel
     auto rgpview    = LocalView<double, 2>(rgp.data(), make_shape(2 * nfld, ngptot()));
     auto rspvorview = LocalView<double, 2>(rspvor.data(), make_shape(nspec2(), nfld));
     auto rspdivview = LocalView<double, 2>(rspdiv.data(), make_shape(nspec2(), nfld));
-    rgpview.assign(0);
     rspvorview.assign(0);
     rspdivview.assign(0);
 
