@@ -252,11 +252,37 @@ void testWindVorDiv(const testFixture& testFixture) {
     EXPECT_APPROX_EQ(xDotX / AdjXDotY, 1., 1e-12);
 }
 
+// Test invtrans_grad adjoint
+void testInvtransGrad(const testFixture& testFixture) {
+    // y: Spectral field from vortex rollup of Gauss field
+    Field gaussField    = createVortexRollup(testFixture.gaussFunctionSpace);
+    Field spectralField = testFixture.spectralFunctionSpace.createField<double>(option::name("y"));
+    testFixture.trans_.dirtrans(gaussField, spectralField);
+
+    // x = Ty: Gauss gradient field (d/dlambda, d/dphi) constructed from spectral field and <x,x> computed.
+    Field gradField = testFixture.gaussFunctionSpace.createField<double>(option::name("grad") | option::variables(2));
+    array::make_view<double, 2>(gradField).assign(0.);
+    testFixture.trans_.invtrans_grad(spectralField, gradField);
+    const double xDotX = dotProd(gradField, gradField);
+
+    // T*x: Adjoint spectral field constructed from Gauss gradient field and <T*x,y> computed.
+    Field adjointSpectralField = testFixture.spectralFunctionSpace.createField<double>(option::name("T*x"));
+    array::make_view<double, 1>(adjointSpectralField).assign(0.);
+    testFixture.trans_.invtrans_grad_adj(gradField, adjointSpectralField);
+    const double adjXDotY = dotProd(adjointSpectralField, spectralField);
+
+    // Adjoint test <x,x> = <T*x,y>
+    Log::info() << "invtrans_grad test" << std::endl;
+    Log::info() << "<x,x>: " << xDotX << " and <T*x,y>: " << adjXDotY << std::endl;
+    EXPECT_APPROX_EQ(xDotX / adjXDotY, 1., 1e-12);
+}
+
 // Create test fixture and run all adjoint tests for given grid
 void testFunction(const GaussianGrid& gaussGrid) {
     testFixture fixture = createTestFixture(Grid(gaussGrid));
     testDirtrans(fixture);
     testWindVorDiv(fixture);
+    testInvtransGrad(fixture);
 }
 
 
