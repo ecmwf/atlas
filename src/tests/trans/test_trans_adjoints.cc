@@ -190,8 +190,7 @@ void testDirtrans(const testFixture& testFixture) {
     const double xDotAdjY = dotProd(gaussField, adjointSpectralField);
 
     // Adjoint test <y,y> = <x, T*y>
-    Log::error() << "dirtrans test" << std::endl;
-    Log::error() << "<y,y>: " << yDotY << " and <x,T*y>: " << xDotAdjY << std::endl;
+    Log::error() << "dirtrans test: <y,y>=" << yDotY << ", <x,T*y>=" << xDotAdjY << std::endl;
     EXPECT_APPROX_EQ(yDotY / xDotAdjY, 1., 1e-12);
 
     //// Test invtrans (T) ---------------------------
@@ -206,8 +205,7 @@ void testDirtrans(const testFixture& testFixture) {
     const double AdjXDotY = dotProd(adjointGaussField, spectralField);
 
     // Adjoint test <x,x> = <T*x,y>
-    Log::error() << "invtrans test" << std::endl;
-    Log::error() << "<x,x>: " << xDotX << " and <Tx,y>: " << AdjXDotY << std::endl;
+    Log::error() << "invtrans test: <x,x>=" << xDotX << ", <Tx,y>=" << AdjXDotY << std::endl;
     EXPECT_APPROX_EQ(xDotX / AdjXDotY, 1., 1e-12);
 }
 
@@ -230,8 +228,7 @@ void testWindVorDiv(const testFixture& testFixture) {
     const double xDotAdjY = dotProd(gaussWindField, adjointSpectralField);
 
     // Adjoint test <y,y> = <x,T*y>
-    Log::error() << "dirtrans_wind2vordiv test" << std::endl;
-    Log::error() << "<y,y>: " << yDotY << " and <x,T*y>: " << xDotAdjY << std::endl;
+    Log::error() << "dirtrans_wind2vordiv test: <y,y>=" << yDotY << ", <x,T*y>=" << xDotAdjY << std::endl;
     EXPECT_APPROX_EQ(yDotY / xDotAdjY, 1., 1e-12);
 
     /// Test invtrans_wind2vordiv (T) ----------------------------
@@ -247,8 +244,7 @@ void testWindVorDiv(const testFixture& testFixture) {
     const double AdjXDotY = dotProd(adjointGaussFieldVor, vor) + dotProd(adjointGaussFieldDiv, div);
 
     // Adjoint test <x,x> = <T*x,y>
-    Log::error() << "invtrans_wind2vordiv test" << std::endl;
-    Log::error() << "<x,x>: " << xDotX << " and <Tx,y>: " << AdjXDotY << std::endl;
+    Log::error() << "invtrans_wind2vordiv test: <x,x>=" << xDotX << ", <Tx,y>=" << AdjXDotY << std::endl;
     EXPECT_APPROX_EQ(xDotX / AdjXDotY, 1., 1e-12);
 }
 
@@ -272,8 +268,7 @@ void testInvtransGrad(const testFixture& testFixture) {
     const double adjXDotY = dotProd(adjointSpectralField, spectralField);
 
     // Adjoint test <x,x> = <T*x,y>
-    Log::info() << "invtrans_grad test" << std::endl;
-    Log::info() << "<x,x>: " << xDotX << " and <T*x,y>: " << adjXDotY << std::endl;
+    Log::info() << "invtrans_grad test: <x,x>=" << xDotX << ", <T*x,y>=" << adjXDotY << std::endl;
     EXPECT_APPROX_EQ(xDotX / adjXDotY, 1., 1e-12);
 }
 
