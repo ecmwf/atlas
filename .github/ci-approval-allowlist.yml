@@ -1,6 +1,5 @@
 ---
 exempt:
-  - workflow: contributor-declaration.yml
   - workflow: label-public-pr.yml
   - workflow: notify-new-pr.yml
   - workflow: old_CI.yml
