@@ -159,6 +159,7 @@ runs-on = "arc-runner-normal"
 build-type = "RelWithDebInfo"
 cxx-compiler = "g++-13"
 c-compiler = "gcc-13"
+fortran-compiler = "gfortran-13"
 container = "eccr.ecmwf.int/public-ci-images/ubuntu24.04-gcc13-gfortran13-boost-qt6-rust1.90"
 platform = "ubuntu-24.04"
 
