@@ -1,0 +1,166 @@
+[package]
+name = "atlas"
+repo = "ecmwf/atlas"
+visibility = "public"
+compiler-inputs = ["cxx-compiler"]
+git-read = ["ecmwf/bindman"]
+
+[[deps]]
+repo = "ecmwf/ecbuild"
+package = "ecbuild"
+ref = "develop"
+compiler-inputs = []
+
+[[deps]]
+repo = "ecmwf/stack-dependencies"
+package = ["qhull", "fftw", "eigen"]
+ref = "master"
+compiler-inputs = ["cxx-compiler"]
+
+# atlas[mpi] is built against eckit[mpi] and fckit[mpi].
+[[deps]]
+repo = "ecmwf/eckit"
+package = "eckit"
+ref = "develop"
+compiler-inputs = ["cxx-compiler"]
+options-input = "options"
+
+[[deps]]
+repo = "ecmwf/fckit"
+package = "fckit"
+ref = "develop"
+compiler-inputs = ["cxx-compiler"]
+options-input = "options"
+when = { fortran-compiler = ["gfortran-8", "gfortran-10", "gfortran-11", "gfortran-12", "gfortran-13", "gfortran-14", "gfortran-15"] }
+
+[matrix.build.defaults]
+job-script = "./.ci/build.sh.j2"
+build-type = "RelWithDebInfo"
+runs-on = "arc-runner-very-large"
+options = ""
+
+[[matrix.build.include]]
+cxx-compiler = "clang++-18"
+c-compiler = "clang-18"
+container = "eccr.ecmwf.int/public-ci-images/ubuntu24.04-clang18:latest"
+platform = "ubuntu-24.04"
+
+[[matrix.build.include]]
+cxx-compiler = "g++-13"
+c-compiler = "gcc-13"
+fortran-compiler = "gfortran-13"
+container = "eccr.ecmwf.int/public-ci-images/ubuntu24.04-gcc13-gfortran13:latest"
+platform = "ubuntu-24.04"
+
+[[matrix.build.include]]
+cxx-compiler = "g++-15"
+c-compiler = "gcc-15"
+fortran-compiler = "gfortran-15"
+container = "eccr.ecmwf.int/public-ci-images/ubuntu26.04-gcc15-gfortran15"
+platform = "ubuntu-26.04"
+
+[[matrix.build.include]]
+cxx-compiler = "g++-8"
+c-compiler = "gcc-8"
+fortran-compiler = "gfortran-8"
+container = "eccr.ecmwf.int/public-ci-images/rocky8-gcc8-gfortran8"
+platform = "rocky-8"
+
+[[matrix.build.include]]
+cxx-compiler = "g++-11"
+c-compiler = "gcc-11"
+fortran-compiler = "gfortran-11"
+container = "eccr.ecmwf.int/public-ci-images/rocky9-gcc11-gfortran11"
+platform = "rocky-9"
+
+[[matrix.build.include]]
+cxx-compiler = "g++-14"
+c-compiler = "gcc-14"
+fortran-compiler = "gfortran-14"
+container = "eccr.ecmwf.int/public-ci-images/rocky10-gcc14-gfortran14"
+platform = "rocky-10"
+
+[[matrix.build.include]]
+cxx-compiler = "g++-10"
+c-compiler = "gcc-10"
+fortran-compiler = "gfortran-10"
+container = "eccr.ecmwf.int/public-ci-images/debian11-gcc10-gfortran10"
+platform = "debian-11"
+
+[[matrix.build.include]]
+cxx-compiler = "g++-12"
+c-compiler = "gcc-12"
+fortran-compiler = "gfortran-12"
+container = "eccr.ecmwf.int/public-ci-images/debian12-gcc12-gfortran12"
+platform = "debian-12"
+
+[[matrix.build.include]]
+cxx-compiler = "g++-14"
+c-compiler = "gcc-14"
+fortran-compiler = "gfortran-14"
+container = "eccr.ecmwf.int/public-ci-images/debian13-gcc14-gfortran14"
+platform = "debian-13"
+
+[[matrix.build.include]]
+cxx-compiler = "g++-13"
+c-compiler = "gcc-13"
+fortran-compiler = "gfortran-13"
+options = "mpi"
+container = "eccr.ecmwf.int/public-ci-images/ubuntu24.04-gcc13-gfortran13-openmpi:latest"
+platform = "ubuntu-24.04"
+
+[matrix.build]
+triggers = ["upstream-change", "rebuild-request"]
+
+[matrix.build-hpc.defaults]
+job-script = "./.ci/build.sh.j2"
+cxx-compiler = "g++-8"
+fortran-compiler = "gfortran-8"
+build-type = "RelWithDebInfo"
+runs-on = "hpc-submit"
+container = "eccr.ecmwf.int/private-ci-images/ubuntu24.04-internal-tools:latest"
+site = "hpc-batch"
+platform = "hpc-atos-gnu"
+# gcc/old, not a version number: as of now gives you 8.5.0
+# `module avail gcc` lists no 8.5.0 to pin directly.
+modules = ["load prgenv/gnu", "unload gcc", "load gcc/old", "load cmake", "load ninja", "load python3/3.12.9-01"]
+c-compiler-binary = "gcc"
+cxx-compiler-binary = "g++"
+fortran-compiler-binary = "gfortran"
+time = "01:30:00"
+
+[[matrix.build-hpc.include]]
+options = ""
+
+[[matrix.build-hpc.include]]
+options = "mpi"
+ntasks = 16
+modules = ["load prgenv/gnu", "unload gcc", "load gcc/old", "load cmake", "load ninja", "load python3/3.12.9-01", "load openmpi"]
+
+[matrix.build-hpc]
+execution = "hpc-atos"
+container-credentials = true
+triggers = ["upstream-change", "rebuild-request"]
+
+[packages.atlas-rust]
+compiler-inputs = ["cxx-compiler"]
+
+[[packages.atlas-rust.deps]]
+package = "atlas"
+options-input = "options"
+
+[matrix.rust]
+packages = ["atlas-rust"]
+publishes = false
+
+[matrix.rust.defaults]
+job-script = "./.ci/rust.sh.j2"
+runs-on = "arc-runner-normal"
+build-type = "RelWithDebInfo"
+cxx-compiler = "g++-13"
+c-compiler = "gcc-13"
+container = "eccr.ecmwf.int/public-ci-images/ubuntu24.04-gcc13-gfortran13-boost-qt6-rust1.90"
+platform = "ubuntu-24.04"
+
+[[matrix.rust.include]]
+rust-compiler = "rust-1.90"

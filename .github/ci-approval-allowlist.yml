@@ -1,0 +1,10 @@
+---
+exempt:
+  - workflow: label-public-pr.yml
+  - workflow: notify-new-pr.yml
+  - workflow: old_CI.yml
+    reason: "legacy, retiring; gates downstream-ci with an if: rather than needs:"
+  - workflow: build.yml
+    reason: "atlas' own compiler matrix, predating the rollout"
+  - workflow: build-hpc.yml
+    reason: "atlas' own HPC matrix, predating the rollout"

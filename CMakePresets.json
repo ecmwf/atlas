@@ -1,0 +1,23 @@
+{
+  "cmakeMinimumRequired": {
+    "major": 3,
+    "minor": 21,
+    "patch": 0
+  },
+  "configurePresets": [
+    {
+      "cacheVariables": {
+        "ENABLE_EIGEN": "ON",
+        "ENABLE_FFTW": "ON",
+        "ENABLE_TESSELATION": "ON",
+        "ENABLE_TESTS": "ON"
+      },
+      "name": "ci"
+    },
+    {
+      "inherits": "ci",
+      "name": "mpi"
+    }
+  ],
+  "version": 3
+}
