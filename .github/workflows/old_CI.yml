@@ -10,15 +10,8 @@ on:
     tags-ignore:
       - '**'
 
-  # Trigger the workflow on pull request
-  pull_request: ~
-
   # Trigger the workflow manually
   workflow_dispatch: ~
-
-  # Trigger after public PR approved for CI
-  pull_request_target:
-    types: [labeled]
 
 jobs:
   # Run Rust CI (fmt + clippy + doc + test) on the rust/ workspace
