@@ -1,4 +1,16 @@
 {% extends "ci-infrastructure/cmake-all-lanes.sh.j2" %}
+{% block sbatch %}
+{% if gpus_per_task | default("") %}
+#SBATCH --qos={{ qos | default("ng") }}
+#SBATCH --nodes=1
+#SBATCH --ntasks={{ ntasks }}
+#SBATCH --cpus-per-task={{ cpus_per_task | default(64) }}
+#SBATCH --gpus-per-task={{ gpus_per_task }}
+#SBATCH --time={{ time | default("01:00:00") }}
+{% else %}
+{{ super() }}
+{%- endif %}
+{% endblock %}
 {% block cmake_args %}
 {% if execution == "hpc-atos" %}
   -DMPI_SLOTS={{ ntasks }} \

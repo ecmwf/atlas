@@ -17,6 +17,14 @@
     {
       "inherits": "ci",
       "name": "mpi"
+    },
+    {
+      "cacheVariables": {
+        "ENABLE_ACC": "ON",
+        "ENABLE_CUDA": "ON"
+      },
+      "inherits": "mpi",
+      "name": "mpi-gpu"
     }
   ],
   "version": 3
