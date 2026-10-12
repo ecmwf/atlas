@@ -6,6 +6,9 @@
 #SBATCH --ntasks={{ ntasks }}
 #SBATCH --cpus-per-task={{ cpus_per_task | default(64) }}
 #SBATCH --gpus-per-task={{ gpus_per_task }}
+{% if mem | default("") %}
+#SBATCH --mem={{ mem }}
+{% endif %}
 #SBATCH --time={{ time | default("01:00:00") }}
 {% else %}
 {{ super() }}

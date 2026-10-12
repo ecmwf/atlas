@@ -176,6 +176,7 @@ c-compiler-binary = "icc"
 cxx-compiler-binary = "icpc"
 fortran-compiler-binary = "ifort"
 ntasks = 16
+mem = "64GB"
 
 [[matrix.build-hpc.include]]
 options = "mpi"
@@ -199,6 +200,7 @@ c-compiler-binary = "nvc"
 cxx-compiler-binary = "nvc++"
 fortran-compiler-binary = "nvfortran"
 ntasks = 16
+mem = "64GB"
 
 # One full GPU node; the gpu partition has no ssdtmp, see .ci/build.sh.j2.
 [[matrix.build-hpc.include]]
@@ -214,6 +216,7 @@ qos = "ng"
 ntasks = 4
 cpus-per-task = 64
 gpus-per-task = 1
+mem = "64GB"
 
 [matrix.build-hpc]
 execution = "hpc-atos"
