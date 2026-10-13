@@ -32,4 +32,7 @@ echo "CUDA: $CUDACXX, host $CUDAHOSTCXX ($("$CUDAHOSTCXX" -dumpfullversion)), ar
 {% if not fortran_compiler_binary %}
   -DENABLE_FORTRAN=OFF \
 {% endif %}
+{% if cxx_compiler_binary == "nvc++" %}
+  -DSKIP_TEST_atlas_test_omp_sort=TRUE \
+{% endif %}
 {% endblock %}
