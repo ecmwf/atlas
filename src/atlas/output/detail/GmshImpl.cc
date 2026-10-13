@@ -19,6 +19,7 @@
 #include "atlas/mesh/actions/BuildXYZField.h"
 #include "atlas/output/detail/GmshIO.h"
 #include "atlas/output/detail/GmshImpl.h"
+#include "atlas/parallel/mpi/mpi.h"
 #include "atlas/runtime/Exception.h"
 #include "atlas/runtime/Log.h"
 
@@ -192,7 +193,17 @@ void GmshImpl::write(const Mesh& mesh, const eckit::Parametrisation& config) con
     merge(c, config);
 
     if (c.elements == "auto") {
-        c.elements = mesh.cells().size() ? "cells" : mesh.edges().size() ? "edges" : "none";
+        const auto& comm = mpi::comm(mesh.mpi_comm());
+        idx_t nb_cells = mesh.cells().size();
+        comm.allReduceInPlace(nb_cells, eckit::mpi::Operation::SUM);
+        if (nb_cells > 0) {
+            c.elements = "cells";
+        }
+        else {
+            idx_t nb_edges = mesh.edges().size();
+            comm.allReduceInPlace(nb_edges, eckit::mpi::Operation::SUM);
+            c.elements = nb_edges > 0 ? "edges" : "none";
+        }
     }
 
     if (c.coordinates == "xyz" and not mesh.nodes().has_field("xyz")) {

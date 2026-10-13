@@ -284,7 +284,6 @@ CellColumns::CellColumns(const Mesh& mesh, const eckit::Configuration& config):
     if (!nb_cells_) {
         nb_cells_ = mesh.cells().size();
     }
-    ATLAS_ASSERT(nb_cells_);
 
     if (mesh_.grid()) {
         grid_ = mesh_.grid();
