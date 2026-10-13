@@ -146,6 +146,9 @@ c-compiler-binary = "gcc"
 cxx-compiler-binary = "g++"
 fortran-compiler-binary = "gfortran"
 time = "01:30:00"
+# ecbuild sets no ctest PROCESSORS, so an `srun -n 16` test takes one -j slot like a serial one.
+# Half the CPUs as slots leaves room for the larger srun steps instead of making them wait.
+ctest-args = '-j "$(( jobs / 2 ))"'
 
 [[matrix.build-hpc.include]]
 options = ""
