@@ -14,6 +14,19 @@
 {{ super() }}
 {%- endif %}
 {% endblock %}
+{% block set_environment %}
+{% if cxx_compiler_binary == "nvc++" %}
+# As atlas's legacy HPC CI: nvc++ raises FE_DIVBYZERO in the Gaussian quadrature
+export ATLAS_FPE=0
+export CUDACXX="$(command -v nvcc)"
+# nvidia/26.1 is configured on /usr/local/apps/gcc/12.2; nvcc would default to the system gcc 8.5
+gcc_toolchain=$(nvc++ -v -E -x c++ /dev/null 2>&1 | grep -oE '/usr/local/apps/gcc/[^/ ]+' | head -n 1)
+[ -n "$gcc_toolchain" ] || { echo "::error::cannot tell which gcc nvc++ is configured with"; exit 1; }
+export CUDAHOSTCXX="$gcc_toolchain/bin/g++"
+export CUDAARCHS=80  # A100
+echo "CUDA: $CUDACXX, host $CUDAHOSTCXX ($("$CUDAHOSTCXX" -dumpfullversion)), arch $CUDAARCHS"
+{% endif %}
+{% endblock %}
 {% block cmake_args %}
 {% if execution == "hpc-atos" %}
   -DMPI_SLOTS={{ ntasks }} \
