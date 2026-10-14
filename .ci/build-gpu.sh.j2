@@ -1,0 +1,10 @@
+{% extends "build.sh.j2" %}
+{% block sbatch %}
+#SBATCH --qos={{ qos }}
+#SBATCH --nodes=1
+#SBATCH --ntasks={{ ntasks }}
+#SBATCH --cpus-per-task={{ cpus_per_task }}
+#SBATCH --gpus-per-task={{ gpus_per_task }}
+#SBATCH --mem={{ mem }}
+#SBATCH --time={{ time | default("01:00:00") }}
+{% endblock %}

@@ -203,8 +203,9 @@ cxx-compiler-binary = "nvc++"
 fortran-compiler-binary = "nvfortran"
 ntasks = 16
 
-# One full GPU node; the gpu partition has no ssdtmp, see .ci/build.sh.j2.
+# One full GPU node; the gpu partition has no ssdtmp.
 [[matrix.build-hpc.include]]
+job-script = "./.ci/build-gpu.sh.j2"
 options = "mpi-gpu"
 cxx-compiler = "nvc++-26.1"
 fortran-compiler = "nvfortran-26.1"

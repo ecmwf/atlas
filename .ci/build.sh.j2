@@ -1,19 +1,4 @@
 {% extends "ci-infrastructure/cmake-all-lanes.sh.j2" %}
-{% block sbatch %}
-{% if gpus_per_task | default("") %}
-#SBATCH --qos={{ qos | default("ng") }}
-#SBATCH --nodes=1
-#SBATCH --ntasks={{ ntasks }}
-#SBATCH --cpus-per-task={{ cpus_per_task | default(64) }}
-#SBATCH --gpus-per-task={{ gpus_per_task }}
-{% if mem | default("") %}
-#SBATCH --mem={{ mem }}
-{% endif %}
-#SBATCH --time={{ time | default("01:00:00") }}
-{% else %}
-{{ super() }}
-{%- endif %}
-{% endblock %}
 {% block set_environment %}
 {% if cxx_compiler_binary == "nvc++" %}
 # As atlas's legacy HPC CI: nvc++ raises FE_DIVBYZERO in the Gaussian quadrature
