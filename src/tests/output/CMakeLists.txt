@@ -12,6 +12,14 @@ ecbuild_add_test( TARGET atlas_test_gmsh
   ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
 )
 
+ecbuild_add_test( TARGET atlas_test_gmsh_empty_partition
+  SOURCES  test_gmsh_empty_partition.cc
+  LIBS     atlas
+  MPI      2
+  CONDITION eckit_HAVE_MPI AND MPI_SLOTS GREATER_EQUAL 2
+  ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
+)
+
 ecbuild_add_test( TARGET atlas_test_pointcloud_io
   SOURCES   test_pointcloud_io.cc
   LIBS      atlas
