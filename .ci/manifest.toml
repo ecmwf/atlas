@@ -1,0 +1,242 @@
+[package]
+name = "atlas"
+repo = "ecmwf/atlas"
+visibility = "public"
+compiler-inputs = ["cxx-compiler"]
+git-read = ["ecmwf/bindman"]
+
+[[deps]]
+repo = "ecmwf/ecbuild"
+package = "ecbuild"
+ref = "develop"
+compiler-inputs = []
+
+[[deps]]
+repo = "ecmwf/stack-dependencies"
+package = ["qhull", "fftw", "eigen"]
+ref = "master"
+compiler-inputs = ["cxx-compiler"]
+
+# atlas[mpi] is built against eckit[mpi] and fckit[mpi], and so is atlas[mpi-gpu].
+[[deps]]
+repo = "ecmwf/eckit"
+package = "eckit"
+ref = "develop"
+compiler-inputs = ["cxx-compiler"]
+options-input = "options"
+unless = { options = "mpi-gpu" }
+
+[[deps]]
+repo = "ecmwf/eckit"
+package = "eckit"
+ref = "develop"
+compiler-inputs = ["cxx-compiler"]
+options = "mpi"
+when = { options = "mpi-gpu" }
+
+[[deps]]
+repo = "ecmwf/fckit"
+package = "fckit"
+ref = "develop"
+compiler-inputs = ["cxx-compiler"]
+options-input = "options"
+# ifort-2023.2 has no leg while the icpc-2023.2 legs are dropped (eckit::geo fails with ICC); kept for re-enabling them.
+when = { fortran-compiler = ["gfortran-8", "gfortran-10", "gfortran-11", "gfortran-12", "gfortran-13", "gfortran-14", "gfortran-15", "ifort-2023.2", "ifx", "nvfortran-26.1"] }
+unless = { options = "mpi-gpu" }
+
+[[deps]]
+repo = "ecmwf/fckit"
+package = "fckit"
+ref = "develop"
+compiler-inputs = ["cxx-compiler"]
+options = "mpi"
+when = { options = "mpi-gpu" }
+
+[matrix.build.defaults]
+job-script = "./.ci/build.sh.j2"
+build-type = "RelWithDebInfo"
+runs-on = "arc-runner-very-large"
+options = ""
+
+[[matrix.build.include]]
+cxx-compiler = "clang++-18"
+c-compiler = "clang-18"
+container = "eccr.ecmwf.int/public-ci-images/ubuntu24.04-clang18:latest"
+platform = "ubuntu-24.04"
+
+[[matrix.build.include]]
+cxx-compiler = "g++-13"
+c-compiler = "gcc-13"
+fortran-compiler = "gfortran-13"
+container = "eccr.ecmwf.int/public-ci-images/ubuntu24.04-gcc13-gfortran13:latest"
+platform = "ubuntu-24.04"
+
+[[matrix.build.include]]
+cxx-compiler = "g++-15"
+c-compiler = "gcc-15"
+fortran-compiler = "gfortran-15"
+container = "eccr.ecmwf.int/public-ci-images/ubuntu26.04-gcc15-gfortran15"
+platform = "ubuntu-26.04"
+
+[[matrix.build.include]]
+cxx-compiler = "g++-8"
+c-compiler = "gcc-8"
+fortran-compiler = "gfortran-8"
+container = "eccr.ecmwf.int/public-ci-images/rocky8-gcc8-gfortran8"
+platform = "rocky-8"
+
+[[matrix.build.include]]
+cxx-compiler = "g++-11"
+c-compiler = "gcc-11"
+fortran-compiler = "gfortran-11"
+container = "eccr.ecmwf.int/public-ci-images/rocky9-gcc11-gfortran11"
+platform = "rocky-9"
+
+[[matrix.build.include]]
+cxx-compiler = "g++-14"
+c-compiler = "gcc-14"
+fortran-compiler = "gfortran-14"
+container = "eccr.ecmwf.int/public-ci-images/rocky10-gcc14-gfortran14"
+platform = "rocky-10"
+
+[[matrix.build.include]]
+cxx-compiler = "g++-10"
+c-compiler = "gcc-10"
+fortran-compiler = "gfortran-10"
+container = "eccr.ecmwf.int/public-ci-images/debian11-gcc10-gfortran10"
+platform = "debian-11"
+
+[[matrix.build.include]]
+cxx-compiler = "g++-12"
+c-compiler = "gcc-12"
+fortran-compiler = "gfortran-12"
+container = "eccr.ecmwf.int/public-ci-images/debian12-gcc12-gfortran12"
+platform = "debian-12"
+
+[[matrix.build.include]]
+cxx-compiler = "g++-14"
+c-compiler = "gcc-14"
+fortran-compiler = "gfortran-14"
+container = "eccr.ecmwf.int/public-ci-images/debian13-gcc14-gfortran14"
+platform = "debian-13"
+
+[[matrix.build.include]]
+cxx-compiler = "g++-13"
+c-compiler = "gcc-13"
+fortran-compiler = "gfortran-13"
+options = "mpi"
+container = "eccr.ecmwf.int/public-ci-images/ubuntu24.04-gcc13-gfortran13-openmpi:latest"
+platform = "ubuntu-24.04"
+
+[matrix.build]
+triggers = ["upstream-change", "rebuild-request"]
+
+[matrix.build-hpc.defaults]
+job-script = "./.ci/build.sh.j2"
+cxx-compiler = "g++-8"
+fortran-compiler = "gfortran-8"
+build-type = "RelWithDebInfo"
+runs-on = "hpc-submit"
+container = "eccr.ecmwf.int/private-ci-images/ubuntu24.04-internal-tools:latest"
+site = "hpc-batch"
+platform = "hpc-atos-gnu"
+# gcc/old, not a version number: as of now gives you 8.5.0
+# `module avail gcc` lists no 8.5.0 to pin directly.
+modules = ["load prgenv/gnu", "unload gcc", "load gcc/old", "load cmake", "load ninja", "load python3/3.12.9-01"]
+c-compiler-binary = "gcc"
+cxx-compiler-binary = "g++"
+fortran-compiler-binary = "gfortran"
+time = "01:30:00"
+# ecbuild sets no ctest PROCESSORS, so an `srun -n 16` test takes one -j slot like a serial one.
+# Half the CPUs as slots leaves room for the larger srun steps instead of making them wait.
+ctest-args = '-j "$(( jobs / 2 ))"'
+
+[[matrix.build-hpc.include]]
+options = ""
+
+[[matrix.build-hpc.include]]
+options = "mpi"
+ntasks = 16
+modules = ["load prgenv/gnu", "unload gcc", "load gcc/old", "load cmake", "load ninja", "load python3/3.12.9-01", "load openmpi"]
+
+[[matrix.build-hpc.include]]
+options = "mpi"
+cxx-compiler = "g++-15"
+fortran-compiler = "gfortran-15"
+platform = "hpc-atos-gnu"
+modules = ["load prgenv/gnu", "unload gcc", "load gcc/15.2.0", "load cmake", "load ninja", "load python3/3.12.9-01", "load hpcx-openmpi/2.21.3"]
+c-compiler-binary = "gcc"
+cxx-compiler-binary = "g++"
+fortran-compiler-binary = "gfortran"
+ntasks = 16
+
+[[matrix.build-hpc.include]]
+options = "mpi"
+cxx-compiler = "icpx"
+fortran-compiler = "ifx"
+platform = "hpc-atos-intel"
+modules = ["load prgenv/intel-llvm", "unload intel", "load intel/2025.3.1", "load cmake", "load ninja", "load python3/3.12.9-01", "load hpcx-openmpi/2.21.3"]
+c-compiler-binary = "icx"
+cxx-compiler-binary = "icpx"
+fortran-compiler-binary = "ifx"
+ntasks = 16
+
+# The HPC-X bundled with nvhpc: ECMWF's hpcx-openmpi for nvidia/26.1 is not CUDA-aware.
+[[matrix.build-hpc.include]]
+options = "mpi"
+cxx-compiler = "nvc++-26.1"
+fortran-compiler = "nvfortran-26.1"
+platform = "hpc-atos-nvidia"
+modules = ["load prgenv/nvidia", "unload nvidia", "load nvidia/26.1", "load cmake", "load ninja", "load python3/3.12.9-01", "use /usr/local/apps/nvidia/26.1/Linux_x86_64/26.1/comm_libs/13.1/hpcx/hpcx-2.25.1/modulefiles", "load hpcx-ompi"]
+c-compiler-binary = "nvc"
+cxx-compiler-binary = "nvc++"
+fortran-compiler-binary = "nvfortran"
+ntasks = 16
+
+# One full GPU node; the gpu partition has no ssdtmp.
+[[matrix.build-hpc.include]]
+options = "mpi-gpu"
+cxx-compiler = "nvc++-26.1"
+fortran-compiler = "nvfortran-26.1"
+platform = "hpc-atos-nvidia"
+modules = ["load prgenv/nvidia", "unload nvidia", "load nvidia/26.1", "load cmake", "load ninja", "load python3/3.12.9-01", "use /usr/local/apps/nvidia/26.1/Linux_x86_64/26.1/comm_libs/13.1/hpcx/hpcx-2.25.1/modulefiles", "load hpcx-ompi"]
+c-compiler-binary = "nvc"
+cxx-compiler-binary = "nvc++"
+fortran-compiler-binary = "nvfortran"
+qos = "ng"
+ntasks = 4
+cpus-per-task = 64
+gpus-per-task = 1
+ssdtmp = ""
+
+[matrix.build-hpc]
+execution = "hpc-atos"
+container-credentials = true
+triggers = ["upstream-change", "rebuild-request"]
+
+[packages.atlas-rust]
+compiler-inputs = ["cxx-compiler"]
+
+[[packages.atlas-rust.deps]]
+package = "atlas"
+options-input = "options"
+
+[matrix.rust]
+packages = ["atlas-rust"]
+publishes = false
+
+[matrix.rust.defaults]
+job-script = "./.ci/rust.sh.j2"
+runs-on = "arc-runner-normal"
+build-type = "RelWithDebInfo"
+cxx-compiler = "g++-13"
+c-compiler = "gcc-13"
+container = "eccr.ecmwf.int/public-ci-images/ubuntu24.04-gcc13-gfortran13-boost-qt6-rust1.90"
+platform = "ubuntu-24.04"
+
+[[matrix.rust.include]]
+rust-compiler = "rust-1.90"
+
+[[trigger-downstream]]
+repo = "ecmwf/mir"
+ref = "develop"
