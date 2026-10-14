@@ -41,7 +41,12 @@ static constexpr bool has_rank() { return detail::has_rank<View>::value; }
 
 template <typename View>
 static constexpr std::size_t rank() {
-    return detail::has_rank<View>::value ? View::rank() : 1;
+    if constexpr (detail::has_rank<View>::value) {
+        return View::rank();
+    }
+    else {
+        return 1;
+    }
 }
 
 namespace detail {
