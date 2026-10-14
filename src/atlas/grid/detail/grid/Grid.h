@@ -17,6 +17,7 @@
 #include <vector>
 
 #include "atlas/domain/Domain.h"
+#include "atlas/grid/GridPointFlags.h"
 #include "atlas/library/config.h"
 #include "atlas/projection/Projection.h"
 #include "atlas/util/Object.h"
@@ -116,6 +117,12 @@ public:  // methods
     /// @note This methods should have constant access time, if necessary derived
     //        classes should compute it at construction
     virtual idx_t size() const = 0;
+
+    /// @return intrinsic properties of a grid point
+    virtual int flags(gidx_t) const { return GridPointFlags::none; }
+
+    /// @return zero-based index of the grid point that owns the given point
+    virtual gidx_t masterIndex(gidx_t index) const { return index; }
 
     virtual Spec spec() const = 0;
 

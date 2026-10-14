@@ -51,6 +51,14 @@ void debug_sync(const eckit::CodeLocation&, const eckit::mpi::Comm&);
 void debug_sync(const eckit::CodeLocation&);
 void debug_sync(const eckit::CodeLocation&, const eckit::mpi::Comm&, std::string_view);
 void debug_sync(const eckit::CodeLocation&, std::string_view);
+
+// Should not be needed because there's the std::string_view signature.
+// However it seems that due to missing `explicit` keyword in constructor
+// eckit::mpi::Comm(std::string_view) constructor, some compilers cannot disambiguate:
+//    void debug_sync(const eckit::CodeLocation&, std::string_view);
+//    void debug_sync(const eckit::CodeLocation&, const eckit::mpi::Comm&);
+// See https://github.com/ecmwf/atlas/issues/403#issuecomment-5777442503
+void debug_sync(const eckit::CodeLocation&, const std::string&);
 }  // namespace detail
 }  // namespace atlas
 

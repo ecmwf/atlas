@@ -253,6 +253,14 @@ Spectral::Spectral(const int truncation, const eckit::Configuration& config):
     config.get("levels", nb_levels_);
 }
 
+Spectral::Spectral(const long truncation, const eckit::Configuration& config) :
+    Spectral(static_cast<int>(truncation), config) {
+}
+
+Spectral::Spectral(const size_t truncation, const eckit::Configuration& config) :
+    Spectral(static_cast<int>(truncation), config) {
+}
+
 Spectral::~Spectral() = default;
 
 std::string Spectral::distribution() const {
@@ -577,6 +585,14 @@ Spectral::Spectral(const eckit::Configuration& config):
     FunctionSpace(new detail::Spectral(config)), functionspace_(dynamic_cast<const detail::Spectral*>(get())) {}
 
 Spectral::Spectral(const int truncation, const eckit::Configuration& config):
+    FunctionSpace(new detail::Spectral(truncation, config)),
+    functionspace_(dynamic_cast<const detail::Spectral*>(get())) {}
+
+Spectral::Spectral(const long truncation, const eckit::Configuration& config):
+    FunctionSpace(new detail::Spectral(truncation, config)),
+    functionspace_(dynamic_cast<const detail::Spectral*>(get())) {}
+
+Spectral::Spectral(const size_t truncation, const eckit::Configuration& config):
     FunctionSpace(new detail::Spectral(truncation, config)),
     functionspace_(dynamic_cast<const detail::Spectral*>(get())) {}
 

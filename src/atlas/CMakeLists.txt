@@ -136,6 +136,7 @@ grid/CubedSphereGrid2.cc
 grid/CubedSphereGrid2.h
 grid/Grid.cc
 grid/Grid.h
+grid/GridPointFlags.h
 grid/SpecRegistry.cc
 grid/SpecRegistry.h
 grid/StructuredGrid.cc

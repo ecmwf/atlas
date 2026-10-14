@@ -166,28 +166,28 @@ void do_remapping_test(Grid src_grid, Grid tgt_grid, std::function<double(const 
 }
 
 void check(const Metadata remap_stat_1, Metadata remap_stat_2, std::array<double, 6> tol) {
-    double err;
+    double err = 0.;
     // check polygon intersections
-    remap_stat_1.get("errors.sum_src_areas_minus_sum_tgt_areas", err);
+    EXPECT(remap_stat_1.get("errors.sum_src_areas_minus_sum_tgt_areas", err));
     Log::info() << "Polygon area computation (new < ref) =  (" << err << " < " << tol[0] << ")" << std::endl;
     EXPECT(err < tol[0]);
-    remap_stat_1.get("errors.intersections_covering_tgt_cells_sum", err);
+    EXPECT(remap_stat_1.get("errors.intersections_covering_tgt_cells_sum", err));
     Log::info() << "Polygon intersection (new < ref) =  (" << err << " < " << tol[1] << ")" << std::endl;
     EXPECT(err < tol[1]);
 
     // check remap accuracy
-    remap_stat_1.get("errors.to_solution_sum", err);
+    EXPECT(remap_stat_1.get("errors.to_solution_sum", err));
     Log::info() << "1st order accuracy (new < ref) =  (" << std::abs(err) << " < " << tol[2] << ")" << std::endl;
     EXPECT(std::abs(err) < tol[2]);
-    remap_stat_2.get("errors.to_solution_sum", err);
+    EXPECT(remap_stat_2.get("errors.to_solution_sum", err));
     Log::info() << "2nd order accuracy (new < ref) =  (" << std::abs(err) << " < " << tol[3] << ")" << std::endl;
     EXPECT(std::abs(err) < tol[3]);
 
     // check mass conservation
-    remap_stat_1.get("errors.conservation_error", err);
+    EXPECT(remap_stat_1.get("errors.conservation_error", err));
     Log::info() << "1st order conservation (new < ref) =  (" << std::abs(err) << " < " << tol[4] << ")" << std::endl;
     EXPECT(std::abs(err) < tol[4]);
-    remap_stat_2.get("errors.conservation_error", err);
+    EXPECT(remap_stat_2.get("errors.conservation_error", err));
     Log::info() << "2nd order conservation (new < ref) =  (" << std::abs(err) << " < " << tol[5] << ")" << std::endl;
     EXPECT(std::abs(err) < tol[5]);
     Log::info().unindent();

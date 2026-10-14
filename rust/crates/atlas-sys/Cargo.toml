@@ -1,11 +1,11 @@
 [package]
 name = "atlas-sys"
-version = "0.46.0"
+version.workspace = true
 edition.workspace = true
 license.workspace = true
 repository.workspace = true
 rust-version.workspace = true
-readme.workspace = true
+readme = "README.md"
 keywords.workspace = true
 categories.workspace = true
 description = "Build-only crate for ECMWF atlas (grid/mesh library)"

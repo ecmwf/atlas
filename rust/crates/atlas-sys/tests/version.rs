@@ -11,6 +11,6 @@ fn crate_version_matches_repo_version_file() {
     assert_eq!(
         version.trim(),
         env!("CARGO_PKG_VERSION"),
-        "rust/crates/atlas-sys/Cargo.toml version and VERSION file are out of sync"
+        "rust/Cargo.toml workspace version and VERSION file are out of sync"
     );
 }

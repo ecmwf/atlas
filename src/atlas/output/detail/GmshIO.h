@@ -15,6 +15,7 @@
 #include <vector>
 
 #include "atlas/functionspace/CellColumns.h"
+#include "atlas/functionspace/EdgeColumns.h"
 #include "atlas/functionspace/NodeColumns.h"
 #include "atlas/functionspace/StructuredColumns.h"
 #include "atlas/util/Metadata.h"
@@ -116,6 +117,12 @@ private:
     void write_delegate(const FieldSet& fieldset, const functionspace::CellColumns&, const eckit::PathName& file_path,
                         openmode mode = std::ios::out) const;
 
+    /// Write fieldset to file using Edges functionspace
+    ///  Depending on argument "mode", the fields will be appended,
+    ///  or existing file will be overwritten
+    void write_delegate(const FieldSet& fieldset, const functionspace::EdgeColumns&, const eckit::PathName& file_path,
+                        openmode mode = std::ios::out) const;
+
     /// Write fieldset to file using StructuredColumns functionspace
     ///  Depending on argument "mode", the fields will be appended,
     ///  or existing file will be overwritten
@@ -132,6 +139,12 @@ private:
     ///  Depending on argument "mode", the fields will be appended,
     ///  or existing file will be overwritten
     void write_delegate(const Field& field, const functionspace::CellColumns&, const eckit::PathName& file_path,
+                        openmode mode = std::ios::out) const;
+
+    /// Write field to file using Edges functionspace
+    ///  Depending on argument "mode", the fields will be appended,
+    ///  or existing file will be overwritten
+    void write_delegate(const Field& field, const functionspace::EdgeColumns&, const eckit::PathName& file_path,
                         openmode mode = std::ios::out) const;
 
     /// Write field to file using Nodes functionspace
