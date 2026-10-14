@@ -139,7 +139,8 @@ namespace atlas::array {
 
     namespace introspection {
         template <typename View, std::size_t... Dimensions>
-        constexpr bool preceding_strides_aligned(const View& view, std::size_t alignment,
+        constexpr bool preceding_strides_aligned([[maybe_unused]] const View& view,
+                                                 [[maybe_unused]] std::size_t alignment,
                                                  std::index_sequence<Dimensions...>) {
             return ((array::extent<Dimensions>(view) <= 1 ||
                      array::is_stride_aligned<Dimensions>(view, alignment)) && ...);

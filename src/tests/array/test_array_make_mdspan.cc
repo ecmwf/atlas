@@ -91,6 +91,7 @@ struct CanMakeShapedMdspan<Source, std::void_t<decltype(
     make_mdspan(std::declval<Source>(), std::declval<std::array<std::size_t, 2>>()))>> : std::true_type {};
 
 CASE("test_make_mdspan_temporary_view_lifetime") {
+    // Temporary non-owning views copy metadata safely; temporary owning containers are rejected.
     static_assert(!CanMakeMdspan<std::vector<double>&&>::value);
     static_assert(!CanMakeMdspan<const std::vector<double>&&>::value);
     static_assert(!CanMakeMdspan<std::array<double, 6>&&>::value);
@@ -125,6 +126,7 @@ CASE("test_make_mdspan_temporary_view_lifetime") {
 }
 
 CASE("test_make_mdspan_as_const_views") {
+    // as_const() preserves storage, shape, strides, and index adjustment while preventing writes.
     std::unique_ptr<Array> array{Array::create<double>(2, 3)};
     auto view = make_host_view<double, 2>(*array);
     view(1, 2) = 42.;
@@ -176,6 +178,7 @@ CASE("test_make_mdspan_as_const_views") {
 }
 
 CASE("test_make_mdspan_arrayview_layout_stride") {
+    // ArrayView conversion preserves its data, shape, and strides with layout_stride.
     std::unique_ptr<Array> array{Array::create<double>(2, 3)};
     auto view = make_host_view<double, 2>(*array);
 
@@ -188,6 +191,7 @@ CASE("test_make_mdspan_arrayview_layout_stride") {
 }
 
 CASE("test_make_mdspan_arrayview_layout_right") {
+    // A contiguous ArrayView can be exposed with layout_right without copying its elements.
     std::unique_ptr<Array> array{Array::create<double>(2, 3)};
     auto view = make_host_view<double, 2>(*array);
 
@@ -200,6 +204,7 @@ CASE("test_make_mdspan_arrayview_layout_right") {
 }
 
 CASE("test_make_mdspan_arrayview_free_function") {
+    // The free conversion function aliases ArrayView storage and reads the original values.
     std::unique_ptr<Array> array{Array::create<double>(2, 3)};
     auto view = make_host_view<double, 2>(*array);
 
@@ -212,6 +217,7 @@ CASE("test_make_mdspan_arrayview_free_function") {
 }
 
 CASE("test_array_is_mdspan") {
+    // Type-based and object-based introspection distinguish Atlas views from mdspans.
     std::unique_ptr<Array> array{Array::create<double>(2, 3)};
     auto view = make_host_view<double, 2>(*array);
     auto span = make_mdspan<layout_stride>(view);
@@ -224,6 +230,7 @@ CASE("test_array_is_mdspan") {
 }
 
 CASE("test_make_mdspan_const_arrayview") {
+    // Object constness is shallow; only a const element type makes the converted span read-only.
     std::unique_ptr<Array> array{Array::create<double>(2, 3)};
     auto view = make_host_view<double, 2>(*array);
     view(0, 2) = 5.;
@@ -250,6 +257,7 @@ CASE("test_make_mdspan_const_arrayview") {
 }
 
 CASE("test_make_mdspan_runtime_extents") {
+    // Explicit runtime extents preserve the ArrayView shape and stride mapping.
     std::unique_ptr<Array> array{Array::create<double>(2, 3)};
     auto view = make_host_view<double, 2>(*array);
 
@@ -260,6 +268,7 @@ CASE("test_make_mdspan_runtime_extents") {
 }
 
 CASE("test_make_mdspan_arrayview_dynamic_fixed_extents") {
+    // Both layouts support a dynamic outer extent and a compile-time fixed inner extent.
     std::unique_ptr<Array> array{Array::create<double>(2, 3)};
     auto view = make_host_view<double, 2>(*array);
 
@@ -277,6 +286,7 @@ CASE("test_make_mdspan_arrayview_dynamic_fixed_extents") {
 
 CASE("test_make_mdspan_dynamic_fixed_extents_argument") {
     std::unique_ptr<Array> array{Array::create<double>(2, 3)};
+    // An extents object supplies the runtime outer size while retaining the fixed inner size.
     auto view = make_host_view<double, 2>(*array);
 
     view(1, 2) = 18.;
@@ -293,6 +303,7 @@ CASE("test_make_mdspan_dynamic_fixed_extents_argument") {
 }
 
 CASE("test_make_mdspan_static_extent_transform") {
+    // Dimension transforms refine static extents while allowing layout and accessor selection.
     std::unique_ptr<Array> array{Array::create<double>(2, 3)};
     auto view = make_host_view<double, 2>(*array);
 
@@ -316,6 +327,7 @@ CASE("test_make_mdspan_static_extent_transform") {
 }
 
 CASE("test_make_mdspan_static_extent_transform_argument") {
+    // A fixed-last-dimension transform also works with an explicitly supplied runtime shape.
     std::unique_ptr<Array> array{Array::create<double>(4, 3)};
     auto view = make_host_view<double, 2>(*array);
 
@@ -334,6 +346,7 @@ CASE("test_make_mdspan_static_extent_transform_argument") {
 }
 
 CASE("test_array_static_extent_introspection") {
+    // All static-extent query forms distinguish dynamic extents from compile-time fixed sizes.
     std::unique_ptr<Array> array{Array::create<double>(4, 3)};
     auto view = make_host_view<double, 2>(*array);
 
@@ -351,6 +364,7 @@ CASE("test_array_static_extent_introspection") {
 }
 
 CASE("test_make_mdspan_static_last_extent_layout_right_restrict_aligned_policy") {
+    // A blocked aligned view supports a fixed SIMD extent and a restrict-aligned accessor policy.
     constexpr idx_t nproma = 32;
     alignas(64) double data[2 * 4 * nproma]{};
     idx_t shape[3]{2, 4, nproma};
@@ -378,6 +392,7 @@ CASE("test_make_mdspan_static_last_extent_layout_right_restrict_aligned_policy")
 }
 
 CASE("test_make_mdspan_documented_simd_fast_path_example_compiles") {
+    // The documented layout/alignment dispatch selects a fixed-extent SIMD kernel correctly.
     constexpr idx_t nproma = 32;
     alignas(64) double data[2 * 4 * nproma]{};
     auto view = LocalView<double, 3>{data, ArrayShape{2, 4, nproma}};
@@ -410,6 +425,7 @@ CASE("test_make_mdspan_documented_simd_fast_path_example_compiles") {
 }
 
 CASE("test_make_mdspan_vector_default_1d") {
+    // Default vector conversion creates a rank-1 row-major span over the original storage.
     std::vector<double> data{1., 2., 3., 4.};
 
     auto span = make_mdspan(data);
@@ -422,7 +438,42 @@ CASE("test_make_mdspan_vector_default_1d") {
     EXPECT(span(2) == 3.);
 }
 
+CASE("test_make_mdspan_vector_fixed_inner_extent_const") {
+    // Constness changes element mutability, not the rank or fixed inner extent of vector-of-array storage.
+    std::vector<std::array<double, 3>> values{{1., 2., 3.}, {4., 5., 6.}};
+    auto writable = make_mdspan(values);
+    auto readonly = make_mdspan(std::as_const(values));
+
+    static_assert(decltype(writable)::rank() == 2);
+    static_assert(decltype(readonly)::rank() == 2);
+    static_assert(decltype(writable)::extents_type::static_extent(0) == dynamic_extent);
+    static_assert(decltype(readonly)::extents_type::static_extent(0) == dynamic_extent);
+    static_assert(decltype(writable)::extents_type::static_extent(1) == 3);
+    static_assert(decltype(readonly)::extents_type::static_extent(1) == 3);
+    static_assert(std::is_same_v<typename decltype(writable)::element_type, double>);
+    static_assert(std::is_same_v<typename decltype(readonly)::element_type, const double>);
+    static_assert(std::is_assignable_v<decltype(writable(1, 2)), double>);
+    static_assert(!std::is_assignable_v<decltype(readonly(1, 2)), double>);
+
+    EXPECT(writable.data_handle() == values.front().data());
+    EXPECT(readonly.data_handle() == values.front().data());
+    EXPECT(writable.extent(0) == values.size());
+    EXPECT(readonly.extent(0) == values.size());
+    EXPECT(writable.extent(1) == 3);
+    EXPECT(readonly.extent(1) == 3);
+    EXPECT(writable.stride(0) == 3);
+    EXPECT(readonly.stride(0) == 3);
+    EXPECT(writable.stride(1) == 1);
+    EXPECT(readonly.stride(1) == 1);
+    EXPECT(readonly(0, 1) == 2.);
+    EXPECT(readonly(1, 2) == 6.);
+    writable(1, 2) = 42.;
+    EXPECT(values[1][2] == 42.);
+    EXPECT(readonly(1, 2) == 42.);
+}
+
 CASE("test_make_mdspan_vector_reshape") {
+    // A runtime shape exposes flat vector storage as a rank-2 row-major span.
     std::vector<double> data{1., 2., 3., 4., 5., 6.};
 
     std::array<std::size_t, 2> shape{2, 3};
@@ -436,6 +487,7 @@ CASE("test_make_mdspan_vector_reshape") {
 }
 
 CASE("test_make_mdspan_vector_reshape_extents_layout_accessor") {
+    // Vector reshaping honors mixed dynamic/fixed extents, explicit layout, and accessor selection.
     std::vector<double> data{1., 2., 3., 4., 5., 6.};
 
     extents<std::size_t, dynamic_extent, 3> shape{2};
@@ -453,6 +505,7 @@ CASE("test_make_mdspan_vector_reshape_extents_layout_accessor") {
 }
 
 CASE("test_make_mdspan_pointer_reshape") {
+    // Raw storage plus a runtime shape produces a non-owning rank-2 span with default policies.
     double data[6]{1., 2., 3., 4., 5., 6.};
 
     std::array<std::size_t, 2> shape{2, 3};
@@ -468,6 +521,7 @@ CASE("test_make_mdspan_pointer_reshape") {
 }
 
 CASE("test_make_mdspan_pointer_reshape_explicit_dims") {
+    // Explicit dims<2> permits a braced runtime shape and preserves the requested extents type.
     double data[6]{1., 2., 3., 4., 5., 6.};
 
     auto span = make_mdspan<dims<2>>(data, {2, 3});
@@ -483,6 +537,7 @@ CASE("test_make_mdspan_pointer_reshape_explicit_dims") {
 }
 
 CASE("test_make_mdspan_pointer_reshape_extents_layout_accessor") {
+    // Raw-pointer conversion supports fixed inner extents with explicit stride layout and accessor.
     double data[6]{1., 2., 3., 4., 5., 6.};
 
     extents<std::size_t, dynamic_extent, 3> shape{2};
@@ -501,6 +556,7 @@ CASE("test_make_mdspan_pointer_reshape_extents_layout_accessor") {
 }
 
 CASE("test_make_mdspan_pointer_reshape_accessor_first") {
+    // Accessor-first policy syntax selects an aligned accessor for reshaped raw storage.
     double data[6]{1., 2., 3., 4., 5., 6.};
 
     std::array<std::size_t, 2> shape{2, 3};
@@ -514,6 +570,7 @@ CASE("test_make_mdspan_pointer_reshape_accessor_first") {
 }
 
 CASE("test_make_mdspan_dynamic_fixed_extents") {
+    // A 4x3 ArrayView retains its dynamic outer size when the inner extent is fixed in the type.
     std::unique_ptr<Array> array{Array::create<double>(4, 3)};
     auto view = make_host_view<double, 2>(*array);
 
@@ -529,6 +586,7 @@ CASE("test_make_mdspan_dynamic_fixed_extents") {
 
 CASE("test_make_mdspan_dynamic_fixed_extents_argument") {
     std::unique_ptr<Array> array{Array::create<double>(4, 3)};
+    // A shaped 4x3 conversion uses the supplied dynamic extent and preserves the fixed inner extent.
     auto view = make_host_view<double, 2>(*array);
 
     view(3, 1) = 24.;
@@ -543,6 +601,7 @@ CASE("test_make_mdspan_dynamic_fixed_extents_argument") {
 }
 
 CASE("test_make_mdspan_localview") {
+    // LocalView conversion preserves the original data, shape, and stride mapping.
     double data[6]{};
     auto view = make_local_view(data);
 
@@ -555,6 +614,7 @@ CASE("test_make_mdspan_localview") {
 }
 
 CASE("test_make_mdspan_localview_layout_right") {
+    // A contiguous LocalView supports explicit row-major conversion without a data copy.
     double data[6]{};
     auto view = make_local_view(data);
 
@@ -567,6 +627,7 @@ CASE("test_make_mdspan_localview_layout_right") {
 }
 
 CASE("test_make_mdspan_const_localview") {
+    // A const LocalView object retains mutable element type and the same storage mapping.
     double data[6]{};
     auto view = make_local_view(data);
     view(0, 2) = 13.;
@@ -580,6 +641,7 @@ CASE("test_make_mdspan_const_localview") {
 }
 
 CASE("test_make_mdspan_localview_runtime_extents") {
+    // Supplying runtime extents to LocalView conversion preserves its shape and strides.
     double data[6]{};
     auto view = make_local_view(data);
 
@@ -591,6 +653,7 @@ CASE("test_make_mdspan_localview_runtime_extents") {
 
 CASE("test_make_mdspan_localview_dynamic_fixed_extents") {
     double data[6]{};
+    // A 2x3 LocalView supports mixed dynamic/fixed extents with either stride or row-major layout.
     auto view = make_local_view(data);
 
     view(1, 2) = 17.;
@@ -607,6 +670,7 @@ CASE("test_make_mdspan_localview_dynamic_fixed_extents") {
 
 CASE("test_make_mdspan_localview_dynamic_fixed_extents_argument") {
     double data[6]{};
+    // A supplied extents object gives both layouts a dynamic outer size of two and fixed inner size of three.
     auto view = make_local_view(data);
 
     view(1, 2) = 19.;
@@ -623,6 +687,7 @@ CASE("test_make_mdspan_localview_dynamic_fixed_extents_argument") {
 }
 
 CASE("test_make_mdspan_localview_free_function") {
+    // The free conversion function exposes LocalView storage and its existing element values.
     double data[6]{};
     auto view = make_local_view(data);
 
@@ -636,6 +701,7 @@ CASE("test_make_mdspan_localview_free_function") {
 
 CASE("test_make_mdspan_localview_dynamic_fixed_extents") {
     double data[12]{};
+    // A 4x3 LocalView preserves the larger runtime outer extent with a fixed inner extent.
     auto view = make_local_view_4x3(data);
 
     view(3, 1) = 23.;
@@ -650,6 +716,7 @@ CASE("test_make_mdspan_localview_dynamic_fixed_extents") {
 
 CASE("test_make_mdspan_localview_dynamic_fixed_extents_argument") {
     double data[12]{};
+    // Explicit mixed extents preserve a 4x3 LocalView's storage and runtime shape.
     auto view = make_local_view_4x3(data);
 
     view(3, 1) = 29.;
@@ -664,6 +731,7 @@ CASE("test_make_mdspan_localview_dynamic_fixed_extents_argument") {
 }
 
 CASE("test_make_mdspan_native_indexview") {
+    // IndexView conversion preserves its index-adjusting accessor, handle, extent, and stride.
     int data[6]{};
     idx_t shape[1]{6};
     idx_t strides[1]{1};
@@ -678,6 +746,7 @@ CASE("test_make_mdspan_native_indexview") {
 }
 
 CASE("test_make_mdspan_queries_layout_right") {
+    // Layout queries accept row-major views and mdspans but reject padded row strides.
     double contiguous_data[6]{};
     auto contiguous_view = make_local_view(contiguous_data);
 
@@ -706,6 +775,7 @@ CASE("test_make_mdspan_queries_layout_right") {
 }
 
 CASE("test_make_mdspan_queries_alignment") {
+    // Base, stride, and slice-start alignment are distinct; zero alignment is rejected.
     alignas(64) double aligned_data[12]{};
     idx_t shape[2]{2, 3};
     idx_t contiguous_strides[2]{3, 1};
@@ -731,6 +801,7 @@ CASE("test_make_mdspan_queries_alignment") {
 }
 
 CASE("test_make_mdspan_alignment_all_slice_starts") {
+    // Slice alignment checks every varying outer stride, skips singletons, and supports const inputs.
     alignas(64) double data[256]{};
     idx_t shape[3]{2, 2, 3};
     idx_t strides[3]{33, 8, 1};
@@ -784,6 +855,7 @@ CASE("test_make_mdspan_alignment_all_slice_starts") {
 }
 
 CASE("test_make_mdspan_queries_unaligned") {
+    // An offset base fails stronger alignment requirements even when its strides are contiguous.
     alignas(16) double data[7]{};
     idx_t shape[2]{2, 3};
     idx_t strides[2]{3, 1};
@@ -796,6 +868,7 @@ CASE("test_make_mdspan_queries_unaligned") {
 }
 
 CASE("test_aligned_accessor") {
+    // Aligned accessors expose their alignment and allow only supported const/alignment conversions.
     alignas(64) double data[6]{};
     using Span = mdspan<double, extents<std::size_t, 2, 3>, layout_right, aligned_accessor<double, 64>>;
     Span span{data};
@@ -816,6 +889,7 @@ CASE("test_aligned_accessor") {
 }
 
 CASE("test_restrict_aligned_accessor") {
+    // Restrict-aligned accessors retain aligned access and support compatible accessor conversions.
     alignas(64) double data[6]{};
     using Span = mdspan<double, extents<std::size_t, 2, 3>, layout_right, restrict_aligned_accessor<double, 64>>;
     Span span{data};
@@ -837,6 +911,7 @@ CASE("test_restrict_aligned_accessor") {
 }
 
 CASE("test_make_mdspan_accessor_first_syntax") {
+    // Accessor-first syntax selects each accessor family while preserving writable shared storage.
     double data[6]{};
     auto view = make_local_view(data);
 
@@ -866,6 +941,7 @@ CASE("test_make_mdspan_accessor_first_syntax") {
 }
 
 CASE("test_make_mdspan_accessor_first_explicit_alignment") {
+    // Explicit alignment policies work with both inferred and supplied shapes.
     alignas(64) double data[6]{};
     auto view = make_local_view(data);
 
@@ -889,6 +965,7 @@ CASE("test_make_mdspan_accessor_first_explicit_alignment") {
 }
 
 CASE("test_make_mdspan_accessor_type") {
+    // Bound accessor types work for views and pointers, including explicitly read-only elements.
     alignas(64) double data[6]{};
     auto view = make_local_view(data);
 
@@ -918,6 +995,7 @@ CASE("test_make_mdspan_accessor_type") {
 }
 
 CASE("test_make_mdspan_container_accessor_type") {
+    // A reshaped container accepts a bound accessor type and explicit row-major layout.
     std::vector<double> values{1., 2., 3., 4., 5., 6.};
 
     std::array<std::size_t, 2> shape{2, 3};
@@ -930,6 +1008,7 @@ CASE("test_make_mdspan_container_accessor_type") {
 }
 
 CASE("test_make_mdspan_from_mdspan_changes_layout") {
+    // Converting an existing mdspan can change layout while preserving accessor, shape, and storage.
     double data[6]{};
     auto view = make_local_view(data);
     auto stride_span = make_mdspan<layout_stride>(view);
@@ -946,6 +1025,7 @@ CASE("test_make_mdspan_from_mdspan_changes_layout") {
 }
 
 CASE("test_make_mdspan_from_mdspan_changes_accessor") {
+    // Converting an existing mdspan can replace its accessor and layout without copying elements.
     double data[6]{};
     auto view = make_local_view(data);
     auto restrict_span = make_mdspan<layout_right>(view);
@@ -962,6 +1042,7 @@ CASE("test_make_mdspan_from_mdspan_changes_accessor") {
 }
 
 CASE("test_make_mdspan_from_mdspan_fixed_extents") {
+    // Existing mdspan conversion can refine the inner extent to a compile-time constant.
     double data[6]{};
     auto view = make_local_view(data);
     auto stride_span = make_mdspan<layout_stride>(view);
@@ -979,6 +1060,7 @@ CASE("test_make_mdspan_from_mdspan_fixed_extents") {
 }
 
 CASE("test_make_mdspan_from_mdspan_preserves_extents") {
+    // Fully static extents survive default, layout-changing, accessor-changing, and shaped conversions.
     double data[6]{};
     using FixedExtents = extents<std::size_t, 2, 3>;
     using InputSpan = mdspan<double, FixedExtents, layout_right, aligned_accessor<double, alignof(double)>>;
