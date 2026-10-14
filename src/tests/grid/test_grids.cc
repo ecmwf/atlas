@@ -19,6 +19,7 @@
 #include "atlas/meshgenerator.h"
 #include "atlas/output/Gmsh.h"
 #include "atlas/parallel/mpi/mpi.h"
+#include "atlas/runtime/Exception.h"
 #include "atlas/util/Config.h"
 
 #include "tests/AtlasTestEnvironment.h"
@@ -83,6 +84,61 @@ CASE("test_factory_from_json_spec") {
     const Grid configured(configured_spec);
     const Grid configured_from_json(configured.spec().json());
     EXPECT(configured_from_json.uid() == configured.uid());
+}
+
+CASE("test_factory_domain_roundtrip") {
+    const Grid named("O32");
+    const Grid regional(
+        Config("type", "structured")
+            ("xspace", Config("type", "linear")("N", 16)("start", -10.)("end", 10.))
+            ("yspace", Config("type", "linear")("N", 9)("start", 60.)("end", 40.)));
+    const Grid cropped(named, RectangularDomain({-10., 10.}, {40., 60.}));
+
+    EXPECT(not named.spec().has("domain"));
+    EXPECT(not regional.spec().has("domain"));
+    EXPECT(cropped.spec().has("domain"));
+
+    for (const Grid& original : {named, regional, cropped}) {
+        EXPECT(bool(original.domain()));
+        for (const Grid& reconstructed : {Grid(original.spec()), Grid(original.spec().json())}) {
+            EXPECT(bool(reconstructed.domain()));
+            EXPECT_EQ(reconstructed.domain().spec().json(), original.domain().spec().json());
+            EXPECT_EQ(reconstructed.size(), original.size());
+            EXPECT_EQ(reconstructed.uid(), original.uid());
+        }
+    }
+}
+
+CASE("test_saber_missing_domain_reproduction") {
+    const StructuredGrid work_grid(
+        Config("type", "structured")
+            ("xspace", Config("type", "linear")("N", 16)("start", -10.)("end", 10.))
+            ("yspace", Config("type", "linear")("N", 9)("start", 60.)("end", 40.)));
+
+    const Config work_grid_spec = work_grid.spec();
+    Config domain_spec;
+    const bool legacy_saber_domain_found = work_grid_spec.get("domain", domain_spec);
+    EXPECT(not legacy_saber_domain_found);
+    if (!legacy_saber_domain_found) {
+        Log::info() << "Reproduced legacy SABER abort condition: geom_from_atlas: missing domain" << std::endl;
+        // SABER USED to fail here trying to access the domain_spec, see comments in https://github.com/ecmwf/atlas/pull/425, but that was now fixed in SABER:
+        // https://github.com/JCSDA/saber/commit/cdcf0170273e6dda8ddddd980e1c525faf44a175 -- Fix failing ctests due to removed domain/projection defaults in Atlas (#1325)
+    }
+
+    // A backward compatible spec was created in SABER:
+    Config compatible_spec(work_grid_spec);
+    compatible_spec.set("domain", work_grid.domain().spec());
+    EXPECT(compatible_spec.get("domain", domain_spec));
+    EXPECT_EQ(domain_spec.getString("type"), "rectangular");
+    EXPECT_EQ(Grid(compatible_spec).uid(), work_grid.uid());
+
+    const RectangularDomain domain(work_grid.domain());
+    EXPECT(bool(domain));
+    EXPECT_EQ(domain.xmin(), -10.);
+    EXPECT_EQ(domain.xmax(), 10.);
+    EXPECT_EQ(domain.ymin(), 40.);
+    EXPECT_EQ(domain.ymax(), 60.);
+
 }
 
 CASE("test_regular_gg") {
