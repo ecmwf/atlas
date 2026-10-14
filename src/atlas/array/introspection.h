@@ -12,6 +12,7 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <numeric>
 #include <type_traits>
 #include <utility>
 
@@ -76,8 +77,11 @@ namespace atlas::array {
         return extent<rank<View>() - 1>(view);
     }
 
+    /// Check only the view's starting address, not its strides or contiguity.
+    /// Use for one specific view or subview passed to an aligned kernel.
+    /// An alignment of zero is invalid and returns false.
     template <typename View>
-    constexpr bool is_aligned(View& view, std::size_t alignment) {
+    constexpr bool is_aligned(const View& view, std::size_t alignment) {
         if (alignment == 0) {
             return false;
         }
@@ -86,7 +90,7 @@ namespace atlas::array {
     }
 
     template <std::size_t ByteAlignment, typename View>
-    constexpr bool is_aligned(View& view) {
+    constexpr bool is_aligned(const View& view) {
         return is_aligned(view, ByteAlignment);
     }
 
@@ -118,26 +122,50 @@ namespace atlas::array {
         }
     }
 
+    /// Check whether advancing one index along Dim preserves byte alignment.
+    /// This checks spacing only, even for singleton dimensions; the base may be unaligned.
+    /// For a 2D double view with strides {8, 1}, stride 0 preserves 64-byte alignment.
+    /// Combine with is_aligned() to establish aligned row starts in that example.
+    /// An alignment of zero is invalid and returns false.
     template <std::size_t Dim, typename View>
-    constexpr bool is_dimension_aligned(View& view, std::size_t alignment) {
-        constexpr std::size_t Rank = rank<View>();
-
-        static_assert(Dim < Rank, "Dimension must be smaller than view rank.");
-
-        if (!is_aligned(view, alignment)) {
+    constexpr bool is_stride_aligned(const View& view, std::size_t alignment) {
+        static_assert(Dim < rank<View>(), "Dimension must be smaller than view rank.");
+        if (alignment == 0) {
             return false;
         }
-        if constexpr (Rank <= 1) {
-            return true;
-        }
-        else {
-            return array::stride<Dim-1>(view) * sizeof(introspection::element_t<View>) % alignment == 0;
+        const auto element_period = alignment / std::gcd(alignment, sizeof(introspection::element_t<View>));
+        return array::stride<Dim>(view) % element_period == 0;
+    }
+
+    namespace introspection {
+        template <typename View, std::size_t... Dimensions>
+        constexpr bool preceding_strides_aligned(const View& view, std::size_t alignment,
+                                                 std::index_sequence<Dimensions...>) {
+            return ((array::extent<Dimensions>(view) <= 1 ||
+                     array::is_stride_aligned<Dimensions>(view, alignment)) && ...);
         }
     }
 
+    /// Check alignment of every trailing subview starting at dimension Dim.
+    /// Fixing any valid indices before Dim must yield an aligned starting address.
+    /// Checks the base and every preceding stride whose extent exceeds one.
+    /// Dim == 0 checks only the base, equivalent to is_aligned(view, alignment).
+    /// Use for kernels applied to all trailing slices, including arbitrary strided views.
+    /// Does not guarantee contiguity or alignment of each element inside a slice.
+    /// For empty views, still checks the base and preceding non-singleton strides.
+    template <std::size_t Dim, typename View>
+    constexpr bool is_dimension_aligned(const View& view, std::size_t alignment) {
+        static_assert(Dim < rank<View>(), "Dimension must be smaller than view rank.");
+        return is_aligned(view, alignment) &&
+               introspection::preceding_strides_aligned(view, alignment, std::make_index_sequence<Dim>{});
+    }
+
+    /// Check all last-dimension slice starts; pair with a layout/contiguity check
+    /// before using contiguous aligned SIMD loads on each slice.
     template <typename View>
-    constexpr bool is_last_dimension_aligned(View& view, std::size_t alignment) {
+    constexpr bool is_last_dimension_aligned(const View& view, std::size_t alignment) {
         constexpr std::size_t Rank = rank<View>();
+        static_assert(Rank > 0, "Last-dimension alignment requires a nonzero view rank.");
         return is_dimension_aligned<Rank - 1>(view, alignment);
     }
 

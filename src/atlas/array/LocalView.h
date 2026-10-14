@@ -107,6 +107,13 @@ private:
 public:
     // -- Constructors
 
+    /// Return a non-owning view with read-only elements, preserving shape and strides.
+    /// Unlike std::as_const(), this adds const to the element type, not just the object.
+    /// The original view remains unchanged; the storage must outlive the returned view.
+    LocalView<std::add_const_t<element_type>, Rank> as_const() const {
+        return LocalView<std::add_const_t<element_type>, Rank>{*this};
+    }
+
     LocalView(const LocalView& other): data_(other.data_), size_(other.size_) {
         init_metadata_pointers();
         copy_metadata(other.shape_, other.strides_);

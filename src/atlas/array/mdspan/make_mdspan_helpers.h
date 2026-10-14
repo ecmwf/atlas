@@ -19,7 +19,33 @@
 #include "atlas/array/mdspan/mdspan.h"
 #include "atlas/array/introspection.h"
 
+namespace atlas::array {
+template <typename ElementType, int Rank> class ArrayView;
+template <typename ElementType, int Rank> class IndexView;
+template <typename ElementType, int Rank> class LocalView;
+}
+
 namespace atlas::array::make_mdspan_helpers {
+
+template <typename View>
+struct is_non_owning_view : std::false_type {};
+
+template <typename Element, int Rank>
+struct is_non_owning_view<ArrayView<Element, Rank>> : std::true_type {};
+
+template <typename Element, int Rank>
+struct is_non_owning_view<IndexView<Element, Rank>> : std::true_type {};
+
+template <typename Element, int Rank>
+struct is_non_owning_view<LocalView<Element, Rank>> : std::true_type {};
+
+template <typename Element, typename Extents, typename Layout, typename Accessor>
+struct is_non_owning_view<mdspan<Element, Extents, Layout, Accessor>> : std::true_type {};
+
+template <typename View>
+using enable_rvalue_view_t = std::enable_if_t<
+    !std::is_lvalue_reference_v<View> &&
+    is_non_owning_view<std::remove_cv_t<std::remove_reference_t<View>>>::value, int>;
 
 template <typename View>
 using element_t = typename introspection::element_t<View>;
@@ -44,6 +70,11 @@ struct is_container_like<Container, std::void_t<
 
 template <typename Container>
 static constexpr bool is_container_like_v = is_container_like<Container>::value;
+
+template <typename Container>
+using enable_rvalue_container_t = std::enable_if_t<
+    !std::is_lvalue_reference_v<Container> &&
+    is_container_like_v<std::remove_reference_t<Container>>, int>;
 
 template <typename T, std::size_t Rank>
 struct to_extents { using type = T; };

@@ -78,6 +78,15 @@ namespace array {
 ///
 /// If Atlas is compiled without the FORTRAN feature (ATLAS_HAVE_FORTRAN==0), then the addition
 /// and substraction of `1` is compiled out, which may slightly improve performance.
+///
+/// Mdspan interoperability intentionally uses shallow constness: data_handle()
+/// retains ElementType* even when the IndexView object is const, and the default
+/// make_mdspan() conversion preserves index_accessor<ElementType>. Consequently,
+/// converting a const IndexView<int, Rank> produces a writable mdspan, unlike the
+/// former const as_mdspan() conversion. Use IndexView<const int, Rank> to express
+/// read-only elements independently of view-object constness.
+/// Legacy const operator() and data() still provide read-only access; they do not
+/// define the mutability of the mdspan-compatible handle or accessor.
 template <typename ElementType, int Rank>
 class IndexView {
 public:
@@ -113,6 +122,14 @@ public:
     }
 
     // -- Access methods
+
+    /// Return a non-owning view with read-only elements and the same index adjustment.
+    /// Unlike std::as_const(), this adds const to the element type, not just the object.
+    /// Shape and strides are copied; the original view and storage are unchanged.
+    /// The storage must outlive the returned view.
+    IndexView<std::add_const_t<element_type>, Rank> as_const() const {
+        return IndexView<std::add_const_t<element_type>, Rank>{data_, shape_, strides_};
+    }
 
     /// @brief Multidimensional index operator: view(i,j,k,...)
     template <typename... Idx>
@@ -163,6 +180,8 @@ public:
     element_type* data() noexcept { return data_; }
 
     inline ATLAS_HOST_DEVICE
+    /// Mdspan-style shallow constness: element_type, not object constness,
+    /// determines whether the returned handle permits modifying elements.
     constexpr data_handle_type data_handle() const noexcept { return data_; }
 
     inline ATLAS_HOST_DEVICE

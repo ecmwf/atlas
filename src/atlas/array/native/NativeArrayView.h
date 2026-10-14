@@ -95,6 +95,14 @@ namespace array {
 /// (ATLAS_HAVE_GRIDTOOLS==1) or by Atlas itself (ATLAS_HAVE_GRIDTOOLS==0).
 ///
 /// The ArrayView class is therefore also compiled differently dependening on this feature.
+///
+/// The mdspan-compatible data_handle() intentionally has shallow constness:
+/// a const ArrayView<T, Rank> still exposes T*, just as const mdspan<T, ...> does.
+/// Use ArrayView<const T, Rank> when the handle itself must be read-only.
+/// Legacy const operator() and data() continue to provide read-only access.
+/// Like IndexView, make_mdspan() preserves element_type independently of object
+/// constness: converting a const ArrayView<T, Rank> produces a writable mdspan
+/// when T is mutable. ArrayView<const T, Rank> produces read-only mdspan elements.
 
 template <typename ElementType, int Rank>
 class ArrayView {
@@ -138,6 +146,13 @@ private:
 
 public:
     // -- Constructors
+
+    /// Return a non-owning view with read-only elements, preserving shape and strides.
+    /// Unlike std::as_const(), this adds const to the element type, not just the object.
+    /// The original view remains unchanged; the storage must outlive the returned view.
+    ArrayView<std::add_const_t<element_type>, Rank> as_const() const {
+        return ArrayView<std::add_const_t<element_type>, Rank>{*this};
+    }
 
     template <typename ElementTypeTp, typename = std::enable_if_t<std::is_convertible_v<ElementTypeTp*,element_type*>>>
     ArrayView(const ArrayView<ElementTypeTp, Rank>& other): data_(other.data()), size_(other.size()) {
@@ -289,6 +304,8 @@ public:
     element_type* data() noexcept { return data_; }
 
     inline ATLAS_HOST_DEVICE
+    /// Mdspan-style shallow constness: element_type, not object constness,
+    /// determines whether the returned handle permits modifying elements.
     constexpr data_handle_type data_handle() const noexcept { return data_; }
 
     inline ATLAS_HOST_DEVICE

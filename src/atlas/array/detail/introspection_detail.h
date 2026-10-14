@@ -106,9 +106,7 @@ struct element_type {
 
 template <typename View>
 struct element_type<View, std::void_t<typename View::element_type>> {
-    using raw_type = typename View::element_type;
-    using type = std::conditional_t<std::is_const_v<std::remove_reference_t<View>>,
-                                     std::add_const_t<raw_type>, raw_type>;
+    using type = typename View::element_type;
 };
 
 }

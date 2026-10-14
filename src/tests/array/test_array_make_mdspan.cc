@@ -77,6 +77,104 @@ struct LayoutRightViewWithoutStrides {
     static constexpr std::size_t rank() { return 2; }
 };
 
+template <typename Source, typename = void>
+struct CanMakeMdspan : std::false_type {};
+
+template <typename Source>
+struct CanMakeMdspan<Source, std::void_t<decltype(make_mdspan(std::declval<Source>()))>> : std::true_type {};
+
+template <typename Source, typename = void>
+struct CanMakeShapedMdspan : std::false_type {};
+
+template <typename Source>
+struct CanMakeShapedMdspan<Source, std::void_t<decltype(
+    make_mdspan(std::declval<Source>(), std::declval<std::array<std::size_t, 2>>()))>> : std::true_type {};
+
+CASE("test_make_mdspan_temporary_view_lifetime") {
+    static_assert(!CanMakeMdspan<std::vector<double>&&>::value);
+    static_assert(!CanMakeMdspan<const std::vector<double>&&>::value);
+    static_assert(!CanMakeMdspan<std::array<double, 6>&&>::value);
+    static_assert(!CanMakeShapedMdspan<std::vector<double>&&>::value);
+    static_assert(CanMakeMdspan<std::vector<double>&>::value);
+    static_assert(CanMakeMdspan<LocalView<double, 2>&&>::value);
+
+    double data[6]{1., 2., 3., 4., 5., 6.};
+    auto span = make_mdspan(make_local_view(data));
+    EXPECT(span.data_handle() == data);
+    EXPECT(span.extent(0) == 2);
+    EXPECT(span.stride(0) == 3);
+    span(1, 2) = 12.;
+    EXPECT(data[5] == 12.);
+
+    auto converted = make_mdspan<layout_right>(make_mdspan(make_local_view(data)));
+    EXPECT(converted(1, 2) == 12.);
+    auto shaped = make_mdspan(make_local_view(data), std::array<std::size_t, 2>{2, 3});
+    EXPECT(shaped(1, 2) == 12.);
+    auto default_span = make_mdspan<default_accessor>(make_local_view(data));
+    auto aligned_span = make_mdspan<aligned_accessor>(make_local_view(data));
+    auto layout_span = make_mdspan<layout_right, default_accessor>(make_local_view(data));
+    auto aligned_layout = make_mdspan<fixed_last_dim<3>, aligned_accessor>(make_local_view(data));
+    auto fixed_span = make_mdspan<fixed_last_dim<3>, layout_right, default_accessor>(make_local_view(data));
+    auto fixed_aligned = make_mdspan<fixed_last_dim<3>, layout_right, aligned_accessor>(make_local_view(data));
+    EXPECT(default_span(1, 2) == 12.);
+    EXPECT(aligned_span(1, 2) == 12.);
+    EXPECT(layout_span(1, 2) == 12.);
+    EXPECT(aligned_layout(1, 2) == 12.);
+    EXPECT(fixed_span(1, 2) == 12.);
+    EXPECT(fixed_aligned(1, 2) == 12.);
+}
+
+CASE("test_make_mdspan_as_const_views") {
+    std::unique_ptr<Array> array{Array::create<double>(2, 3)};
+    auto view = make_host_view<double, 2>(*array);
+    view(1, 2) = 42.;
+    const auto& const_view = view;
+    auto readonly = make_mdspan(const_view.as_const());
+    auto readonly_again = make_mdspan(view.as_const().as_const());
+    static_assert(std::is_same_v<typename decltype(readonly)::element_type, const double>);
+    static_assert(!std::is_assignable_v<decltype(readonly(1, 2)), double>);
+    EXPECT(readonly.data_handle() == view.data());
+    expect_shape_2d(readonly, view);
+    expect_strides_2d(readonly, view);
+    view(1, 2) = 43.;
+    EXPECT(readonly(1, 2) == 43.);
+    EXPECT(readonly_again(1, 2) == 43.);
+
+    double data[8]{};
+    idx_t shape[2]{2, 3};
+    idx_t strides[2]{4, 1};
+    auto local = LocalView<double, 2>{data, shape, strides};
+    local(1, 2) = 17.;
+    auto readonly_local = make_mdspan(local.as_const());
+    auto readonly_local_again = make_mdspan(local.as_const().as_const());
+    static_assert(std::is_same_v<typename decltype(readonly_local)::element_type, const double>);
+    static_assert(!std::is_assignable_v<decltype(readonly_local(1, 2)), double>);
+    EXPECT(readonly_local.data_handle() == data);
+    expect_shape_2d(readonly_local, local);
+    expect_strides_2d(readonly_local, local);
+    EXPECT(readonly_local(1, 2) == 17.);
+    EXPECT(readonly_local_again(1, 2) == 17.);
+
+    int indices[8]{};
+    idx_t index_shape[1]{4};
+    idx_t index_strides[1]{2};
+    auto index_view = IndexView<int, 1>{indices, index_shape, index_strides};
+    index_view(3) = 7;
+    auto readonly_index = make_mdspan(index_view.as_const());
+    auto readonly_index_again = make_mdspan(index_view.as_const().as_const());
+    static_assert(std::is_same_v<typename decltype(readonly_index)::element_type, const int>);
+    static_assert(std::is_same_v<typename decltype(readonly_index)::accessor_type,
+                                index_accessor<const int, ATLAS_HAVE_FORTRAN>>);
+    static_assert(!std::is_assignable_v<decltype(readonly_index(3)), int>);
+    EXPECT(readonly_index.data_handle() == indices);
+    EXPECT(readonly_index.extent(0) == index_view.extent(0));
+    EXPECT(readonly_index.stride(0) == index_view.stride(0));
+    EXPECT(readonly_index(3) == 7);
+    EXPECT(indices[6] == 7 + ATLAS_HAVE_FORTRAN);
+    index_view(3) = 8;
+    EXPECT(readonly_index_again(3) == 8);
+}
+
 CASE("test_make_mdspan_arrayview_layout_stride") {
     std::unique_ptr<Array> array{Array::create<double>(2, 3)};
     auto view = make_host_view<double, 2>(*array);
@@ -133,9 +231,22 @@ CASE("test_make_mdspan_const_arrayview") {
     const auto& const_view = view;
     auto span = make_mdspan<layout_stride>(const_view);
 
-    static_assert(std::is_const_v<typename decltype(span)::element_type>);
+    static_assert(std::is_same_v<typename decltype(span)::element_type, double>);
     expect_same_data(span, const_view);
     EXPECT(span(0, 2) == 5.);
+    span(0, 2) = 6.;
+    EXPECT(view(0, 2) == 6.);
+    auto explicit_span = make_mdspan<layout_stride, default_accessor>(const_view);
+    static_assert(std::is_same_v<typename decltype(explicit_span)::element_type, double>);
+    explicit_span(0, 2) = 7.;
+    EXPECT(view(0, 2) == 7.);
+
+    auto readonly_view = make_host_view<const double, 2>(*array);
+    const auto& const_readonly_view = readonly_view;
+    auto readonly_span = make_mdspan(const_readonly_view);
+    static_assert(std::is_same_v<typename decltype(readonly_span)::element_type, const double>);
+    static_assert(!std::is_assignable_v<decltype(readonly_span(0, 2)), double>);
+    EXPECT(readonly_span(0, 2) == 7.);
 }
 
 CASE("test_make_mdspan_runtime_extents") {
@@ -463,7 +574,7 @@ CASE("test_make_mdspan_const_localview") {
     const auto& const_view = view;
     auto span = make_mdspan<layout_stride>(const_view);
 
-    static_assert(std::is_const_v<typename decltype(span)::element_type>);
+    static_assert(std::is_same_v<typename decltype(span)::element_type, double>);
     expect_layout_stride_2d<decltype(span)>(span, const_view);
     EXPECT(span(0, 2) == 13.);
 }
@@ -606,12 +717,70 @@ CASE("test_make_mdspan_queries_alignment") {
     EXPECT(is_aligned(contiguous_view, 64));
     EXPECT(is_aligned(span, 64));
     EXPECT(not is_aligned(contiguous_view, 0));
-    EXPECT(not is_dimension_aligned<0>(contiguous_view, 64));
+    EXPECT(is_dimension_aligned<0>(contiguous_view, 64));
+    EXPECT(not is_stride_aligned<0>(contiguous_view, 64));
+    EXPECT(is_stride_aligned<0>(padded_view, 32));
+    EXPECT(not is_stride_aligned<1>(padded_view, 32));
+    EXPECT(not is_stride_aligned<0>(padded_view, 0));
+    EXPECT(not is_dimension_aligned<0>(padded_view, 0));
     EXPECT(is_dimension_aligned<0>(contiguous_view, alignof(double)));
     EXPECT(not is_dimension_aligned<1>(contiguous_view, 64));
     EXPECT(not is_last_dimension_aligned(contiguous_view, 64));
     EXPECT(is_last_dimension_aligned(padded_view, 32));
     EXPECT(is_last_dimension_aligned(span, 32));
+}
+
+CASE("test_make_mdspan_alignment_all_slice_starts") {
+    alignas(64) double data[256]{};
+    idx_t shape[3]{2, 2, 3};
+    idx_t strides[3]{33, 8, 1};
+    auto view = LocalView<double, 3>{data, shape, strides};
+    auto span = make_mdspan<layout_stride>(view);
+
+    EXPECT(is_aligned(view, 64));
+    EXPECT(is_stride_aligned<1>(view, 64));
+    EXPECT(not is_stride_aligned<0>(view, 64));
+    EXPECT(is_dimension_aligned<0>(view, 64));
+    EXPECT(not is_dimension_aligned<1>(view, 64));
+    EXPECT(not is_last_dimension_aligned(view, 64));
+    EXPECT(not is_last_dimension_aligned(span, 64));
+
+    idx_t aligned_strides[3]{32, 8, 1};
+    auto aligned_view = LocalView<double, 3>{data, shape, aligned_strides};
+    EXPECT(is_last_dimension_aligned(aligned_view, 64));
+    const auto& const_aligned_view = aligned_view;
+    EXPECT(is_aligned(const_aligned_view, 64));
+    EXPECT(is_aligned<64>(const_aligned_view));
+    EXPECT(is_dimension_aligned<2>(const_aligned_view, 64));
+    EXPECT(is_last_dimension_aligned(const_aligned_view, 64));
+    EXPECT(is_aligned(make_mdspan(aligned_view), 64));
+    EXPECT(is_aligned<64>(make_mdspan(aligned_view)));
+    EXPECT(is_stride_aligned<0>(make_mdspan(aligned_view), 64));
+    EXPECT(is_dimension_aligned<2>(make_mdspan(aligned_view), 64));
+    EXPECT(is_last_dimension_aligned(make_mdspan(aligned_view), 64));
+    for (idx_t outer = 0; outer < shape[0]; ++outer) {
+        for (idx_t middle = 0; middle < shape[1]; ++middle) {
+            EXPECT(reinterpret_cast<std::uintptr_t>(&aligned_view(outer, middle, 0)) % 64 == 0);
+        }
+    }
+
+    idx_t singleton_shape[3]{1, 2, 3};
+    auto singleton_view = LocalView<double, 3>{data, singleton_shape, strides};
+    EXPECT(not is_stride_aligned<0>(singleton_view, 64));
+    EXPECT(is_last_dimension_aligned(singleton_view, 64));
+
+    idx_t vector_shape[1]{3};
+    idx_t vector_strides[1]{1};
+    auto vector_view = LocalView<double, 1>{data, vector_shape, vector_strides};
+    EXPECT(is_last_dimension_aligned(vector_view, 64));
+    EXPECT(not is_stride_aligned<0>(vector_view, 64));
+
+    auto offset_view = LocalView<double, 3>{data + 1, shape, aligned_strides};
+    const auto& const_offset_view = offset_view;
+    EXPECT(is_stride_aligned<0>(const_offset_view, 64));
+    EXPECT(not is_aligned(const_offset_view, 64));
+    EXPECT(not is_dimension_aligned<0>(const_offset_view, 64));
+    EXPECT(not is_last_dimension_aligned(const_offset_view, 64));
 }
 
 CASE("test_make_mdspan_queries_unaligned") {

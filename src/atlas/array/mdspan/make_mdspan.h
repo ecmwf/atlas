@@ -33,6 +33,12 @@ namespace atlas::array {
 /// container and raw-pointer overloads assume contiguous storage and use
 /// layout_right unless another layout is requested.
 ///
+/// Views declaring element_type use mdspan-style shallow constness: a const
+/// view object does not make its elements const during conversion. Use a view
+/// with const element_type to produce read-only elements. Legacy const data()
+/// and element-access overloads are unchanged. For inputs without element_type,
+/// element constness is inferred from their data handle (for example const containers).
+///
 /// The overload set is organised around four common decisions:
 ///
 /// - **Input source**: pass an Atlas view, an existing mdspan, a contiguous
@@ -68,6 +74,18 @@ namespace atlas::array {
 /// choosing layout_right, a fixed last extent of 32, and a 64-byte
 /// restrict_aligned accessor. With those guarantees, loops over the last
 /// dimension have a fixed trip count and aligned non-aliased accesses.
+///
+/// Alignment queries answer different questions:
+/// - `is_aligned(view, 64)` checks one starting address, suitable for one subview.
+/// - `is_stride_aligned<0>(view, 64)` checks alignment-preserving spacing along
+///   dimension 0, independently of the base. For 2D doubles with strides {8, 1},
+///   it confirms rows are 64 bytes apart even if the base itself is unaligned.
+/// - `is_dimension_aligned<Dim>(view, 64)` checks the base and all varying
+///   preceding dimensions, ensuring every trailing slice starts aligned.
+///   Dimension 0 is equivalent to checking the base alone.
+/// - `is_last_dimension_aligned(view, 64)` applies that guarantee to all innermost
+///   slices. Unlike a single-stride check, it also handles irregular outer strides.
+/// None of these queries implies contiguity; the layout check below supplies it.
 ///
 /// @code
 /// if (conforms_layout<layout_right>(view) && is_last_dimension_aligned(view, 64)) {
@@ -1158,6 +1176,75 @@ auto make_mdspan(Value* data, InputExtents input_shape) {
     return make_mdspan_pointer_impl<Extents, layout_right, Accessor>(data, Extents{input_shape});
 }
 
+/// Temporary Atlas views and mdspans are accepted because only their handles and
+/// metadata are copied. Owning containers must be lvalues. The underlying storage
+/// must outlive the resulting mdspan, even when the source view is temporary.
+/// Use make_mdspan(view.as_const()) to obtain read-only elements without copying data.
+template <typename... Options, typename View, typename... Arguments,
+          make_mdspan_helpers::enable_rvalue_view_t<View> = 0>
+auto make_mdspan(View&& view, Arguments&&... arguments)
+    -> decltype(make_mdspan<Options...>(view, std::forward<Arguments>(arguments)...)) {
+    return make_mdspan<Options...>(view, std::forward<Arguments>(arguments)...);
+}
+
+template <template <typename> typename Accessor, typename View, typename... Arguments,
+          make_mdspan_helpers::enable_rvalue_view_t<View> = 0>
+auto make_mdspan(View&& view, Arguments&&... arguments)
+    -> decltype(make_mdspan<Accessor>(view, std::forward<Arguments>(arguments)...)) {
+    return make_mdspan<Accessor>(view, std::forward<Arguments>(arguments)...);
+}
+
+template <typename Option, template <typename> typename Accessor, typename View, typename... Arguments,
+          make_mdspan_helpers::enable_rvalue_view_t<View> = 0>
+auto make_mdspan(View&& view, Arguments&&... arguments)
+    -> decltype(make_mdspan<Option, Accessor>(view, std::forward<Arguments>(arguments)...)) {
+    return make_mdspan<Option, Accessor>(view, std::forward<Arguments>(arguments)...);
+}
+
+template <typename First, typename Second, template <typename> typename Accessor,
+          typename View, typename... Arguments, make_mdspan_helpers::enable_rvalue_view_t<View> = 0>
+auto make_mdspan(View&& view, Arguments&&... arguments)
+    -> decltype(make_mdspan<First, Second, Accessor>(view, std::forward<Arguments>(arguments)...)) {
+    return make_mdspan<First, Second, Accessor>(view, std::forward<Arguments>(arguments)...);
+}
+
+template <template <typename, std::size_t> typename Accessor, typename View, typename... Arguments,
+          make_mdspan_helpers::enable_rvalue_view_t<View> = 0>
+auto make_mdspan(View&& view, Arguments&&... arguments)
+    -> decltype(make_mdspan<Accessor>(view, std::forward<Arguments>(arguments)...)) {
+    return make_mdspan<Accessor>(view, std::forward<Arguments>(arguments)...);
+}
+
+template <typename Option, template <typename, std::size_t> typename Accessor,
+          typename View, typename... Arguments, make_mdspan_helpers::enable_rvalue_view_t<View> = 0>
+auto make_mdspan(View&& view, Arguments&&... arguments)
+    -> decltype(make_mdspan<Option, Accessor>(view, std::forward<Arguments>(arguments)...)) {
+    return make_mdspan<Option, Accessor>(view, std::forward<Arguments>(arguments)...);
+}
+
+template <typename First, typename Second, template <typename, std::size_t> typename Accessor,
+          typename View, typename... Arguments, make_mdspan_helpers::enable_rvalue_view_t<View> = 0>
+auto make_mdspan(View&& view, Arguments&&... arguments)
+    -> decltype(make_mdspan<First, Second, Accessor>(view, std::forward<Arguments>(arguments)...)) {
+    return make_mdspan<First, Second, Accessor>(view, std::forward<Arguments>(arguments)...);
+}
+
 /// @}
+
+template <typename... Options, typename Container, typename... Arguments,
+          make_mdspan_helpers::enable_rvalue_container_t<Container> = 0>
+void make_mdspan(Container&&, Arguments&&...) = delete;
+
+template <template <typename> typename Accessor, typename Container, typename... Arguments,
+          make_mdspan_helpers::enable_rvalue_container_t<Container> = 0>
+void make_mdspan(Container&&, Arguments&&...) = delete;
+
+template <typename Option, template <typename> typename Accessor, typename Container, typename... Arguments,
+          make_mdspan_helpers::enable_rvalue_container_t<Container> = 0>
+void make_mdspan(Container&&, Arguments&&...) = delete;
+
+template <template <typename, std::size_t> typename Accessor, typename Container, typename... Arguments,
+          make_mdspan_helpers::enable_rvalue_container_t<Container> = 0>
+void make_mdspan(Container&&, Arguments&&...) = delete;
 
 }  // namespace atlas::array
