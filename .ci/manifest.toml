@@ -205,7 +205,6 @@ ntasks = 16
 
 # One full GPU node; the gpu partition has no ssdtmp.
 [[matrix.build-hpc.include]]
-job-script = "./.ci/build-gpu.sh.j2"
 options = "mpi-gpu"
 cxx-compiler = "nvc++-26.1"
 fortran-compiler = "nvfortran-26.1"
@@ -218,7 +217,7 @@ qos = "ng"
 ntasks = 4
 cpus-per-task = 64
 gpus-per-task = 1
-mem = "64GB"
+ssdtmp = ""
 
 [matrix.build-hpc]
 execution = "hpc-atos"
