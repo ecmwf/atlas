@@ -21,7 +21,7 @@
 #include <vector>
 
 #include "atlas/grid/detail/grid/Grid.h"
-#include "atlas/mdspan.h"
+#include "atlas/array/mdspan.h"
 #include "atlas/runtime/Exception.h"
 #include "atlas/util/Point.h"
 
@@ -157,13 +157,13 @@ public:  // methods
     /// Constructor taking a mdspan (makes copy)
     /// First dimension is number of points, second dimension is coordinate. First X (lon), then Y (lat)
     template <typename Extents, typename LayoutPolicy, typename AccessorPolicy>
-    Unstructured(mdspan<const double, Extents, LayoutPolicy, AccessorPolicy> xy):
+    Unstructured(array::mdspan<const double, Extents, LayoutPolicy, AccessorPolicy> xy):
         Unstructured(xy.extent(0), &xy[std::array{0,0}], &xy[std::array{0,1}], xy.stride(1), xy.stride(1)) {}
 
     /// Constructor taking a mdspan (makes copy)
     /// First dimension is number of points, second dimension is coordinate. First X (lon), then Y (lat)
     template <typename Extents, typename LayoutPolicy, typename AccessorPolicy>
-    Unstructured(const std::string& uid, mdspan<const double, Extents, LayoutPolicy, AccessorPolicy> xy):
+    Unstructured(const std::string& uid, array::mdspan<const double, Extents, LayoutPolicy, AccessorPolicy> xy):
         Unstructured(uid, xy.extent(0), &xy[std::array{0,0}], &xy[std::array{0,1}], xy.stride(1), xy.stride(1)) {}
 
     /// Constructor from initializer list

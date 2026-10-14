@@ -11,7 +11,7 @@
 
 #include "atlas/parallel/mpi/mpi.h"
 #include "atlas/util/Config.h"
-#include "atlas/mdspan.h"
+#include "atlas/array/mdspan.h"
 #include "atlas/mesh/Mesh.h"
 
 #include <array>
@@ -104,10 +104,13 @@ public:
                     const eckit::Configuration& config = util::NoConfig()) const;
 
     template<typename T>
-    using span = mdspan<T,dims<1>,layout_right>;
+    using span = array::mdspan<T,array::dims<1>,array::layout_right>;
+
+    template<typename T, typename Extents>
+    using mdspan = array::mdspan<T,Extents>;
 
     template<typename T>
-    using strided_span = mdspan<T,dims<1>,layout_stride>;
+    using strided_span = array::mdspan<T,array::dims<1>,array::layout_stride>;
 
     // operator (5)
     Mesh operator()(span<const gidx_t> global_index,
@@ -115,8 +118,8 @@ public:
                     strided_span<const double> lon, strided_span<const double> lat,
                     span<const int> ghost, span<const int> partition,
                     span<const idx_t> remote_index, const idx_t remote_index_base,
-                    span<const gidx_t> triag_global_index, mdspan<const gidx_t, extents<size_t,dynamic_extent,3>> triag_nodes_global,
-                    span<const gidx_t> quad_global_index,  mdspan<const gidx_t, extents<size_t,dynamic_extent,4>> quad_nodes_global,
+                    span<const gidx_t> triag_global_index, mdspan<const gidx_t, array::extents<size_t,array::dynamic_extent,3>> triag_nodes_global,
+                    span<const gidx_t> quad_global_index,  mdspan<const gidx_t, array::extents<size_t,array::dynamic_extent,4>> quad_nodes_global,
                     const gidx_t global_index_base,
                     const eckit::Configuration& config = util::NoConfig()) const;
 

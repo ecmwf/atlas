@@ -93,11 +93,11 @@ constexpr bool is_value_type(const View&) {
   return ((std::is_same_v<ValueType, ValueTypes>) || ...);
 }
 
-/// @brief Return true if View::non_const_value_type is any of ValuesTypes...
-template <typename... ValueTypes, typename View>
-constexpr bool is_non_const_value_type(const View&) {
-  using ValueType = typename std::decay_t<View>::non_const_value_type;
-  return ((std::is_same_v<ValueType, ValueTypes>) || ...);
+/// @brief Return true if View::value_type is any of ValuesTypes...
+template <typename... ElementTypes, typename View>
+constexpr bool is_element_type(const View&) {
+  using ElementType = typename std::decay_t<View>::element_type;
+  return ((std::is_same_v<ElementType, ElementTypes>) || ...);
 }
 
 }  // namespace array

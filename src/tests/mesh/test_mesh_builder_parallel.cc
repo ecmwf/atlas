@@ -31,15 +31,6 @@ namespace test {
 
 //-----------------------------------------------------------------------------
 
-template <typename T>
-mdspan<T,dims<1>> make_mdspan(std::vector<T>& v) {
-    return mdspan<T,dims<1>>{v.data(), v.size()};
-}
-template <typename T, size_t N>
-mdspan<T,extents<size_t,dynamic_extent,N>> make_mdspan(std::vector<std::array<T,N>>& v) {
-    return mdspan<T,extents<size_t,dynamic_extent,N>>{reinterpret_cast<T*>(v.data()), v.size()};
-}
-
 //-----------------------------------------------------------------------------
 
 CASE("test_cs_c2_mesh_parallel") {
@@ -168,11 +159,11 @@ CASE("test_cs_c2_mesh_parallel") {
 
     SECTION("Build Mesh without a Grid") {
         const Mesh mesh = mesh_builder(
-            make_mdspan(global_indices),
-            make_mdspan(lons), make_mdspan(lats), make_mdspan(lons), make_mdspan(lats),
-            make_mdspan(ghosts), make_mdspan(partitions), make_mdspan(remote_indices), remote_index_base,
-            make_mdspan(tri_global_indices), make_mdspan(tri_boundary_nodes),
-            make_mdspan(quad_global_indices), make_mdspan(quad_boundary_nodes),
+            array::make_mdspan(global_indices),
+            array::make_mdspan(lons), array::make_mdspan(lats), array::make_mdspan(lons), array::make_mdspan(lats),
+            array::make_mdspan(ghosts), array::make_mdspan(partitions), array::make_mdspan(remote_indices), remote_index_base,
+            array::make_mdspan(tri_global_indices), array::make_mdspan(tri_boundary_nodes),
+            array::make_mdspan(quad_global_indices), array::make_mdspan(quad_boundary_nodes),
             global_index_base);
         // const Mesh mesh = mesh_builder(lons, lats, ghosts, global_indices, remote_indices, remote_index_base, partitions,
         //                                tri_boundary_nodes, tri_global_indices, quad_boundary_nodes, quad_global_indices);
@@ -214,11 +205,11 @@ CASE("test_cs_c2_mesh_parallel") {
         //                                tri_boundary_nodes, tri_global_indices, quad_boundary_nodes, quad_global_indices,
         //                                config);
         const Mesh mesh = mesh_builder(
-            make_mdspan(global_indices),
-            make_mdspan(lons), make_mdspan(lats), make_mdspan(lons), make_mdspan(lats),
-            make_mdspan(ghosts), make_mdspan(partitions), make_mdspan(remote_indices), remote_index_base,
-            make_mdspan(tri_global_indices), make_mdspan(tri_boundary_nodes),
-            make_mdspan(quad_global_indices), make_mdspan(quad_boundary_nodes),
+            array::make_mdspan(global_indices),
+            array::make_mdspan(lons), array::make_mdspan(lats), array::make_mdspan(lons), array::make_mdspan(lats),
+            array::make_mdspan(ghosts), array::make_mdspan(partitions), array::make_mdspan(remote_indices), remote_index_base,
+            array::make_mdspan(tri_global_indices), array::make_mdspan(tri_boundary_nodes),
+            array::make_mdspan(quad_global_indices), array::make_mdspan(quad_boundary_nodes),
             global_index_base,
             config);
 
@@ -237,11 +228,11 @@ CASE("test_cs_c2_mesh_parallel") {
         //                                tri_boundary_nodes, tri_global_indices, quad_boundary_nodes, quad_global_indices,
         //                                config);
         const Mesh mesh = mesh_builder(
-            make_mdspan(global_indices),
-            make_mdspan(lons), make_mdspan(lats), make_mdspan(lons), make_mdspan(lats),
-            make_mdspan(ghosts), make_mdspan(partitions), make_mdspan(remote_indices), remote_index_base,
-            make_mdspan(tri_global_indices), make_mdspan(tri_boundary_nodes),
-            make_mdspan(quad_global_indices), make_mdspan(quad_boundary_nodes),
+            array::make_mdspan(global_indices),
+            array::make_mdspan(lons), array::make_mdspan(lats), array::make_mdspan(lons), array::make_mdspan(lats),
+            array::make_mdspan(ghosts), array::make_mdspan(partitions), array::make_mdspan(remote_indices), remote_index_base,
+            array::make_mdspan(tri_global_indices), array::make_mdspan(tri_boundary_nodes),
+            array::make_mdspan(quad_global_indices), array::make_mdspan(quad_boundary_nodes),
             global_index_base,
             config);
 
