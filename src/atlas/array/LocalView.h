@@ -176,7 +176,7 @@ public:
 
     ENABLE_IF_CONST_WITH_NON_CONST(element_type)
     operator const LocalView<element_type, Rank>&() const {
-        static_assert(std::is_const<element_type>::value, "must be const");
+        static_assert(std::is_const<ElementType>::value, "must be const");
         static_assert(!std::is_const<value_type>::value, "must be non-const");
         return (const LocalView<element_type, Rank>&)(*this);
     }

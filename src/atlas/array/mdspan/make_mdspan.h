@@ -545,6 +545,11 @@ auto make_mdspan(std::vector<std::array<T, N>>& vector) {
     return mdspan<T, extents<std::size_t, dynamic_extent, N>>{reinterpret_cast<T*>(vector.data()), vector.size()};
 }
 
+template <typename T, std::size_t N>
+auto make_mdspan(const std::vector<std::array<T, N>>& vector) {
+    return mdspan<const T, extents<std::size_t, dynamic_extent, N>>{reinterpret_cast<const T*>(vector.data()), vector.size()};
+}
+
 //------------------------------------------------------------------------------
 /// @brief Create a rank-1 mdspan over a container with a one-argument accessor policy.
 ///

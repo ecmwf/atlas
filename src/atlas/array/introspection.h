@@ -15,6 +15,7 @@
 #include <type_traits>
 #include <utility>
 
+#include "atlas/array/mdspan/mdspan.h"
 #include "atlas/array/detail/introspection_detail.h"
 
 namespace atlas::array {
