@@ -705,6 +705,8 @@ interpolation/method/structured/kernels/QuasiCubic3DKernel.h
 interpolation/method/structured/kernels/QuasiCubicHorizontalKernel.h
 interpolation/method/unstructured/ConservativeSphericalPolygonInterpolation.cc
 interpolation/method/unstructured/ConservativeSphericalPolygonInterpolation.h
+interpolation/method/unstructured/ConservativeSphericalPolygonInterpolationLimiter.cc
+interpolation/method/unstructured/ConservativeSphericalPolygonInterpolationLimiter.h
 interpolation/method/unstructured/FiniteElement.cc
 interpolation/method/unstructured/FiniteElement.h
 interpolation/method/unstructured/SphericalMeanValue.cc
@@ -738,8 +740,8 @@ linalg/sparse/SparseMatrixMultiply_OpenMP.cc
 linalg/sparse/SparseMatrixStorage.cc
 linalg/sparse/SparseMatrixStorage.h
 linalg/sparse/SparseMatrixToTriplets.h
-linalg/sparse/SparseMatrixView.h
 linalg/sparse/SparseMatrixTriplet.h
+linalg/sparse/SparseMatrixView.h
 linalg/dense.h
 linalg/dense/Backend.h
 linalg/dense/Backend.cc
@@ -906,14 +908,18 @@ util/detail/Cache.h
 util/detail/KDTree.h
 util/detail/filesystem.cc
 util/detail/filesystem.h
-util/function/MDPI_functions.h
-util/function/MDPI_functions.cc
+util/function/MDPI.h
+util/function/MDPI.cc
+util/function/SlottedCylinder.h
+util/function/SlottedCylinder.cc
 util/function/SolidBodyRotation.h
 util/function/SolidBodyRotation.cc
 util/function/SphericalHarmonic.h
 util/function/SphericalHarmonic.cc
 util/function/VortexRollup.h
 util/function/VortexRollup.cc
+util/function/XStep.h
+util/function/XStep.cc
 )
 
 

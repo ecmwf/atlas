@@ -56,8 +56,6 @@ linalg::SparseMatrixStorage assemble_global_matrix(const Interpolation& interpol
 
 
 linalg::SparseMatrixStorage assemble_global_matrix(size_t nrows, size_t ncols, const Interpolation& interpolation, int mpi_root) {
-
-
     auto src_fs = interpolation.source();
     auto tgt_fs = interpolation.target();
 
