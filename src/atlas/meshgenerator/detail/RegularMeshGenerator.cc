@@ -135,10 +135,10 @@ void RegularMeshGenerator::generate(const Grid& grid, Mesh& mesh) const {
     // if ( nb_parts == 1 || eckit::mpi::size() == 1 ) partitioner_factory =
     // "equal_regions"; // Only one part --> Trans is slower
 
-    mpi::push(options.getString("mpi_comm"));
+    mpi::scope::push(options.getString("mpi_comm"));
     grid::Partitioner partitioner(partitioner_type, nb_parts);
     grid::Distribution distribution(partitioner.partition(grid));
-    mpi::pop();
+    mpi::scope::pop();
     generate(grid, distribution, mesh);
 }
 

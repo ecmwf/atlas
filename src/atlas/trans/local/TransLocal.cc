@@ -22,6 +22,8 @@
 #include "eckit/log/JSON.h"
 #include "eckit/types/FloatCompare.h"
 
+#include "pluto/pluto.h"
+
 #include "atlas/array.h"
 #include "atlas/field.h"
 #include "atlas/grid/Iterator.h"
@@ -55,6 +57,33 @@ namespace trans {
 
 namespace {
 static TransBuilderGrid<TransLocal> builder("local", "local");
+
+template <typename Value>
+class PooledBuffer {
+public:
+    explicit PooledBuffer(const std::size_t size): size_(size), allocator_(pluto::host_pool_resource()), data_(nullptr) {
+        if (size_) {
+            data_ = allocator_.allocate(size_);
+        }
+    }
+
+    ~PooledBuffer() {
+        if (data_) {
+            allocator_.deallocate(data_, size_);
+        }
+    }
+
+    PooledBuffer(const PooledBuffer&)            = delete;
+    PooledBuffer& operator=(const PooledBuffer&) = delete;
+
+    Value* data() { return data_; }
+    Value& operator[](const std::size_t index) { return data_[index]; }
+
+private:
+    std::size_t size_;
+    pluto::allocator<Value> allocator_;
+    Value* data_{nullptr};
+};
 }  // namespace
 
 namespace {
@@ -530,8 +559,8 @@ TransLocal::TransLocal(const Cache& cache, const Grid& grid, const Domain& domai
             }
         }
         //Log::info() << "nlats=" << g.ny() << " nlatsGlobal=" << gs_global.ny() << std::endl;
-        std::vector<double> lats(nlatsLeg_);
-        std::vector<double> lons(nlonsMax);
+        PooledBuffer<double> lats(nlatsLeg_);
+        PooledBuffer<double> lons(nlonsMax);
         if (nlatsNH_ >= nlatsSH_ || useGlobalLeg) {
             for (idx_t j = 0; j < nlatsLeg_; ++j) {
                 double lat = gsLeg.y(j);
@@ -754,7 +783,7 @@ TransLocal::TransLocal(const Cache& cache, const Grid& grid, const Domain& domai
                     << "Furthermore, results may contain aliasing errors." << std::endl;
             }
 
-            std::vector<double> lats(grid_.size());
+            PooledBuffer<double> lats(grid_.size());
             alloc_aligned(legendre_, legendre_size(truncation_) * grid_.size(), "Legendre coeffs.");
             int j(0);
             for (PointLonLat p : grid_.lonlat()) {
@@ -871,8 +900,57 @@ void gp_transpose(const int nb_size, const int nb_fields, const double gp_tmp[],
 void TransLocal::invtrans_vordiv2wind(const Field& spvor, const Field& spdiv, Field& gpwind,
                                       const eckit::Configuration& config) const {
     // VERY PRELIMINARY IMPLEMENTATION WITHOUT ANY GUARANTEES
-    ATLAS_ASSERT(spvor.rank() == 1, "Only rank-1 fields supported at the moment");
-    ATLAS_ASSERT(spdiv.rank() == 1, "Only rank-1 fields supported at the moment");
+    ATLAS_ASSERT(spvor.rank() == spdiv.rank(), "Vorticity and divergence ranks must match");
+    ATLAS_ASSERT(spvor.shape() == spdiv.shape(), "Vorticity and divergence shapes must match");
+    ATLAS_ASSERT(spvor.rank() == 1 || spvor.rank() == 2, "Only rank-1 and rank-2 spectral fields are supported");
+
+    if (spvor.rank() == 2) {
+        // Rank-2 spectral fields require a rank-3 wind field
+        // The wind has dimensions (grid points, levels, 2) -- (2 for u and v)
+        // The spectral fields have dimensions (levels, spectral coefficients)
+
+        // The function invtrans expects:
+        // - vorticity_spectra and divergence_spectra to be of size (levels * spectral coefficients)
+        // - wind to be of layout (2, levels, grid points)
+        // Therefore, we need to transpose the wind data after the inverse transform
+
+        const int nb_vordiv_fields = static_cast<int>(spvor.shape(1));
+
+        ATLAS_ASSERT(gpwind.rank() == 3, "Rank-2 spectral fields require a rank-3 wind field");
+        ATLAS_ASSERT(gpwind.shape(0) == grid().size(), "Wind horizontal dimension must match the grid size");
+        ATLAS_ASSERT(gpwind.shape(1) == nb_vordiv_fields, "Wind levels must match the spectral fields");
+        ATLAS_ASSERT(gpwind.shape(2) == 2, "Wind field must have two components");
+
+        const auto vorticity_spectra  = array::make_view<double, 2>(spvor);
+        const auto divergence_spectra = array::make_view<double, 2>(spdiv);
+        auto gp_fields                = array::make_view<double, 3>(gpwind);
+        const size_t spectral_data_size = 2 * legendre_size(truncation_) * nb_vordiv_fields;
+        ATLAS_ASSERT(vorticity_spectra.size() == spectral_data_size);
+        ATLAS_ASSERT(divergence_spectra.size() == spectral_data_size);
+
+        // The wind data is transposed compared to what invtrans is expecting,
+        // so we need to allocate a temporary array to hold the transformed wind data
+        const idx_t nb_grid_points = grid().size();
+        const idx_t transformed_wind_stride_component = nb_vordiv_fields * nb_grid_points;
+        const idx_t transformed_wind_stride_level = nb_grid_points;
+        PooledBuffer<double> transformed_wind_data(2 * nb_vordiv_fields * nb_grid_points);
+        auto transformed_wind = [&transformed_wind_stride_component, &transformed_wind_stride_level, &transformed_wind_data](idx_t component, idx_t level, idx_t point) {
+            return transformed_wind_data[component * transformed_wind_stride_component + level * transformed_wind_stride_level + point];
+        };
+
+        // Perform the inverse transform to get the wind data in the temporary array
+        invtrans(nb_vordiv_fields, vorticity_spectra.data(), divergence_spectra.data(), transformed_wind_data.data(), config);
+
+        // Transpose the temporary transformed wind data into the gp_fields array
+        for (idx_t point = 0; point < nb_grid_points; ++point) {
+            for (idx_t level = 0; level < nb_vordiv_fields; ++level) {
+                gp_fields(point, level, 0) = transformed_wind(0, level, point);
+                gp_fields(point, level, 1) = transformed_wind(1, level, point);
+            }
+        }
+        return;
+    }
+
     int nb_vordiv_fields          = 1;
     const auto vorticity_spectra  = array::make_view<double, 1>(spvor);
     const auto divergence_spectra = array::make_view<double, 1>(spdiv);
@@ -1444,7 +1522,7 @@ void TransLocal::invtrans_uv(const int truncation, const int nb_scalar_fields, c
             {
                 if (nb_vordiv_fields > 0) {
                     ATLAS_TRACE("compute u,v from U,V");
-                    std::vector<double> coslatinvs(nlats);
+                    PooledBuffer<double> coslatinvs(nlats);
                     for (idx_t j = 0; j < nlats; ++j) {
                         double lat = g.y(j);
                         if (lat > latPole) {
@@ -1528,39 +1606,34 @@ void TransLocal::invtrans(const int nb_scalar_fields, const double scalar_spectr
         // collect all spectral data into one array "all_spectra":
         ATLAS_TRACE("TransLocal::invtrans");
         int nb_vordiv_spec_ext = 2 * legendre_size(truncation_ + 1) * nb_vordiv_fields;
-        std::vector<double> U_ext;
-        std::vector<double> V_ext;
-        std::vector<double> scalar_ext;
-        if (nb_vordiv_fields > 0) {
-            std::vector<double> vorticity_spectra_extended(nb_vordiv_spec_ext);
-            std::vector<double> divergence_spectra_extended(nb_vordiv_spec_ext);
-            U_ext.resize(nb_vordiv_spec_ext);
-            V_ext.resize(nb_vordiv_spec_ext);
+        int nb_scalar_ext      = 2 * legendre_size(truncation_ + 1) * nb_scalar_fields;
+        PooledBuffer<double> U_ext(nb_vordiv_spec_ext);
+        PooledBuffer<double> V_ext(nb_vordiv_spec_ext);
+        PooledBuffer<double> scalar_ext(nb_scalar_ext);
+        PooledBuffer<double> vorticity_spectra_extended(nb_vordiv_spec_ext);
+        PooledBuffer<double> divergence_spectra_extended(nb_vordiv_spec_ext);
 
-            {
-                ATLAS_TRACE("extend vordiv");
-                // increase truncation in vorticity_spectra and divergence_spectra:
-                extend_truncation(truncation_, nb_vordiv_fields, vorticity_spectra, vorticity_spectra_extended.data());
-                extend_truncation(truncation_, nb_vordiv_fields, divergence_spectra,
-                                  divergence_spectra_extended.data());
-            }
+        {
+            ATLAS_TRACE("extend vordiv");
+            // increase truncation in vorticity_spectra and divergence_spectra:
+            extend_truncation(truncation_, nb_vordiv_fields, vorticity_spectra, vorticity_spectra_extended.data());
+            extend_truncation(truncation_, nb_vordiv_fields, divergence_spectra,
+                              divergence_spectra_extended.data());
+        }
 
-            {
-                ATLAS_TRACE("vordiv to UV");
-                // call vd2uv to compute u and v in spectral space
-                trans::VorDivToUV vordiv_to_UV_ext(truncation_ + 1, option::type("local"));
-                vordiv_to_UV_ext.execute(nb_vordiv_spec_ext, nb_vordiv_fields, vorticity_spectra_extended.data(),
-                                         divergence_spectra_extended.data(), U_ext.data(), V_ext.data());
-            }
+        {
+            ATLAS_TRACE("vordiv to UV");
+            // call vd2uv to compute u and v in spectral space
+            trans::VorDivToUV vordiv_to_UV_ext(truncation_ + 1, option::type("local"));
+            vordiv_to_UV_ext.execute(nb_vordiv_spec_ext, nb_vordiv_fields, vorticity_spectra_extended.data(),
+                                     divergence_spectra_extended.data(), U_ext.data(), V_ext.data());
         }
         if (nb_scalar_fields > 0) {
-            int nb_scalar_ext = 2 * legendre_size(truncation_ + 1) * nb_scalar_fields;
-            scalar_ext.resize(nb_scalar_ext);
             extend_truncation(truncation_, nb_scalar_fields, scalar_spectra, scalar_ext.data());
         }
         int nb_all_fields = 2 * nb_vordiv_fields + nb_scalar_fields;
         int nb_all_size   = 2 * legendre_size(truncation_ + 1) * nb_all_fields;
-        std::vector<double> all_spectra(nb_all_size);
+        PooledBuffer<double> all_spectra(nb_all_size);
         int k = 0, i = 0, j = 0, l = 0;
         {
             ATLAS_TRACE("merge all spectra");

@@ -129,33 +129,29 @@ struct FieldSpecFixtures {
 // Helper struct to key different interpolation schemes to strings
 struct InterpSchemeFixtures {
   static const Config& get(const std::string& fixture) {
-    static const auto cubedsphereBilinear =
-        option::type("cubedsphere-bilinear") | Config("adjoint", true);
-    static const auto finiteElement =
-        option::type("finite-element") | Config("adjoint", true);
-    static const auto structuredLinear = option::type("structured-bilinear") |
-                                         option::halo(1) |
-                                         Config("adjoint", true);
-    static const auto structuredCubic = option::type("structured-bicubic") |
-                                        option::halo(2) |
-                                        Config("adjoint", true);
-    static const auto sphericalVector =
-        option::type("spherical-vector") | Config("adjoint", true);
+      static const auto cubedsphereBilinear = option::type("cubedsphere-bilinear") | Config("adjoint", true);
+      static const auto sphericalMeanValue  = option::type("spherical-mean-value") | Config("normalisation", false);
+      static const auto sphericalMeanValueNormalised =
+          option::type("spherical-mean-value") | Config("normalisation", true);
+      static const auto finiteElement = option::type("finite-element") | Config("adjoint", true);
+      static const auto structuredLinear =
+          option::type("structured-bilinear") | option::halo(1) | Config("adjoint", true);
+      static const auto structuredCubic =
+          option::type("structured-bicubic") | option::halo(2) | Config("adjoint", true);
+      static const auto sphericalVector = option::type("spherical-vector") | Config("adjoint", true);
 
-    static const auto interpSchemes = std::map<std::string_view, Config>{
-        {"cubedsphere_bilinear", cubedsphereBilinear},
-        {"finite_element", finiteElement},
-        {"structured_linear", structuredLinear},
-        {"structured_cubic", structuredCubic},
-        {"cubedsphere_bilinear_spherical",
-         sphericalVector | Config("scheme", cubedsphereBilinear)},
-        {"finite_element_spherical",
-         sphericalVector | Config("scheme", finiteElement)},
-        {"structured_linear_spherical",
-         sphericalVector | Config("scheme", structuredLinear)},
-        {"structured_cubic_spherical",
-         sphericalVector | Config("scheme", structuredCubic)}};
-    return interpSchemes.at(fixture);
+      static const auto interpSchemes = std::map<std::string_view, Config>{
+          {"cubedsphere_bilinear", cubedsphereBilinear},
+          {"finite_element", finiteElement},
+          {"structured_linear", structuredLinear},
+          {"structured_cubic", structuredCubic},
+          {"cubedsphere_bilinear_spherical", sphericalVector | Config("scheme", cubedsphereBilinear)},
+          {"finite_element_spherical", sphericalVector | Config("scheme", finiteElement)},
+          {"structured_linear_spherical", sphericalVector | Config("scheme", structuredLinear)},
+          {"structured_cubic_spherical", sphericalVector | Config("scheme", structuredCubic)},
+          {"spherical_mean_value", sphericalVector | Config("scheme", sphericalMeanValue)},
+          {"spherical_mean_value_normalised", sphericalVector | Config("scheme", sphericalMeanValueNormalised)}};
+      return interpSchemes.at(fixture);
   }
 };
 
@@ -486,6 +482,91 @@ CASE("structured columns O96 vector interpolation (2d-field, 2-vector, hi-res)")
   testInterpolation<Rank2dField>((config));
 }
 
+CASE("cubed sphere CS-LFR-48 scalar spherical mean value interpolation (3d-field, scalar)") {
+    const auto config = Config("source_fixture", "cubedsphere_mesh")
+                            .set("target_fixture", "gaussian_mesh")
+                            .set("field_spec_fixture", "scalar")
+                            .set("interp_fixture", "spherical_mean_value")
+                            .set("file_id", "spherical_vector_cs2")
+                            .set("tol", 0.00096);
+
+    testInterpolation<Rank3dField>((config));
+}
+
+CASE("cubed sphere CS-LFR-48 scalar normalised spherical mean value interpolation (3d-field, scalar)") {
+    const auto config = Config("source_fixture", "cubedsphere_mesh")
+                            .set("target_fixture", "gaussian_mesh")
+                            .set("field_spec_fixture", "scalar")
+                            .set("interp_fixture", "spherical_mean_value_normalised")
+                            .set("file_id", "spherical_vector_cs2")
+                            .set("tol", 0.00096);
+
+    testInterpolation<Rank3dField>((config));
+}
+
+CASE("cubed sphere CS-LFR-48 vector spherical mean value interpolation (3d-field, 2-vector)") {
+    const auto config = Config("source_fixture", "cubedsphere_mesh")
+                            .set("target_fixture", "gaussian_mesh")
+                            .set("field_spec_fixture", "2vector")
+                            .set("interp_fixture", "spherical_mean_value")
+                            .set("file_id", "spherical_vector_cs2")
+                            .set("tol", 0.00018);
+
+    testInterpolation<Rank3dField>((config));
+}
+
+
+CASE("cubed sphere CS-LFR-48 vector normalised spherical mean value interpolation (3d-field, 2-vector)") {
+    const auto config = Config("source_fixture", "cubedsphere_mesh")
+                            .set("target_fixture", "gaussian_mesh")
+                            .set("field_spec_fixture", "2vector")
+                            .set("interp_fixture", "spherical_mean_value_normalised")
+                            .set("file_id", "spherical_vector_cs2")
+                            .set("tol", 0.00018);
+
+    testInterpolation<Rank3dField>((config));
+}
+
+CASE("cubed sphere CS-LFR-48 vector spherical mean value interpolation (3d-field, 3-vector)") {
+    const auto config = Config("source_fixture", "cubedsphere_mesh")
+                            .set("target_fixture", "gaussian_mesh")
+                            .set("field_spec_fixture", "3vector")
+                            .set("interp_fixture", "spherical_mean_value")
+                            .set("file_id", "spherical_vector_cs3")
+                            .set("tol", 0.00096);
+
+    testInterpolation<Rank3dField>((config));
+}
+
+CASE("cubed sphere CS-LFR-48 vector normalised spherical mean value interpolation (3d-field, 3-vector)") {
+    const auto config = Config("source_fixture", "cubedsphere_mesh")
+                            .set("target_fixture", "gaussian_mesh")
+                            .set("field_spec_fixture", "3vector")
+                            .set("interp_fixture", "spherical_mean_value_normalised")
+                            .set("file_id", "spherical_vector_cs3")
+                            .set("tol", 0.00096);
+
+    testInterpolation<Rank3dField>((config));
+}
+
+CASE("cubed sphere CS-LFR-48 (spherical mean value) to empty point cloud") {
+    const auto config = Config("source_fixture", "cubedsphere_mesh")
+                            .set("target_fixture", "empty_point_cloud")
+                            .set("field_spec_fixture", "2vector")
+                            .set("interp_fixture", "spherical_mean_value");
+
+    testInterpolation<Rank2dField>((config));
+}
+
+CASE("cubed sphere CS-LFR-48 (normalised spherical mean value) to empty point cloud") {
+    const auto config = Config("source_fixture", "cubedsphere_mesh")
+                            .set("target_fixture", "empty_point_cloud")
+                            .set("field_spec_fixture", "2vector")
+                            .set("interp_fixture", "spherical_mean_value_normalised");
+
+    testInterpolation<Rank2dField>((config));
+}
+
 CASE("separate vector field components") {
   const auto sourceFunctionSpace =
       FunctionSpaceFixtures::get("structured_columns");
@@ -516,10 +597,20 @@ CASE("separate vector field components") {
 
   uSourceView.assign(0.);
   vSourceView.assign(0.);
+  const auto sourceGhostView = array::make_view<int, 1>(sourceFunctionSpace.ghost());
   for (auto idx = idx_t{0}; idx < sourceFunctionSpace.size(); idx++) {
+    if (sourceGhostView(idx)) {
+      continue;
+    }
     std::tie(uSourceView(idx), vSourceView(idx)) =
         vortexHorizontal(sourceLonLatView(idx, 0), sourceLonLatView(idx, 1));
   }
+
+  // Copy non-halo exchanged source fields.
+  auto uOriginalSource = sourceFieldSet["u"].clone();
+  auto vOriginalSource = sourceFieldSet["v"].clone();
+  const auto uOriginalSourceView = array::make_view<double, 1>(uOriginalSource);
+  const auto vOriginalSourceView = array::make_view<double, 1>(vOriginalSource);
 
   const auto interpScheme =
       InterpSchemeFixtures::get("structured_linear_spherical");
@@ -561,15 +652,15 @@ CASE("separate vector field components") {
   uSourceAdjointView.assign(0.);
   vSourceAdjointView.assign(0.);
 
-  //  sourceAdjointFieldSet.set_dirty(false);
+  sourceAdjointFieldSet.set_dirty(false); // Check that adjoint of halo exchange still triggers on "clean" fields.
   interp.execute_adjoint(sourceAdjointFieldSet, targetAdjointFieldSet);
 
   constexpr auto tinyNum = 1e-13;
   const auto targetDotTarget = dotProduct(uTargetView, uTargetView) +
                                dotProduct(vTargetView, vTargetView);
   const auto sourceDotSourceAdjoint =
-      dotProduct(uSourceView, uSourceAdjointView) +
-      dotProduct(vSourceView, vSourceAdjointView);
+      dotProduct(uOriginalSourceView, uSourceAdjointView) +
+      dotProduct(vOriginalSourceView, vSourceAdjointView);
 
   const auto dotProdRatio = targetDotTarget / sourceDotSourceAdjoint;
   EXPECT_APPROX_EQ(dotProdRatio, 1., tinyNum);

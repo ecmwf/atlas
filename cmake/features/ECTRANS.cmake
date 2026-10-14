@@ -35,6 +35,12 @@ if( atlas_HAVE_ATLAS_FUNCTIONSPACE AND (ENABLE_ECTRANS OR NOT DEFINED ENABLE_ECT
         find_package( transi 0.8 QUIET )
     endif()
 endif()
+if (ectrans_FOUND)
+    ecbuild_parse_version( ${ectrans_VERSION} PREFIX ATLAS_ECTRANS )
+    math( EXPR ATLAS_ECTRANS_VERSION_INT "( 10000 * ${ATLAS_ECTRANS_VERSION_MAJOR} ) + ( 100 * ${ATLAS_ECTRANS_VERSION_MINOR} ) + ${ATLAS_ECTRANS_VERSION_PATCH}" )
+else()
+    set( ATLAS_ECTRANS_VERSION_INT 0 )
+endif()
 ecbuild_add_option( FEATURE ECTRANS
                     DESCRIPTION "Support for IFS spectral transforms"
                     CONDITION atlas_HAVE_ATLAS_FUNCTIONSPACE AND transi_FOUND )

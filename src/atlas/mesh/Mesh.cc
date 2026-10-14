@@ -27,13 +27,13 @@ Mesh::Mesh(): Handle(new Implementation()) {}
 Mesh::Mesh(const Grid& grid, const eckit::Configuration& config):
     Handle([&]() {
         if (config.has("mpi_comm")) {
-            mpi::push(config.getString("mpi_comm"));
+            mpi::scope::push(config.getString("mpi_comm"));
         }
         auto cfg           = grid.meshgenerator() | util::Config(config);
         auto meshgenerator = MeshGenerator{grid.meshgenerator() | config};
         auto mesh          = meshgenerator.generate(grid, grid::Partitioner(grid.partitioner() | config));
         if (config.has("mpi_comm")) {
-            mpi::pop();
+            mpi::scope::pop();
         }
         mesh.get()->attach();
         return mesh.get();

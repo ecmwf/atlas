@@ -96,9 +96,15 @@ public:
     void scatter(const Field&, Field&) const override;
     const parallel::GatherScatter& scatter() const override;
 
-    std::string checksum(const FieldSet&) const;
-    std::string checksum(const Field&) const;
+    std::string checksum(const FieldSet&) const override;
+    std::string checksum(const Field&) const override;
+
+
+    [[deprecated("Use FunctionSpaceImpl::checksum(const FieldSet&) or FunctionSpaceImpl::checksum(const Field&) instead")]]
     const parallel::Checksum& checksum() const;
+
+    // Just for internal API at the moment. DO NOT USE!
+    const parallel::Checksum& deprecated_checksum() const;
 
     /// @brief Compute sum of scalar field
     /// @param [out] sum    Scalar value containing the sum of the full 3D field
@@ -274,6 +280,8 @@ public:
 
     Field partition() const override { return nodes_.partition(); }
 
+    Field mask() const override;
+
     const util::PartitionPolygon& polygon(idx_t halo = 0) const override { return mesh_.polygon(halo); }
 
     const util::PartitionPolygons& polygons() const override { return mesh_.polygons(); }
@@ -306,6 +314,7 @@ private:                  // data
     mutable util::ObjectHandle<parallel::GatherScatter> gather_scatter_;  // without ghost
     mutable util::ObjectHandle<parallel::HaloExchange> halo_exchange_;
     mutable util::ObjectHandle<parallel::Checksum> checksum_;
+    mutable Field field_mask_;
 
 private:
     template <typename Value>
@@ -506,8 +515,9 @@ public:
     void haloExchange(const Field&, bool on_device = false) const;
     const parallel::HaloExchange& halo_exchange() const;
 
-    std::string checksum(const FieldSet&) const;
-    std::string checksum(const Field&) const;
+    using FunctionSpace::checksum;
+
+    [[deprecated("Use FunctionSpace::checksum(const FieldSet&) or FunctionSpace::checksum(const Field&) instead")]]
     const parallel::Checksum& checksum() const;
 
     /// @brief Compute sum of scalar field

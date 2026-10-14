@@ -419,6 +419,7 @@ private:
     std::string name_ = {"structured"};
     XSpace xspace_;
     YSpace yspace_;
+    bool domain_set_{false};
     mutable std::string type_;
 };
 

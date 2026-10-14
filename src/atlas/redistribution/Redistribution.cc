@@ -11,6 +11,7 @@
 #include "atlas/functionspace/FunctionSpace.h"
 #include "atlas/redistribution/detail/RedistributeGeneric.h"
 #include "atlas/redistribution/detail/RedistributionImplFactory.h"
+#include "atlas/runtime/Exception.h"
 
 
 namespace atlas {
@@ -20,8 +21,6 @@ Redistribution::Redistribution(): Handle(){};
 Redistribution::Redistribution(const FunctionSpace& sourceFunctionSpace, const FunctionSpace& targetFunctionSpace,
                                const util::Config& config):
     Handle([&]() -> redistribution::detail::RedistributionImpl* {
-        ATLAS_ASSERT(sourceFunctionSpace.type() == targetFunctionSpace.type());
-
         std::string type = redistribution::detail::RedistributeGeneric::static_type();
         config.get("type", type);
 

@@ -7,6 +7,74 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
 ## [Unreleased]
 
+## [0.47.0] - 2026-10-14
+
+### Added
+- Add Rust bindings through the `atlas-sys` crate and prepare it for crates.io publishing with registry dependencies, license files, and an automated publishing workflow (#360, #441).
+- Add `FunctionSpace::mask()`, `setMask()`, and `hasMask()` (#416).
+- Add Gmsh output policies for missing and masked values (#418).
+- Add grid construction from JSON strings and support named grids through the `grid` configuration key (#424).
+- Add `Grid::masterIndex()` and `Grid::flags()` for grids with intrinsic halos and folds, such as ORCA (#428).
+- Add a FieldBuilder interface with a grid-box-area field builder (#396).
+- Implement `Trans::invtrans_vordiv2uv` for fields with and without levels (#408).
+- Add global-index-based edge-to-cell connectivity (#413).
+- Add Fortran grid type queries, unstructured-grid constructors from coordinates, and mesh constructors from grids, distributions, and partitioners (#398, #404).
+- Add Fortran FieldSet shape accessors, FunctionSpace checksum array support, and BlockStructuredColumns and FunctionSpace accessors (#376, #389, #391).
+- Add `ArrayView::extent()` and `LocalView::extent()` for mdspan interoperability (#390).
+- Add specialized mdspan accessors in pluto (#432).
+- Add device queries and device properties to hic (#431).
+- Add `Metadata::json()`, version definitions for downstream introspection, and documentation of Atlas environment variables (#373, #358, #362).
+- Add `ATLAS_DEBUG_SYNC` macros with a timeout for diagnosing deadlocks and improve macOS backtraces with source line numbers (#385, #375).
+
+### Changed
+- Update Gmsh output to format 4.1 (#430).
+- Omit inferred domains and default projections from structured-grid specifications. The constructed grid still provides its domain; consumers requiring an explicit serialized domain should use `grid.domain().spec()` (#424).
+- Implement BlockStructuredColumns checksums and align checksums across StructuredColumns, NodeColumns, CellColumns, and EdgeColumns. Checksum values may differ from previous releases (#371, #384, #388).
+- Improve Spectral coefficient indexing and iteration, and support a configurable, stable MPI communicator (#399).
+- Use pluto allocators in GatherScatter and pooled temporary buffers in TransLocal and TransIFS (#369, #409).
+- Gather only referenced source rows when applying interpolation with missing values (#397).
+- Allow automatic source-field halo exchanges to be disabled during interpolation (#411).
+- Allow GatherScatter setup to preserve global indices explicitly (#419).
+- Preserve field names when creating fields from existing fields (#372).
+- Update pocketfft and make its symbols unique to Atlas (#357).
+
+### Fixed
+- Fix Gmsh output deadlocks and allow CellColumns construction on partitions with zero cells (#440).
+- Initialize pooled buffers used by TransIFS adjoint operations and fix `invtrans_grad_adj` (#425, #439).
+- Prevent accidental Spectral functionspace construction from a boolean.
+- Fix PointCloud GatherScatter setup (#429).
+- Fix GatherScatter for sparse global indexing in EdgeColumns (#387).
+- Fix device-state handling in halo exchange (#370).
+- Fix halo exchange inconsistencies in spherical-vector interpolation (#411).
+- Fix functionspace metadata broadcasts to use the correct MPI communicator (#414).
+- Fix ambiguity in `mpi::Scope` and debug synchronization macros (#405, #422).
+- Fix odd-sized pole patches and exceptional pole-patch partitioning in structured mesh generation (#417, #415).
+- Fix StructuredColumns coordinate computation for regional grids and grids with non-degree units (#396).
+- Fix NodeColumns statistics to use owned nodes only (#401).
+- Fix BlockStructuredColumns checksum hexadecimal output (#386).
+- Fix Fortran construction of unstructured grids by identifier (#400).
+- Make spherical-harmonic function evaluation thread-safe (#406).
+- Work around zero-sized local spectra with ectrans versions older than 2.1 (#399).
+- Fix tracing CallStack handling (#379).
+- Improve compatibility with eckit versions newer than 2.2.0, Python wheel builds, and builds without tessellation support (#382, #412, #355).
+
+## [0.46.0] - 2026-03-23
+
+### Added
+- Set a custom MPI communicator in TransIFS. by @mo-joshuacolclough in https://github.com/ecmwf/atlas/pull/346
+
+### Fixed
+- Fix export of hic-targets with ECBUILD_2_COMPAT=ON (#353)
+- Fix missing return in Fortran pluto%has_registered_resource
+- Fix bug in the interpolation procedure (spherical vector) by @mo-lormi in https://github.com/ecmwf/atlas/pull/351
+- Fix issues with mpi scope (Outermost mpi::Scope does not restore prior communicator #186)
+
+### Changed
+* Add ability to redistribute from NodeColumns to StructuredColumns by @lewisn-met in https://github.com/ecmwf/atlas/pull/353
+* Improvement do atlas::mpi by @wdeconinck in https://github.com/ecmwf/atlas/pull/348
+* Demonstrate use of spherical mean value interpolation for vectors by @lewisn-met in https://github.com/ecmwf/atlas/pull/349
+
+
 ## [0.45.1] - 2026-02-23
 
 ### Added
@@ -17,6 +85,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 - Allow more time for cubed_meshgen test by @DJDavies2 in https://github.com/ecmwf/atlas/pull/344
 - Intel version < 19.1 compilation
 - Installation script for METIS
+
 
 ## [0.45.0] - 2026-01-14
 
@@ -728,6 +797,7 @@ Fix StructuredInterpolation2D with retry for failed stencils
 ## 0.13.0 - 2018-02-16
 
 [Unreleased]: https://github.com/ecmwf/atlas/compare/master...develop
+[0.46.0]: https://github.com/ecmwf/atlas/compare/0.45.1...0.46.0
 [0.45.1]: https://github.com/ecmwf/atlas/compare/0.45.0...0.45.1
 [0.45.0]: https://github.com/ecmwf/atlas/compare/0.44.1...0.45.0
 [0.44.1]: https://github.com/ecmwf/atlas/compare/0.44.0...0.44.1

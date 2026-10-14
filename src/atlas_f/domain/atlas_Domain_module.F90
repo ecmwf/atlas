@@ -90,7 +90,7 @@ function atlas_Domain__ctor_config(config) result(this)
   use, intrinsic :: iso_c_binding, only : c_ptr
   type(atlas_Domain) :: this
   type(atlas_Config) :: config
-  call this%reset_c_ptr( atlas__Domain__ctor_config(config%CPTR_PGIBUG_B) )
+  call this%reset_c_ptr( atlas__Domain__ctor_config(config%c_ptr()) )
   call this%return()
 end function
 
@@ -102,7 +102,7 @@ function atlas_Domain__type(this) result(type_)
   character(len=:), allocatable :: type_
   type(c_ptr) :: type_c_str
   integer :: size
-  call atlas__Domain__type(this%CPTR_PGIBUG_A, type_c_str, size )
+  call atlas__Domain__type(this%c_ptr(), type_c_str, size )
   type_ = c_ptr_to_string(type_c_str)
   call c_ptr_free(type_c_str)
 end function
@@ -115,7 +115,7 @@ function hash(this)
   character(len=:), allocatable :: hash
   type(c_ptr) :: hash_c_str
   integer :: size
-  call atlas__Domain__hash(this%CPTR_PGIBUG_A, hash_c_str, size )
+  call atlas__Domain__hash(this%c_ptr(), hash_c_str, size )
   hash = c_ptr_to_string(hash_c_str)
   call c_ptr_free(hash_c_str)
 end function
@@ -124,7 +124,7 @@ function spec(this)
   use atlas_Domain_c_binding
   class(atlas_Domain), intent(in) :: this
   type(atlas_Config) :: spec
-  spec = atlas_Config( atlas__Domain__spec(this%CPTR_PGIBUG_A) )
+  spec = atlas_Config( atlas__Domain__spec(this%c_ptr()) )
   call spec%return()
 end function
 
@@ -143,28 +143,28 @@ function north(this) result(value)
   use atlas_Domain_c_binding
   class(atlas_LonLatRectangularDomain), intent(in) :: this
   real(c_double) :: value
-  value = atlas__LonLatRectangularDomain__north(this%CPTR_PGIBUG_A)
+  value = atlas__LonLatRectangularDomain__north(this%c_ptr())
 end function
 
 function west(this) result(value)
   use atlas_Domain_c_binding
   class(atlas_LonLatRectangularDomain), intent(in) :: this
   real(c_double) :: value
-  value = atlas__LonLatRectangularDomain__west(this%CPTR_PGIBUG_A)
+  value = atlas__LonLatRectangularDomain__west(this%c_ptr())
 end function
 
 function south(this) result(value)
   use atlas_Domain_c_binding
   class(atlas_LonLatRectangularDomain), intent(in) :: this
   real(c_double) :: value
-  value = atlas__LonLatRectangularDomain__south(this%CPTR_PGIBUG_A)
+  value = atlas__LonLatRectangularDomain__south(this%c_ptr())
 end function
 
 function east(this) result(value)
   use atlas_Domain_c_binding
   class(atlas_LonLatRectangularDomain), intent(in) :: this
   real(c_double) :: value
-  value = atlas__LonLatRectangularDomain__east(this%CPTR_PGIBUG_A)
+  value = atlas__LonLatRectangularDomain__east(this%c_ptr())
 end function
 
 !------------------------------------------------------------------------------

@@ -58,21 +58,25 @@ public:
 public:
     struct Configuration {
         bool binary;
-        bool edges;
-        bool elements;
         bool gather;
         bool ghost;
         bool info;
+        bool element_partition_as_entity;
 
         bool configured_land_water;
         bool land;
         bool water;
 
         std::vector<long> levels;
+        std::string elements;
         std::string nodes;
         std::string file;
         std::string openmode;
         std::string coordinates;
+        std::string missing_value_policy;
+        double missing_value_fill;
+        std::string masked_value_policy;
+        double masked_value_fill;
     };
 
     static void setGmshConfiguration(detail::GmshIO&, const Configuration&);

@@ -30,6 +30,14 @@ if( CGAL_FOUND )
 
 endif()
 
+if( atlas_HAVE_FFTW )
+
+    ecbuild_info( "FFTW" )
+    ecbuild_info( "    FFTW_INCLUDE_DIRS   : [${FFTW_INCLUDE_DIRS}]" )
+    ecbuild_info( "    FFTW_LIBRARIES      : [${FFTW_LIBRARIES}]" )
+
+endif()
+
 if( atlas_HAVE_CUDA )
 
     ecbuild_info( "CUDA (${CUDA_VERSION})" )

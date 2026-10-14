@@ -8,7 +8,7 @@
  * nor does it submit to any jurisdiction.
  */
 
-#include "pluto/memory_resource/compat/memory_resource"
+#include "pluto/memory_resource/compat/memory_resource.h"
 
 #include <cstdlib> // posix_memalign
 #include <exception>

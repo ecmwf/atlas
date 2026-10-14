@@ -83,15 +83,18 @@ public:
         //          x       *------ *        x
         //        x        x        x         x
 
+        //                           k0          k1          k2        k3
+        //  k_interval:    <--  -1   |-----0-----|-----1-----|----2----|    3  -->
+        //
         using Value = typename OutputArray::value_type;
 
-        const idx_t k = stencil.k_interval();
+        const idx_t k_interval = stencil.k_interval();
         idx_t k1, k2;
-        if (k < 1) {
+        if (k_interval < 1) {
             k1 = stencil.k(0);
             k2 = stencil.k(1);
         }
-        else if (k > 1) {
+        else if (k_interval > 1) {
             k1 = stencil.k(2);
             k2 = stencil.k(3);
         }

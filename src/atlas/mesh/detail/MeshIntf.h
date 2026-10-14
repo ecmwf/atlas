@@ -20,6 +20,13 @@ namespace mesh {
 // C wrapper interfaces to C++ routines
 extern "C" {
 Mesh::Implementation* atlas__Mesh__new();
+Mesh::Implementation* atlas__Mesh__new_grid(Grid::Implementation* grid, const util::Config* config);
+Mesh::Implementation* atlas__Mesh__new_grid_distribution(Grid::Implementation* grid,
+                                                         grid::Distribution::Implementation* distribution,
+                                                         const util::Config* config);
+Mesh::Implementation* atlas__Mesh__new_grid_partitioner(Grid::Implementation* grid,
+                                                        grid::Partitioner::Implementation* partitioner,
+                                                        const util::Config* config);
 void atlas__Mesh__delete(Mesh::Implementation* This);
 Nodes* atlas__Mesh__nodes(Mesh::Implementation* This);
 Edges* atlas__Mesh__edges(Mesh::Implementation* This);

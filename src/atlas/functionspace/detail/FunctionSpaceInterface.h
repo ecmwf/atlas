@@ -37,10 +37,19 @@ field::FieldImpl* atlas__FunctionSpace__create_field(const FunctionSpaceImpl* Th
 field::FieldImpl* atlas__FunctionSpace__create_field_template(const FunctionSpaceImpl* This,
                                                               const field::FieldImpl* field_template,
                                                               const eckit::Configuration* options);
+field::FieldImpl* atlas__FunctionSpace__lonlat(const FunctionSpaceImpl* This);
+field::FieldImpl* atlas__FunctionSpace__ghost(const FunctionSpaceImpl* This);
+field::FieldImpl* atlas__FunctionSpace__global_index(const FunctionSpaceImpl* This);
+field::FieldImpl* atlas__FunctionSpace__remote_index(const FunctionSpaceImpl* This);
+field::FieldImpl* atlas__FunctionSpace__partition(const FunctionSpaceImpl* This);
 void atlas__FunctionSpace__halo_exchange_field(const FunctionSpaceImpl* This, field::FieldImpl* field);
 void atlas__FunctionSpace__halo_exchange_fieldset(const FunctionSpaceImpl* This, field::FieldSetImpl* fieldset);
 void atlas__FunctionSpace__adjoint_halo_exchange_field(const FunctionSpaceImpl* This, field::FieldImpl* field);
 void atlas__FunctionSpace__adjoint_halo_exchange_fieldset(const FunctionSpaceImpl* This, field::FieldSetImpl* fieldset);
+void atlas__FunctionSpace__checksum_field(const FunctionSpaceImpl* This, const field::FieldImpl* field,
+                                          char*& checksum, int& size);
+void atlas__FunctionSpace__checksum_fieldset(const FunctionSpaceImpl* This, const field::FieldSetImpl* fieldset,
+                                             char*& checksum, int& size);
 }
 
 //------------------------------------------------------------------------------------------------------

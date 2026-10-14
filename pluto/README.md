@@ -17,6 +17,17 @@ GPU specific memory resources are available, delegating to the low-level hic (HI
 
 Pluto can be used and configured both from C++ and Fortran.
 
+Installation
+============
+
+Basic installation instructions:
+```sh
+git clone https://github.com/ecmwf/atlas
+cmake -S atlas/pluto -B build --install-prefix $PWD/install
+cmake --build build
+cmake --install build
+```
+
 The concepts
 ============
 

@@ -17,6 +17,7 @@
 #include <vector>
 
 #include "atlas/domain/Domain.h"
+#include "atlas/grid/GridPointFlags.h"
 #include "atlas/library/config.h"
 #include "atlas/projection/Projection.h"
 #include "atlas/util/Object.h"
@@ -117,6 +118,12 @@ public:  // methods
     //        classes should compute it at construction
     virtual idx_t size() const = 0;
 
+    /// @return intrinsic properties of a grid point
+    virtual int flags(gidx_t) const { return GridPointFlags::none; }
+
+    /// @return zero-based index of the grid point that owns the given point
+    virtual gidx_t masterIndex(gidx_t index) const { return index; }
+
     virtual Spec spec() const = 0;
 
     virtual std::unique_ptr<IteratorXY> xy_begin() const         = 0;
@@ -183,7 +190,11 @@ public:
 //----------------------------------------------------------------------------------------------------------------------
 
 extern "C" {
+const Grid* atlas__grid__Grid(const char* identifier);
+const Grid* atlas__grid__Grid__config(util::Config* conf);
+void atlas__grid__Grid__delete(Grid* This);
 void atlas__grid__Grid__name(const Grid* This, char*& uid, int& size);
+void atlas__grid__Grid__type(const Grid* This, char*& type, int& size);
 idx_t atlas__grid__Grid__size(Grid* This);
 Grid::Spec* atlas__grid__Grid__spec(Grid* This);
 void atlas__grid__Grid__uid(const Grid* This, char*& uid, int& size);

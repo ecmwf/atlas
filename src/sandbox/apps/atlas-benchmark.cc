@@ -571,7 +571,7 @@ double AtlasBenchmark::result() {
     Log::info() << "  minval: " << setw(13) << setprecision(6) << scientific << minval << endl;
     Log::info() << "  norm:   " << setw(13) << setprecision(6) << scientific << norm << endl;
 
-    Log::info() << "  checksum: " << nodes_fs.checksum().execute(grad) << endl;
+    Log::info() << "  checksum: " << nodes_fs.checksum(grad_field) << endl;
 
     return norm;
 }

@@ -55,6 +55,7 @@ TYPE, extends(fckit_owned_object) :: atlas_Grid
 !------------------------------------------------------------------------------
 contains
   procedure :: name => atlas_Grid__name
+  procedure :: type => atlas_Grid__type
   procedure :: size => atlas_Grid__size
   procedure :: spec => atlas_Grid__spec
   procedure :: uid
@@ -96,6 +97,7 @@ END TYPE atlas_UnstructuredGrid
 
 interface atlas_UnstructuredGrid
   module procedure atlas_UnstructuredGrid__ctor_points
+  module procedure atlas_UnstructuredGrid__ctor_xy
   module procedure atlas_UnstructuredGrid__ctor_config
   module procedure atlas_UnstructuredGrid__ctor_cptr
 end interface
@@ -506,24 +508,23 @@ end subroutine
 
 function atlas_Grid__ctor_id(identifier) result(this)
   use fckit_c_interop_module, only: c_str
-  use atlas_grid_Structured_c_binding
+  use atlas_grid_Grid_c_binding
   type(atlas_Grid) :: this
   character(len=*), intent(in) :: identifier
-  call this%reset_c_ptr( atlas__grid__Structured(c_str(identifier)) )
+  call this%reset_c_ptr( atlas__grid__Grid(c_str(identifier)) )
   call this%return()
 end function
 
 function atlas_Grid__ctor_config(config) result(this)
-  use atlas_grid_Structured_c_binding
+  use atlas_grid_Grid_c_binding
   type(atlas_Grid) :: this
   type(atlas_Config), intent(in) :: config
-  call this%reset_c_ptr( atlas__grid__Structured__config(config%CPTR_PGIBUG_B) )
+  call this%reset_c_ptr( atlas__grid__Grid__config(config%c_ptr()) )
   call this%return()
 end function
 
 function atlas_Grid__ctor_cptr(cptr) result(this)
   use fckit_c_interop_module, only: c_str
-  use atlas_grid_Structured_c_binding
   type(atlas_Grid) :: this
   type(c_ptr), intent(in) :: cptr
   call this%reset_c_ptr( cptr )
@@ -536,7 +537,7 @@ function atlas_UnstructuredGrid__ctor_config(config) result(this)
   use atlas_grid_unstructured_c_binding
   type(atlas_UnstructuredGrid) :: this
   type(atlas_Config), intent(in) :: config
-  call this%reset_c_ptr( atlas__grid__Unstructured__config(config%CPTR_PGIBUG_B) )
+  call this%reset_c_ptr( atlas__grid__Unstructured__config(config%c_ptr()) )
   call this%return()
 end function
 
@@ -566,6 +567,28 @@ function atlas_UnstructuredGrid__ctor_points( xy ) result(this)
   call this%return()
 end function
 
+function atlas_UnstructuredGrid__ctor_xy(x, y) result(this)
+  use, intrinsic :: iso_c_binding, only : c_double, c_size_t
+  use atlas_grid_unstructured_c_binding
+  type(atlas_UnstructuredGrid) :: this
+  real(c_double), intent(in) :: x(:)
+  real(c_double), intent(in) :: y(:)
+  integer(c_size_t) :: xstride
+  integer(c_size_t) :: ystride
+
+  integer(c_size_t) :: n
+  n = size(x, kind=c_size_t)
+  if (n /= size(y, kind=c_size_t)) then
+    error stop 'atlas_UnstructuredGrid(x,y): x and y must have the same size'
+  end if
+
+  xstride = 1_c_size_t
+  ystride = 1_c_size_t
+
+  call this%reset_c_ptr( atlas__grid__Unstructured__x_y(n, x, y, xstride, ystride) )
+  call this%return()
+end function
+
 ! -----------------------------------------------------------------------------
 
 function atlas_StructuredGrid__ctor_id(identifier) result(this)
@@ -581,7 +604,7 @@ function atlas_StructuredGrid__ctor_config(config) result(this)
   use atlas_grid_Structured_c_binding
   type(atlas_StructuredGrid) :: this
   type(atlas_Config), intent(in) :: config
-  call this%reset_c_ptr( atlas__grid__Structured__config(config%CPTR_PGIBUG_B) )
+  call this%reset_c_ptr( atlas__grid__Structured__config(config%c_ptr()) )
   call this%return()
 end function
 
@@ -654,7 +677,7 @@ function atlas_ReducedGaussianGrid__ctor_projection_int32(nx, projection) result
   integer(c_int), intent(in)  :: nx(:)
   type(atlas_Projection), intent(in) :: projection
   call this%reset_c_ptr( &
-    & atlas__grid__reduced__ReducedGaussian_int_projection( nx, int(size(nx),c_long), projection%CPTR_PGIBUG_A ) )
+    & atlas__grid__reduced__ReducedGaussian_int_projection( nx, int(size(nx),c_long), projection%c_ptr() ) )
    call this%return()
 end function
 
@@ -665,7 +688,7 @@ function atlas_ReducedGaussianGrid__ctor_projection_int64(nx, projection) result
   integer(c_long), intent(in)  :: nx(:)
   type(atlas_Projection), intent(in) :: projection
   call this%reset_c_ptr( &
-    & atlas__grid__reduced__ReducedGaussian_long_projection( nx, int(size(nx),c_long), projection%CPTR_PGIBUG_A ) )
+    & atlas__grid__reduced__ReducedGaussian_long_projection( nx, int(size(nx),c_long), projection%c_ptr() ) )
   call this%return()
 end function
 
@@ -760,9 +783,22 @@ function atlas_Grid__name(this) result(name)
   character(len=:), allocatable :: name
   type(c_ptr) :: name_c_str
   integer :: size
-  call atlas__grid__Grid__name(this%CPTR_PGIBUG_A, name_c_str, size )
+  call atlas__grid__Grid__name(this%c_ptr(), name_c_str, size )
   name = c_ptr_to_string(name_c_str)
   call c_ptr_free(name_c_str)
+end function
+
+function atlas_Grid__type(this) result(type)
+  use atlas_grid_Grid_c_binding
+  use fckit_c_interop_module, only : c_ptr_to_string, c_ptr_free
+  use, intrinsic :: iso_c_binding, only : c_ptr
+  class(atlas_Grid), intent(in) :: this
+  character(len=:), allocatable :: type
+  type(c_ptr) :: type_c_str
+  integer :: size
+  call atlas__grid__Grid__type(this%c_ptr(), type_c_str, size )
+  type = c_ptr_to_string(type_c_str)
+  call c_ptr_free(type_c_str)
 end function
 
 function atlas_Grid__size(this) result(npts)
@@ -770,14 +806,14 @@ function atlas_Grid__size(this) result(npts)
   use atlas_grid_Grid_c_binding
   class(atlas_Grid), intent(in) :: this
   integer(ATLAS_KIND_IDX) :: npts
-  npts = int(atlas__grid__Grid__size(this%CPTR_PGIBUG_A),ATLAS_KIND_IDX)
+  npts = int(atlas__grid__Grid__size(this%c_ptr()),ATLAS_KIND_IDX)
 end function
 
 function atlas_Grid__spec(this) result(spec)
   use atlas_grid_Grid_c_binding
   class(atlas_Grid), intent(in) :: this
   type(atlas_Config) :: spec
-  spec = atlas_Config( atlas__grid__Grid__spec(this%CPTR_PGIBUG_A) )
+  spec = atlas_Config( atlas__grid__Grid__spec(this%c_ptr()) )
   call spec%return ()
 end function
 
@@ -789,7 +825,7 @@ function uid(this)
   character(len=:), allocatable :: uid
   type(c_ptr) :: uid_c_str
   integer :: size
-  call atlas__grid__Grid__uid(this%CPTR_PGIBUG_A, uid_c_str, size )
+  call atlas__grid__Grid__uid(this%c_ptr(), uid_c_str, size )
   uid = c_ptr_to_string(uid_c_str)
   call c_ptr_free(uid_c_str)
 end function
@@ -799,7 +835,7 @@ function lonlat_bounding_box (this) result (bb)
   use atlas_grid_Grid_c_binding
   class(atlas_Grid), intent(in) :: this
   type(atlas_LonLatRectangularDomain) :: bb
-  bb = atlas_LonLatRectangularDomain(atlas__grid__Grid__lonlat_bounding_box (this%CPTR_PGIBUG_A))
+  bb = atlas_LonLatRectangularDomain(atlas__grid__Grid__lonlat_bounding_box (this%c_ptr()))
   call bb%return()
 end function
 
@@ -809,7 +845,7 @@ function Gaussian__N(this) result(N)
   use atlas_grid_Structured_c_binding
   class(atlas_GaussianGrid), intent(in) :: this
   integer(c_long) :: N
-  N = atlas__grid__Gaussian__N(this%CPTR_PGIBUG_A)
+  N = atlas__grid__Gaussian__N(this%c_ptr())
 end function
 
 function ReducedGaussian__N(this) result(N)
@@ -817,7 +853,7 @@ function ReducedGaussian__N(this) result(N)
   use atlas_grid_Structured_c_binding
   class(atlas_ReducedGaussianGrid), intent(in) :: this
   integer(c_long) :: N
-  N = atlas__grid__Gaussian__N(this%CPTR_PGIBUG_A)
+  N = atlas__grid__Gaussian__N(this%c_ptr())
 end function
 
 function RegularGaussian__N(this) result(N)
@@ -825,7 +861,7 @@ function RegularGaussian__N(this) result(N)
   use atlas_grid_Structured_c_binding
   class(atlas_RegularGaussianGrid), intent(in) :: this
   integer(c_long) :: N
-  N = atlas__grid__Gaussian__N(this%CPTR_PGIBUG_A)
+  N = atlas__grid__Gaussian__N(this%c_ptr())
 end function
 
 function Structured__ny(this) result(ny)
@@ -833,7 +869,7 @@ function Structured__ny(this) result(ny)
   use atlas_grid_Structured_c_binding
   class(atlas_StructuredGrid), intent(in) :: this
   integer(ATLAS_KIND_IDX) :: ny
-  ny = atlas__grid__Structured__ny(this%CPTR_PGIBUG_A)
+  ny = atlas__grid__Structured__ny(this%c_ptr())
 end function
 
 subroutine Structured__index2ij_int32(this, gidx, i, j) 
@@ -842,7 +878,7 @@ subroutine Structured__index2ij_int32(this, gidx, i, j)
   integer(c_int32_t), intent (in) :: gidx
   class(atlas_StructuredGrid), intent(in) :: this
   integer(ATLAS_KIND_IDX), intent(out) :: i, j
-  call atlas__grid__Structured__index2ij(this%CPTR_PGIBUG_A, c_gidx(gidx), i, j)
+  call atlas__grid__Structured__index2ij(this%c_ptr(), c_gidx(gidx), i, j)
   i = i + 1
   j = j + 1
 end subroutine
@@ -853,7 +889,7 @@ subroutine Structured__index2ij_int64(this, gidx, i, j)
   integer(c_int64_t), intent (in) :: gidx
   class(atlas_StructuredGrid), intent(in) :: this
   integer(ATLAS_KIND_IDX), intent(out) :: i, j
-  call atlas__grid__Structured__index2ij(this%CPTR_PGIBUG_A, c_gidx(gidx), i, j)
+  call atlas__grid__Structured__index2ij(this%c_ptr(), c_gidx(gidx), i, j)
   i = i + 1
   j = j + 1
 end subroutine
@@ -864,7 +900,7 @@ function Structured__ij_int32(this, gidx) result(ij)
   integer(c_int), intent (in) :: gidx
   class(atlas_StructuredGrid), intent(in) :: this
   integer(ATLAS_KIND_IDX) :: ij (2)
-  call atlas__grid__Structured__index2ij(this%CPTR_PGIBUG_A, c_gidx(gidx), ij(1), ij(2))
+  call atlas__grid__Structured__index2ij(this%c_ptr(), c_gidx(gidx), ij(1), ij(2))
   ij = ij + 1
 end function
 
@@ -874,7 +910,7 @@ function Structured__ij_int64(this, gidx) result(ij)
   integer(c_long), intent (in) :: gidx
   class(atlas_StructuredGrid), intent(in) :: this
   integer(ATLAS_KIND_IDX) :: ij (2)
-  call atlas__grid__Structured__index2ij(this%CPTR_PGIBUG_A, c_gidx(gidx), ij(1), ij(2))
+  call atlas__grid__Structured__index2ij(this%c_ptr(), c_gidx(gidx), ij(1), ij(2))
   ij = ij + 1
 end function
 
@@ -884,7 +920,7 @@ function Structured__index_int32(this, i, j) result(gidx)
   integer(ATLAS_KIND_IDX) :: gidx
   class(atlas_StructuredGrid), intent(in) :: this
   integer(c_int), intent(in) :: i, j
-  gidx = int(1 + atlas__grid__Structured__index(this%CPTR_PGIBUG_A, c_idx(i), c_idx(j) ), ATLAS_KIND_IDX )
+  gidx = int(1 + atlas__grid__Structured__index(this%c_ptr(), c_idx(i), c_idx(j) ), ATLAS_KIND_IDX )
 end function
 
 function Structured__index_int64(this, i, j) result(gidx)
@@ -893,7 +929,7 @@ function Structured__index_int64(this, i, j) result(gidx)
   integer(ATLAS_KIND_IDX) :: gidx
   class(atlas_StructuredGrid), intent(in) :: this
   integer(c_long), intent(in) :: i, j
-  gidx = int( 1 + atlas__grid__Structured__index(this%CPTR_PGIBUG_A, c_idx(i), c_idx(j) ), ATLAS_KIND_IDX )
+  gidx = int( 1 + atlas__grid__Structured__index(this%c_ptr(), c_idx(i), c_idx(j) ), ATLAS_KIND_IDX )
 end function
 
 function Structured__nx_int32(this, j) result(nx)
@@ -902,7 +938,7 @@ function Structured__nx_int32(this, j) result(nx)
   integer(ATLAS_KIND_IDX) :: nx
   class(atlas_StructuredGrid), intent(in) :: this
   integer(c_int), intent(in) :: j
-  nx = atlas__grid__Structured__nx(this%CPTR_PGIBUG_A, c_idx(j) )
+  nx = atlas__grid__Structured__nx(this%c_ptr(), c_idx(j) )
 end function
 
 function Structured__nx_int64(this, j) result(nx)
@@ -911,14 +947,14 @@ function Structured__nx_int64(this, j) result(nx)
   integer(ATLAS_KIND_IDX) :: nx
   class(atlas_StructuredGrid), intent(in) :: this
   integer(c_long), intent(in) :: j
-  nx = atlas__grid__Structured__nx(this%CPTR_PGIBUG_A, c_idx(j) )
+  nx = atlas__grid__Structured__nx(this%c_ptr(), c_idx(j) )
 end function
 
 function Structured__reduced(this) result(reduced)
   use atlas_grid_Structured_c_binding
   class(atlas_StructuredGrid), intent(in) :: this
   logical :: reduced
-  if( atlas__grid__Structured__reduced(this%CPTR_PGIBUG_A) == 1 ) then
+  if( atlas__grid__Structured__reduced(this%c_ptr()) == 1 ) then
     reduced = .true.
   else
     reduced = .false.
@@ -932,7 +968,7 @@ function Structured__nx_array(this) result(nx)
   integer(ATLAS_KIND_IDX), pointer        :: nx(:)
   type   (c_ptr)                          :: nx_c_ptr
   integer(ATLAS_KIND_IDX)                 :: nx_size
-  call atlas__grid__Structured__nx_array(this%CPTR_PGIBUG_A, nx_c_ptr, nx_size)
+  call atlas__grid__Structured__nx_array(this%c_ptr(), nx_c_ptr, nx_size)
   call c_f_pointer(nx_c_ptr , nx , (/nx_size/))
 end function
 
@@ -941,7 +977,7 @@ function Structured__nxmax(this) result(nxmax)
   use atlas_grid_Structured_c_binding
   class(atlas_StructuredGrid), intent(in)  :: this
   integer(c_long)                          :: nxmax
-  nxmax = atlas__grid__Structured__nxmax(this%CPTR_PGIBUG_A)
+  nxmax = atlas__grid__Structured__nxmax(this%c_ptr())
 end function
 
 function Structured__nxmin(this) result(nxmin)
@@ -949,7 +985,7 @@ function Structured__nxmin(this) result(nxmin)
   use atlas_grid_Structured_c_binding
   class(atlas_StructuredGrid), intent(in)  :: this
   integer(c_long)                          :: nxmin
-  nxmin = atlas__grid__Structured__nxmin(this%CPTR_PGIBUG_A)
+  nxmin = atlas__grid__Structured__nxmin(this%c_ptr())
 end function
 
 function Structured__y_32(this, j) result(y)
@@ -958,7 +994,7 @@ function Structured__y_32(this, j) result(y)
   real(c_double) :: y
   class(atlas_StructuredGrid), intent(in) :: this
   integer(c_int),              intent(in) :: j
-  y = atlas__grid__Structured__y(this%CPTR_PGIBUG_A, c_idx(j) )
+  y = atlas__grid__Structured__y(this%c_ptr(), c_idx(j) )
 end function
 
 function Structured__y_64(this, j) result(y)
@@ -967,7 +1003,7 @@ function Structured__y_64(this, j) result(y)
   real(c_double) :: y
   class(atlas_StructuredGrid), intent(in) :: this
   integer(c_long),             intent(in) :: j
-  y = atlas__grid__Structured__y(this%CPTR_PGIBUG_A, c_idx(j) )
+  y = atlas__grid__Structured__y(this%c_ptr(), c_idx(j) )
 end function
 
 function Structured__y_array(this) result(y)
@@ -977,7 +1013,7 @@ function Structured__y_array(this) result(y)
   real   (c_double)       , pointer    :: y(:)
   type   (c_ptr)                       :: y_c_ptr
   integer(ATLAS_KIND_IDX)              :: y_size
-  call atlas__grid__Structured__y_array(this%CPTR_PGIBUG_A, &
+  call atlas__grid__Structured__y_array(this%c_ptr(), &
       & y_c_ptr, y_size)
   call c_f_pointer (y_c_ptr, y, (/y_size/))
 end function
@@ -988,7 +1024,7 @@ function Structured__x_32(this, i,j) result(x)
   class(atlas_StructuredGrid), intent(in)  :: this
   real(c_double) :: x
   integer(c_int) :: i,j
-  x = atlas__grid__Structured__x(this%CPTR_PGIBUG_A, c_idx(i), c_idx(j))
+  x = atlas__grid__Structured__x(this%c_ptr(), c_idx(i), c_idx(j))
 end function
 
 function Structured__x_64(this, i,j) result(x)
@@ -997,7 +1033,7 @@ function Structured__x_64(this, i,j) result(x)
   class(atlas_StructuredGrid), intent(in)  :: this
   real(c_double) :: x
   integer(c_long) :: i,j
-  x = atlas__grid__Structured__x(this%CPTR_PGIBUG_A, c_idx(i), c_idx(j))
+  x = atlas__grid__Structured__x(this%c_ptr(), c_idx(i), c_idx(j))
 end function
 
 function Structured__xy_32(this, i,j) result(xy)
@@ -1006,7 +1042,7 @@ function Structured__xy_32(this, i,j) result(xy)
   real(c_double) :: xy(2)
   class(atlas_StructuredGrid), intent(in) :: this
   integer(c_int) , intent(in) :: i,j
-  call atlas__grid__Structured__xy(this%CPTR_PGIBUG_A, c_idx(i), c_idx(j), xy)
+  call atlas__grid__Structured__xy(this%c_ptr(), c_idx(i), c_idx(j), xy)
 end function
 
 function Structured__xy_64(this, i,j) result(xy)
@@ -1015,7 +1051,7 @@ function Structured__xy_64(this, i,j) result(xy)
   real(c_double) :: xy(2)
   class(atlas_StructuredGrid), intent(in) :: this
   integer(c_long) , intent(in) :: i,j
-  call atlas__grid__Structured__xy(this%CPTR_PGIBUG_A, c_idx(i), c_idx(j), xy)
+  call atlas__grid__Structured__xy(this%c_ptr(), c_idx(i), c_idx(j), xy)
 end function
 
 function Structured__lonlat_32(this, i,j) result(lonlat)
@@ -1024,7 +1060,7 @@ function Structured__lonlat_32(this, i,j) result(lonlat)
   real(c_double) :: lonlat(2)
   class(atlas_StructuredGrid), intent(in) :: this
   integer(c_int) , intent(in) :: i,j
-  call atlas__grid__Structured__lonlat(this%CPTR_PGIBUG_A, c_idx(i), c_idx(j), lonlat)
+  call atlas__grid__Structured__lonlat(this%c_ptr(), c_idx(i), c_idx(j), lonlat)
 end function
 
 function Structured__lonlat_64(this, i,j) result(lonlat)
@@ -1033,7 +1069,7 @@ function Structured__lonlat_64(this, i,j) result(lonlat)
   real(c_double) :: lonlat(2)
   class(atlas_StructuredGrid), intent(in) :: this
   integer(c_long) , intent(in) :: i,j
-  call atlas__grid__Structured__lonlat(this%CPTR_PGIBUG_A, c_idx(i), c_idx(j), lonlat)
+  call atlas__grid__Structured__lonlat(this%c_ptr(), c_idx(i), c_idx(j), lonlat)
 end function
 
 ! ----------------------------------------------------------------------------------------

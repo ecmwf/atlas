@@ -173,11 +173,25 @@ ecbuild_add_test( TARGET atlas_test_interpolation_spherical_vector
   ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
 )
 
+ecbuild_add_test( TARGET atlas_test_interpolation_spherical_vector_to_point_6PE
+  SOURCES  test_interpolation_spherical_vector_to_point_6PE.cc
+  LIBS     atlas
+  MPI      6
+  CONDITION eckit_HAVE_MPI AND MPI_SLOTS GREATER_EQUAL 6 AND atlas_HAVE_EIGEN
+  ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
+)
+
 ecbuild_add_test( TARGET atlas_test_interpolation_binning
   SOURCES  test_interpolation_binning.cc
   LIBS     atlas
   MPI      6
   CONDITION eckit_HAVE_MPI AND MPI_SLOTS GREATER_EQUAL 6
+  ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
+)
+
+ecbuild_add_test( TARGET atlas_test_interpolation_disable_halo_exchange
+  SOURCES  test_interpolation_disable_halo_exchange.cc
+  LIBS     atlas
   ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
 )
 
@@ -195,5 +209,7 @@ ecbuild_add_test( TARGET atlas_test_interpolation_global_matrix
   LIBS     atlas
   ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
 )
+
+
 
 endif()

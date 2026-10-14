@@ -70,10 +70,6 @@ contains
   procedure, private :: scatter_field
   generic, public :: scatter => scatter_fieldset, scatter_field
 
-  procedure, private :: checksum_fieldset
-  procedure, private :: checksum_field
-  generic, public :: checksum => checksum_fieldset, checksum_field
-
   procedure :: j_begin
   procedure :: j_end
   procedure :: i_begin
@@ -156,20 +152,20 @@ function empty_config() result(config)
   call config%return()
 end function
 
-function ctor_grid(grid, halo, nproma, levels) result(this)
+function ctor_grid(grid, nproma, halo, levels) result(this)
   use atlas_functionspace_BlockStructuredColumns_c_binding
   type(atlas_functionspace_BlockStructuredColumns) :: this
   class(atlas_Grid), intent(in) :: grid
-  integer, optional :: halo
-  integer, optional :: nproma
-  integer, optional :: levels
+  integer, optional, intent(in) :: nproma
+  integer, optional, intent(in) :: halo
+  integer, optional, intent(in) :: levels
   type(atlas_Config) :: config
   config = empty_config() ! Due to PGI compiler bug, we have to do this instead of "config = atlas_Config()""
   if( present(halo) )   call config%set("halo",halo)
   if( present(nproma) )   call config%set("nproma",nproma)
   if( present(levels) ) call config%set("levels",levels)
-  call this%reset_c_ptr( atlas__functionspace__BStructuredColumns__new__grid( grid%CPTR_PGIBUG_A, &
-      & config%CPTR_PGIBUG_B ) )
+  call this%reset_c_ptr( atlas__functionspace__BStructuredColumns__new__grid( grid%c_ptr(), &
+      & config%c_ptr() ) )
   call this%set_index()
   call config%final()
   call this%return()
@@ -181,66 +177,72 @@ function ctor_grid_config(grid, config) result(this)
   class(atlas_Grid), intent(in) :: grid
   type(atlas_Config), intent (in) :: config
   call this%reset_c_ptr(atlas__functionspace__BStructuredColumns__new__grid( &
-      & grid%CPTR_PGIBUG_A, &
-      & config%CPTR_PGIBUG_B ) )
+      & grid%c_ptr(), &
+      & config%c_ptr() ) )
   call this%set_index()
   call this%return()
 end function
 
-function ctor_grid_dist(grid, distribution, halo, levels) result(this)
+function ctor_grid_dist(grid, distribution, nproma, halo, levels) result(this)
   use atlas_functionspace_BlockStructuredColumns_c_binding
   type(atlas_functionspace_BlockStructuredColumns) :: this
   class(atlas_Grid), intent(in) :: grid
   type(atlas_griddistribution), intent(in) :: distribution
-  integer, optional :: halo
-  integer, optional :: levels
+  integer, optional, intent(in) :: halo
+  integer, optional, intent(in) :: nproma
+  integer, optional, intent(in) :: levels
   type(atlas_Config) :: config
   config = empty_config() ! Due to PGI compiler bug, we have to do this instead of "config = atlas_Config()""
+  if( present(nproma) ) call config%set("nproma",nproma)
   if( present(halo) )   call config%set("halo",halo)
   if( present(levels) ) call config%set("levels",levels)
   call this%reset_c_ptr( atlas__functionspace__BStructuredColumns__new__grid_dist( &
-      & grid%CPTR_PGIBUG_A, distribution%CPTR_PGIBUG_A, config%CPTR_PGIBUG_B ) )
+      & grid%c_ptr(), distribution%c_ptr(), config%c_ptr() ) )
   call this%set_index()
   call config%final()
   call this%return()
 end function
 
-function ctor_grid_dist_levels(grid, distribution, levels, halo) result(this)
+function ctor_grid_dist_levels(grid, distribution, levels, nproma, halo) result(this)
   use atlas_functionspace_BlockStructuredColumns_c_binding
   type(atlas_functionspace_BlockStructuredColumns) :: this
   class(atlas_Grid), intent(in) :: grid
   type(atlas_griddistribution), intent(in) :: distribution
-  integer, optional :: halo
-  real(c_double) :: levels(:)
+  integer, optional, intent(in) :: halo
+  integer, optional, intent(in) :: nproma
+  real(c_double), intent(in) :: levels(:)
   type(atlas_Config) :: config
   type(atlas_Vertical) :: vertical
   config = empty_config() ! Due to PGI compiler bug, we have to do this insted of "config = atlas_Config()""
   if( present(halo) )   call config%set("halo",halo)
+  if( present(nproma) ) call config%set("nproma",nproma)
   call config%set("levels",size(levels))
   vertical = atlas_Vertical(levels)
   call this%reset_c_ptr( atlas__functionspace__BStructuredColumns__new__grid_dist_vert( &
-      & grid%CPTR_PGIBUG_A, distribution%CPTR_PGIBUG_A, vertical%CPTR_PGIBUG_B, &
-      & config%CPTR_PGIBUG_B ) )
+      & grid%c_ptr(), distribution%c_ptr(), vertical%c_ptr(), &
+      & config%c_ptr() ) )
   call this%set_index()
   call config%final()
   call vertical%final()
   call this%return()
 end function
 
-function ctor_grid_dist_vertical(grid, distribution, vertical, halo) result(this)
+function ctor_grid_dist_vertical(grid, distribution, vertical, nproma, halo) result(this)
   use atlas_functionspace_BlockStructuredColumns_c_binding
   type(atlas_functionspace_BlockStructuredColumns) :: this
   class(atlas_Grid), intent(in) :: grid
   type(atlas_griddistribution), intent(in) :: distribution
-  integer, optional :: halo
-  type(atlas_Vertical) :: vertical
+  integer, optional, intent(in) :: halo
+  integer, optional, intent(in) :: nproma
+  type(atlas_Vertical), intent(in) :: vertical
   type(atlas_Config) :: config
   config = empty_config() ! Due to PGI compiler bug, we have to do this insted of "config = atlas_Config()""
   if( present(halo) )   call config%set("halo",halo)
+  if( present(nproma) ) call config%set("nproma",nproma)
   call config%set("levels",vertical%size())
   call this%reset_c_ptr( atlas__functionspace__BStructuredColumns__new__grid_dist_vert( &
-      & grid%CPTR_PGIBUG_A, distribution%CPTR_PGIBUG_A, vertical%CPTR_PGIBUG_B, &
-      & config%CPTR_PGIBUG_B ) )
+      & grid%c_ptr(), distribution%c_ptr(), vertical%c_ptr(), &
+      & config%c_ptr() ) )
   call this%set_index()
   call config%final()
   call this%return()
@@ -253,67 +255,73 @@ function ctor_grid_dist_config(grid, distribution, config) result(this)
   type(atlas_griddistribution), intent(in) :: distribution
   type(atlas_Config), intent (in) :: config
   call this%reset_c_ptr(atlas__functionspace__BStructuredColumns__new__grid_dist_config( &
-      & grid%CPTR_PGIBUG_A, distribution%CPTR_PGIBUG_A, &
-      & config%CPTR_PGIBUG_B ) )
+      & grid%c_ptr(), distribution%c_ptr(), &
+      & config%c_ptr() ) )
   call this%set_index()
   call this%return()
 end function
 
 
-function ctor_grid_part(grid, partitioner, halo, levels) result(this)
+function ctor_grid_part(grid, partitioner, halo, nproma, levels) result(this)
   use atlas_functionspace_BlockStructuredColumns_c_binding
   type(atlas_functionspace_BlockStructuredColumns) :: this
   class(atlas_Grid), intent(in) :: grid
   type(atlas_Partitioner), intent(in) :: partitioner
-  integer, optional :: halo
-  integer, optional :: levels
+  integer, optional, intent(in) :: halo
+  integer, optional, intent(in) :: nproma
+  integer, optional, intent(in) :: levels
   type(atlas_Config) :: config
   config = empty_config() ! Due to PGI compiler bug, we have to do this instead of "config = atlas_Config()""
   if( present(halo) )   call config%set("halo",halo)
+  if( present(nproma) ) call config%set("nproma",nproma)
   if( present(levels) ) call config%set("levels",levels)
   call this%reset_c_ptr( atlas__functionspace__BStructuredColumns__new__grid_part( &
-      & grid%CPTR_PGIBUG_A, partitioner%CPTR_PGIBUG_A, config%CPTR_PGIBUG_B ) )
+      & grid%c_ptr(), partitioner%c_ptr(), config%c_ptr() ) )
   call this%set_index()
   call config%final()
   call this%return()
 end function
 
-function ctor_grid_part_levels(grid, partitioner, levels, halo) result(this)
+function ctor_grid_part_levels(grid, partitioner, levels, nproma, halo) result(this)
   use atlas_functionspace_BlockStructuredColumns_c_binding
   type(atlas_functionspace_BlockStructuredColumns) :: this
   class(atlas_Grid), intent(in) :: grid
   type(atlas_Partitioner), intent(in) :: partitioner
-  integer, optional :: halo
-  real(c_double) :: levels(:)
+  integer, optional, intent(in) :: halo
+  integer, optional, intent(in) :: nproma
+  real(c_double), intent(in) :: levels(:)
   type(atlas_Config) :: config
   type(atlas_Vertical) :: vertical
   config = empty_config() ! Due to PGI compiler bug, we have to do this insted of "config = atlas_Config()""
   if( present(halo) )   call config%set("halo",halo)
+  if( present(nproma) ) call config%set("nproma",nproma)
   call config%set("levels",size(levels))
   vertical = atlas_Vertical(levels)
   call this%reset_c_ptr( atlas__functionspace__BStructuredColumns__new__grid_part_vert( &
-      & grid%CPTR_PGIBUG_A, partitioner%CPTR_PGIBUG_A, vertical%CPTR_PGIBUG_B, &
-      & config%CPTR_PGIBUG_B ) )
+      & grid%c_ptr(), partitioner%c_ptr(), vertical%c_ptr(), &
+      & config%c_ptr() ) )
   call this%set_index()
   call config%final()
   call vertical%final()
   call this%return()
 end function
 
-function ctor_grid_part_vertical(grid, partitioner, vertical, halo) result(this)
+function ctor_grid_part_vertical(grid, partitioner, vertical, nproma, halo) result(this)
   use atlas_functionspace_BlockStructuredColumns_c_binding
   type(atlas_functionspace_BlockStructuredColumns) :: this
   class(atlas_Grid), intent(in) :: grid
   type(atlas_Partitioner), intent(in) :: partitioner
-  integer, optional :: halo
+  integer, optional, intent(in) :: nproma
+  integer, optional, intent(in) :: halo
   type(atlas_Vertical) :: vertical
   type(atlas_Config) :: config
   config = empty_config() ! Due to PGI compiler bug, we have to do this insted of "config = atlas_Config()""
+  if( present(nproma) ) call config%set("nproma",nproma)
   if( present(halo) )   call config%set("halo",halo)
   call config%set("levels",vertical%size())
   call this%reset_c_ptr( atlas__functionspace__BStructuredColumns__new__grid_part_vert( &
-      & grid%CPTR_PGIBUG_A, partitioner%CPTR_PGIBUG_A, vertical%CPTR_PGIBUG_B, &
-      & config%CPTR_PGIBUG_B ) )
+      & grid%c_ptr(), partitioner%c_ptr(), vertical%c_ptr(), &
+      & config%c_ptr() ) )
   call this%set_index()
   call config%final()
   call this%return()
@@ -325,7 +333,7 @@ subroutine gather_field(this,local,global)
   class(atlas_functionspace_BlockStructuredColumns), intent(in) :: this
   type(atlas_Field), intent(in) :: local
   type(atlas_Field), intent(inout) :: global
-  call atlas__functionspace__BStructuredColumns__gather_field(this%CPTR_PGIBUG_A,local%CPTR_PGIBUG_A,global%CPTR_PGIBUG_A)
+  call atlas__functionspace__BStructuredColumns__gather_field(this%c_ptr(),local%c_ptr(),global%c_ptr())
 end subroutine
 
 subroutine gather_fieldset(this,local,global)
@@ -333,7 +341,7 @@ subroutine gather_fieldset(this,local,global)
   class(atlas_functionspace_BlockStructuredColumns), intent(in) :: this
   type(atlas_FieldSet), intent(in) :: local
   type(atlas_FieldSet), intent(inout) :: global
-  call atlas__functionspace__BStructuredColumns__gather_fieldset(this%CPTR_PGIBUG_A,local%CPTR_PGIBUG_A,global%CPTR_PGIBUG_A)
+  call atlas__functionspace__BStructuredColumns__gather_fieldset(this%c_ptr(),local%c_ptr(),global%c_ptr())
 end subroutine
 
 subroutine scatter_field(this,global,local)
@@ -341,7 +349,7 @@ subroutine scatter_field(this,global,local)
   class(atlas_functionspace_BlockStructuredColumns), intent(in) :: this
   type(atlas_Field), intent(in) :: global
   type(atlas_Field), intent(inout) :: local
-  call atlas__functionspace__BStructuredColumns__scatter_field(this%CPTR_PGIBUG_A,global%CPTR_PGIBUG_A,local%CPTR_PGIBUG_A)
+  call atlas__functionspace__BStructuredColumns__scatter_field(this%c_ptr(),global%c_ptr(),local%c_ptr())
 end subroutine
 
 subroutine scatter_fieldset(this,global,local)
@@ -349,41 +357,8 @@ subroutine scatter_fieldset(this,global,local)
   class(atlas_functionspace_BlockStructuredColumns), intent(in) :: this
   type(atlas_FieldSet), intent(in) :: global
   type(atlas_FieldSet), intent(inout) :: local
-  call atlas__functionspace__BStructuredColumns__scatter_fieldset(this%CPTR_PGIBUG_A,global%CPTR_PGIBUG_A,local%CPTR_PGIBUG_A)
+  call atlas__functionspace__BStructuredColumns__scatter_fieldset(this%c_ptr(),global%c_ptr(),local%c_ptr())
 end subroutine
-
-function checksum_fieldset(this,fieldset) result(checksum)
-  use, intrinsic :: iso_c_binding
-  use atlas_functionspace_BlockStructuredColumns_c_binding
-  character(len=:), allocatable :: checksum
-  class(atlas_functionspace_BlockStructuredColumns), intent(in) :: this
-  type(atlas_FieldSet), intent(in) :: fieldset
-  type(c_ptr) :: checksum_cptr
-  integer(ATLAS_KIND_IDX) :: checksum_size
-  integer(c_int) :: checksum_allocated
-  call atlas__fs__BStructuredColumns__checksum_fieldset( &
-    & this%CPTR_PGIBUG_A,fieldset%CPTR_PGIBUG_A,checksum_cptr,checksum_size,checksum_allocated)
-  allocate(character(len=checksum_size) :: checksum )
-  checksum = c_ptr_to_string(checksum_cptr)
-  if( checksum_allocated == 1 ) call c_ptr_free(checksum_cptr)
-end function
-
-
-function checksum_field(this,field) result(checksum)
-  use, intrinsic :: iso_c_binding
-  use atlas_functionspace_BlockStructuredColumns_c_binding
-  character(len=:), allocatable :: checksum
-  class(atlas_functionspace_BlockStructuredColumns), intent(in) :: this
-  type(atlas_Field), intent(in) :: field
-  type(c_ptr) :: checksum_cptr
-  integer(ATLAS_KIND_IDX) :: checksum_size
-  integer(c_int) :: checksum_allocated
-  call atlas__fs__BStructuredColumns__checksum_field( &
-      & this%CPTR_PGIBUG_A,field%CPTR_PGIBUG_A,checksum_cptr,checksum_size,checksum_allocated)
-  allocate(character(len=checksum_size) :: checksum )
-  checksum = c_ptr_to_string(checksum_cptr)
-  if( checksum_allocated == 1 ) call c_ptr_free(checksum_cptr)
-end function
 
 subroutine set_index(this)
   use, intrinsic :: iso_c_binding, only : c_ptr, c_f_pointer
@@ -393,7 +368,7 @@ subroutine set_index(this)
   integer(ATLAS_KIND_IDX), pointer :: index_fptr(:)
   integer(ATLAS_KIND_IDX) :: i_min, i_max, j_min, j_max
   integer(ATLAS_KIND_IDX) :: ni, nj
-  call atlas__fs__BStructuredColumns__index_host( this%CPTR_PGIBUG_A, index_cptr, i_min, i_max, j_min, j_max )
+  call atlas__fs__BStructuredColumns__index_host( this%c_ptr(), index_cptr, i_min, i_max, j_min, j_max )
   ni = i_max-i_min+1;
   nj = j_max-j_min+1;
   call c_f_pointer( index_cptr, index_fptr, (/ni*nj/) )
@@ -404,14 +379,14 @@ function j_begin(this) result(j)
   use atlas_functionspace_BlockStructuredColumns_c_binding
   integer(ATLAS_KIND_IDX) :: j
   class(atlas_functionspace_BlockStructuredColumns), intent(in) :: this
-  j = atlas__fs__BStructuredColumns__j_begin(this%CPTR_PGIBUG_A)
+  j = atlas__fs__BStructuredColumns__j_begin(this%c_ptr())
 end function
 
 function j_end(this) result(j)
   use atlas_functionspace_BlockStructuredColumns_c_binding
   integer(ATLAS_KIND_IDX) :: j
   class(atlas_functionspace_BlockStructuredColumns), intent(in) :: this
-  j = atlas__fs__BStructuredColumns__j_end(this%CPTR_PGIBUG_A)
+  j = atlas__fs__BStructuredColumns__j_end(this%c_ptr())
 end function
 
 function i_begin(this,j) result(i)
@@ -419,7 +394,7 @@ function i_begin(this,j) result(i)
   integer(ATLAS_KIND_IDX) :: i
   integer(ATLAS_KIND_IDX), intent(in) :: j
   class(atlas_functionspace_BlockStructuredColumns), intent(in) :: this
-  i = atlas__fs__BStructuredColumns__i_begin(this%CPTR_PGIBUG_A,j)
+  i = atlas__fs__BStructuredColumns__i_begin(this%c_ptr(),j)
 end function
 
 function i_end(this,j) result(i)
@@ -427,7 +402,7 @@ function i_end(this,j) result(i)
   integer(ATLAS_KIND_IDX) :: i
   integer(ATLAS_KIND_IDX), intent(in) :: j
   class(atlas_functionspace_BlockStructuredColumns), intent(in) :: this
-  i = atlas__fs__BStructuredColumns__i_end(this%CPTR_PGIBUG_A,j)
+  i = atlas__fs__BStructuredColumns__i_end(this%c_ptr(),j)
 end function
 
 
@@ -435,14 +410,14 @@ function j_begin_halo(this) result(j)
   use atlas_functionspace_BlockStructuredColumns_c_binding
   integer(ATLAS_KIND_IDX) :: j
   class(atlas_functionspace_BlockStructuredColumns), intent(in) :: this
-  j = atlas__fs__BStructuredColumns__j_begin_halo(this%CPTR_PGIBUG_A)
+  j = atlas__fs__BStructuredColumns__j_begin_halo(this%c_ptr())
 end function
 
 function j_end_halo(this) result(j)
   use atlas_functionspace_BlockStructuredColumns_c_binding
   integer(ATLAS_KIND_IDX) :: j
   class(atlas_functionspace_BlockStructuredColumns), intent(in) :: this
-  j = atlas__fs__BStructuredColumns__j_end_halo(this%CPTR_PGIBUG_A)
+  j = atlas__fs__BStructuredColumns__j_end_halo(this%c_ptr())
 end function
 
 function i_begin_halo(this,j) result(i)
@@ -450,7 +425,7 @@ function i_begin_halo(this,j) result(i)
   integer(ATLAS_KIND_IDX) :: i
   integer(ATLAS_KIND_IDX), intent(in) :: j
   class(atlas_functionspace_BlockStructuredColumns), intent(in) :: this
-  i = atlas__fs__BStructuredColumns__i_begin_halo(this%CPTR_PGIBUG_A,j)
+  i = atlas__fs__BStructuredColumns__i_begin_halo(this%c_ptr(),j)
 end function
 
 function i_end_halo(this,j) result(i)
@@ -458,35 +433,35 @@ function i_end_halo(this,j) result(i)
   integer(ATLAS_KIND_IDX) :: i
   integer(ATLAS_KIND_IDX), intent(in) :: j
   class(atlas_functionspace_BlockStructuredColumns), intent(in) :: this
-  i = atlas__fs__BStructuredColumns__i_end_halo(this%CPTR_PGIBUG_A,j)
+  i = atlas__fs__BStructuredColumns__i_end_halo(this%c_ptr(),j)
 end function
 
 function get_size(this) result(size)
   use atlas_functionspace_BlockStructuredColumns_c_binding
   integer(ATLAS_KIND_IDX) :: size
   class(atlas_functionspace_BlockStructuredColumns), intent(in) :: this
-  size = atlas__fs__BStructuredColumns__size(this%CPTR_PGIBUG_A)
+  size = atlas__fs__BStructuredColumns__size(this%c_ptr())
 end function
 
 function get_size_owned(this) result(size)
   use atlas_functionspace_BlockStructuredColumns_c_binding
   integer(ATLAS_KIND_IDX) :: size
   class(atlas_functionspace_BlockStructuredColumns), intent(in) :: this
-  size = atlas__fs__BStructuredColumns__sizeOwned(this%CPTR_PGIBUG_A)
+  size = atlas__fs__BStructuredColumns__sizeOwned(this%c_ptr())
 end function
 
 function levels(this)
   use atlas_functionspace_BlockStructuredColumns_c_binding
   integer(ATLAS_KIND_IDX) :: levels
   class(atlas_functionspace_BlockStructuredColumns), intent(in) :: this
-  levels = atlas__fs__BStructuredColumns__levels(this%CPTR_PGIBUG_A)
+  levels = atlas__fs__BStructuredColumns__levels(this%c_ptr())
 end function
 
 function xy(this) result(field)
   use atlas_functionspace_BlockStructuredColumns_c_binding
   type(atlas_Field) :: field
   class(atlas_functionspace_BlockStructuredColumns), intent(in) :: this
-  field = atlas_Field( atlas__fs__BStructuredColumns__xy(this%CPTR_PGIBUG_A) )
+  field = atlas_Field( atlas__fs__BStructuredColumns__xy(this%c_ptr()) )
   call field%return()
 end function
 
@@ -494,7 +469,7 @@ function z(this) result(field)
   use atlas_functionspace_BlockStructuredColumns_c_binding
   type(atlas_Field) :: field
   class(atlas_functionspace_BlockStructuredColumns), intent(in) :: this
-  field = atlas_Field( atlas__fs__BStructuredColumns__z(this%CPTR_PGIBUG_A) )
+  field = atlas_Field( atlas__fs__BStructuredColumns__z(this%c_ptr()) )
   call field%return()
 end function
 
@@ -503,7 +478,7 @@ function partition(this) result(field)
   use atlas_functionspace_BlockStructuredColumns_c_binding
   type(atlas_Field) :: field
   class(atlas_functionspace_BlockStructuredColumns), intent(in) :: this
-  field = atlas_Field( atlas__fs__BStructuredColumns__partition(this%CPTR_PGIBUG_A) )
+  field = atlas_Field( atlas__fs__BStructuredColumns__partition(this%c_ptr()) )
   call field%return()
 end function
 
@@ -511,7 +486,7 @@ function global_index(this) result(field)
   use atlas_functionspace_BlockStructuredColumns_c_binding
   type(atlas_Field) :: field
   class(atlas_functionspace_BlockStructuredColumns), intent(in) :: this
-  field = atlas_Field( atlas__fs__BStructuredColumns__global_index(this%CPTR_PGIBUG_A) )
+  field = atlas_Field( atlas__fs__BStructuredColumns__global_index(this%c_ptr()) )
   call field%return()
 end function
 
@@ -519,7 +494,7 @@ function index_i(this) result(field)
   use atlas_functionspace_BlockStructuredColumns_c_binding
   type(atlas_Field) :: field
   class(atlas_functionspace_BlockStructuredColumns), intent(in) :: this
-  field = atlas_Field( atlas__fs__BStructuredColumns__index_i(this%CPTR_PGIBUG_A) )
+  field = atlas_Field( atlas__fs__BStructuredColumns__index_i(this%c_ptr()) )
   call field%return()
 end function
 
@@ -527,7 +502,7 @@ function index_j(this) result(field)
   use atlas_functionspace_BlockStructuredColumns_c_binding
   type(atlas_Field) :: field
   class(atlas_functionspace_BlockStructuredColumns), intent(in) :: this
-  field = atlas_Field( atlas__fs__BStructuredColumns__index_j(this%CPTR_PGIBUG_A) )
+  field = atlas_Field( atlas__fs__BStructuredColumns__index_j(this%c_ptr()) )
   call field%return()
 end function
 
@@ -535,7 +510,7 @@ function grid(this)
   use atlas_functionspace_BlockStructuredColumns_c_binding
   type(atlas_Grid) :: grid
   class(atlas_functionspace_BlockStructuredColumns), intent(in) :: this
-  grid = atlas_Grid( atlas__fs__BStructuredColumns__grid(this%CPTR_PGIBUG_A) )
+  grid = atlas_Grid( atlas__fs__BStructuredColumns__grid(this%c_ptr()) )
   call grid%return()
 end function
 
@@ -544,7 +519,7 @@ function block_begin(this,j) result(i)
   integer(ATLAS_KIND_IDX) :: i
   integer(ATLAS_KIND_IDX), intent(in) :: j
   class(atlas_functionspace_BlockStructuredColumns), intent(in) :: this
-  i = atlas__fs__BStructuredColumns__block_begin(this%CPTR_PGIBUG_A,j-1) + 1
+  i = atlas__fs__BStructuredColumns__block_begin(this%c_ptr(),j-1) + 1
 end function
 
 function block_size(this,j) result(i)
@@ -552,21 +527,21 @@ function block_size(this,j) result(i)
   integer(ATLAS_KIND_IDX) :: i
   integer(ATLAS_KIND_IDX), intent(in) :: j
   class(atlas_functionspace_BlockStructuredColumns), intent(in) :: this
-  i = atlas__fs__BStructuredColumns__block_size(this%CPTR_PGIBUG_A,j-1)
+  i = atlas__fs__BStructuredColumns__block_size(this%c_ptr(),j-1)
 end function
 
 function nproma(this) result(i)
   use atlas_functionspace_BlockStructuredColumns_c_binding
   integer(ATLAS_KIND_IDX) :: i
   class(atlas_functionspace_BlockStructuredColumns), intent(in) :: this
-  i = atlas__fs__BStructuredColumns__nproma(this%CPTR_PGIBUG_A)
+  i = atlas__fs__BStructuredColumns__nproma(this%c_ptr())
 end function
 
 function nblks(this) result(i)
   use atlas_functionspace_BlockStructuredColumns_c_binding
   integer(ATLAS_KIND_IDX) :: i
   class(atlas_functionspace_BlockStructuredColumns), intent(in) :: this
-  i = atlas__fs__BStructuredColumns__nblks(this%CPTR_PGIBUG_A)
+  i = atlas__fs__BStructuredColumns__nblks(this%c_ptr())
 end function
 
 !-------------------------------------------------------------------------------

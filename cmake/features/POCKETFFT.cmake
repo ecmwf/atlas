@@ -26,7 +26,7 @@ if( atlas_HAVE_ATLAS_TRANS )
             else()
                 set(pocketfft_ROOT ${PROJECT_BINARY_DIR}/pocketfft)
                 if (NOT EXISTS ${pocketfft_ROOT} )
-                    set(pocketfft_COMMIT 0fa0ef591e38c2758e3184c6c23e497b9f732ffa) # from branch cpp, dated 30 Nov 2024
+                    set(pocketfft_COMMIT 292ec80532e9cf20281257b90b97680fa9a97098) # from branch cpp, dated 10 April 2026
                     set(pocketfft_URL https://github.com/mreineck/pocketfft/archive/${pocketfft_COMMIT}.zip)
                     ecbuild_info("Downloading pocketfft (${pocketfft_URL}) ...")
                     file(DOWNLOAD ${pocketfft_URL} ${PROJECT_BINARY_DIR}/download/pocketfft.zip STATUS DOWNLOAD_STATUS)

@@ -68,7 +68,7 @@ public:
 
     template <typename idx_t, typename std::enable_if<std::is_integral<idx_t>::value, int>::type = 0>
     T& at(idx_t i) noexcept(false) {
-        if (i >= size_) {
+        if (i >= static_cast<idx_t>(size_)) {
             throw_OutOfRange("atlas::vector", i, size_);
         }
         return data_[i];
@@ -76,7 +76,7 @@ public:
 
     template <typename idx_t, typename std::enable_if<std::is_integral<idx_t>::value, int>::type = 0>
     T const& at(idx_t i) const noexcept(false) {
-        if (i >= size_) {
+        if (i >= static_cast<idx_t>(size_)) {
             throw_OutOfRange("atlas::vector", i, size_);
         }
         return data_[i];

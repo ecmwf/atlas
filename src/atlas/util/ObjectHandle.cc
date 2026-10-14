@@ -8,11 +8,12 @@
  * nor does it submit to any jurisdiction.
  */
 
+#include "atlas/util/ObjectHandle.h"
+
 #include <ostream>
 
 #include "atlas/runtime/Log.h"
 #include "atlas/util/Object.h"
-#include "atlas/util/ObjectHandle.h"
 
 namespace atlas {
 namespace util {

@@ -16,6 +16,16 @@ call run_allocate(pluto%host%get_default_resource())
 call pluto%host%set_default_resource("pluto::pinned_resource")
 call run_allocate(pluto%host%get_default_resource())
 
+if (pluto%has_registered_resource("some_nonsense")) then
+  write(0,*) "ERROR: resource 'some_nonsense' should not exist"
+  ERROR STOP 1
+endif
+
+if (.NOT. pluto%has_registered_resource("pluto::host_resource")) then
+  write(0,*) "ERROR: resource 'pluto::host_resource' should exist"
+  ERROR STOP 1
+endif
+
 contains
 
 subroutine run_allocate(memory_resource)

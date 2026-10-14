@@ -21,9 +21,6 @@ public:
 
 public:
     MatchingMeshPartitionerCubedSphere(): MatchingMeshPartitioner() {}
-    // MatchingMeshPartitionerCubedSphere(const idx_t nb_partitions): MatchingMeshPartitioner(nb_partitions) {}
-    // MatchingMeshPartitionerCubedSphere(const idx_t nb_partitions, const eckit::Parametrisation&):
-    //     MatchingMeshPartitioner(nb_partitions) {}
     MatchingMeshPartitionerCubedSphere(const Mesh& mesh, const eckit::Parametrisation& config): MatchingMeshPartitioner(mesh, config) {}
 
     using MatchingMeshPartitioner::partition;

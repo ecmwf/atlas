@@ -10,11 +10,13 @@
 
 #include "atlas/grid/Partitioner.h"
 #include "atlas/functionspace/FunctionSpace.h"
+#include "atlas/functionspace/detail/FunctionSpaceImpl.h"
 #include "atlas/grid/Distribution.h"
 #include "atlas/grid/Grid.h"
 #include "atlas/grid/detail/distribution/DistributionImpl.h"
 #include "atlas/grid/detail/partitioner/Partitioner.h"
 #include "atlas/mesh/Mesh.h"
+#include "atlas/mesh/detail/MeshImpl.h"
 #include "atlas/option.h"
 #include "atlas/parallel/mpi/mpi.h"
 #include "atlas/runtime/Exception.h"
@@ -155,6 +157,17 @@ detail::partitioner::Partitioner* atlas__grid__MatchingFunctionSpacePartitioner_
     }
     p->detach();
     return p;
+}
+
+detail::partitioner::Partitioner* atlas__grid__MatchingPartitioner__new(const util::Object* object,
+                                                                        const Partitioner::Config* config) {
+    if (const auto* mesh = dynamic_cast<const Mesh::Implementation*>(object)) {
+        return atlas__grid__MatchingMeshPartitioner__new(mesh, config);
+    }
+    if (const auto* functionspace = dynamic_cast<const FunctionSpace::Implementation*>(object)) {
+        return atlas__grid__MatchingFunctionSpacePartitioner__new(functionspace, config);
+    }
+    ATLAS_THROW_EXCEPTION("MatchingPartitioner requires a Mesh or FunctionSpace");
 }
 
 Distribution::Implementation* atlas__grid__Partitioner__partition(const Partitioner::Implementation* This,

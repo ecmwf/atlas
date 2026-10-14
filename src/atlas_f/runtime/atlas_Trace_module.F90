@@ -147,7 +147,7 @@ function running( this )
   use atlas_Trace_c_binding
   logical :: running
   class(atlas_Trace) :: this
-  if( atlas_Trace__running( this%CPTR_PGIBUG_B ) == 0 ) then
+  if( atlas_Trace__running( this%c_ptr() ) == 0 ) then
     running = .False.
   else
     running = .True.
@@ -161,7 +161,7 @@ function elapsed( this )
   use atlas_Trace_c_binding
   real(c_double) :: elapsed
   class(atlas_Trace) :: this
-  elapsed = atlas_Trace__elapsed( this%CPTR_PGIBUG_B )
+  elapsed = atlas_Trace__elapsed( this%c_ptr() )
 end function
 
 !-------------------------------------------------------------------------------
@@ -169,7 +169,7 @@ end function
 subroutine start( this )
   use atlas_Trace_c_binding
   class(atlas_Trace) :: this
-  call atlas_Trace__start( this%CPTR_PGIBUG_B )
+  call atlas_Trace__start( this%c_ptr() )
 end subroutine
 
 !-------------------------------------------------------------------------------
@@ -177,7 +177,7 @@ end subroutine
 subroutine stop( this )
   use atlas_Trace_c_binding
   class(atlas_Trace) :: this
-  call atlas_Trace__stop( this%CPTR_PGIBUG_B )
+  call atlas_Trace__stop( this%c_ptr() )
 end subroutine
 
 !-------------------------------------------------------------------------------
@@ -185,7 +185,7 @@ end subroutine
 subroutine pause( this )
   use atlas_Trace_c_binding
   class(atlas_Trace) :: this
-  call atlas_Trace__pause( this%CPTR_PGIBUG_B )
+  call atlas_Trace__pause( this%c_ptr() )
 end subroutine
 
 !-------------------------------------------------------------------------------
@@ -193,7 +193,7 @@ end subroutine
 subroutine resume( this )
   use atlas_Trace_c_binding
   class(atlas_Trace) :: this
-  call atlas_Trace__resume( this%CPTR_PGIBUG_B )
+  call atlas_Trace__resume( this%c_ptr() )
 end subroutine
 
 !-------------------------------------------------------------------------------

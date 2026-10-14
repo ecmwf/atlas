@@ -10,7 +10,11 @@
 
 #pragma once
 
+#include <array>
 #include <cstddef>
+#include <cstdint>
+#include <string>
+#include <type_traits>
 
 namespace atlas {
 namespace util {
@@ -22,6 +26,20 @@ checksum_t checksum(const long values[], size_t size);
 checksum_t checksum(const float values[], size_t size);
 checksum_t checksum(const double values[], size_t size);
 checksum_t checksum(const checksum_t values[], size_t size);
+
+void checksum_reset(checksum_t&);
+void checksum_update(checksum_t&, const int values[], size_t size);
+void checksum_update(checksum_t&, const long values[], size_t size);
+void checksum_update(checksum_t&, const float values[], size_t size);
+void checksum_update(checksum_t&, const double values[], size_t size);
+void checksum_update(checksum_t&, const checksum_t values[], size_t size);
+void checksum_update(checksum_t&, const int values[], size_t size, size_t stride);
+void checksum_update(checksum_t&, const long values[], size_t size, size_t stride);
+void checksum_update(checksum_t&, const float values[], size_t size, size_t stride);
+void checksum_update(checksum_t&, const double values[], size_t size, size_t stride);
+void checksum_update(checksum_t&, const checksum_t values[], size_t size, size_t stride);
+checksum_t checksum_digest(const checksum_t&);
+std::string checksum_to_hex_str(const util::checksum_t& digest);
 
 }  // namespace util
 }  // namespace atlas

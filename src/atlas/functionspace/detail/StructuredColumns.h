@@ -33,7 +33,6 @@ namespace atlas {
 namespace parallel {
 class GatherScatter;
 class HaloExchange;
-class Checksum;
 }  // namespace parallel
 }  // namespace atlas
 
@@ -57,7 +56,6 @@ namespace detail {
 
 class StructuredColumnsHaloExchangeCache;
 class StructuredColumnsGatherScatterCache;
-class StructuredColumnsChecksumCache;
 
 
 // -------------------------------------------------------------------
@@ -109,8 +107,8 @@ public:
 
     idx_t halo() const { return halo_; }
 
-    std::string checksum(const FieldSet&) const;
-    std::string checksum(const Field&) const;
+    std::string checksum(const FieldSet&) const override;
+    std::string checksum(const Field&) const override;
 
 
     const Vertical& vertical() const { return vertical_; }
@@ -153,7 +151,9 @@ public:
     Field index_i() const { return field_index_i_; }
     Field index_j() const { return field_index_j_; }
     Field ghost() const override { return field_ghost_; }
+    Field mask() const override;
 
+    idx_t compute_j(idx_t j) const;
     void compute_xy(idx_t i, idx_t j, PointXY& xy) const;
     PointXY compute_xy(idx_t i, idx_t j) const {
         PointXY xy;
@@ -195,7 +195,6 @@ private:  // methods
 
     const parallel::GatherScatter& gather() const override;
     const parallel::GatherScatter& scatter() const override;
-    const parallel::Checksum& checksum() const;
     const parallel::HaloExchange& halo_exchange() const;
 
     void create_remote_index() const;
@@ -212,12 +211,10 @@ private:  // data
 
     friend class StructuredColumnsHaloExchangeCache;
     friend class StructuredColumnsGatherScatterCache;
-    friend class StructuredColumnsChecksumCache;
     bool periodic_points_{false};
 
     const StructuredGrid* grid_;
     mutable util::ObjectHandle<parallel::GatherScatter> gather_scatter_;
-    mutable util::ObjectHandle<parallel::Checksum> checksum_;
     mutable util::ObjectHandle<parallel::HaloExchange> halo_exchange_;
     mutable std::vector<util::ObjectHandle<util::PartitionPolygon>> polygons_;
     mutable util::PartitionPolygons all_polygons_;
@@ -230,6 +227,7 @@ private:  // data
     Field field_index_i_;
     Field field_index_j_;
     Field field_ghost_;
+    mutable Field field_mask_;
 
     class Map2to1 {
     public:
@@ -311,6 +309,7 @@ private:  // data
 
     idx_t north_pole_included_;
     idx_t south_pole_included_;
+    bool grid_is_regional_;
     idx_t ny_;
 
     idx_t part_;

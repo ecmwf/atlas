@@ -18,8 +18,6 @@
 #include "atlas/interpolation/method/MethodFactory.h"
 #include "atlas/interpolation/method/sphericalvector/ComplexMatrixMultiply.h"
 #include "atlas/interpolation/method/sphericalvector/Types.h"
-#include "atlas/linalg/sparse/MakeEckitSparseMatrix.h"
-#include "atlas/option/Options.h"
 #include "atlas/parallel/omp/omp.h"
 #include "atlas/runtime/Exception.h"
 #include "atlas/runtime/Trace.h"
@@ -149,23 +147,19 @@ void SphericalVector::do_execute(const Field& sourceField, Field& targetField,
                                  Metadata&) const {
   ATLAS_TRACE("atlas::interpolation::method::SphericalVector::do_execute()");
 
-  if (targetField.size() == 0) {
-    return;
-  }
-
   const auto fieldType = sourceField.metadata().getString("type", "");
   if (fieldType != "vector") {
     auto metadata = Metadata();
     Method::do_execute(sourceField, targetField, metadata);
-
     return;
   }
 
-  Method::check_compatibility(sourceField, targetField, matrix());
-
   haloExchange(sourceField);
-  interpolate_vector_field(sourceField, targetField,
-                           WeightsMatMul(complexWeights_, realWeights_));
+
+  if (complexWeights_.nonZeros() > 0) {
+      Method::check_compatibility(sourceField, targetField, matrix());
+      interpolate_vector_field(sourceField, targetField, WeightsMatMul(complexWeights_, realWeights_));
+  }
   targetField.set_dirty();
 }
 
@@ -193,24 +187,20 @@ void SphericalVector::do_execute_adjoint(Field& sourceField,
   ATLAS_TRACE(
       "atlas::interpolation::method::SphericalVector::do_execute_adjoint()");
 
-  if (targetField.size() == 0) {
-    return;
-  }
-
   const auto fieldType = sourceField.metadata().getString("type", "");
   if (fieldType != "vector") {
     auto metadata = Metadata();
     Method::do_execute_adjoint(sourceField, targetField, metadata);
-
     return;
   }
 
-  Method::check_compatibility(sourceField, targetField, matrix());
-
   ATLAS_ASSERT(adjoint_, "\"adjoint\" needs to be set to \"true\" in Config.");
-  interpolate_vector_field(
-      targetField, sourceField,
-      WeightsMatMulAdjoint(complexWeightsAdjoint_, realWeightsAdjoint_));
+  if (complexWeightsAdjoint_.nonZeros() > 0) {
+      Method::check_compatibility(sourceField, targetField, matrix());
+      interpolate_vector_field(targetField, sourceField,
+                               WeightsMatMulAdjoint(complexWeightsAdjoint_, realWeightsAdjoint_));
+  }
+  sourceField.set_dirty();
   adjointHaloExchange(sourceField);
 }
 

@@ -15,7 +15,7 @@
 #include "atlas/mesh/Mesh.h"
 #include "atlas/mesh/Nodes.h"
 #include "atlas/runtime/Trace.h"
-#include "atlas/util/Earth.h"
+#include "atlas/util/Geometry.h"
 #include "atlas/util/Point.h"
 
 namespace atlas {
@@ -43,9 +43,10 @@ Field& BuildXYZField::operator()(mesh::Nodes& nodes) const {
         array::ArrayView<double, 2> xyz    = array::make_view<double, 2>(nodes.field(name_));
 
         PointXYZ p2;
+        geometry::Earth earth;
         for (idx_t n = 0; n < nodes.size(); ++n) {
             const PointLonLat p1(lonlat(n, 0), lonlat(n, 1));
-            util::Earth::convertSphericalToCartesian(p1, p2);
+            earth.lonlat2xyz(p1, p2);
             xyz(n, 0) = p2.x();
             xyz(n, 1) = p2.y();
             xyz(n, 2) = p2.z();

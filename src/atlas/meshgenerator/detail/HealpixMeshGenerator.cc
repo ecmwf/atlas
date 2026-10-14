@@ -490,10 +490,10 @@ void HealpixMeshGenerator::generate(const Grid& grid, Mesh& mesh) const {
     std::string partitioner_type = "equal_regions";
     options.get("partitioner", partitioner_type);
 
-    mpi::push(options.getString("mpi_comm"));
+    mpi::scope::push(options.getString("mpi_comm"));
     grid::Partitioner partitioner(partitioner_type, nb_parts);
     grid::Distribution distribution(partitioner.partition(grid));
-    mpi::pop();
+    mpi::scope::pop();
     generate(grid, distribution, mesh);
 }
 

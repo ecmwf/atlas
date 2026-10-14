@@ -13,6 +13,9 @@
 #include "atlas/array.h"
 #include "atlas/field.h"
 #include "atlas/functionspace/PointCloud.h"
+#include "atlas/grid/Distribution.h"
+#include "atlas/grid/Grid.h"
+#include "atlas/grid/detail/grid/Unstructured.h"
 #include "atlas/option.h"
 #include "atlas/parallel/mpi/mpi.h"
 
@@ -24,6 +27,31 @@ using namespace atlas::util;
 
 namespace atlas {
 namespace test {
+
+//-----------------------------------------------------------------------------
+
+// Models grids such as ORCA whose stored points already include intrinsic ghosts
+// at the South boundary which don't participate in halo exchanges.
+// Points 0 and 7 are duplicates mapped to masters 4 and 3, while point 6 is an
+// intrinsic ghost that maps to itself and therefore remains a PointCloud source point.
+class GridWithExtensionAndDuplicates : public grid::detail::grid::Unstructured {
+public:
+    GridWithExtensionAndDuplicates():
+        Unstructured({{40., 0.}, {10., 0.}, {20., 0.}, {30., 0.},
+                      {40., 0.}, {50., 0.}, {60., 0.}, {30., 0.}}) {}
+
+    int flags(gidx_t index) const override {
+        GridPointFlags flags = index == 0 || index == 6 || index == 7 ? GridPointFlags::extension : GridPointFlags::none;
+        if (index == 0 || index == 7) {
+            flags.set(GridPointFlags::duplicate);
+        }
+        return flags.value();
+    }
+
+    gidx_t masterIndex(gidx_t index) const override {
+        return index == 0 ? 4 : index == 7 ? 3 : index;
+    }
+};
 
 //-----------------------------------------------------------------------------
 
@@ -123,6 +151,78 @@ CASE("test_functionspace_PointCloud create from 3D initializer list") {
     EXPECT(equal(pointcloud.iterate().lonlat(), ref_lonlat()));
 }
 
+
+//-----------------------------------------------------------------------------
+
+CASE("test_functionspace_PointCloud with intrinsic grid ghosts") {
+    EXPECT_EQ(mpi::size(), 2);
+
+    Grid grid(new GridWithExtensionAndDuplicates());
+    int partitions[] = {0, 0, 0, 0, 1, 1, 1, 1};
+    grid::Distribution distribution(2, grid.size(), partitions);
+    functionspace::PointCloud pointcloud(grid, distribution);
+
+    auto ghost        = array::make_view<int, 1>(pointcloud.ghost());
+    auto global_index = array::make_view<gidx_t, 1>(pointcloud.global_index());
+    auto remote_index = array::make_indexview<idx_t, 1>(pointcloud.remote_index());
+
+    EXPECT_EQ(pointcloud.size(), 4);
+    if (mpi::rank() == 0) {
+        EXPECT(ghost(0));
+        EXPECT(!ghost(1));
+        EXPECT(!ghost(2));
+        EXPECT(!ghost(3));
+        EXPECT_EQ(remote_index(0), 0);
+    }
+    else {
+        EXPECT(!ghost(0));
+        EXPECT(!ghost(1));
+        EXPECT(!ghost(2));
+        EXPECT(ghost(3));
+        EXPECT_EQ(remote_index(3), 3);
+    }
+
+    Field local = pointcloud.createField<double>(option::name("local"));
+    auto local_view = array::make_view<double, 1>(local);
+    for (idx_t index = 0; index < pointcloud.size(); ++index) {
+        local_view(index) = ghost(index) ? -1. : 10. * global_index(index);
+    }
+    local.haloExchange();
+    for (idx_t index = 0; index < pointcloud.size(); ++index) {
+        const gidx_t grid_index = global_index(index) - 1;
+        EXPECT_EQ(local_view(index), 10. * (grid.masterIndex(grid_index) + 1));
+    }
+
+    Field global = pointcloud.createField<double>(option::name("global") | option::global());
+    if (mpi::rank() == 0) {
+        auto global_view = array::make_view<double, 1>(global);
+        for (idx_t index = 0; index < global.size(); ++index) {
+            global_view(index) = 100. + index;
+        }
+    }
+    pointcloud.scatter(global, local);
+    local.haloExchange();
+    for (idx_t index = 0; index < pointcloud.size(); ++index) {
+        const gidx_t grid_index = global_index(index) - 1;
+        EXPECT_EQ(local_view(index), 100. + grid.masterIndex(grid_index));
+    }
+
+    for (idx_t index = 0; index < pointcloud.size(); ++index) {
+        local_view(index) = 10. * global_index(index);
+    }
+    if (mpi::rank() == 0) {
+        array::make_view<double, 1>(global).assign(-1.);
+    }
+    pointcloud.gather(local, global);
+    if (mpi::rank() == 0) {
+        auto global_view = array::make_view<double, 1>(global);
+        EXPECT_EQ(global_view(0), -1.);
+        for (idx_t index = 1; index < global.size() - 1; ++index) {
+            EXPECT_EQ(global_view(index), 10. * (index + 1));
+        }
+        EXPECT_EQ(global_view(global.size() - 1), -1.);
+    }
+}
 
 //-----------------------------------------------------------------------------
 
