@@ -40,6 +40,7 @@ package = "fckit"
 ref = "develop"
 compiler-inputs = ["cxx-compiler"]
 options-input = "options"
+# ifort-2023.2 has no leg while the icpc-2023.2 legs are dropped (eckit::geo fails with ICC); kept for re-enabling them.
 when = { fortran-compiler = ["gfortran-8", "gfortran-10", "gfortran-11", "gfortran-12", "gfortran-13", "gfortran-14", "gfortran-15", "ifort-2023.2", "ifx", "nvfortran-26.1"] }
 unless = { options = "mpi-gpu" }
 
