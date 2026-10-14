@@ -19,6 +19,7 @@
 #include "atlas/mesh/actions/BuildXYZField.h"
 #include "atlas/output/detail/GmshIO.h"
 #include "atlas/output/detail/GmshImpl.h"
+#include "atlas/parallel/mpi/mpi.h"
 #include "atlas/runtime/Exception.h"
 #include "atlas/runtime/Log.h"
 
@@ -33,13 +34,17 @@ void GmshImpl::defaults() {
     config_.nodes    = "xy";
     config_.gather   = false;
     config_.ghost    = false;
-    config_.elements = true;
-    config_.edges    = false;
+    config_.elements = "auto";
     config_.levels.clear();
-    config_.file        = "output.msh";
-    config_.info        = false;
-    config_.openmode    = "w";
-    config_.coordinates = "xy";
+    config_.file                 = "output.msh";
+    config_.info                 = false;
+    config_.element_partition_as_entity = false;
+    config_.openmode             = "w";
+    config_.coordinates          = "xy";
+    config_.missing_value_policy = "skip";
+    config_.missing_value_fill   = 0.;
+    config_.masked_value_policy  = "skip";
+    config_.masked_value_fill    = 0.;
 
     config_.configured_land_water = false;
     config_.land                  = true;
@@ -58,12 +63,20 @@ void merge(GmshImpl::Configuration& present, const eckit::Parametrisation& updat
     update.get("gather", present.gather);
     update.get("ghost", present.ghost);
     update.get("elements", present.elements);
-    update.get("edges", present.edges);
+    if (present.elements != "auto" && present.elements != "cells" && present.elements != "edges") {
+        ATLAS_THROW_EXCEPTION("Invalid Gmsh elements='" << present.elements
+                                                        << "': expected 'auto', 'cells' or 'edges'");
+    }
     update.get("levels", present.levels);
     update.get("file", present.file);
     update.get("info", present.info);
+    update.get("element_partition_as_entity", present.element_partition_as_entity);
     update.get("openmode", present.openmode);
     update.get("coordinates", present.coordinates);
+    update.get("missing_value.policy", present.missing_value_policy);
+    update.get("missing_value.fill", present.missing_value_fill);
+    update.get("masked_value.policy", present.masked_value_policy);
+    update.get("masked_value.fill", present.masked_value_fill);
     if (update.has("water") || update.has("land")) {
         update.get("land", present.land);
         update.get("water", present.water);
@@ -106,11 +119,16 @@ void GmshImpl::setGmshConfiguration(detail::GmshIO& gmsh, const GmshImpl::Config
     gmsh.options.set("nodes", c.nodes);
     gmsh.options.set("gather", c.gather);
     gmsh.options.set("ghost", c.ghost);
-    gmsh.options.set("elements", c.elements);
-    gmsh.options.set("edges", c.edges);
+    gmsh.options.set("elements", c.elements == "cells");
+    gmsh.options.set("edges", c.elements == "edges");
     gmsh.options.set("levels", c.levels);
     gmsh.options.set("info", c.info);
+    gmsh.options.set("element_partition_as_entity", c.element_partition_as_entity);
     gmsh.options.set("nodes", c.coordinates);
+    gmsh.options.set("missing_value.policy", c.missing_value_policy);
+    gmsh.options.set("missing_value.fill", c.missing_value_fill);
+    gmsh.options.set("masked_value.policy", c.masked_value_policy);
+    gmsh.options.set("masked_value.fill", c.masked_value_fill);
     if (c.configured_land_water) {
         gmsh.options.set("land", c.land);
         gmsh.options.set("water", c.water);
@@ -173,6 +191,20 @@ GmshImpl::~GmshImpl() = default;
 void GmshImpl::write(const Mesh& mesh, const eckit::Parametrisation& config) const {
     GmshImpl::Configuration c = config_;
     merge(c, config);
+
+    if (c.elements == "auto") {
+        const auto& comm = mpi::comm(mesh.mpi_comm());
+        idx_t nb_cells = mesh.cells().size();
+        comm.allReduceInPlace(nb_cells, eckit::mpi::Operation::SUM);
+        if (nb_cells > 0) {
+            c.elements = "cells";
+        }
+        else {
+            idx_t nb_edges = mesh.edges().size();
+            comm.allReduceInPlace(nb_edges, eckit::mpi::Operation::SUM);
+            c.elements = nb_edges > 0 ? "edges" : "none";
+        }
+    }
 
     if (c.coordinates == "xyz" and not mesh.nodes().has_field("xyz")) {
         Log::debug() << "Building xyz representation for nodes" << std::endl;

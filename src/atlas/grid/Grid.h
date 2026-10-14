@@ -15,6 +15,7 @@
 #include <string>
 
 #include "atlas/domain/Domain.h"
+#include "atlas/grid/GridPointFlags.h"
 #include "atlas/library/config.h"
 #include "atlas/projection/Projection.h"
 #include "atlas/util/ObjectHandle.h"
@@ -87,6 +88,9 @@ public:
     bool operator!=(const Grid& other) const { return uid() != other.uid(); }
 
     idx_t size() const;
+
+    int flags(gidx_t index) const;
+    gidx_t masterIndex(gidx_t index) const;
 
     const Projection& projection() const;
     const Domain& domain() const;

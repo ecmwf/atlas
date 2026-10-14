@@ -16,7 +16,7 @@ set -e
 set -u
 set -o pipefail
 
-version=25.1
+version=26.1
 
 TEMPORARY_FILES="${TMPDIR:-/tmp}"
 export NVHPC_INSTALL_DIR=$(pwd)/nvhpc-install
@@ -53,10 +53,10 @@ case "$(uname -m)" in
 esac
 
 if [ -d "${NVHPC_INSTALL_DIR}" ]; then
-    #if [[ $(find "${NVHPC_INSTALL_DIR}" -name "nvc" | wc -l) == 1 ]]; then
+    if [[ $(find "${NVHPC_INSTALL_DIR}" -name "nvc" | wc -l) == 1 ]]; then
       echo "NVHPC already installed at ${NVHPC_INSTALL_DIR}"
       exit
-    #fi
+    fi
 fi
 
 
@@ -94,13 +94,29 @@ echo "+ ${TEMPORARY_FILES}/${FOLDER}/install"
 #rm -rf "${TEMPORARY_FILES}/${FOLDER}"
 
 NVHPC_VERSION=$(basename "${NVHPC_INSTALL_DIR}"/Linux_$(uname -m)/*.*/)
+NVHPC_DIR=${NVHPC_INSTALL_DIR}/Linux_$(uname -m)/${NVHPC_VERSION}
 
 # Use gcc which is available in PATH
-${NVHPC_INSTALL_DIR}/Linux_$(uname -m)/${NVHPC_VERSION}/compilers/bin/makelocalrc \
-  -x ${NVHPC_INSTALL_DIR}/Linux_$(uname -m)/${NVHPC_VERSION}/compilers/bin \
+${NVHPC_DIR}/compilers/bin/makelocalrc \
+  -x ${NVHPC_DIR}/compilers/bin \
   -gcc $(which gcc) \
   -gpp $(which g++) \
   -g77 $(which gfortran)
+
+# Locate the bundled OpenMPI prefix. From 25.x the comm_libs/mpi symlink points
+# at hpcx (a bin-only directory), so we derive the real prefix from the location
+# of openmpi-default-hostfile and fall back to comm_libs/mpi for older releases.
+MPI_HOME=$(dirname $(dirname $(find ${NVHPC_DIR}/comm_libs -name openmpi-default-hostfile -path '*/etc/*' 2>/dev/null | head -1)))
+if [ -z "${MPI_HOME}" ] || [ ! -d "${MPI_HOME}" ]; then
+    MPI_HOME=${NVHPC_DIR}/comm_libs/mpi
+fi
+
+# Allow for oversubscription. For open-mpi >= v5.0
+echo "rmaps_default_mapping_policy=:oversubscribe" >> ${MPI_HOME}/etc/prte-mca-params.conf
+
+# Allow for oversubscription. For open-mpi < v5.0 only (older nvhpc versions)
+echo "localhost slots=72" >> ${MPI_HOME}/etc/openmpi-default-hostfile
+echo "hwloc_base_binding_policy = core:overload-allowed" >> ${MPI_HOME}/etc/openmpi-mca-params.conf
 
 cat > ${NVHPC_INSTALL_DIR}/env.sh << EOF
 ### Variables
@@ -114,7 +130,7 @@ export NVHPC_LIBRARY_PATH=\${NVHPC_DIR}/compilers/lib
 export LD_LIBRARY_PATH=\${NVHPC_LIBRARY_PATH}
 
 ### MPI
-export MPI_HOME=\${NVHPC_DIR}/comm_libs/mpi
+export MPI_HOME=${MPI_HOME}
 export PATH=\${MPI_HOME}/bin:\${PATH}
 EOF
 

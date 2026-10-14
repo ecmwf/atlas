@@ -88,7 +88,7 @@ subroutine atlas_Checksum__delete(this)
   use atlas_checksum_c_binding
   class(atlas_Checksum), intent(inout) :: this
   if ( .not. this%is_null() ) then
-    call atlas__Checksum__delete(this%CPTR_PGIBUG_A)
+    call atlas__Checksum__delete(this%c_ptr())
   end if
   call this%reset_c_ptr()
 end subroutine atlas_Checksum__delete
@@ -99,7 +99,7 @@ subroutine Checksum__setup32(this, part, remote_idx, glb_idx )
   integer(c_int), intent(in) :: part(:)
   integer(ATLAS_KIND_IDX), intent(in) :: remote_idx(:)
   integer(c_int), intent(in) :: glb_idx(:)
-  call atlas__Checksum__setup32( this%CPTR_PGIBUG_A, part, remote_idx, 1, &
+  call atlas__Checksum__setup32( this%c_ptr(), part, remote_idx, 1, &
     &                          glb_idx, size(part) )
 end subroutine Checksum__setup32
 
@@ -109,7 +109,7 @@ subroutine Checksum__setup64(this, part, remote_idx, glb_idx)
   integer(c_int), intent(in) :: part(:)
   integer(ATLAS_KIND_IDX), intent(in) :: remote_idx(:)
   integer(c_long), intent(in) :: glb_idx(:)
-  call atlas__Checksum__setup64( this%CPTR_PGIBUG_A, part, remote_idx, 1, &
+  call atlas__Checksum__setup64( this%c_ptr(), part, remote_idx, 1, &
     &                            glb_idx, size(part) )
 end subroutine Checksum__setup64
 
@@ -126,7 +126,7 @@ function execute_${dtype}$_r1(this, loc_field_data) result(checksum)
   lstrides = (/ array_stride(loc_field_data,1) /)
   lextents = (/ 1                        /)
   lview => array_view1d(loc_field_data)
-  call atlas__Checksum__execute_strided_${ctype}$( this%CPTR_PGIBUG_A, &
+  call atlas__Checksum__execute_strided_${ctype}$( this%c_ptr(), &
     &  lview, lstrides, lextents, lrank, checksum_c_str )
   checksum = c_str_to_string(checksum_c_str)
 end function
@@ -142,7 +142,7 @@ function execute_${dtype}$_r2(this, loc_field_data) result(checksum)
   lstrides = (/ array_stride(loc_field_data,2), array_stride(loc_field_data,1) /)
   lextents = (/ 1,                        size  (loc_field_data,1) /)
   lview => array_view1d(loc_field_data)
-  call atlas__Checksum__execute_strided_${ctype}$( this%CPTR_PGIBUG_A, &
+  call atlas__Checksum__execute_strided_${ctype}$( this%c_ptr(), &
     &  lview, lstrides, lextents, lrank, checksum_c_str )
   checksum = c_str_to_string(checksum_c_str)
 end function
@@ -158,7 +158,7 @@ function execute_${dtype}$_r3(this, loc_field_data) result(checksum)
   lstrides = (/ array_stride(loc_field_data,3), array_stride(loc_field_data,2) , array_stride(loc_field_data,1) /)
   lextents = (/ 1,                        size  (loc_field_data,2) , size  (loc_field_data,1) /)
   lview => array_view1d(loc_field_data)
-  call atlas__Checksum__execute_strided_${ctype}$( this%CPTR_PGIBUG_A, &
+  call atlas__Checksum__execute_strided_${ctype}$( this%c_ptr(), &
     &  lview, lstrides, lextents, lrank, checksum_c_str )
   checksum = c_str_to_string(checksum_c_str)
 end function

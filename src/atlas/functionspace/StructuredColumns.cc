@@ -48,14 +48,6 @@ StructuredColumns::StructuredColumns(const Grid& grid, const grid::Distribution&
     FunctionSpace(new detail::StructuredColumns(grid, distribution, vertical, config)),
     functionspace_(dynamic_cast<const detail::StructuredColumns*>(get())) {}
 
-std::string StructuredColumns::checksum(const FieldSet& fieldset) const {
-    return functionspace_->checksum(fieldset);
-}
-
-std::string StructuredColumns::checksum(const Field& field) const {
-    return functionspace_->checksum(field);
-}
-
 // ----------------------------------------------------------------------------
 
 }  // namespace functionspace

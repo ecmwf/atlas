@@ -136,6 +136,7 @@ grid/CubedSphereGrid2.cc
 grid/CubedSphereGrid2.h
 grid/Grid.cc
 grid/Grid.h
+grid/GridPointFlags.h
 grid/SpecRegistry.cc
 grid/SpecRegistry.h
 grid/StructuredGrid.cc
@@ -469,6 +470,10 @@ list( APPEND atlas_field_srcs
 field.h
 field/Field.cc
 field/Field.h
+field/FieldBuilder.cc
+field/FieldBuilder.h
+field/builders/GridBoxArea.cc
+field/builders/GridBoxArea.h
 field/FieldCreator.cc
 field/FieldCreator.h
 field/FieldCreatorArraySpec.cc

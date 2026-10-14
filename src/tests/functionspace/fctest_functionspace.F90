@@ -774,7 +774,7 @@ template = field
 
 field = fs%create_field(template,global=.true.)
 FCTEST_CHECK_EQUAL( field%rank() , 2 )
-FCTEST_CHECK_EQUAL( field%name() , "" )
+FCTEST_CHECK_EQUAL( field%name() , "field" ) ! copied from template
 call field%final()
 
 field = fs%create_field(template,name="field",global=.true.)

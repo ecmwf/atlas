@@ -162,15 +162,15 @@ function atlas_Trans__ctor( grid, nsmax, config ) result(this)
   type(atlas_Config), intent(in), optional :: config
   if( present( config ) ) then
     if( present(nsmax) ) then
-      call this%reset_c_ptr( atlas__Trans__new_config( grid%CPTR_PGIBUG_A, nsmax, config%CPTR_PGIBUG_B ) )
+      call this%reset_c_ptr( atlas__Trans__new_config( grid%c_ptr(), nsmax, config%c_ptr() ) )
     else
-      call this%reset_c_ptr( atlas__Trans__new_config( grid%CPTR_PGIBUG_A, 0, config%CPTR_PGIBUG_B ) )
+      call this%reset_c_ptr( atlas__Trans__new_config( grid%c_ptr(), 0, config%c_ptr() ) )
     endif
   else
     if( present(nsmax) ) then
-      call this%reset_c_ptr( atlas__Trans__new( grid%CPTR_PGIBUG_A, nsmax ) )
+      call this%reset_c_ptr( atlas__Trans__new( grid%c_ptr(), nsmax ) )
     else
-      call this%reset_c_ptr( atlas__Trans__new( grid%CPTR_PGIBUG_A, 0 ) )
+      call this%reset_c_ptr( atlas__Trans__new( grid%c_ptr(), 0 ) )
     endif
   endif
   call this%return()
@@ -180,21 +180,21 @@ function handle( this )
   use atlas_trans_c_binding
   integer :: handle
   class(atlas_Trans) :: this
-  handle = atlas__Trans__handle (this%CPTR_PGIBUG_A)
+  handle = atlas__Trans__handle (this%c_ptr())
 end function
 
 function truncation( this )
   use atlas_trans_c_binding
   integer :: truncation
   class(atlas_Trans) :: this
-  truncation = atlas__Trans__truncation (this%CPTR_PGIBUG_A)
+  truncation = atlas__Trans__truncation (this%c_ptr())
 end function
 
 function spectral( this )
   use atlas_trans_c_binding
   type(atlas_FunctionSpace) :: spectral
   class(atlas_Trans) :: this
-  spectral = atlas_FunctionSpace( atlas__Trans__spectral (this%CPTR_PGIBUG_A) )
+  spectral = atlas_FunctionSpace( atlas__Trans__spectral (this%c_ptr()) )
   call spectral%return()
 end function
 
@@ -203,7 +203,7 @@ function grid( this )
   use atlas_trans_c_binding
   class(atlas_Trans) :: this
   type(atlas_Grid) :: grid
-  grid = atlas_Grid( atlas__Trans__grid(this%CPTR_PGIBUG_A) )
+  grid = atlas_Grid( atlas__Trans__grid(this%c_ptr()) )
   call grid%return()
 end function
 
@@ -217,15 +217,15 @@ subroutine dirtrans_fieldset(this, gpfields, spfields, config)
   type(atlas_Config) :: p
 
   if( present(config) ) then
-    call p%reset_c_ptr( config%CPTR_PGIBUG_B )
+    call p%reset_c_ptr( config%c_ptr() )
   else
     p = atlas_Config()
   endif
 
-  call atlas__Trans__dirtrans_fieldset( this%CPTR_PGIBUG_A,     &
-    &                          gpfields%CPTR_PGIBUG_A, &
-    &                          spfields%CPTR_PGIBUG_A, &
-    &                          p%CPTR_PGIBUG_B )
+  call atlas__Trans__dirtrans_fieldset( this%c_ptr(),     &
+    &                          gpfields%c_ptr(), &
+    &                          spfields%c_ptr(), &
+    &                          p%c_ptr() )
 
   if( .not. present(config) ) then
     call p%final()
@@ -242,15 +242,15 @@ subroutine invtrans_fieldset(this, spfields, gpfields, config)
   type(atlas_Config) :: p
 
   if( present(config) ) then
-    call p%reset_c_ptr( config%CPTR_PGIBUG_B )
+    call p%reset_c_ptr( config%c_ptr() )
   else
     p = atlas_Config()
   endif
 
-  call atlas__Trans__invtrans_fieldset( this%CPTR_PGIBUG_A,     &
-    &                          spfields%CPTR_PGIBUG_A, &
-    &                          gpfields%CPTR_PGIBUG_A, &
-    &                          p%CPTR_PGIBUG_B )
+  call atlas__Trans__invtrans_fieldset( this%c_ptr(),     &
+    &                          spfields%c_ptr(), &
+    &                          gpfields%c_ptr(), &
+    &                          p%c_ptr() )
 
   if( .not. present(config) ) then
     call p%final()
@@ -266,15 +266,15 @@ subroutine dirtrans_field(this, gpfield, spfield, config)
   type(atlas_Config) :: p
 
   if( present(config) ) then
-    call p%reset_c_ptr( config%CPTR_PGIBUG_B )
+    call p%reset_c_ptr( config%c_ptr() )
   else
     p = atlas_Config()
   endif
 
-  call atlas__Trans__dirtrans_field( this%CPTR_PGIBUG_A, &
-    &                          gpfield%CPTR_PGIBUG_A, &
-    &                          spfield%CPTR_PGIBUG_A, &
-    &                          p%CPTR_PGIBUG_B )
+  call atlas__Trans__dirtrans_field( this%c_ptr(), &
+    &                          gpfield%c_ptr(), &
+    &                          spfield%c_ptr(), &
+    &                          p%c_ptr() )
 
   if( .not. present(config) ) then
     call p%final()
@@ -291,16 +291,16 @@ subroutine dirtrans_wind2vordiv_field(this, gpwind, spvor, spdiv, config)
   type(atlas_Config) :: p
 
   if( present(config) ) then
-    call p%reset_c_ptr( config%CPTR_PGIBUG_B )
+    call p%reset_c_ptr( config%c_ptr() )
   else
     p = atlas_Config()
   endif
 
-  call atlas__Trans__dirtrans_wind2vordiv_field( this%CPTR_PGIBUG_A, &
-    &                          gpwind%CPTR_PGIBUG_A, &
-    &                          spvor%CPTR_PGIBUG_A, &
-    &                          spdiv%CPTR_PGIBUG_A, &
-    &                          p%CPTR_PGIBUG_B )
+  call atlas__Trans__dirtrans_wind2vordiv_field( this%c_ptr(), &
+    &                          gpwind%c_ptr(), &
+    &                          spvor%c_ptr(), &
+    &                          spdiv%c_ptr(), &
+    &                          p%c_ptr() )
 
   if( .not. present(config) ) then
     call p%final()
@@ -318,15 +318,15 @@ subroutine invtrans_field(this, spfield, gpfield, config)
   type(atlas_Config) :: p
 
   if( present(config) ) then
-    call p%reset_c_ptr( config%CPTR_PGIBUG_B )
+    call p%reset_c_ptr( config%c_ptr() )
   else
     p = atlas_Config()
   endif
 
-  call atlas__Trans__invtrans_field( this%CPTR_PGIBUG_A, &
-    &                          spfield%CPTR_PGIBUG_A, &
-    &                          gpfield%CPTR_PGIBUG_A, &
-    &                          p%CPTR_PGIBUG_B )
+  call atlas__Trans__invtrans_field( this%c_ptr(), &
+    &                          spfield%c_ptr(), &
+    &                          gpfield%c_ptr(), &
+    &                          p%c_ptr() )
 
   if( .not. present(config) ) then
     call p%final()
@@ -344,16 +344,16 @@ subroutine invtrans_vordiv2wind_field(this, spvor, spdiv, gpwind, config)
   type(atlas_Config) :: p
 
   if( present(config) ) then
-    call p%reset_c_ptr( config%CPTR_PGIBUG_B )
+    call p%reset_c_ptr( config%c_ptr() )
   else
     p = atlas_Config()
   endif
 
-  call atlas__Trans__invtrans_vordiv2wind_field( this%CPTR_PGIBUG_A, &
-    &                          spvor%CPTR_PGIBUG_A, &
-    &                          spdiv%CPTR_PGIBUG_A, &
-    &                          gpwind%CPTR_PGIBUG_A, &
-    &                          p%CPTR_PGIBUG_B )
+  call atlas__Trans__invtrans_vordiv2wind_field( this%c_ptr(), &
+    &                          spvor%c_ptr(), &
+    &                          spdiv%c_ptr(), &
+    &                          gpwind%c_ptr(), &
+    &                          p%c_ptr() )
 
   if( .not. present(config) ) then
     call p%final()
@@ -369,10 +369,10 @@ subroutine invtrans_grad_field(this, spfield, gpfield)
   class(atlas_Field), intent(inout) :: gpfield
   type(atlas_Config) :: config
   config = atlas_Config()
-  call atlas__Trans__invtrans_grad_field( this%CPTR_PGIBUG_A, &
-    &                          spfield%CPTR_PGIBUG_A, &
-    &                          gpfield%CPTR_PGIBUG_A, &
-    &                          config%CPTR_PGIBUG_B)
+  call atlas__Trans__invtrans_grad_field( this%c_ptr(), &
+    &                          spfield%c_ptr(), &
+    &                          gpfield%c_ptr(), &
+    &                          config%c_ptr())
   call config%final()
 end subroutine invtrans_grad_field
 

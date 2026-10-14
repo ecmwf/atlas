@@ -47,10 +47,6 @@ void atlas__NodesFunctionSpace__scatter_field(const NodeColumns* This, const fie
                                               field::FieldImpl* local);
 const parallel::GatherScatter* atlas__NodesFunctionSpace__get_scatter(const NodeColumns* This);
 
-void atlas__NodesFunctionSpace__checksum_fieldset(const NodeColumns* This, const field::FieldSetImpl* fieldset,
-                                                  char*& checksum, int& size, int& allocated);
-void atlas__NodesFunctionSpace__checksum_field(const NodeColumns* This, const field::FieldImpl* field, char*& checksum,
-                                               int& size, int& allocated);
 const parallel::Checksum* atlas__NodesFunctionSpace__get_checksum(const NodeColumns* This);
 
 void atlas__NodesFunctionSpace__sum_double(const NodeColumns* This, const field::FieldImpl* field, double& sum, int& N);

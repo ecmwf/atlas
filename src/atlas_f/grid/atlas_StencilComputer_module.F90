@@ -176,7 +176,7 @@ function atlas_StructuredGrid_ComputeNorth__ctor(grid, halo) result(this)
   type(atlas_StructuredGrid_ComputeNorth) :: this
   class(atlas_StructuredGrid), intent(in) :: grid
   integer(c_int), intent(in) :: halo
-  call this%reset_c_ptr( atlas__grid__ComputeNorth__new(grid%CPTR_PGIBUG_B, halo), &
+  call this%reset_c_ptr( atlas__grid__ComputeNorth__new(grid%c_ptr(), halo), &
     & fckit_c_deleter(atlas__grid__ComputeNorth__delete) )
   call this%return()
 end function
@@ -190,7 +190,7 @@ function atlas_StructuredGrid_ComputeWest__ctor(grid, halo) result(this)
   type(atlas_StructuredGrid_ComputeWest) :: this
   class(atlas_StructuredGrid), intent(in) :: grid
   integer(c_int), intent(in) :: halo
-  call this%reset_c_ptr( atlas__grid__ComputeWest__new(grid%CPTR_PGIBUG_B, halo), &
+  call this%reset_c_ptr( atlas__grid__ComputeWest__new(grid%c_ptr(), halo), &
     & fckit_c_deleter(atlas__grid__ComputeWest__delete) )
   call this%return()
 end function
@@ -233,7 +233,7 @@ function atlas_StructuredGrid_ComputeNorth__execute_real32(this, y) result(index
   integer(ATLAS_KIND_IDX) :: index
   class(atlas_StructuredGrid_ComputeNorth), intent(in) :: this
   real(c_float), intent(in) :: y
-  index = atlas__grid__ComputeNorth__execute_real32(this%CPTR_PGIBUG_B, y) + 1
+  index = atlas__grid__ComputeNorth__execute_real32(this%c_ptr(), y) + 1
 end function
 
 function atlas_StructuredGrid_ComputeNorth__execute_real64(this, y) result(index)
@@ -243,7 +243,7 @@ function atlas_StructuredGrid_ComputeNorth__execute_real64(this, y) result(index
   integer(ATLAS_KIND_IDX) :: index
   class(atlas_StructuredGrid_ComputeNorth), intent(in) :: this
   real(c_double), intent(in) :: y
-  index = atlas__grid__ComputeNorth__execute_real64(this%CPTR_PGIBUG_B, y) + 1
+  index = atlas__grid__ComputeNorth__execute_real64(this%c_ptr(), y) + 1
 end function
 ! ----------------------------------------------------------------------------------------
 
@@ -255,7 +255,7 @@ function atlas_StructuredGrid_ComputeWest__execute_real32(this, x, j) result(ind
   class(atlas_StructuredGrid_ComputeWest), intent(in) :: this
   real(c_float), intent(in) :: x
   integer(ATLAS_KIND_IDX), intent(in) :: j
-  index = atlas__grid__ComputeWest__execute_real32(this%CPTR_PGIBUG_B, x, j-int(1,ATLAS_KIND_IDX)) + 1
+  index = atlas__grid__ComputeWest__execute_real32(this%c_ptr(), x, j-int(1,ATLAS_KIND_IDX)) + 1
 end function
 
 function atlas_StructuredGrid_ComputeWest__execute_real64(this, x, j) result(index)
@@ -266,7 +266,7 @@ function atlas_StructuredGrid_ComputeWest__execute_real64(this, x, j) result(ind
   class(atlas_StructuredGrid_ComputeWest), intent(in) :: this
   real(c_double), intent(in) :: x
   integer(ATLAS_KIND_IDX), intent(in) :: j
-  index = atlas__grid__ComputeWest__execute_real64(this%CPTR_PGIBUG_B, x, j-int(1,ATLAS_KIND_IDX)) + 1
+  index = atlas__grid__ComputeWest__execute_real64(this%c_ptr(), x, j-int(1,ATLAS_KIND_IDX)) + 1
 end function
 ! ----------------------------------------------------------------------------------------
 

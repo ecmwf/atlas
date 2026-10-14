@@ -53,8 +53,9 @@ private:
 
 public:
     static TimingsRegistry& instance() {
-        static TimingsRegistry registry;
-        return registry;
+        // Leaking this singleton as it is used in static destructors and we don't want to rely on the order of destruction of static objects
+        static TimingsRegistry* registry = new TimingsRegistry();
+        return *registry;
     }
 
     size_t add(const CodeLocation&, const CallStack& stack, const std::string& title, const Timings::Labels&);

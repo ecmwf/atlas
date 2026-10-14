@@ -29,7 +29,16 @@ if( HAVE_FCTEST )
     SOURCES         fctest_blockstructuredcolumns.F90
     LIBS            atlas_f
     ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
-)
+  )
+
+  add_fctest( TARGET atlas_fctest_blockstructuredcolumns_checksum
+    MPI             2
+    CONDITION       eckit_HAVE_MPI AND MPI_SLOTS GREATER_EQUAL 2
+    LINKER_LANGUAGE Fortran
+    SOURCES         fctest_blockstructuredcolumns_checksum.F90
+    LIBS            atlas_f
+    ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
+  )
 
 endif()
 
@@ -47,10 +56,32 @@ ecbuild_add_test( TARGET atlas_test_functionspace_splitcomm
   ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
 )
 
+ecbuild_add_test( TARGET atlas_test_spectral_functionspace
+  MPI         4
+  CONDITION   atlas_HAVE_ECTRANS AND eckit_HAVE_MPI AND ( transi_HAVE_MPI OR ectrans_HAVE_MPI ) AND MPI_SLOTS GREATER_EQUAL 4
+  SOURCES     test_spectral_functionspace.cc
+  LIBS        atlas
+  ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
+)
+
+ecbuild_add_test( TARGET atlas_test_spectral_functionspace_serial
+   SOURCES     test_spectral_functionspace.cc
+   LIBS        atlas
+   ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
+ )
+
 
 ecbuild_add_test( TARGET atlas_test_cellcolumns
   SOURCES  test_cellcolumns.cc
   LIBS     atlas
+  ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
+)
+
+ecbuild_add_test( TARGET atlas_test_columns_checksum
+  MPI         2
+  CONDITION   eckit_HAVE_MPI AND MPI_SLOTS GREATER_EQUAL 2
+  SOURCES     test_columns_checksum.cc
+  LIBS        atlas
   ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
 )
 
@@ -85,12 +116,31 @@ ecbuild_add_test( TARGET atlas_test_structuredcolumns
   CONDITION eckit_HAVE_MPI AND MPI_SLOTS GREATER_EQUAL 5
 )
 
+ecbuild_add_test( TARGET atlas_test_structuredcolumns_area
+  SOURCES  test_structuredcolumns_area.cc
+  LIBS     atlas
+  ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
+)
+
 ecbuild_add_test( TARGET atlas_test_blockstructuredcolumns
   MPI        3
   SOURCES  test_blockstructuredcolumns.cc
   LIBS     atlas
   ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
   CONDITION eckit_HAVE_MPI AND MPI_SLOTS GREATER_EQUAL 3
+)
+
+ecbuild_add_test( TARGET atlas_test_blockstructuredcolumns_checksum
+  SOURCES  test_blockstructuredcolumns_checksum.cc
+  LIBS     atlas
+  ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
+)
+
+ecbuild_add_test( TARGET atlas_test_blockstructuredcolumns_checksum_mpi
+  COMMAND   atlas_test_blockstructuredcolumns_checksum
+  MPI       4
+  ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
+  CONDITION eckit_HAVE_MPI AND MPI_SLOTS GREATER_EQUAL 4
 )
 
 ecbuild_add_test( TARGET atlas_test_pointcloud

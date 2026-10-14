@@ -95,6 +95,21 @@ ecbuild_add_test( TARGET atlas_test_mesh_node2cell
   ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
 )
 
+ecbuild_add_executable( TARGET atlas_test_gauss_with_cs_partition
+  SOURCES    test_gauss_with_cs_partition.cc
+  LIBS       atlas
+  NOINSTALL
+)
+
+foreach( mpi_size 1 6 12 54 )
+  ecbuild_add_test( TARGET atlas_test_gauss_with_cs_partition_MPI_${mpi_size}
+    COMMAND     atlas_test_gauss_with_cs_partition
+    MPI         ${mpi_size}
+    CONDITION   eckit_HAVE_MPI AND MPI_SLOTS GREATER_EQUAL ${mpi_size}
+    ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
+  )
+endforeach()
+
 ecbuild_add_test( TARGET atlas_test_meshgen_splitcomm
   MPI         4
   CONDITION   eckit_HAVE_MPI AND MPI_SLOTS GREATER_EQUAL 4

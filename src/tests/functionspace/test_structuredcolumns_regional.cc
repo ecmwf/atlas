@@ -36,6 +36,28 @@ namespace test {
 
 //-----------------------------------------------------------------------------
 
+CASE("regional compute_xy reflects halo rows") {
+    const int Nx = 8, Ny = 8;
+    StructuredGrid::XSpace xspace(Config("type", "linear")("N", Nx)("start", 20.)("end", 60.));
+    StructuredGrid::YSpace yspace(Config("type", "linear")("N", Ny)("start", 20.)("end", 60.));
+    StructuredGrid grid(xspace, yspace);
+    functionspace::StructuredColumns fs(grid, grid::Partitioner("checkerboard"), Config("halo", 2));
+
+    const idx_t i = 0;
+
+    const idx_t north_jj    = 2;
+    const PointXY north_halo = fs.compute_xy(i, -2);
+    EXPECT_EQ(north_halo.x(), grid.x(i, north_jj));
+    EXPECT_EQ(north_halo.y(), 2. * grid.y(0) - grid.y(north_jj));
+
+    const idx_t south_jj    = Ny - 3;
+    const PointXY south_halo = fs.compute_xy(i, Ny + 1);
+    EXPECT_EQ(south_halo.x(), grid.x(i, south_jj));
+    EXPECT_EQ(south_halo.y(), 2. * grid.y(Ny - 1) - grid.y(south_jj));
+}
+
+//-----------------------------------------------------------------------------
+
 CASE("regional lonlat") {
     const int Nx = 8, Ny = 8;
     const double xmin = +20, xmax = +60, ymin = +20, ymax = +60;

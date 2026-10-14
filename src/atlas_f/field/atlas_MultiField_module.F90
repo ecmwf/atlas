@@ -81,7 +81,7 @@ function atlas_MultiField__create(params) result(field)
   use atlas_multifield_c_binding
   type(atlas_MultiField) :: field
   class(atlas_Config), intent(in) :: params
-  field = atlas_MultiField__cptr( atlas__MultiField__create(params%CPTR_PGIBUG_B) )
+  field = atlas_MultiField__cptr( atlas__MultiField__create(params%c_ptr()) )
   call field%return()
 end function
 
@@ -130,7 +130,7 @@ function MultiField__size(this) result(size)
   use atlas_multifield_c_binding
   class(atlas_MultiField), intent(in) :: this
   integer :: size
-  size = atlas__MultiField__size(this%CPTR_PGIBUG_B)
+  size = atlas__MultiField__size(this%c_ptr())
 end function
 
 !-------------------------------------------------------------------------------
@@ -140,7 +140,7 @@ function MultiField__fieldset(this) result(fset)
   class(atlas_MultiField), intent(in) :: this
   type(c_ptr) :: fset_cptr
   type(atlas_FieldSet) :: fset
-  fset_cptr = atlas__MultiField__fieldset(this%CPTR_PGIBUG_B)
+  fset_cptr = atlas__MultiField__fieldset(this%c_ptr())
   fset = atlas_FieldSet( fset_cptr )
   call fset%return()
 end function

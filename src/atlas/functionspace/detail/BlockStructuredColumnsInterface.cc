@@ -111,29 +111,6 @@ void atlas__functionspace__BStructuredColumns__scatter_fieldset(const detail::Bl
     This->scatter(g, l);
 }
 
-void atlas__fs__BStructuredColumns__checksum_fieldset(const detail::BlockStructuredColumns* This,
-                                                     const field::FieldSetImpl* fieldset, char*& checksum, idx_t& size,
-                                                     int& allocated) {
-    ATLAS_ASSERT(This != nullptr, "Cannot access uninitialised atlas_functionspace_BlockStructuredColumns");
-    ATLAS_ASSERT(fieldset != nullptr, "Cannot access uninitialised atlas_FieldSet");
-    std::string checksum_str(This->checksum(fieldset));
-    size      = static_cast<idx_t>(checksum_str.size());
-    checksum  = new char[size + 1];
-    allocated = true;
-    std::strncpy(checksum, checksum_str.c_str(), size + 1);
-}
-
-void atlas__fs__BStructuredColumns__checksum_field(const detail::BlockStructuredColumns* This, const field::FieldImpl* field,
-                                                  char*& checksum, idx_t& size, int& allocated) {
-    ATLAS_ASSERT(This != nullptr, "Cannot access uninitialised atlas_functionspace_BlockStructuredColumns");
-    ATLAS_ASSERT(field != nullptr, "Cannot access uninitialised atlas_Field");
-    std::string checksum_str(This->checksum(field));
-    size      = static_cast<idx_t>(checksum_str.size());
-    checksum  = new char[size + 1];
-    allocated = true;
-    std::strncpy(checksum, checksum_str.c_str(), size + 1);
-}
-
 void atlas__fs__BStructuredColumns__index_host(const detail::BlockStructuredColumns* This, idx_t*& data, idx_t& i_min,
                                               idx_t& i_max, idx_t& j_min, idx_t& j_max) {
     ATLAS_ASSERT(This != nullptr, "Cannot access uninitialised atlas_functionspace_BlockStructuredColumns");

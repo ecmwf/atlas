@@ -86,7 +86,7 @@ function ctor_create(fspace1, fspace2, redist_name) result(this)
   type(atlas_Config) :: config
   config = empty_config()
   if (present(redist_name)) call config%set("type", redist_name)
-  call this%reset_c_ptr( atlas__Redistribution__new__config(fspace1%CPTR_PGIBUG_A, fspace2%CPTR_PGIBUG_A, config%CPTR_PGIBUG_B) )
+  call this%reset_c_ptr( atlas__Redistribution__new__config(fspace1%c_ptr(), fspace2%c_ptr(), config%c_ptr()) )
   call config%final()
   call this%return()
 end function
@@ -97,14 +97,14 @@ subroutine atlas_Redistribution__execute(this, field_1, field_2)
   class(atlas_Redistribution), intent(in) :: this
   class(atlas_Field), intent(in) :: field_1
   class(atlas_Field), intent(inout) :: field_2
-  call atlas__Redistribution__execute(this%CPTR_PGIBUG_A, field_1%CPTR_PGIBUG_A, field_2%CPTR_PGIBUG_A)
+  call atlas__Redistribution__execute(this%c_ptr(), field_1%c_ptr(), field_2%c_ptr())
 end subroutine
 
 function atlas_Redistribution__source(this) result(fspace)
   use atlas_redistribution_c_binding
   class(atlas_Redistribution), intent(in) :: this
   type(atlas_FunctionSpace) :: fspace
-  call fspace%reset_c_ptr(atlas__Redistribution__source(this%CPTR_PGIBUG_A))
+  call fspace%reset_c_ptr(atlas__Redistribution__source(this%c_ptr()))
   call fspace%return()
 end function
 
@@ -112,7 +112,7 @@ function atlas_Redistribution__target(this) result(fspace)
   use atlas_redistribution_c_binding
   class(atlas_Redistribution), intent(in) :: this
   type(atlas_FunctionSpace) :: fspace
-  call fspace%reset_c_ptr(atlas__Redistribution__target(this%CPTR_PGIBUG_A))
+  call fspace%reset_c_ptr(atlas__Redistribution__target(this%c_ptr()))
   call fspace%return()
 end function
 

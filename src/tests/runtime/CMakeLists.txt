@@ -13,6 +13,19 @@ ecbuild_add_test( TARGET atlas_test_trace
   OMP         2
 )
 
+ecbuild_add_test( TARGET atlas_test_debug_logging
+  SOURCES     test_debug_logging.cc
+  LIBS        atlas
+  ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT} ATLAS_MPI_BARRIER_TIMEOUT=3
+)
+
+ecbuild_add_test( TARGET atlas_test_debug_logging_mpi
+  COMMAND     atlas_test_debug_logging
+  MPI        3
+  CONDITION  eckit_HAVE_MPI AND MPI_SLOTS GREATER_EQUAL 3
+  ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT} ATLAS_MPI_BARRIER_TIMEOUT=3
+)
+
 foreach( test test_library test_library_noargs test_library_init_nofinal test_library_noinit_final )
   ecbuild_add_test( TARGET atlas_${test}
     SOURCES     ${test}.cc

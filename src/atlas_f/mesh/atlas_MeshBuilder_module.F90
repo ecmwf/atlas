@@ -104,7 +104,7 @@ function atlas_TriangularMeshBuilder__build(this, &
   view1d_triag_global_index => array_view1d(triag_global_index)
   view1d_triag_nodes => array_view1d(triag_nodes)
   call mesh%reset_c_ptr() ! Somehow needed with PGI/16.7 and build-type "bit"
-  mesh = atlas_Mesh( atlas__TriangularMeshBuilder__operator(this%CPTR_PGIBUG_A, &
+  mesh = atlas_Mesh( atlas__TriangularMeshBuilder__operator(this%c_ptr(), &
        & int(nb_nodes,c_size_t), node_global_index, &
        & view1d_x,   view1d_y,   int(array_stride(x,1),c_size_t),   int(array_stride(y,1),c_size_t),   &
        & view1d_lon, view1d_lat, int(array_stride(lon,1),c_size_t), int(array_stride(lat,1),c_size_t), &

@@ -10,6 +10,8 @@
 
 #pragma once
 
+#include <cstddef>
+#include <functional>
 #include <string>
 
 #include "atlas/library/config.h"
@@ -75,6 +77,9 @@ public:
     void scatter(const FieldSet&, FieldSet&) const;
     void scatter(const Field&, Field&) const;
 
+    std::string checksum(const FieldSet&) const;
+    std::string checksum(const Field&) const;
+
     const util::PartitionPolygon& polygon(idx_t halo = 0) const;
 
     const util::PartitionPolygons& polygons() const;
@@ -98,6 +103,15 @@ public:
     Field remote_index() const;
 
     Field partition() const;
+
+    Field mask() const;
+
+    bool hasMask() const;
+
+    void setMask(const Field& global_mask);
+
+    using MaskInitializer = std::function<void(int*, size_t)>;
+    void setMask(const MaskInitializer&, idx_t root = 0);
 
     const functionspace::HaloDescription& halo_description() const;
 

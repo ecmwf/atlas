@@ -15,6 +15,7 @@
 #include <mutex>
 #include <sstream>
 #include <string>
+#include <vector>
 
 #include "eckit/utils/MD5.h"
 
@@ -164,6 +165,9 @@ void transpose_nonblocked_to_blocked(const Field& nonblocked, Field& blocked, co
     else if (kind == array::DataType::kind<long>()) {
         block_copy<long>(nonblocked, blocked, fs);
     }
+    else if (kind == array::DataType::kind<unsigned long>()) {
+        block_copy<unsigned long>(nonblocked, blocked, fs);
+    }
     else if (kind == array::DataType::kind<float>()) {
         block_copy<float>(nonblocked, blocked, fs);
     }
@@ -182,6 +186,9 @@ void transpose_blocked_to_nonblocked(const Field& blocked, Field& nonblocked, co
     }
     else if (kind == array::DataType::kind<long>()) {
         rev_block_copy<long>(blocked, nonblocked, fs);
+    }
+    else if (kind == array::DataType::kind<unsigned long>()) {
+        rev_block_copy<unsigned long>(blocked, nonblocked, fs);
     }
     else if (kind == array::DataType::kind<float>()) {
         rev_block_copy<float>(blocked, nonblocked, fs);
@@ -354,14 +361,213 @@ void BlockStructuredColumns::gather(const Field& local, Field& global) const {
 // Checksum Field
 // ----------------------------------------------------------------------------
 
-std::string BlockStructuredColumns::checksum(const Field&) const {
-    ATLAS_NOTIMPLEMENTED;
+namespace {
+
+struct ChecksumData {
+    Field local_lane_checksums;
+    Field global_lane_checksums;
+    int root{0};
+};
+
+bool block_slice_contiguous(const Field& f) {
+    idx_t expected_stride = 1;
+    for (idx_t dim = f.rank() - 1; dim > 0; --dim) {
+        if (f.stride(dim) != expected_stride) {
+            return false;
+        }
+        expected_stride *= f.shape(dim);
+    }
+    return true;
 }
 
-std::string BlockStructuredColumns::checksum(const FieldSet&) const {
-    ATLAS_NOTIMPLEMENTED;
+template <typename T>
+void checksum_update_lane(util::checksum_t& checksum, const array::Array& f, const T* data, idx_t dim, idx_t offset) {
+    if (dim == f.rank() - 1) {
+        util::checksum_update(checksum, data + offset, 1);
+        return;
+    }
+    for (idx_t index = 0; index < f.shape(dim); ++index) {
+        checksum_update_lane(checksum, f, data, dim + 1, offset + index * f.stride(dim));
+    }
 }
 
+template <typename T>
+void update_lane_checksums_with_field_contiguous(const BlockStructuredColumns& fs, const Field& f, const T* data,
+                                                 array::ArrayView<util::checksum_t, 2>& local_lane_checksums_view) {
+    const idx_t nproma = f.shape(f.rank() - 1);
+    const idx_t full_blocks = (fs.nblks() > 0 ? fs.nblks() - 1 : 0);
+
+    if (f.rank() == 4) {
+        auto update_block = [&](idx_t jblk, idx_t block_size) {
+            const idx_t block_offset = jblk * f.stride(0);
+            const T* block_data = data + block_offset;
+            // [nblks, nvar, nlev, nproma]: iterate lev-outer, var-inner
+            // to match global field order [npoints, nlev, nvar]
+            const idx_t nvar = f.shape(1);
+            const idx_t nlev = f.shape(2);
+            const size_t lane_size = static_cast<size_t>(nvar);
+            const size_t lane_stride = static_cast<size_t>(nlev * nproma);
+            for (idx_t jlev = 0; jlev < nlev; ++jlev) {
+                for (idx_t jlane = 0; jlane < block_size; ++jlane) {
+                    const T* lane_data = block_data + jlev * nproma + jlane;
+                    util::checksum_update(local_lane_checksums_view(jblk, jlane), lane_data, lane_size, lane_stride);
+                }
+            }
+        };
+
+        atlas_omp_parallel_for(idx_t jblk = 0; jblk < full_blocks; ++jblk) {
+            update_block(jblk, nproma);
+        }
+        if (fs.nblks() > 0) {
+            update_block(fs.nblks() - 1, fs.block_size(fs.nblks() - 1));
+        }
+    }
+    else {
+        const size_t lane_stride = static_cast<size_t>(nproma);
+        size_t lane_size{1};
+        for (idx_t dim = 1; dim < f.rank() - 1; ++dim) {
+            lane_size *= f.shape(dim);
+        }
+        auto update_block = [&](idx_t jblk, idx_t block_size) {
+            const idx_t block_offset = jblk * f.stride(0);
+            const T* block_data = data + block_offset;
+            for (idx_t jlane = 0; jlane < block_size; ++jlane) {
+                const T* lane_data = block_data + jlane;
+                util::checksum_update(local_lane_checksums_view(jblk, jlane), lane_data, lane_size, lane_stride);
+            }
+        };
+
+        atlas_omp_parallel_for(idx_t jblk = 0; jblk < full_blocks; ++jblk) {
+            update_block(jblk, nproma);
+        }
+        if (fs.nblks() > 0) {
+            update_block(fs.nblks() - 1, fs.block_size(fs.nblks() - 1));
+        }
+    }
+}
+
+template <typename T>
+void update_lane_checksums_with_field(const BlockStructuredColumns& fs, const Field& f,
+                                      ChecksumData& checksum_data) {
+    auto local_lane_checksums_view = array::make_view<util::checksum_t, 2>(checksum_data.local_lane_checksums);
+    const auto* data = f.array().host_data<T>();
+    if (block_slice_contiguous(f)) {
+        update_lane_checksums_with_field_contiguous(fs, f, data, local_lane_checksums_view);
+        return;
+    }
+
+    // A fallback; we should usually not be here normally, as a field block is usually contiguous
+    const idx_t lane_stride = f.stride(f.rank() - 1);
+    atlas_omp_parallel_for (idx_t jblk = 0; jblk < fs.nblks(); ++jblk) {
+        const idx_t block_offset = jblk * f.stride(0);
+        const idx_t block_size   = fs.block_size(jblk);
+        if (f.rank() == 4) {
+            // Iterate lev-outer, var-inner to match global field order [npoints, nlev, nvar]
+            const idx_t nvar = f.shape(1);
+            const idx_t nlev = f.shape(2);
+            for (idx_t jlane = 0; jlane < block_size; ++jlane) {
+                util::checksum_t lane_checksum = local_lane_checksums_view(jblk, jlane);
+                for (idx_t jlev = 0; jlev < nlev; ++jlev) {
+                    for (idx_t jvar = 0; jvar < nvar; ++jvar) {
+                        const idx_t offset = block_offset + jlane * lane_stride + jvar * f.stride(1) + jlev * f.stride(2);
+                        util::checksum_update(lane_checksum, data + offset, size_t{1});
+                    }
+                }
+                local_lane_checksums_view(jblk, jlane) = lane_checksum;
+            }
+        }
+        else {
+            for (idx_t jlane = 0; jlane < block_size; ++jlane) {
+                util::checksum_t lane_checksum = local_lane_checksums_view(jblk, jlane);
+                checksum_update_lane(lane_checksum, f, data, idx_t{1}, block_offset + jlane * lane_stride);
+                local_lane_checksums_view(jblk, jlane) = lane_checksum;
+            }
+        }
+    }
+}
+
+void update_lane_checksums_with_field_dynamic(const BlockStructuredColumns& fs, const Field& f,
+                                              ChecksumData& checksum_data) {
+    switch (f.datatype().kind()) {
+        case array::DataType::kind<int>():    return update_lane_checksums_with_field<int>(fs, f, checksum_data);
+        case array::DataType::kind<long>():   return update_lane_checksums_with_field<long>(fs, f, checksum_data);
+        case array::DataType::kind<float>():  return update_lane_checksums_with_field<float>(fs, f, checksum_data);
+        case array::DataType::kind<double>(): return update_lane_checksums_with_field<double>(fs, f, checksum_data);
+        default:
+            throw_Exception("datatype not supported", Here());
+    }
+}
+
+ChecksumData get_checksum_data(const BlockStructuredColumns& fs) {
+    pluto::scope scope;
+    pluto::host::set_default_resource(pluto::host_pool_resource());
+    ChecksumData checksum_data;
+    checksum_data.root = 0;
+    checksum_data.local_lane_checksums = fs.createField(option::name("checksum_local_lane_checksums") |
+                                                        option::datatypeT<util::checksum_t>() |
+                                                        option::levels(0));
+    checksum_data.global_lane_checksums = fs.createField(checksum_data.local_lane_checksums, option::global(checksum_data.root));
+    auto local_lane_checksums_view = array::make_view<util::checksum_t, 2>(checksum_data.local_lane_checksums);
+    local_lane_checksums_view.assign(0);
+    return checksum_data;
+}
+
+util::checksum_t checksum_from_lane_states(const BlockStructuredColumns& fs, ChecksumData& checksum_data) {
+    auto& local_lane_checksums = checksum_data.local_lane_checksums;
+    auto local_lane_checksums_view = array::make_view<util::checksum_t, 2>(local_lane_checksums);
+    for (idx_t jblk = 0; jblk < fs.nblks(); ++jblk) {
+        for (idx_t jlane = 0; jlane < fs.nproma(); ++jlane) {
+            local_lane_checksums_view(jblk, jlane) = util::checksum_digest(local_lane_checksums_view(jblk, jlane));
+        }
+    }
+
+    auto& mpi_comm = mpi::comm(fs.mpi_comm());
+
+    if (mpi_comm.size() == 1) {
+        ATLAS_ASSERT(local_lane_checksums.contiguous());
+        const auto* local_lane_checksums_data = local_lane_checksums.array().host_data<util::checksum_t>();
+        return util::checksum(local_lane_checksums_data, static_cast<size_t>(fs.structuredcolumns().sizeOwned()));
+    }
+
+    auto& global_lane_checksums = checksum_data.global_lane_checksums;
+    fs.gather(local_lane_checksums, global_lane_checksums);
+
+    util::checksum_t global_checksum = 0;
+    if (mpi_comm.rank() == checksum_data.root) {
+        ATLAS_ASSERT(global_lane_checksums.contiguous());
+        const auto* global_lane_checksums_data = global_lane_checksums.array().host_data<util::checksum_t>();
+        global_checksum = util::checksum(global_lane_checksums_data, global_lane_checksums.size());
+    }
+    mpi_comm.broadcast(global_checksum, checksum_data.root);
+    return global_checksum;
+}
+
+util::checksum_t field_checksum(const BlockStructuredColumns& fs, const Field& f) {
+    ATLAS_ASSERT(f.rank() > 1);
+    auto checksum_data = get_checksum_data(fs);
+    update_lane_checksums_with_field_dynamic(fs, f, checksum_data);
+    return checksum_from_lane_states(fs, checksum_data);
+}
+
+util::checksum_t fieldset_checksum(const BlockStructuredColumns& fs, const FieldSet& fields) {
+    auto checksum_data = get_checksum_data(fs);
+    for (idx_t jfld = 0; jfld < fields.size(); ++jfld) {
+        update_lane_checksums_with_field_dynamic(fs, fields[jfld], checksum_data);
+    }
+    return checksum_from_lane_states(fs, checksum_data);
+}
+}  // namespace
+
+
+std::string BlockStructuredColumns::checksum(const Field& f) const {
+    ATLAS_TRACE("BlockStructuredColumns::checksum");
+    return util::checksum_to_hex_str(field_checksum(*this, f));
+}
+
+std::string BlockStructuredColumns::checksum(const FieldSet& f) const {
+    ATLAS_TRACE("BlockStructuredColumns::checksum");
+    return util::checksum_to_hex_str(fieldset_checksum(*this, f));
+}
 
 // ----------------------------------------------------------------------------
 

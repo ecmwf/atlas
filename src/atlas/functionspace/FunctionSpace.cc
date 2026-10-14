@@ -10,9 +10,12 @@
 
 
 #include "atlas/functionspace/FunctionSpace.h"
+#include "atlas/array/MakeView.h"
 #include "atlas/field/Field.h"
 #include "atlas/grid.h"
 #include "atlas/functionspace/detail/FunctionSpaceImpl.h"
+#include "atlas/option/Options.h"
+#include "atlas/parallel/mpi/mpi.h"
 
 namespace atlas {
 
@@ -91,6 +94,27 @@ Field FunctionSpace::partition() const {
     return get()->partition();
 }
 
+Field FunctionSpace::mask() const {
+    return get()->mask();
+}
+
+bool FunctionSpace::hasMask() const {
+    return get()->hasMask();
+}
+
+void FunctionSpace::setMask(const Field& global_mask) {
+    get()->setMask(global_mask);
+}
+
+void FunctionSpace::setMask(const MaskInitializer& initialize, idx_t root) {
+    Field global_mask = createField<int>(option::name("mask") | option::global(root));
+    if (mpi::comm(mpi_comm()).rank() == root) {
+        auto global_mask_view = array::make_view<int, 1>(global_mask);
+        initialize(global_mask_view.data(), global_mask_view.size());
+    }
+    setMask(global_mask);
+}
+
 void FunctionSpace::haloExchange(const FieldSet& fields, bool on_device) const {
     get()->haloExchange(fields, on_device);
 }
@@ -121,6 +145,14 @@ const parallel::GatherScatter& FunctionSpace::gather() const {
 
 const parallel::GatherScatter& FunctionSpace::scatter() const {
     return get()->scatter();
+}
+
+std::string FunctionSpace::checksum(const FieldSet& fieldset) const {
+    return get()->checksum(fieldset);
+}
+
+std::string FunctionSpace::checksum(const Field& field) const {
+    return get()->checksum(field);
 }
 
 std::string FunctionSpace::mpi_comm() const {

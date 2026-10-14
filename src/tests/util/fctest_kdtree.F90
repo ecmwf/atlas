@@ -108,7 +108,7 @@ implicit none
 
   ! Check constructor with specific geometry
   kdtree = atlas_IndexKDTree(geometry)
-  write(0,*) "kdtree%c_ptr() = ", c_ptr_to_loc(kdtree%CPTR_PGIBUG_A)
+  write(0,*) "kdtree%c_ptr() = ", c_ptr_to_loc(kdtree%c_ptr())
 
   ! Check reserve
   call kdtree%reserve(n)
@@ -155,7 +155,7 @@ implicit none
 
   ! Check constructor with specific geometry
   kdtree = atlas_IndexKDTree(geometry)
-  write(0,*) "kdtree%c_ptr() = ", c_ptr_to_loc(kdtree%CPTR_PGIBUG_A)
+  write(0,*) "kdtree%c_ptr() = ", c_ptr_to_loc(kdtree%c_ptr())
 
   ! Check reserve
   call kdtree%reserve(n)
@@ -200,7 +200,7 @@ implicit none
 
   ! Check constructor without geometry (Earth)
   kdtree = atlas_IndexKDTree()
-  write(0,*) "kdtree%c_ptr() = ", c_ptr_to_loc(kdtree%CPTR_PGIBUG_A)
+  write(0,*) "kdtree%c_ptr() = ", c_ptr_to_loc(kdtree%c_ptr())
 
   ! Check geometry accessor
   geometry = kdtree%geometry()
@@ -259,7 +259,7 @@ implicit none
 
   ! Check constructor without geometry (Earth)
   kdtree = atlas_IndexKDTree()
-  write(0,*) "kdtree%c_ptr() = ", c_ptr_to_loc(kdtree%CPTR_PGIBUG_A)
+  write(0,*) "kdtree%c_ptr() = ", c_ptr_to_loc(kdtree%c_ptr())
 
   ! Check build with list
   call kdtree%build(n, tree_lonlats, tree_indices)

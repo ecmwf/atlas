@@ -43,7 +43,7 @@ void atlas__SpectralFunctionSpace__nspec2g(const detail::Spectral* This, int& ns
 void atlas__SpectralFunctionSpace__truncation(const detail::Spectral* This, int& truncation);
 void atlas__SpectralFunctionSpace__nump(const detail::Spectral* This, int& nump);
 void atlas__SpectralFunctionSpace__nmyms(const detail::Spectral* This, const int*& nmyms, int& size);
-void atlas__SpectralFunctionSpace__nasm0(const detail::Spectral* This, const int*& nasm0, int& size);
+void atlas__SpectralFunctionSpace__nasm0_base1(const detail::Spectral* This, const int*& nasm0, int& size);
 void atlas__SpectralFunctionSpace__nvalue(const detail::Spectral* This, const int*& nvalue, int& size);
 void atlas__SpectralFunctionSpace__levels(const detail::Spectral* This, int& levels);
 }

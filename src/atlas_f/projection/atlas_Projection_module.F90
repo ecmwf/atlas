@@ -88,7 +88,7 @@ function atlas_Projection__ctor_config(config) result(this)
   use, intrinsic :: iso_c_binding, only : c_ptr
   type(atlas_Projection) :: this
   type(atlas_Config) :: config
-  call this%reset_c_ptr( atlas__Projection__ctor_config(config%CPTR_PGIBUG_B) )
+  call this%reset_c_ptr( atlas__Projection__ctor_config(config%c_ptr()) )
   call this%return()
 end function
 
@@ -100,7 +100,7 @@ function atlas_Projection__type(this) result(type_)
   character(len=:), allocatable :: type_
   type(c_ptr) :: type_c_str
   integer :: size
-  call atlas__Projection__type(this%CPTR_PGIBUG_A, type_c_str, size )
+  call atlas__Projection__type(this%c_ptr(), type_c_str, size )
   type_ = c_ptr_to_string(type_c_str)
   call c_ptr_free(type_c_str)
 end function
@@ -113,7 +113,7 @@ function hash(this)
   character(len=:), allocatable :: hash
   type(c_ptr) :: hash_c_str
   integer :: size
-  call atlas__Projection__hash(this%CPTR_PGIBUG_A, hash_c_str, size )
+  call atlas__Projection__hash(this%c_ptr(), hash_c_str, size )
   hash = c_ptr_to_string(hash_c_str)
   call c_ptr_free(hash_c_str)
 end function
@@ -122,7 +122,7 @@ function spec(this)
   use atlas_projection_c_binding
   class(atlas_Projection), intent(in) :: this
   type(atlas_Config) :: spec
-  spec = atlas_Config( atlas__Projection__spec(this%CPTR_PGIBUG_A) )
+  spec = atlas_Config( atlas__Projection__spec(this%c_ptr()) )
   call spec%return()
 end function
 
@@ -134,7 +134,7 @@ subroutine xy2lonlat(this, x, y, lon, lat)
   real(c_double), intent(in) :: y
   real(c_double), intent(out) :: lon
   real(c_double), intent(out) :: lat
-  call atlas__Projection__xy2lonlat(this%CPTR_PGIBUG_A, x, y, lon, lat )
+  call atlas__Projection__xy2lonlat(this%c_ptr(), x, y, lon, lat )
 end subroutine
 
 subroutine lonlat2xy(this, lon, lat, x, y)
@@ -145,7 +145,7 @@ subroutine lonlat2xy(this, lon, lat, x, y)
   real(c_double), intent(in) :: lat
   real(c_double), intent(out) :: x
   real(c_double), intent(out) :: y
-  call atlas__Projection__lonlat2xy(this%CPTR_PGIBUG_A, lon, lat, x, y )
+  call atlas__Projection__lonlat2xy(this%c_ptr(), lon, lat, x, y )
 end subroutine
 
 !------------------------------------------------------------------------------

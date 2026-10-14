@@ -10,6 +10,7 @@
 
 #include "Grid.h"
 
+#include <sstream>
 #include <vector>
 
 #include "eckit/utils/MD5.h"
@@ -52,6 +53,13 @@ const Grid* Grid::create(const Config& config) {
         }
     }
 
+    if (config.get("grid", name)) {
+        // This is an eckit::geo grid specification.
+        // For now simply treat it as name and hope for the best...
+        // It should work for all named grids
+        return create(name, config);
+    }
+
     if (name.size()) {
         Log::info() << "name provided: " << name << std::endl;
     }
@@ -66,13 +74,19 @@ const Grid* Grid::create(const Config& config) {
     }
 }
 
-const Grid* Grid::create(const std::string& name) {
-    return create(name, util::NoConfig());
+const Grid* Grid::create(const std::string& from_string) {
+    return create(from_string, util::NoConfig());
 }
 
-const Grid* Grid::create(const std::string& name, const Grid::Config& config) {
+const Grid* Grid::create(const std::string& from_string, const Grid::Config& config) {
+    const auto first = from_string.find_first_not_of(" \t\n\r");
+    if (first != std::string::npos && from_string[first] == '{') {
+        std::istringstream stream(from_string);
+        return create(util::Config(stream, "json"));
+    }
+
     for (const auto& [key, builder]: GridBuilder::nameRegistry()) {
-        const Grid* grid = builder->create(name, config);
+        const Grid* grid = builder->create(from_string, config);
         if (grid) {
             return grid;
         }
@@ -80,7 +94,7 @@ const Grid* Grid::create(const std::string& name, const Grid::Config& config) {
 
     // Throw exception
     std::ostringstream log;
-    log << "Could not construct Grid from the name \"" << name << "\"\n";
+    log << "Could not construct Grid from the name \"" << from_string << "\"\n";
     log << "Accepted names are: \n";
     for (const auto& [key, grid_builder]: GridBuilder::typeRegistry()) {
         for( auto& grid_name: grid_builder->names()) {
@@ -152,6 +166,14 @@ Grid::Config Grid::partitioner() const {
     ATLAS_NOTIMPLEMENTED;
 }
 
+const Grid* atlas__grid__Grid(const char* identifier) {
+    return Grid::create(std::string(identifier));
+}
+
+const Grid* atlas__grid__Grid__config(util::Config* conf){
+    return Grid::create(*conf);
+}
+
 idx_t atlas__grid__Grid__size(Grid* This) {
     ATLAS_ASSERT(This != nullptr, "Cannot access uninitialised atlas_Grid");
     return This->size();
@@ -178,6 +200,14 @@ void atlas__grid__Grid__name(const Grid* This, char*& name, int& size) {
     size          = static_cast<int>(s.size());
     name          = new char[size + 1];
     std::strncpy(name, s.c_str(), size + 1);
+}
+
+void atlas__grid__Grid__type(const Grid* This, char*& type, int& size) {
+    ATLAS_ASSERT(This != nullptr, "Cannot access uninitialised atlas_Grid");
+    std::string s = This->type();
+    size          = static_cast<int>(s.size());
+    type          = new char[size + 1];
+    std::strncpy(type, s.c_str(), size + 1);
 }
 
 Grid::Domain::Implementation* atlas__grid__Grid__lonlat_bounding_box(const Grid* This) {

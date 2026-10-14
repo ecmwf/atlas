@@ -7,6 +7,7 @@
 ! does it submit to any jurisdiction.
 
 #include "atlas/atlas_f.h"
+#:include "internals/atlas_generics.fypp"
 
 module atlas_functionspace_module
 
@@ -46,6 +47,11 @@ TYPE, extends(fckit_owned_object) :: atlas_FunctionSpace
 !------------------------------------------------------------------------------
 contains
   procedure, public :: name => atlas_FunctionSpace__name
+  procedure, public :: lonlat
+  procedure, public :: ghost
+  procedure, public :: global_index
+  procedure, public :: remote_index
+  procedure, public :: partition
 
   procedure, private :: create_field_args
   procedure, private :: create_field_template
@@ -58,6 +64,14 @@ contains
   procedure, private :: adjoint_halo_exchange_field
   procedure, private :: adjoint_halo_exchange_fieldset
 
+  procedure, private :: checksum_field
+  procedure, private :: checksum_fieldset
+#:for rank in ranks
+#:for dtype in dtypes[:4]
+  procedure, private :: checksum_${dtype}$_r${rank}$
+#:endfor
+#:endfor
+
   generic, public :: create_field => &
     & create_field_args, &
     & create_field_template, &
@@ -66,6 +80,17 @@ contains
 
   generic, public :: halo_exchange => halo_exchange_field, halo_exchange_fieldset
   generic, public :: adjoint_halo_exchange => adjoint_halo_exchange_field, adjoint_halo_exchange_fieldset
+  generic, public :: checksum => &
+    & checksum_field, &
+    & checksum_fieldset, &
+#:set counter = 1
+#:set last = len(ranks) * len(dtypes[:4])
+#:for rank in ranks
+#:for dtype in dtypes[:4]
+    & checksum_${dtype}$_r${rank}$#{if counter < last}#, & #{endif}#
+#:set counter = counter + 1
+#:endfor
+#:endfor
 
 #if FCKIT_FINAL_NOT_INHERITING
   final :: atlas_FunctionSpace__final_auto
@@ -97,9 +122,49 @@ function atlas_FunctionSpace__name(this) result(name)
   character(len=:), allocatable :: name
   type(c_ptr) :: name_c_str
   integer :: size
-  call atlas__FunctionSpace__name(this%CPTR_PGIBUG_A, name_c_str, size )
+  call atlas__FunctionSpace__name(this%c_ptr(), name_c_str, size )
   name = c_ptr_to_string(name_c_str)
   call c_ptr_free(name_c_str)
+end function
+
+function lonlat(this) result(field)
+  use atlas_functionspace_c_binding
+  type(atlas_Field) :: field
+  class(atlas_Functionspace), intent(in) :: this
+  field = atlas_Field( atlas__FunctionSpace__lonlat(this%c_ptr()) )
+  call field%return()
+end function
+
+function ghost(this) result(field)
+  use atlas_functionspace_c_binding
+  type(atlas_Field) :: field
+  class(atlas_Functionspace), intent(in) :: this
+  field = atlas_Field( atlas__FunctionSpace__ghost(this%c_ptr()) )
+  call field%return()
+end function
+
+function global_index(this) result(field)
+  use atlas_functionspace_c_binding
+  type(atlas_Field) :: field
+  class(atlas_Functionspace), intent(in) :: this
+  field = atlas_Field( atlas__FunctionSpace__global_index(this%c_ptr()) )
+  call field%return()
+end function
+
+function remote_index(this) result(field)
+  use atlas_functionspace_c_binding
+  type(atlas_Field) :: field
+  class(atlas_Functionspace), intent(in) :: this
+  field = atlas_Field( atlas__FunctionSpace__remote_index(this%c_ptr()) )
+  call field%return()
+end function
+
+function partition(this) result(field)
+  use atlas_functionspace_c_binding
+  type(atlas_Field) :: field
+  class(atlas_Functionspace), intent(in) :: this
+  field = atlas_Field( atlas__FunctionSpace__partition(this%c_ptr()) )
+  call field%return()
 end function
 
 
@@ -131,7 +196,7 @@ function create_field_args(this,kind,name,levels,variables,type,alignment,global
   if( present(type) )      call options%set("type",type)
   if( present(alignment) ) call options%set("alignment",alignment)
 
-  field = atlas_Field( atlas__FunctionSpace__create_field( this%CPTR_PGIBUG_A, options%CPTR_PGIBUG_B ) )
+  field = atlas_Field( atlas__FunctionSpace__create_field( this%c_ptr(), options%c_ptr() ) )
 
   call field%return()
   call options%final()
@@ -158,7 +223,7 @@ function create_field_template(this,template,name,global,owner) result(field)
   if( present(global) )    call options%set("global",global)
 
   field = atlas_Field( atlas__FunctionSpace__create_field_template( &
-    & this%CPTR_PGIBUG_A, template%CPTR_PGIBUG_A,options%CPTR_PGIBUG_B) )
+    & this%c_ptr(), template%c_ptr(),options%c_ptr()) )
 
   call options%final()
 
@@ -171,7 +236,7 @@ subroutine halo_exchange_fieldset(this,fieldset)
   use atlas_functionspace_c_binding
   class(atlas_Functionspace), intent(in) :: this
   type(atlas_FieldSet), intent(inout) :: fieldset
-  call atlas__FunctionSpace__halo_exchange_fieldset(this%CPTR_PGIBUG_A,fieldset%CPTR_PGIBUG_A)
+  call atlas__FunctionSpace__halo_exchange_fieldset(this%c_ptr(),fieldset%c_ptr())
 end subroutine
 
 !------------------------------------------------------------------------------
@@ -180,7 +245,7 @@ subroutine halo_exchange_field(this,field)
   use atlas_functionspace_c_binding
   class(atlas_Functionspace), intent(in) :: this
   type(atlas_Field), intent(inout) :: field
-  call atlas__FunctionSpace__halo_exchange_field(this%CPTR_PGIBUG_A,field%CPTR_PGIBUG_A)
+  call atlas__FunctionSpace__halo_exchange_field(this%c_ptr(),field%c_ptr())
 end subroutine
 
 
@@ -190,7 +255,7 @@ subroutine adjoint_halo_exchange_fieldset(this,fieldset)
   use atlas_functionspace_c_binding
   class(atlas_Functionspace), intent(in) :: this
   type(atlas_FieldSet), intent(inout) :: fieldset
-  call atlas__FunctionSpace__adjoint_halo_exchange_fieldset(this%CPTR_PGIBUG_A,fieldset%CPTR_PGIBUG_A)
+  call atlas__FunctionSpace__adjoint_halo_exchange_fieldset(this%c_ptr(),fieldset%c_ptr())
 end subroutine
 
 !------------------------------------------------------------------------------
@@ -199,10 +264,60 @@ subroutine adjoint_halo_exchange_field(this,field)
   use atlas_functionspace_c_binding
   class(atlas_Functionspace), intent(in) :: this
   type(atlas_Field), intent(inout) :: field
-  call atlas__FunctionSpace__adjoint_halo_exchange_field(this%CPTR_PGIBUG_A,field%CPTR_PGIBUG_A)
+  call atlas__FunctionSpace__adjoint_halo_exchange_field(this%c_ptr(),field%c_ptr())
 end subroutine
 
 !------------------------------------------------------------------------------
+
+function checksum_field(this,field) result(checksum)
+  use atlas_functionspace_c_binding
+  use fckit_c_interop_module, only : c_ptr_to_string, c_ptr_free
+  use, intrinsic :: iso_c_binding, only : c_ptr
+  character(len=:), allocatable :: checksum
+  class(atlas_Functionspace), intent(in) :: this
+  type(atlas_Field), intent(in) :: field
+  type(c_ptr) :: checksum_cptr
+  integer :: checksum_size
+  call atlas__FunctionSpace__checksum_field(this%c_ptr(),field%c_ptr(),checksum_cptr,checksum_size)
+  allocate(character(len=checksum_size) :: checksum)
+  checksum = c_ptr_to_string(checksum_cptr)
+  call c_ptr_free(checksum_cptr)
+end function checksum_field
+
+!------------------------------------------------------------------------------
+
+function checksum_fieldset(this,fieldset) result(checksum)
+  use atlas_functionspace_c_binding
+  use fckit_c_interop_module, only : c_ptr_to_string, c_ptr_free
+  use, intrinsic :: iso_c_binding, only : c_ptr
+  character(len=:), allocatable :: checksum
+  class(atlas_Functionspace), intent(in) :: this
+  type(atlas_FieldSet), intent(in) :: fieldset
+  type(c_ptr) :: checksum_cptr
+  integer :: checksum_size
+  call atlas__FunctionSpace__checksum_fieldset(this%c_ptr(),fieldset%c_ptr(),checksum_cptr,checksum_size)
+  allocate(character(len=checksum_size) :: checksum)
+  checksum = c_ptr_to_string(checksum_cptr)
+  call c_ptr_free(checksum_cptr)
+end function checksum_fieldset
+
+!------------------------------------------------------------------------------
+
+#:for rank in ranks
+#:for dtype,ftype,ctype in types[:4]
+function checksum_${dtype}$_r${rank}$(this,array) result(checksum)
+  use, intrinsic :: iso_c_binding, only : c_int, c_long, c_float, c_double
+  character(len=:), allocatable :: checksum
+  class(atlas_Functionspace), intent(in) :: this
+  ${ftype}$, intent(in), target :: array(${dim[rank]}$)
+  type(atlas_Field) :: field
+  field = atlas_Field(array)
+  checksum = checksum_field(this, field)
+  call field%final()
+end function checksum_${dtype}$_r${rank}$
+
+#:endfor
+#:endfor
 
 !------------------------------------------------------------------------------
 
@@ -229,7 +344,7 @@ function deprecated_create_field_1(this,name,kind,levels,vars) result(field)
   opt_variables = sum(vars)
   call options%set("variables",opt_variables)
 
-  field = atlas_Field( atlas__FunctionSpace__create_field( this%CPTR_PGIBUG_A, options%CPTR_PGIBUG_B ) )
+  field = atlas_Field( atlas__FunctionSpace__create_field( this%c_ptr(), options%c_ptr() ) )
 
   call options%final()
 
@@ -252,7 +367,7 @@ function deprecated_create_field_2(this,require_name,kind,levels) result(field)
   call options%set("name",require_name)
   call options%set("levels",levels)
 
-  field = atlas_Field( atlas__FunctionSpace__create_field( this%CPTR_PGIBUG_A, options%CPTR_PGIBUG_B ) )
+  field = atlas_Field( atlas__FunctionSpace__create_field( this%c_ptr(), options%c_ptr() ) )
   call options%final()
 
   call field%return()

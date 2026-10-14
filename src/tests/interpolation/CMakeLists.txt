@@ -189,6 +189,12 @@ ecbuild_add_test( TARGET atlas_test_interpolation_binning
   ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
 )
 
+ecbuild_add_test( TARGET atlas_test_interpolation_disable_halo_exchange
+  SOURCES  test_interpolation_disable_halo_exchange.cc
+  LIBS     atlas
+  ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
+)
+
 ecbuild_add_test( TARGET atlas_test_par_interpolation_global_matrix
   SOURCES  test_interpolation_global_matrix.cc
   LIBS     atlas
@@ -203,5 +209,7 @@ ecbuild_add_test( TARGET atlas_test_interpolation_global_matrix
   LIBS     atlas
   ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
 )
+
+
 
 endif()

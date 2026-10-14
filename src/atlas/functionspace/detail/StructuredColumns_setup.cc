@@ -100,8 +100,9 @@ void StructuredColumns::setup(const grid::Distribution& distribution, const ecki
     const double eps = 1.e-12;
 
     ny_                  = grid_->ny();
-    north_pole_included_ = 90. - grid_->y(0) == 0.;
-    south_pole_included_ = 90. + grid_->y(ny_ - 1) == 0;
+    grid_is_regional_    = regional;
+    north_pole_included_ = (!regional && grid_->projection().units() == "degrees" && 90. - grid_->y(0) == 0.);
+    south_pole_included_ = (!regional && grid_->projection().units() == "degrees" && 90. + grid_->y(ny_ - 1) == 0.);
 
     distribution_ = distribution.type();
 

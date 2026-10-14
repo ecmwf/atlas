@@ -12,3 +12,6 @@ env.sh
 *.DS_Store
 .vscode
 
+# Rust
+rust/target/
+rust/Cargo.lock

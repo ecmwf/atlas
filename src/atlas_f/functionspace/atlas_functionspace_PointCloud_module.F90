@@ -82,7 +82,7 @@ function ctor_lonlat(lonlat) result(this)
   use atlas_functionspace_PointCloud_c_binding
   type(atlas_functionspace_PointCloud) :: this
   class(atlas_Field), intent(in) :: lonlat
-  call this%reset_c_ptr( atlas__functionspace__PointCloud__new__lonlat( lonlat%CPTR_PGIBUG_A ) )
+  call this%reset_c_ptr( atlas__functionspace__PointCloud__new__lonlat( lonlat%c_ptr() ) )
   call this%return()
 end function
 
@@ -93,7 +93,7 @@ function ctor_lonlat_ghost(lonlat,ghost) result(this)
   type(atlas_functionspace_PointCloud) :: this
   class(atlas_Field), intent(in) :: lonlat
   class(atlas_Field), intent(in) :: ghost
-  call this%reset_c_ptr( atlas__functionspace__PointCloud__new__lonlat_ghost( lonlat%CPTR_PGIBUG_A, ghost%CPTR_PGIBUG_A  ) )
+  call this%reset_c_ptr( atlas__functionspace__PointCloud__new__lonlat_ghost( lonlat%c_ptr(), ghost%c_ptr()  ) )
   call this%return()
 end function
 
@@ -103,7 +103,7 @@ function ctor_fieldset(fset) result(this)
   use atlas_functionspace_PointCloud_c_binding
   type(atlas_functionspace_PointCloud) :: this
   class(atlas_FieldSet), intent(in) :: fset
-  call this%reset_c_ptr( atlas__functionspace__PointCloud__new__fieldset( fset%CPTR_PGIBUG_A  ) )
+  call this%reset_c_ptr( atlas__functionspace__PointCloud__new__fieldset( fset%c_ptr()  ) )
   call this%return()
 end function
 
@@ -113,7 +113,7 @@ function ctor_grid(grid) result(this)
   use atlas_functionspace_PointCloud_c_binding
   type(atlas_functionspace_PointCloud) :: this
   class(atlas_Grid), intent(in) :: grid
-  call this%reset_c_ptr( atlas__functionspace__PointCloud__new__grid( grid%CPTR_PGIBUG_A ) )
+  call this%reset_c_ptr( atlas__functionspace__PointCloud__new__grid( grid%c_ptr() ) )
   call this%return()
 end function
 
@@ -123,7 +123,7 @@ function size_(this)
   use atlas_functionspace_PointCloud_c_binding
   integer :: size_
   class(atlas_functionspace_PointCloud), intent(in) :: this
-  size_ = atlas__fs__PointCloud__size(this%CPTR_PGIBUG_A)
+  size_ = atlas__fs__PointCloud__size(this%c_ptr())
 end function
 
 !------------------------------------------------------------------------------
@@ -132,7 +132,7 @@ function lonlat(this) result(field)
   use atlas_functionspace_PointCloud_c_binding
   type(atlas_Field) :: field
   class(atlas_functionspace_PointCloud), intent(in) :: this
-  field = atlas_Field( atlas__fs__PointCloud__lonlat(this%CPTR_PGIBUG_A) )
+  field = atlas_Field( atlas__fs__PointCloud__lonlat(this%c_ptr()) )
   call field%return()
 end function
 

@@ -53,7 +53,7 @@ if( HAVE_FCTEST )
   )
 endif()
 
-foreach( test util earth flags polygon point )
+foreach( test util earth flags polygon point checksum )
   ecbuild_add_test( TARGET atlas_test_${test}
     SOURCES test_${test}.cc
     LIBS atlas
@@ -63,6 +63,12 @@ endforeach()
 
 ecbuild_add_test( TARGET atlas_test_vector
   SOURCES  test_vector.cc
+  LIBS     atlas
+  ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
+)
+
+ecbuild_add_test( TARGET atlas_test_spherical_harmonics
+  SOURCES  test_spherical_harmonics.cc
   LIBS     atlas
   ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
 )

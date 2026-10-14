@@ -24,6 +24,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 ecbuild_add_option( FEATURE PMR DESCRIPTION "Compatibility with std::pmr in C++" DEFAULT OFF )
 set(PLUTO_HAVE_PMR ${HAVE_PMR})
+# See src/pluto/memory_resource/compat/README.md, and update README.md when DEFAULT changes
 
 ecbuild_add_option( FEATURE MDSPAN DESCRIPTION "Compatibility with std::mdspan in C++" DEFAULT OFF )
 set(PLUTO_HAVE_MDSPAN ${HAVE_MDSPAN})

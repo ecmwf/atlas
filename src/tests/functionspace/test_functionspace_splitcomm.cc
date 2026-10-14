@@ -14,6 +14,7 @@
 #include "atlas/output/Gmsh.h"
 #include "tests/AtlasTestEnvironment.h"
 #include "atlas/functionspace/NodeColumns.h"
+#include "atlas/functionspace/Spectral.h"
 #include "atlas/functionspace/StructuredColumns.h"
 #include "atlas/functionspace/BlockStructuredColumns.h"
 #include "atlas/functionspace/PointCloud.h"
@@ -39,20 +40,22 @@ int color() {
 }
 
 Grid grid() {
-    static Grid g (color() == 0 ? "O32" : "N32" );
-    return g;
+    return Grid(color() == 0 ? "O32" : "N32" );
 }
 
 std::string expected_checksum() {
-    if (grid().name()=="O32") {
-        return "75e913d400755a0d2782fc65e2035e97";
-    }
-    else if (grid().name()=="N32") {
-        return "bcb344196d20becbb66f098d91f83abb";
-    }
-    else {
-        return "unknown";
-    }
+    static std::string result = [&]() {
+        if (grid().name()=="O32") {
+            return "6408";
+        }
+        else if (grid().name()=="N32") {
+            return "ca85";
+        }
+        else {
+            return "unknown";
+        }
+    }();
+    return result;
 }
 
 struct Fixture {
@@ -68,11 +71,32 @@ struct Fixture {
 
 void field_init(Field& field) {
     auto fs = field.functionspace();
-    auto f = array::make_view<double,1>(field);
     auto g = array::make_view<gidx_t,1>(fs.global_index());
+
+    if (functionspace::BlockStructuredColumns fsb{fs}) {
+        auto f = array::make_view<double,2>(field);
+        auto g = array::make_view<gidx_t,1>(fs.global_index());
+        for( idx_t jblk=0; jblk<fsb.nblks(); ++jblk ) {
+            auto block = fsb.block(jblk);
+            for( idx_t jlane=0; jlane<block.size(); ++jlane ) {
+                f(jblk,jlane) = g(block.index(jlane));
+            }
+        }
+        return;
+    }
+    auto f = array::make_view<double,1>(field);
     for( idx_t j=0; j<f.size(); ++j ) {
         f(j) = g(j);
     }
+}
+
+template <typename FunctionSpace>
+void check_scatter_metadata(const FunctionSpace& fs, Field& local, Field& global) {
+    if (global.size()) {
+        global.metadata().set("split_color", color());
+    }
+    fs.scatter(global, local);
+    EXPECT_EQUAL(local.metadata().get<int>("split_color"), color());
 }
 
 CASE("test FunctionSpace NodeColumns") {
@@ -101,16 +125,67 @@ CASE("test FunctionSpace NodeColumns") {
             EXPECT_EQ(++g,x);
         });
     }
+    check_scatter_metadata(fs, field, fieldg);
 
     // Checksum
     auto checksum = fs.checksum(field);
     EXPECT_EQ(checksum, expected_checksum());
 
+    Log::error() << "fs.part() = " << fs.part() << " fs.nb_parts() = " << fs.nb_parts() << " grid = " << fs.grid().name() << " checksum = " << checksum << std::endl;
+
     // Output
-    output::Gmsh gmsh(grid().name()+".msh");
+    output::Gmsh gmsh(mesh.grid().name()+".msh");
     gmsh.write(mesh);
     gmsh.write(field);
 }
+
+CASE("setMask initializes on a nonzero owner") {
+    Fixture fixture;
+
+    auto mesh = Mesh(grid(), option::mpi_split_comm());
+    FunctionSpace fs = functionspace::NodeColumns(mesh, atlas::option::halo(1));
+    constexpr idx_t root = 1;
+    int initialization_count = 0;
+
+    fs.setMask([&initialization_count](int* mask, size_t size) {
+        ++initialization_count;
+        for (size_t j = 0; j < size; ++j) {
+            mask[j] = (j+1)%2;
+        }
+    }, root);
+
+    const int expected_initialization_count = mpi::comm("split").rank() == root ? 1 : 0;
+    EXPECT_EQUAL(initialization_count, expected_initialization_count);
+
+    auto gidx  = array::make_view<gidx_t,1>(fs.global_index());
+    auto ghost = array::make_view<int,1>(fs.ghost());
+    auto mask  = array::make_view<int, 1>(fs.mask());
+    for (idx_t j = 0; j < fs.size(); ++j) {
+        if (not ghost(j)) {
+            EXPECT_EQUAL(mask(j), gidx[j]%2);
+        }
+    }
+}
+
+CASE("test FunctionSpace Spectral records communicator") {
+    Fixture fixture;
+
+    functionspace::Spectral spectral(3, util::Config("backend", "local") | util::Config("mpi_comm", "split"));
+    EXPECT_EQUAL(spectral.mpi_comm(), "split");
+    EXPECT_EQUAL(spectral.part(), mpi::comm("split").rank());
+    EXPECT_EQUAL(spectral.nb_parts(), mpi::comm("split").size());
+
+    constexpr idx_t owner = 0;
+    Field global = spectral.createField<double>(atlas::option::global() | util::Config("owner", owner));
+    const bool is_owner = mpi::comm("split").rank() == owner;
+    EXPECT_EQUAL(global.shape(0), (is_owner ? spectral.nb_spectral_coefficients_global() : 0));
+
+    idx_t iterations = 0;
+    spectral.parallel_for(atlas::option::global() | util::Config("owner", owner),
+                          [&](idx_t, idx_t, int, int) { ++iterations; });
+    EXPECT_EQUAL(iterations, (is_owner ? spectral.nb_spectral_coefficients_global() / 2 : 0));
+}
+
 
 CASE("test FunctionSpace StructuredColumns") {
     Fixture fixture;
@@ -136,10 +211,13 @@ CASE("test FunctionSpace StructuredColumns") {
             EXPECT_EQ(++g,x);
         });
     }
+    check_scatter_metadata(fs, field, fieldg);
 
     // Checksum
     auto checksum = fs.checksum(field);
     EXPECT_EQ(checksum, expected_checksum());
+
+    Log::error() << "fs.part() = " << fs.part() << " fs.nb_parts() = " << fs.nb_parts() << " grid = " << fs.grid().name() << " checksum = " << checksum << std::endl;
 }
 
 CASE("test FunctionSpace BlockStructuredColumns") {
@@ -150,7 +228,7 @@ CASE("test FunctionSpace BlockStructuredColumns") {
     EXPECT_EQUAL(fs.nb_parts(),mpi::comm("split").size());
 
     auto field  = fs.createField<double>();
-    // field_init(field);
+    field_init(field);
 
     // HaloExchange
     // field.haloExchange();
@@ -158,18 +236,20 @@ CASE("test FunctionSpace BlockStructuredColumns") {
 
     // Gather
     auto fieldg = fs.createField<double>(atlas::option::global());
-    // fs.gather(field,fieldg);
+    fs.gather(field,fieldg);
 
-    // if (fieldg.size()) {
-    //     idx_t g{0};
-    //     field::for_each_value(fieldg,[&](double x) {
-    //         EXPECT_EQ(++g,x);
-    //     });
-    // }
+    if (fieldg.size()) {
+        idx_t g{0};
+        field::for_each_value(fieldg,[&](double x) {
+            EXPECT_EQ(++g,x);
+        });
+    }
 
-    // // Checksum
-    // auto checksum = fs.checksum(field);
-    // EXPECT_EQ(checksum, expected_checksum());
+    // Checksum
+    auto checksum = fs.checksum(field);
+    EXPECT_EQ(checksum, expected_checksum());
+
+    Log::error() << "fs.part() = " << fs.part() << " fs.nb_parts() = " << fs.nb_parts() << " grid = " << fs.grid().name() << " checksum = " << checksum << std::endl;
 }
 
 //-----------------------------------------------------------------------------
@@ -198,6 +278,7 @@ CASE("test FunctionSpace PointCloud") {
             EXPECT_EQ(++g,x);
         });
     }
+    check_scatter_metadata(fs, field, fieldg);
 
     // Checksum
     // auto checksum = fs.checksum(field);
@@ -208,9 +289,9 @@ CASE("test FunctionSpace PointCloud") {
 
 CASE("test FunctionSpace StructuredColumns with MatchingPartitioner") {
     Fixture fixture;
-
-    auto fs_A = functionspace::StructuredColumns(grid(), option::mpi_split_comm());
-    auto fs_B = functionspace::StructuredColumns(grid(), grid::MatchingPartitioner(fs_A), option::mpi_split_comm());
+    auto g = grid();
+    auto fs_A = functionspace::StructuredColumns(g, option::mpi_split_comm());
+    auto fs_B = functionspace::StructuredColumns(g, grid::MatchingPartitioner(fs_A), option::mpi_split_comm());
     fs_A.polygon().outputPythonScript("fs_A_polygons.py");
     fs_B.polygon().outputPythonScript("fs_B_polygons.py");
 }

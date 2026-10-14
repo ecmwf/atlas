@@ -1,0 +1,22 @@
+[workspace]
+resolver = "2"
+members = ["crates/atlas-sys"]
+
+[workspace.package]
+version = "0.47.0"
+edition = "2024"
+license = "Apache-2.0"
+repository = "https://github.com/ecmwf/atlas"
+rust-version = "1.90"
+keywords = ["ecmwf", "weather", "meteorology", "geo", "grid"]
+categories = ["science"]
+
+[workspace.dependencies]
+# Internal
+atlas-sys = { version = "0.47", path = "crates/atlas-sys" }
+
+# Foundation crates
+eckit-sys = { version = "2.5", default-features = false }
+
+# Build tools
+bindman-utils = "0.2"

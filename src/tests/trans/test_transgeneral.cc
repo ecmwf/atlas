@@ -1583,6 +1583,59 @@ CASE("test_trans_levels") {
         }
     }
 }
+
+CASE("invtrans_vordiv2wind supports rank-1 and rank-2 spectral fields") {
+    constexpr int truncation = 3;
+    constexpr int levels     = 2;
+    const Grid grid("F2");
+    const functionspace::Spectral spectral(truncation, option::levels(levels));
+    const functionspace::StructuredColumns gridpoints(grid, option::levels(levels));
+    const trans::Trans trans(gridpoints, spectral);
+    const idx_t spectral_coefficients = trans.spectralCoefficients();
+
+    Field spvor = spectral.createField<double>(option::name("vorticity"));
+    Field spdiv = spectral.createField<double>(option::name("divergence"));
+    Field wind  = gridpoints.createField<double>(option::name("wind") | option::variables(2));
+    auto spvor_view = array::make_view<double, 2>(spvor);
+    auto spdiv_view = array::make_view<double, 2>(spdiv);
+    auto wind_view  = array::make_view<double, 3>(wind);
+    spvor_view.assign(0.);
+    spdiv_view.assign(0.);
+
+    spvor_view(8, 0)  = 1.;
+    spdiv_view(10, 0) = 0.5;
+    spvor_view(12, 1) = -0.75;
+    spdiv_view(14, 1) = 1.25;
+
+    trans.invtrans_vordiv2wind(spvor, spdiv, wind);
+
+    const functionspace::Spectral spectral_level(truncation);
+    const functionspace::StructuredColumns gridpoints_level(grid);
+    const trans::Trans trans_level(gridpoints_level, spectral_level);
+
+    for (int level = 0; level < levels; ++level) {
+        Field spvor_level = spectral_level.createField<double>(option::name("vorticity"));
+        Field spdiv_level = spectral_level.createField<double>(option::name("divergence"));
+        Field wind_level =
+            gridpoints_level.createField<double>(option::name("wind") | option::variables(2));
+        auto spvor_level_view = array::make_view<double, 1>(spvor_level);
+        auto spdiv_level_view = array::make_view<double, 1>(spdiv_level);
+        auto wind_level_view  = array::make_view<double, 2>(wind_level);
+
+        for (idx_t coefficient = 0; coefficient < spectral_coefficients; ++coefficient) {
+            spvor_level_view(coefficient) = spvor_view(coefficient, level);
+            spdiv_level_view(coefficient) = spdiv_view(coefficient, level);
+        }
+
+        trans.invtrans_vordiv2wind(spvor_level, spdiv_level, wind_level);
+
+        for (idx_t point = 0; point < gridpoints.size(); ++point) {
+            for (int component = 0; component < 2; ++component) {
+                EXPECT_APPROX_EQ(wind_view(point, level, component), wind_level_view(point, component), 1.e-14);
+            }
+        }
+    }
+}
 #endif
 
 

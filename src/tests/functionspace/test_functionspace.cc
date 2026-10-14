@@ -63,6 +63,19 @@ CASE("test_functionspace_NodeColumns_no_halo") {
     }
 }
 
+CASE("NodeColumns owns its mask") {
+    Mesh mesh = StructuredMeshGenerator().generate(Grid("O8"));
+    functionspace::NodeColumns first(mesh);
+    functionspace::NodeColumns second(mesh);
+
+    auto first_mask  = array::make_view<int, 1>(first.mask());
+    auto second_mask = array::make_view<int, 1>(second.mask());
+    first_mask(0)    = 0;
+
+    EXPECT(second_mask(0) == 1);
+    EXPECT(!mesh.nodes().has_field("mask"));
+}
+
 CASE("test_functionspace_NodeColumns") {
     ReducedGaussianGrid grid({4, 8, 8, 4});
 
@@ -470,6 +483,81 @@ CASE("test_functionspace_NodeColumns") {
         // sum_per_level.dump(Log::info());
     }
 
+    {
+        Log::info() << "Testing that NodeColumns statistics exclude ghost nodes" << std::endl;
+        const auto ghost = array::make_view<int, 1>(mesh.nodes().ghost());
+        double minimum;
+        double maximum;
+        double mean;
+        double stddev;
+        idx_t count;
+        gidx_t global_index;
+
+        surface_scalar.assign(2.);
+        for (idx_t node = 0; node < nodes_fs.nb_nodes(); ++node) {
+            if (ghost(node)) {
+                surface_scalar(node) = -100.;
+            }
+        }
+        nodes_fs.minimum(surface_scalar_field, minimum);
+        EXPECT(minimum == 2.);
+        nodes_fs.minimumAndLocation(surface_scalar_field, minimum, global_index);
+        EXPECT(minimum == 2.);
+
+        for (idx_t node = 0; node < nodes_fs.nb_nodes(); ++node) {
+            if (ghost(node)) {
+                surface_scalar(node) = 100.;
+            }
+        }
+        nodes_fs.maximum(surface_scalar_field, maximum);
+        EXPECT(maximum == 2.);
+        nodes_fs.maximumAndLocation(surface_scalar_field, maximum, global_index);
+        EXPECT(maximum == 2.);
+        nodes_fs.meanAndStandardDeviation(surface_scalar_field, mean, stddev, count);
+        EXPECT(mean == 2.);
+        EXPECT(stddev == 0.);
+
+        Field min_per_level("min", array::make_datatype<double>(), array::make_shape(nb_levels));
+        Field max_per_level("max", array::make_datatype<double>(), array::make_shape(nb_levels));
+        Field mean_per_level("mean", array::make_datatype<double>(), array::make_shape(nb_levels));
+        Field stddev_per_level("stddev", array::make_datatype<double>(), array::make_shape(nb_levels));
+        Field gidx_per_level("gidx", array::make_datatype<gidx_t>(), array::make_shape(nb_levels));
+
+        columns_scalar.assign(2.);
+        for (idx_t node = 0; node < nodes_fs.nb_nodes(); ++node) {
+            if (ghost(node)) {
+                for (idx_t level = 0; level < nb_levels; ++level) {
+                    columns_scalar(node, level) = -100.;
+                }
+            }
+        }
+        nodes_fs.minimumPerLevel(columns_scalar_field, min_per_level);
+        nodes_fs.minimumAndLocationPerLevel(columns_scalar_field, min_per_level, gidx_per_level);
+        auto minimum_levels = array::make_view<double, 1>(min_per_level);
+        for (idx_t level = 0; level < nb_levels; ++level) {
+            EXPECT(minimum_levels(level) == 2.);
+        }
+
+        for (idx_t node = 0; node < nodes_fs.nb_nodes(); ++node) {
+            if (ghost(node)) {
+                for (idx_t level = 0; level < nb_levels; ++level) {
+                    columns_scalar(node, level) = 100.;
+                }
+            }
+        }
+        nodes_fs.maximumPerLevel(columns_scalar_field, max_per_level);
+        nodes_fs.maximumAndLocationPerLevel(columns_scalar_field, max_per_level, gidx_per_level);
+        auto maximum_levels = array::make_view<double, 1>(max_per_level);
+        nodes_fs.meanAndStandardDeviationPerLevel(columns_scalar_field, mean_per_level, stddev_per_level, count);
+        auto mean_levels   = array::make_view<double, 1>(mean_per_level);
+        auto stddev_levels = array::make_view<double, 1>(stddev_per_level);
+        for (idx_t level = 0; level < nb_levels; ++level) {
+            EXPECT(maximum_levels(level) == 2.);
+            EXPECT(mean_levels(level) == 2.);
+            EXPECT(stddev_levels(level) == 0.);
+        }
+    }
+
     Field tmp = nodes_fs.createField(option::datatypeT<double>() | option::global(0) | option::levels(10) |
                                      option::name("tmp"));
 }
@@ -507,13 +595,71 @@ CASE("test_SpectralFunctionSpace") {
     EXPECT(columns_scalar.shape(1) == nb_levels);
 }
 
+CASE("test_createField_copy_preserves_name") {
+    auto expect_copy_preserves_name = [](const auto& fs, const std::string& name, const auto& options) {
+        Field source = fs.template createField<double>(option::name(name) | options);
+        Field copy   = fs.createField(source);
+
+        EXPECT(copy.name() == name);
+    };
+
+    SECTION("CellColumns") {
+        Mesh mesh = StructuredMeshGenerator().generate(Grid("O8"));
+        CellColumns cell_fs(mesh);
+
+        expect_copy_preserves_name(cell_fs, "cell-source", option::levels(2) | option::variables(3));
+    }
+
+    SECTION("EdgeColumns") {
+        Mesh mesh = StructuredMeshGenerator().generate(Grid("O8"));
+        EdgeColumns edge_fs(mesh);
+
+        expect_copy_preserves_name(edge_fs, "edge-source", option::levels(2) | option::variables(3));
+    }
+
+    SECTION("NodeColumns") {
+        Mesh mesh = StructuredMeshGenerator().generate(Grid("O8"));
+        NodeColumns node_fs(mesh);
+
+        expect_copy_preserves_name(node_fs, "node-source", option::levels(2) | option::variables(3));
+    }
+
+    SECTION("PointCloud") {
+        Grid grid("O8");
+        PointCloud pointcloud_fs(grid);
+
+        expect_copy_preserves_name(pointcloud_fs, "pointcloud-source", option::levels(2) | option::variables(3));
+    }
+
+    SECTION("StructuredColumns") {
+        StructuredGrid grid("O8");
+        StructuredColumns structured_fs(grid, option::levels(2));
+
+        expect_copy_preserves_name(structured_fs, "structured-source", option::levels(2) | option::variables(3));
+    }
+
+    SECTION("BlockStructuredColumns") {
+        StructuredGrid grid("O8");
+        BlockStructuredColumns blockstructured_fs(grid, option::levels(2) | option::nproma(4));
+
+        expect_copy_preserves_name(blockstructured_fs, "blockstructured-source",
+                                   option::levels(2) | option::variables(3));
+    }
+
+    SECTION("Spectral") {
+        Spectral spectral_fs(159);
+
+        expect_copy_preserves_name(spectral_fs, "spectral-source", option::levels(2));
+    }
+}
+
 #if ATLAS_HAVE_TRANS
 
 CASE("test_SpectralFunctionSpace_trans_dist") {
     trans::Trans trans(Grid("F80"), 159);
     idx_t nb_levels(10);
 
-    Spectral spectral_fs(trans);
+    Spectral spectral_fs = trans.spectral();
     idx_t nspec2 = spectral_fs.nb_spectral_coefficients();
 
     Field surface_scalar_field = spectral_fs.createField<double>(option::name("scalar"));
@@ -599,7 +745,7 @@ CASE("test_SpectralFunctionSpace_norm") {
     trans::Trans trans(Grid("F80"), 159);
     size_t nb_levels(10);
 
-    Spectral spectral_fs(trans);
+    Spectral spectral_fs = trans.spectral();
 
     Field twoD_field   = spectral_fs.createField<double>(option::name("2d"));
     Field threeD_field = spectral_fs.createField<double>(option::name("3d") | option::levels(nb_levels));
@@ -643,6 +789,7 @@ CASE("test_SpectralFunctionSpace_norm") {
         }
     }
 }
+#endif
 
 template <typename T>
 mdspan<T,dims<1>> make_mdspan(std::vector<T>& v) {
@@ -654,6 +801,11 @@ mdspan<T,extents<size_t,dynamic_extent,N>> make_mdspan(std::vector<std::array<T,
 }
 
 CASE("test_functionspace_grid") {
+    if (not ATLAS_HAVE_TESSELATION) {
+        Log::info() << "Skipping test_functionspace_grid since tessellation is not available" << std::endl;
+        return;
+    }
+
     // Create list of points and construct Grid from them
     std::vector<PointXY> points = {
         {0.0, 5.0}, {0.0, 0.0}, {10.0, 0.0}, {15.0, 0.0}, {5.0, 5.0}, {15.0, 5.0}
@@ -725,8 +877,6 @@ CASE("test_functionspace_grid") {
     functionspace::Spectral spectral(159);
     EXPECT_THROWS(spectral.grid());
 }
-
-#endif
 
 //-----------------------------------------------------------------------------
 

@@ -13,34 +13,15 @@
 
 ! -----------------------------------------------------------------------------
 
-TESTSUITE(fctest_unstructuredgrid)
-
-! -----------------------------------------------------------------------------
-
-TESTSUITE_INIT
-  use atlas_module
-  call atlas_library%initialise()
-END_TESTSUITE_INIT
-
-! -----------------------------------------------------------------------------
-
-TESTSUITE_FINALIZE
-  use atlas_module
-  call atlas_library%finalise()
-END_TESTSUITE_FINALIZE
-
-! ----------------------------------------------------------------------------
-
-TEST( test_unstructuredgrid )
-  use, intrinsic :: iso_c_binding
-  use atlas_module
+module fixture_unstructuredgrid
+  use, intrinsic :: iso_c_binding, only : c_double
   implicit none
-  type(atlas_UnstructuredGrid) :: grid
-  type(atlas_Mesh) :: mesh
-  type(atlas_Output) :: gmsh
-  type(atlas_MeshGenerator) :: meshgenerator
 
   real(c_double) :: xy(2,173)
+
+contains
+
+subroutine init_xy()
   xy(:,1) = [180,0]
   xy(:,2) = [90,0]
   xy(:,3) = [-90,0]
@@ -214,6 +195,38 @@ TEST( test_unstructuredgrid )
   xy(:,171) = [44.2448,-15.2529]
   xy(:,172) = [73.9368,-14.4869]
   xy(:,173) = [60.5478,-11.7037]
+end subroutine
+
+end module
+
+! -----------------------------------------------------------------------------
+
+TESTSUITE_WITH_FIXTURE(fctest_unstructuredgrid, fixture_unstructuredgrid)
+
+! -----------------------------------------------------------------------------
+
+TESTSUITE_INIT
+  use atlas_module
+  call atlas_library%initialise()
+  call init_xy()
+END_TESTSUITE_INIT
+
+! -----------------------------------------------------------------------------
+
+TESTSUITE_FINALIZE
+  use atlas_module
+  call atlas_library%finalise()
+END_TESTSUITE_FINALIZE
+
+! ----------------------------------------------------------------------------
+
+TEST( test_unstructuredgrid )
+  use atlas_module
+  implicit none
+  type(atlas_UnstructuredGrid) :: grid
+  type(atlas_Mesh) :: mesh
+  type(atlas_Output) :: gmsh
+  type(atlas_MeshGenerator) :: meshgenerator
 
   grid = atlas_UnstructuredGrid(xy)
 
@@ -234,6 +247,48 @@ TEST( test_unstructuredgrid )
   call gmsh%final()
   call grid%final()
   call meshgenerator%final()
+END_TEST
+
+! -----------------------------------------------------------------------------
+
+TEST( test_unstructuredgrid_x_and_y_mesh_constructor )
+  use, intrinsic :: iso_c_binding
+  use atlas_module
+  implicit none
+  type(atlas_UnstructuredGrid) :: grid
+  type(atlas_Mesh) :: mesh
+  type(atlas_mesh_Nodes) :: nodes
+  type(atlas_Field) :: lonlat
+  real(c_double), allocatable :: x(:), y(:)
+  real(c_double), pointer :: lonlat_view(:,:)
+  integer(c_int) :: grid_size
+
+  grid_size = size(xy,2)
+  x = xy(1,:)
+  y = xy(2,:)
+
+  grid = atlas_UnstructuredGrid(x, y)
+
+  FCTEST_CHECK_EQUAL( int(grid%size(), c_int), grid_size )
+  FCTEST_CHECK_EQUAL( grid%owners(), 1 )
+
+  mesh = atlas_Mesh(grid)
+
+  nodes = mesh%nodes()
+  lonlat = nodes%lonlat()
+  call lonlat%data(lonlat_view)
+
+  FCTEST_CHECK_EQUAL( mesh%owners(), 1 )
+  FCTEST_CHECK_EQUAL( grid%owners(), 2 )
+  FCTEST_CHECK_EQUAL( int(nodes%size(), c_int), grid_size )
+  FCTEST_CHECK_CLOSE( lonlat_view(1,:), x, 1.e-12_c_double )
+  FCTEST_CHECK_CLOSE( lonlat_view(2,:), y, 1.e-12_c_double )
+
+  call lonlat%final()
+  call nodes%final()
+  call mesh%final()
+  FCTEST_CHECK_EQUAL( grid%owners(), 1 )
+  call grid%final()
 END_TEST
 
 ! -----------------------------------------------------------------------------

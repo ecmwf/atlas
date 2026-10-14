@@ -318,7 +318,7 @@ CASE("test_spectral_fields") {
     trans::Trans trans(g, 47);
 
     functionspace::NodeColumns nodal(m);
-    functionspace::Spectral spectral(trans);
+    functionspace::Spectral spectral = trans.spectral();
 
     Field spf = spectral.createField<double>(option::name("spf"));
     Field gpf = nodal.createField<double>(option::name("gpf"));

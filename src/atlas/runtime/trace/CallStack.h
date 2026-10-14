@@ -41,10 +41,10 @@ public:
     operator bool() const { return size_ > 0; }
 
 public:
-    CallStack(): stack_(64){};
-    CallStack(const CallStack& other): stack_(other.stack_), size_(other.size_) {}
+    CallStack() { stack_.reserve(64); }
+    CallStack(const CallStack& other): stack_(other.begin(), other.end()), size_(other.size_) {}
     CallStack& operator=(const CallStack& other) {
-        stack_ = other.stack_;
+        stack_.assign(other.begin(), other.end());
         size_  = other.size_;
         hash_  = 0;
         return *this;

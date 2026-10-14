@@ -48,8 +48,8 @@ public:
 
     const StructuredGrid& grid() const { return functionspace_->grid(); }
 
-    std::string checksum(const FieldSet&) const;
-    std::string checksum(const Field&) const;
+    std::string checksum(const FieldSet& fieldset) const { return functionspace_->checksum(fieldset); }
+    std::string checksum(const Field& field) const { return functionspace_->checksum(field); }
 
     idx_t index(idx_t blk, idx_t rof) const { return functionspace_->index(blk, rof); }
     idx_t k_begin() const { return functionspace_->k_begin(); }

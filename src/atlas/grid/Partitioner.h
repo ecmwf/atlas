@@ -126,6 +126,8 @@ Partitioner::Implementation* atlas__grid__Partitioner__new(const Partitioner::Co
 
 Partitioner::Implementation* atlas__grid__Partitioner__new_type(const char* type);
 
+Partitioner::Implementation* atlas__grid__MatchingPartitioner__new(const util::Object* object,
+                                                                   const Partitioner::Config* config);
 Partitioner::Implementation* atlas__grid__MatchingMeshPartitioner__new(const mesh::detail::MeshImpl* mesh,
                                                                        const Partitioner::Config* config);
 Partitioner::Implementation* atlas__grid__MatchingFunctionSpacePartitioner__new(
