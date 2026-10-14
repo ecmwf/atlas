@@ -1,0 +1,23 @@
+{% extends "ci-infrastructure/cmake-all-lanes.sh.j2" %}
+{% block set_environment %}
+{% if cxx_compiler_binary == "nvc++" %}
+# As atlas's legacy HPC CI: nvc++ raises FE_DIVBYZERO in the Gaussian quadrature
+export ATLAS_FPE=0
+export CUDACXX="$(command -v nvcc)"
+# The gcc nvidia/26.1 is configured with (localrc GCCDIR), so nvcc and nvc++ share one libstdc++
+export CUDAHOSTCXX=/usr/bin/g++
+export CUDAARCHS=80  # A100
+echo "CUDA: $CUDACXX, host $CUDAHOSTCXX ($("$CUDAHOSTCXX" -dumpfullversion)), arch $CUDAARCHS"
+{% endif %}
+{% endblock %}
+{% block cmake_args %}
+{% if execution == "hpc-atos" %}
+  -DMPI_SLOTS={{ ntasks }} \
+{% endif %}
+{% if not fortran_compiler_binary %}
+  -DENABLE_FORTRAN=OFF \
+{% endif %}
+{% if cxx_compiler_binary == "nvc++" %}
+  -DSKIP_TEST_atlas_test_omp_sort=TRUE \
+{% endif %}
+{% endblock %}
