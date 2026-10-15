@@ -594,6 +594,64 @@ CASE("test_make_mdspan_vector_fixed_inner_extent_const") {
     EXPECT(readonly(1, 2) == 42.);
 }
 
+CASE("test_make_mdspan_explicit_extents_matching_rank") {
+    // Mixed static/dynamic extents retain the source rank and shape in both conversion forms.
+    double data[6]{1., 2., 3., 4., 5., 6.};
+    auto view = make_local_view(data);
+    using Extents = extents<std::size_t, 2, dynamic_extent>;
+    auto span = make_mdspan<Extents, layout_right>(view);
+    auto shaped = make_mdspan<Extents, layout_right>(view, std::array<std::size_t, 2>{2, 3});
+    static_assert(decltype(span)::rank() == 2);
+    static_assert(decltype(shaped)::rank() == 2);
+    EXPECT(span.extent(0) == 2);
+    EXPECT(span.extent(1) == 3);
+    EXPECT(span(1, 2) == 6.);
+    EXPECT(shaped.extent(0) == 2);
+    EXPECT(shaped.extent(1) == 3);
+    EXPECT(shaped(1, 2) == 6.);
+}
+
+CASE("test_make_mdspan_vector_array_reshape") {
+    // Shaped vector-of-array conversions use scalar storage with every accessor spelling.
+    std::vector<std::array<double, 3>> values{{1., 2., 3.}, {4., 5., 6.}};
+    auto check_policies = [](auto& container) {
+        using Element = std::conditional_t<std::is_const_v<std::remove_reference_t<decltype(container)>>, const double, double>;
+        auto check = [&](auto span) {
+            using Span = decltype(span);
+            static_assert(Span::rank() == 2);
+            static_assert(std::is_same_v<typename Span::element_type, Element>);
+            static_assert(std::is_assignable_v<decltype(span(1, 2)), double> == !std::is_const_v<Element>);
+            EXPECT(span.data_handle() == container.front().data());
+            EXPECT(span.extent(0) == 2);
+            EXPECT(span.extent(1) == 3);
+            EXPECT(span.stride(0) == 3);
+            EXPECT(span.stride(1) == 1);
+            EXPECT(span(1, 2) == 6.);
+        };
+        std::array<std::size_t, 2> shape{2, 3};
+        check(make_mdspan(container, shape));
+        check(make_mdspan<layout_stride>(container, shape));
+        check(make_mdspan<default_accessor>(container, shape));
+        check(make_mdspan<aligned_accessor>(container, shape));
+        check(make_mdspan<layout_stride, default_accessor>(container, shape));
+        check(make_mdspan<default_accessor<Element>>(container, shape));
+        check(make_mdspan<layout_stride, default_accessor<Element>>(container, shape));
+        check(make_mdspan<aligned_accessor_policy<alignof(double)>>(container, shape));
+        check(make_mdspan<layout_stride, aligned_accessor_policy<alignof(double)>>(container, shape));
+        extents<std::size_t, dynamic_extent, 3> fixed_shape{2};
+        auto fixed = make_mdspan(container, fixed_shape);
+        static_assert(decltype(fixed)::extents_type::static_extent(1) == 3);
+        check(fixed);
+    };
+    check_policies(values);
+    check_policies(std::as_const(values));
+    auto writable = make_mdspan(values, std::array<std::size_t, 2>{2, 3});
+    auto readonly = make_mdspan(std::as_const(values), std::array<std::size_t, 2>{2, 3});
+    writable(1, 2) = 42.;
+    EXPECT(values[1][2] == 42.);
+    EXPECT(readonly(1, 2) == 42.);
+}
+
 CASE("test_make_mdspan_vector_reshape") {
     // A runtime shape exposes flat vector storage as a rank-2 row-major span.
     std::vector<double> data{1., 2., 3., 4., 5., 6.};

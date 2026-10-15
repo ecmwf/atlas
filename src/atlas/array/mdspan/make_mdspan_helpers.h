@@ -289,6 +289,8 @@ auto make_mdspan_impl(View& view) {
     constexpr std::size_t Rank = rank<View>();
     using ActualExtents = to_extents_t<Extents, Rank>;
 
+    static_assert(ActualExtents::rank() == Rank, "The requested extents rank must match the view rank.");
+
     auto extents = make_mdspan_extents<View, ActualExtents>(view, std::make_index_sequence<Rank>{});
     return make_mdspan_from_extents<ActualExtents, Layout, Accessor>(
         data_handle(view), extents,
@@ -319,7 +321,7 @@ auto make_mdspan_pointer_impl(Value* data, Extents extents) {
 
 template<typename Extents, typename Layout, typename Accessor, typename Container>
 auto make_mdspan_container_impl(Container& container, Extents extents) {
-    return make_mdspan_pointer_impl<Extents, Layout, Accessor>(container.data(), extents);
+    return make_mdspan_pointer_impl<Extents, Layout, Accessor>(container_descriptor_t<Container>::data(container), extents);
 }
 
 }  // namespace atlas::array::make_mdspan_helpers

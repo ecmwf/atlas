@@ -969,7 +969,7 @@ template<
 >
 auto make_mdspan(Container& container, InputExtents input_shape) {
     using namespace make_mdspan_helpers;
-    using Value = std::remove_pointer_t<std::remove_reference_t<decltype(container.data())>>;
+    using Value = container_element_t<Container>;
     constexpr std::size_t Rank = rank_from_extents<InputExtents>();
     using Extents = to_extents_t<InputExtents, Rank>;
     using Accessor = AccessorPolicy<Value>;
@@ -1012,7 +1012,7 @@ template<
 >
 auto make_mdspan(Container& container, InputExtents input_shape) {
     using namespace make_mdspan_helpers;
-    using Value = std::remove_pointer_t<std::remove_reference_t<decltype(container.data())>>;
+    using Value = container_element_t<Container>;
     constexpr std::size_t Rank = rank_from_extents<InputExtents>();
     using Extents = to_extents_t<InputExtents, Rank>;
     using Accessor = AccessorPolicy<Value, default_accessor_alignment_v<Value>>;
@@ -1037,7 +1037,7 @@ template<
 >
 auto make_mdspan(Container& container, InputExtents input_shape) {
     using namespace make_mdspan_helpers;
-    using Value = std::remove_pointer_t<std::remove_reference_t<decltype(container.data())>>;
+    using Value = container_element_t<Container>;
     constexpr std::size_t Rank = rank_from_extents<InputExtents>();
     using Extents = to_extents_t<InputExtents, Rank>;
     using Accessor = accessor_or_policy_t<AccessorOrPolicy, Value>;
@@ -1064,7 +1064,7 @@ template<
 >
 auto make_mdspan(Container& container, InputExtents input_shape) {
     using namespace make_mdspan_helpers;
-    using Value = std::remove_pointer_t<std::remove_reference_t<decltype(container.data())>>;
+    using Value = container_element_t<Container>;
     constexpr std::size_t Rank = rank_from_extents<InputExtents>();
     using Extents = to_extents_t<InputExtents, Rank>;
     using Accessor = accessor_or_policy_t<AccessorOrPolicy, Value>;
