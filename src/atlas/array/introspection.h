@@ -100,7 +100,7 @@ namespace atlas::array {
         if constexpr (std::is_same_v<introspection::layout_t<View>, layout_right>) {
             return true;
         }
-        else if constexpr (Rank <= 1) {
+        else if constexpr (Rank == 0 || !introspection::has_rank<View>()) {
             return true;
         }
         else {

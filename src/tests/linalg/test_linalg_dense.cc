@@ -8,6 +8,7 @@
  * nor does it submit to any jurisdiction.
  */
 
+#include <memory>
 #include <tuple>
 #include <vector>
 
@@ -22,6 +23,10 @@
 #include "eckit/linalg/Vector.h"
 
 #include "atlas/linalg/dense.h"
+#include "atlas/linalg/View.h"
+#include "atlas/array/ArrayView.h"
+#include "atlas/array/Array.h"
+#include "atlas/array/MakeView.h"
 
 #include "tests/AtlasTestEnvironment.h"
 
@@ -71,6 +76,45 @@ void expect_equal(const T1& v, const T2& r) {
 }
 
 //----------------------------------------------------------------------------------------------------------------------
+
+CASE("test_linalg_make_view_readonly_elements") {
+    // Linalg conversion must retain pointee constness even for mutable view objects.
+    using ReadonlyArray = array::ArrayView<const double, 1>;
+    using ReadonlyLocal = array::LocalView<const double, 1>;
+    static_assert(std::is_same_v<typename linalg::view_type<ReadonlyArray>::element_type, const double>);
+    static_assert(std::is_same_v<typename linalg::view_type<ReadonlyLocal>::element_type, const double>);
+
+    std::unique_ptr<array::Array> storage{array::Array::create<double>(3)};
+    auto writable_array = array::make_host_view<double, 1>(*storage);
+    writable_array(0) = 1.;
+    writable_array(1) = 2.;
+    writable_array(2) = 3.;
+    auto* data = writable_array.data();
+    array::ArrayShape shape{3};
+    array::LocalView<double, 1> writable_source{data, shape};
+    auto readonly_local = writable_source.as_const();
+    auto local_result = linalg::make_view(readonly_local);
+    static_assert(!std::is_assignable_v<decltype(local_result(1)), double>);
+    EXPECT(local_result.data() == data);
+    EXPECT(local_result.shape(0) == 3);
+    EXPECT(local_result(1) == 2.);
+
+    auto readonly_array = array::make_host_view<const double, 1>(*storage);
+    auto array_result = linalg::make_view(readonly_array);
+    static_assert(!std::is_assignable_v<decltype(array_result(1)), double>);
+    EXPECT(array_result.data() == data);
+    EXPECT(array_result(2) == 3.);
+
+    auto writable_result = linalg::make_view(writable_source);
+    static_assert(std::is_same_v<typename decltype(writable_result)::element_type, double>);
+    writable_result(1) = 42.;
+    EXPECT(local_result(1) == 42.);
+    EXPECT(array_result(1) == 42.);
+
+    auto const_result = linalg::make_view(std::as_const(writable_source));
+    static_assert(std::is_same_v<typename decltype(const_result)::element_type, const double>);
+    EXPECT(const_result(1) == 42.);
+}
 
 CASE("test configuration via resource") {
     if (atlas::Library::instance().linalgDenseBackend().empty()) {

@@ -77,6 +77,71 @@ struct LayoutRightViewWithoutStrides {
     static constexpr std::size_t rank() { return 2; }
 };
 
+struct OffsetAccessor : default_accessor<double> {
+    std::size_t displacement{0};
+
+    double& access(double* data, std::size_t offset) const noexcept {
+        return data[offset + displacement];
+    }
+};
+
+struct RequiredOffsetAccessor : OffsetAccessor {
+    RequiredOffsetAccessor() = delete;
+    explicit RequiredOffsetAccessor(std::size_t offset) { displacement = offset; }
+};
+
+CASE("test_make_mdspan_review_rank_one_strided_layout") {
+    // A rank-1 view with stride two must not qualify for contiguous row-major conversion.
+    double data[5]{1., 2., 3., 4., 5.};
+    idx_t shape[1]{3};
+    idx_t strides[1]{2};
+    auto view = LocalView<double, 1>{data, shape, strides};
+    auto span = make_mdspan<layout_stride>(view);
+    EXPECT(span(1) == 3.);
+    EXPECT(not conforms_layout_right(view));
+    EXPECT(not conforms_layout_right(span));
+    EXPECT(not conforms_layout<layout_right>(view));
+
+    idx_t contiguous_strides[1]{1};
+    auto contiguous_view = LocalView<double, 1>{data, shape, contiguous_strides};
+    EXPECT(conforms_layout_right(contiguous_view));
+    auto contiguous_span = make_mdspan<layout_right>(contiguous_view);
+    EXPECT(contiguous_span(1) == 2.);
+    std::vector<double> values{1., 2., 3.};
+    EXPECT(conforms_layout_right(values));
+    EXPECT(conforms_layout_right(std::as_const(values)));
+    std::array<double, 3> array_values{1., 2., 3.};
+    EXPECT(conforms_layout_right(array_values));
+}
+
+CASE("test_make_mdspan_review_preserve_accessor_state") {
+    // Conversion must retain the source accessor instance, not only its type.
+    double data[4]{10., 20., 30., 40.};
+    using Span = mdspan<double, extents<std::size_t, 2>, layout_right, OffsetAccessor>;
+    OffsetAccessor accessor;
+    accessor.displacement = 1;
+    Span source{data, typename Span::mapping_type{}, accessor};
+    EXPECT(source(0) == 20.);
+    auto converted = make_mdspan(source);
+    auto strided = make_mdspan<layout_stride>(source);
+    auto shaped = make_mdspan(source, typename Span::extents_type{});
+    EXPECT(converted.accessor().displacement == 1);
+    EXPECT(converted(0) == source(0));
+    EXPECT(strided(0) == source(0));
+    EXPECT(shaped(0) == source(0));
+    auto replaced = make_mdspan<default_accessor>(source);
+    EXPECT(replaced(0) == data[0]);
+
+    using RequiredSpan = mdspan<double, extents<std::size_t, 2>, layout_right, RequiredOffsetAccessor>;
+    RequiredSpan required{data, typename RequiredSpan::mapping_type{}, RequiredOffsetAccessor{1}};
+    auto required_copy = make_mdspan(std::as_const(required));
+    auto required_strided = make_mdspan<layout_stride>(required);
+    auto required_shaped = make_mdspan(required, typename RequiredSpan::extents_type{});
+    EXPECT(required_copy(0) == 20.);
+    EXPECT(required_strided(0) == 20.);
+    EXPECT(required_shaped(0) == 20.);
+}
+
 template <typename Source, typename = void>
 struct CanMakeMdspan : std::false_type {};
 

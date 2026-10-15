@@ -11,6 +11,7 @@
 #pragma once
 
 #include <type_traits>
+#include <utility>
 
 #include "eckit/linalg/Matrix.h"
 #include "eckit/linalg/Vector.h"
@@ -28,8 +29,7 @@ namespace view {
 
 template <typename View, typename>
 struct Convert {
-    using value_type = typename std::conditional<std::is_const<View>::value, const introspection::value_type<View>,
-                                                 introspection::value_type<View>>::type;
+    using value_type = std::remove_pointer_t<decltype(std::declval<View&>().data())>;
     using type       = array::LocalView<value_type, introspection::rank<View>()>;
     static type apply(View& view) { return type(view.data(), view.shape()); }
 };

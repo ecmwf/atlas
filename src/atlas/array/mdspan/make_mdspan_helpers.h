@@ -223,20 +223,36 @@ template <typename AccessorOrPolicy, typename Value>
 using accessor_or_policy_t = typename accessor_or_policy<AccessorOrPolicy, Value>::type;
 
 template<typename Extents, typename Layout, typename Accessor, typename DataHandle, typename StridesFactory>
-auto make_mdspan_from_extents(DataHandle data, Extents extents, StridesFactory strides_factory) {
+auto make_mdspan_from_extents(DataHandle data, Extents extents, StridesFactory strides_factory,
+                             Accessor accessor = Accessor{}) {
     if constexpr (std::is_same_v<Layout, layout_right>) {
         typename layout_right::template mapping<Extents> mapping{extents};
         using Mdspan = mdspan<typename Accessor::element_type, Extents, layout_right, Accessor>;
-        return Mdspan{data, mapping, Accessor{}};
+        return Mdspan{data, mapping, accessor};
     }
     else if constexpr (std::is_same_v<Layout, layout_stride>) {
         typename layout_stride::template mapping<Extents> mapping{extents, strides_factory()};
         using Mdspan = mdspan<typename Accessor::element_type, Extents, layout_stride, Accessor>;
-        return Mdspan{data, mapping, Accessor{}};
+        return Mdspan{data, mapping, accessor};
     }
     else {
         static_assert(introspection::always_false_v<Layout>, "make_mdspan() is only implemented for layout_right and layout_stride");
         return mdspan<typename Accessor::element_type, Extents, layout_right, Accessor>{data};
+    }
+}
+
+template <typename Accessor, typename View>
+auto make_view_accessor(const View& view) {
+    if constexpr (introspection::is_mdspan<View>()) {
+        if constexpr (std::is_same_v<Accessor, typename View::accessor_type>) {
+            return view.accessor();
+        }
+        else {
+            return Accessor{};
+        }
+    }
+    else {
+        return Accessor{};
     }
 }
 
@@ -248,7 +264,8 @@ auto make_mdspan_impl(View& view) {
     auto extents = make_mdspan_extents<View, ActualExtents>(view, std::make_index_sequence<Rank>{});
     return make_mdspan_from_extents<ActualExtents, Layout, Accessor>(
         data_handle(view), extents,
-        [&view]() { return make_mdspan_strides<View, Rank>(view, std::make_index_sequence<Rank>{}); });
+        [&view]() { return make_mdspan_strides<View, Rank>(view, std::make_index_sequence<Rank>{}); },
+        make_view_accessor<Accessor>(view));
 }
 
 template<typename Layout, typename Accessor, typename InputExtents, typename View>
@@ -261,7 +278,8 @@ auto make_mdspan_impl(View& view, InputExtents input_shape) {
     Extents extents{input_shape};
     return make_mdspan_from_extents<Extents, Layout, Accessor>(
         data_handle(view), extents,
-        [&view]() { return make_mdspan_strides<View, Rank>(view, std::make_index_sequence<Rank>{}); });
+        [&view]() { return make_mdspan_strides<View, Rank>(view, std::make_index_sequence<Rank>{}); },
+        make_view_accessor<Accessor>(view));
 }
 
 template<typename Extents, typename Layout, typename Accessor, typename Value>
