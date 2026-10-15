@@ -377,8 +377,8 @@ CASE("test_arrayview_slice_type") {
         EXPECT(slice2_view(1, 1, 0) == 224);
         EXPECT(slice2_view(1, 1, 1) == 225);
 
-        static_assert(std::is_same<decltype(slice1), mdspan<const double, dims<2>, layout_stride, restrict_accessor<const double>>>::value, "failed");
-        static_assert(std::is_same<decltype(slice2), mdspan<const double, dims<3>, layout_stride, restrict_accessor<const double>>>::value, "failed");
+        static_assert(std::is_same<decltype(slice1), mdspan<const double, dims<2>, layout_stride>>::value, "failed");
+        static_assert(std::is_same<decltype(slice2), mdspan<const double, dims<3>, layout_stride>>::value, "failed");
     }
 
 

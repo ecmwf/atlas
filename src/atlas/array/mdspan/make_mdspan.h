@@ -31,7 +31,8 @@ namespace atlas::array {
 /// input data and derives as much metadata as possible from the input object: view
 /// overloads preserve the view data handle, extents, strides, layout, and accessor;
 /// container and raw-pointer overloads assume contiguous storage and use
-/// layout_right unless another layout is requested.
+/// layout_right unless another layout is requested. If no accessor is selected
+/// or declared by the source, conversions use default_accessor, matching mdspan.
 ///
 /// Views declaring element_type use mdspan-style shallow constness: a const
 /// view object does not make its elements const during conversion. Use a view
@@ -50,8 +51,9 @@ namespace atlas::array {
 /// - **Layout**: let the input layout be preserved for views/mdspans, use the
 ///   contiguous layout_right default for containers and pointers, or specify a
 ///   layout such as `layout_stride` or `layout_right` explicitly.
-/// - **Accessor**: use the default restrict accessor, choose an accessor template
-///   such as `default_accessor` or `aligned_accessor`, pass an accessor policy
+/// - **Accessor**: preserve the source accessor when declared, otherwise use
+///   `default_accessor`; choose an accessor template such as `restrict_accessor`
+///   or `aligned_accessor`, pass an accessor policy
 ///   such as `aligned_accessor_policy<64>`, or pass a fully bound accessor type
 ///   such as `aligned_accessor<double, 64>`.
 ///
@@ -559,7 +561,7 @@ auto make_mdspan(View& view) {
 /// @endcode
 template<
     typename Layout = layout_right,
-    template <typename> typename AccessorPolicy = restrict_accessor,
+    template <typename> typename AccessorPolicy = default_accessor,
     typename Container,
     typename std::enable_if_t<make_mdspan_helpers::is_container_like_v<Container> &&
                               make_mdspan_helpers::is_layout_like_v<Layout>, int> = 0
@@ -586,12 +588,12 @@ auto make_mdspan(Container& container) {
 /// @endcode
 template <typename T, std::size_t N>
 auto make_mdspan(std::vector<std::array<T, N>>& vector) {
-    return mdspan<T, extents<std::size_t, dynamic_extent, N>>{reinterpret_cast<T*>(vector.data()), vector.size()};
+    return make_mdspan<layout_right>(vector);
 }
 
 template <typename T, std::size_t N>
 auto make_mdspan(const std::vector<std::array<T, N>>& vector) {
-    return mdspan<const T, extents<std::size_t, dynamic_extent, N>>{reinterpret_cast<const T*>(vector.data()), vector.size()};
+    return make_mdspan<layout_right>(vector);
 }
 
 template <typename T, std::size_t N>
@@ -967,7 +969,7 @@ auto make_mdspan(View& view, InputExtents input_shape) {
 /// @endcode
 template<
     typename Layout = layout_right,
-    template <typename> typename AccessorPolicy = restrict_accessor,
+    template <typename> typename AccessorPolicy = default_accessor,
     typename Container,
     typename InputExtents,
     typename std::enable_if_t<make_mdspan_helpers::is_container_like_v<Container> &&
@@ -1091,7 +1093,7 @@ auto make_mdspan(Container& container, InputExtents input_shape) {
 template<
     typename Extents,
     typename Layout = layout_right,
-    template <typename> typename AccessorPolicy = restrict_accessor,
+    template <typename> typename AccessorPolicy = default_accessor,
     typename Value,
     typename std::enable_if_t<make_mdspan_helpers::is_extent_like_v<Extents> &&
                               make_mdspan_helpers::is_layout_like_v<Layout>, int> = 0
@@ -1113,7 +1115,7 @@ auto make_mdspan(Value* data, std::array<typename Extents::index_type, Extents::
 /// @endcode
 template<
     typename Layout = layout_right,
-    template <typename> typename AccessorPolicy = restrict_accessor,
+    template <typename> typename AccessorPolicy = default_accessor,
     typename Value,
     typename InputExtents,
     typename std::enable_if_t<make_mdspan_helpers::is_layout_like_v<Layout>, int> = 0

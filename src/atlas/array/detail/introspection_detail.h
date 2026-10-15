@@ -117,7 +117,7 @@ using element_t = typename detail::element_type<View>::type;
 namespace detail {
 template <typename View, typename = std::void_t<> >
 struct accessor_type {
-    using type = restrict_accessor<element_t<View>>;
+    using type = default_accessor<element_t<View>>;
 };
 
 template <typename View>

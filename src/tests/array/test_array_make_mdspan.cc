@@ -23,7 +23,9 @@ using DynamicFirstFixedLastExtents = extents<std::size_t, dynamic_extent, 3>;
 
 template <typename Span, typename View>
 void expect_same_data(const Span& span, const View& view) {
-    static_assert(std::is_same_v<typename Span::accessor_type, restrict_accessor<typename Span::element_type>>);
+    static_assert(std::is_same_v<typename Span::accessor_type, default_accessor<typename Span::element_type>>);
+    using DefaultSpan = mdspan<typename Span::element_type, typename Span::extents_type, typename Span::layout_type>;
+    static_assert(std::is_same_v<typename Span::accessor_type, typename DefaultSpan::accessor_type>);
     EXPECT(span.data_handle() == view.data());
 }
 
@@ -411,7 +413,7 @@ CASE("test_make_mdspan_static_extent_transform") {
     static_assert(decltype(dim_span)::extents_type::static_extent(0) == dynamic_extent);
     static_assert(decltype(dim_span)::extents_type::static_extent(1) == 3);
     static_assert(std::is_same_v<typename decltype(dim_span)::layout_type, layout_stride>);
-    static_assert(std::is_same_v<typename decltype(dim_span)::accessor_type, restrict_accessor<double>>);
+    static_assert(std::is_same_v<typename decltype(dim_span)::accessor_type, default_accessor<double>>);
     static_assert(decltype(last_span)::extents_type::static_extent(0) == dynamic_extent);
     static_assert(decltype(last_span)::extents_type::static_extent(1) == 3);
     static_assert(std::is_same_v<typename decltype(last_span)::layout_type, layout_right>);
@@ -528,7 +530,7 @@ CASE("test_make_mdspan_vector_default_1d") {
 
     static_assert(decltype(span)::rank() == 1);
     static_assert(std::is_same_v<typename decltype(span)::layout_type, layout_right>);
-    static_assert(std::is_same_v<typename decltype(span)::accessor_type, restrict_accessor<double>>);
+    static_assert(std::is_same_v<typename decltype(span)::accessor_type, default_accessor<double>>);
     EXPECT(span.extent(0) == data.size());
     EXPECT(span.data_handle() == data.data());
     EXPECT(span(2) == 3.);
@@ -539,6 +541,11 @@ CASE("test_make_mdspan_vector_fixed_inner_extent_const") {
     std::vector<std::array<double, 3>> values{{1., 2., 3.}, {4., 5., 6.}};
     auto writable = make_mdspan(values);
     auto readonly = make_mdspan(std::as_const(values));
+
+    static_assert(std::is_same_v<typename decltype(writable)::accessor_type, default_accessor<double>>);
+    static_assert(std::is_same_v<typename decltype(readonly)::accessor_type, default_accessor<const double>>);
+    static_assert(std::is_same_v<decltype(writable), decltype(make_mdspan<layout_right>(values))>);
+    static_assert(std::is_same_v<decltype(readonly), decltype(make_mdspan<layout_right>(std::as_const(values)))>);
 
     auto check_policies = [](auto& container) {
         using Element = std::conditional_t<std::is_const_v<std::remove_reference_t<decltype(container)>>, const double, double>;
@@ -592,6 +599,35 @@ CASE("test_make_mdspan_vector_fixed_inner_extent_const") {
     writable(1, 2) = 42.;
     EXPECT(values[1][2] == 42.);
     EXPECT(readonly(1, 2) == 42.);
+}
+
+CASE("test_make_mdspan_empty_contiguous_strides") {
+    std::vector<double> values;
+    auto check = [](const auto& span, const auto& shape, const auto& expected_strides) {
+        EXPECT(span.size() == 0);
+        EXPECT(span.mapping().required_span_size() == 0);
+        for (std::size_t dimension = 0; dimension < span.rank(); ++dimension) {
+            EXPECT(span.extent(dimension) == shape[dimension]);
+            EXPECT(span.stride(dimension) == expected_strides[dimension]);
+            EXPECT(span.stride(dimension) > 0);
+        }
+    };
+    auto check_container = [&](auto& container) {
+        for (const auto& shape : {std::array<std::size_t, 2>{2, 0},
+                                  std::array<std::size_t, 2>{0, 3},
+                                  std::array<std::size_t, 2>{0, 0}}) {
+            const std::array<std::size_t, 2> strides{shape[1] == 0 ? 1 : shape[1], 1};
+            auto span = make_mdspan<layout_stride>(container, shape);
+            EXPECT(span.data_handle() == container.data());
+            check(span, shape, strides);
+        }
+        std::array<std::size_t, 3> shape{2, 0, 3};
+        check(make_mdspan<layout_stride>(container, shape), shape, std::array<std::size_t, 3>{3, 3, 1});
+    };
+    check_container(values);
+    check_container(std::as_const(values));
+    std::array<std::size_t, 2> shape{2, 0};
+    check(make_mdspan<layout_stride>(values.data(), shape), shape, std::array<std::size_t, 2>{1, 1});
 }
 
 CASE("test_make_mdspan_explicit_extents_matching_rank") {
@@ -693,7 +729,7 @@ CASE("test_make_mdspan_pointer_reshape") {
 
     static_assert(decltype(span)::rank() == 2);
     static_assert(std::is_same_v<typename decltype(span)::layout_type, layout_right>);
-    static_assert(std::is_same_v<typename decltype(span)::accessor_type, restrict_accessor<double>>);
+    static_assert(std::is_same_v<typename decltype(span)::accessor_type, default_accessor<double>>);
     EXPECT(span.data_handle() == data);
     EXPECT(span.extent(0) == 2);
     EXPECT(span.extent(1) == 3);
@@ -709,7 +745,7 @@ CASE("test_make_mdspan_pointer_reshape_explicit_dims") {
     static_assert(decltype(span)::rank() == 2);
     static_assert(std::is_same_v<typename decltype(span)::extents_type, dims<2>>);
     static_assert(std::is_same_v<typename decltype(span)::layout_type, layout_right>);
-    static_assert(std::is_same_v<typename decltype(span)::accessor_type, restrict_accessor<double>>);
+    static_assert(std::is_same_v<typename decltype(span)::accessor_type, default_accessor<double>>);
     EXPECT(span.data_handle() == data);
     EXPECT(span.extent(0) == 2);
     EXPECT(span.extent(1) == 3);
@@ -1228,7 +1264,7 @@ CASE("test_make_mdspan_from_mdspan_changes_layout") {
     auto right_span = make_mdspan<layout_right>(stride_span);
 
     static_assert(std::is_same_v<typename decltype(right_span)::layout_type, layout_right>);
-    static_assert(std::is_same_v<typename decltype(right_span)::accessor_type, restrict_accessor<double>>);
+    static_assert(std::is_same_v<typename decltype(right_span)::accessor_type, default_accessor<double>>);
     EXPECT(right_span.data_handle() == stride_span.data_handle());
     EXPECT(right_span.extent(0) == stride_span.extent(0));
     EXPECT(right_span.extent(1) == stride_span.extent(1));
@@ -1239,7 +1275,12 @@ CASE("test_make_mdspan_from_mdspan_changes_accessor") {
     // Converting an existing mdspan can replace its accessor and layout without copying elements.
     double data[6]{};
     auto view = make_local_view(data);
-    auto restrict_span = make_mdspan<layout_right>(view);
+    auto restrict_span = make_mdspan<layout_right, restrict_accessor>(view);
+
+    auto preserved = make_mdspan(restrict_span);
+    auto preserved_shaped = make_mdspan(restrict_span, std::array<std::size_t, 2>{2, 3});
+    static_assert(std::is_same_v<typename decltype(preserved)::accessor_type, restrict_accessor<double>>);
+    static_assert(std::is_same_v<typename decltype(preserved_shaped)::accessor_type, restrict_accessor<double>>);
 
     restrict_span(0, 2) = 37.;
     auto default_span = make_mdspan<layout_stride, default_accessor>(restrict_span);
@@ -1263,7 +1304,7 @@ CASE("test_make_mdspan_from_mdspan_fixed_extents") {
 
     expect_dynamic_first_fixed_last_extents<decltype(fixed_span)>();
     static_assert(std::is_same_v<typename decltype(fixed_span)::layout_type, layout_right>);
-    static_assert(std::is_same_v<typename decltype(fixed_span)::accessor_type, restrict_accessor<double>>);
+    static_assert(std::is_same_v<typename decltype(fixed_span)::accessor_type, default_accessor<double>>);
     EXPECT(fixed_span.data_handle() == stride_span.data_handle());
     EXPECT(fixed_span.extent(0) == 2);
     EXPECT(fixed_span.extent(1) == 3);

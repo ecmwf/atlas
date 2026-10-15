@@ -195,7 +195,8 @@ std::array<std::size_t, Extents::rank()> make_contiguous_strides(const Extents& 
     std::size_t stride{1};
     for (std::size_t dimension = Rank; dimension > 0; --dimension) {
         strides[dimension - 1] = stride;
-        stride *= static_cast<std::size_t>(extents.extent(dimension - 1));
+        const auto extent = static_cast<std::size_t>(extents.extent(dimension - 1));
+        stride *= extent == 0 ? 1 : extent;
     }
     return std::array<std::size_t, Rank>{strides[I]...};
 }
