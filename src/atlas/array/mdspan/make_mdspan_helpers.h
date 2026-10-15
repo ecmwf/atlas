@@ -290,9 +290,16 @@ auto make_mdspan_from_extents(DataHandle data, Extents extents, StridesFactory s
     }
 }
 
+template <typename View, typename = void>
+struct has_view_accessor : std::false_type {};
+
+template <typename View>
+struct has_view_accessor<View, std::void_t<typename View::accessor_type,
+                                         decltype(std::declval<const View&>().accessor())>> : std::true_type {};
+
 template <typename Accessor, typename View>
 auto make_view_accessor(const View& view) {
-    if constexpr (introspection::is_mdspan<View>()) {
+    if constexpr (has_view_accessor<View>::value) {
         if constexpr (std::is_same_v<Accessor, typename View::accessor_type>) {
             return view.accessor();
         }
