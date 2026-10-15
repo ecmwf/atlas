@@ -92,6 +92,51 @@ struct RequiredOffsetAccessor : OffsetAccessor {
     explicit RequiredOffsetAccessor(std::size_t offset) { displacement = offset; }
 };
 
+template <typename Accessor>
+struct ViewWithAccessor {
+    using element_type = double;
+    using data_handle_type = double*;
+    using accessor_type = Accessor;
+
+    double* data;
+    Accessor accessor_instance;
+
+    static constexpr std::size_t rank() { return 1; }
+    std::size_t extent(std::size_t) const { return 2; }
+    std::size_t stride(std::size_t) const { return 1; }
+    double* data_handle() const { return data; }
+    const Accessor& accessor() const { return accessor_instance; }
+};
+
+CASE("test_make_mdspan_custom_view_preserves_accessor") {
+    double data[4]{10., 20., 30., 40.};
+    auto check = [&](const auto& view) {
+        using View = std::decay_t<decltype(view)>;
+        static_assert(!introspection::is_mdspan<View>());
+        auto check_span = [&](auto span) {
+            static_assert(std::is_same_v<typename decltype(span)::accessor_type, typename View::accessor_type>);
+            EXPECT(span.data_handle() == data);
+            EXPECT(span.extent(0) == 2);
+            EXPECT(span.stride(0) == 1);
+            EXPECT(span.accessor().displacement == 1);
+            EXPECT(span(0) == 20.);
+            EXPECT(span(1) == 30.);
+        };
+        check_span(make_mdspan(view));
+        check_span(make_mdspan<layout_right>(view));
+        check_span(make_mdspan(view, std::array<std::size_t, 1>{2}));
+        check_span(make_mdspan<dims<1>>(view));
+        check_span(make_mdspan<dims<1>>(view, std::array<std::size_t, 1>{2}));
+        auto replaced = make_mdspan<default_accessor>(view);
+        static_assert(std::is_same_v<typename decltype(replaced)::accessor_type, default_accessor<double>>);
+        EXPECT(replaced(0) == 10.);
+    };
+    OffsetAccessor accessor;
+    accessor.displacement = 1;
+    check(ViewWithAccessor<OffsetAccessor>{data, accessor});
+    check(ViewWithAccessor<RequiredOffsetAccessor>{data, RequiredOffsetAccessor{1}});
+}
+
 CASE("test_make_mdspan_layout_compatibility") {
     double data[8]{10., 20., 30., 40., 50., 60., 70., 80.};
     using Extents = extents<std::size_t, 2, 3>;
