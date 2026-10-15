@@ -188,22 +188,73 @@ auto get_stride(const View& view, std::size_t dimension) -> decltype(view.stride
     return view.stride(dimension);
 }
 
-template <typename View, std::size_t... I>
-bool has_layout_right_strides(const View& view, std::index_sequence<I...>) {
+template <std::size_t Rank>
+bool valid_layout_stride(const std::array<std::size_t, Rank>& extents,
+                         const std::array<std::size_t, Rank>& strides) {
+    std::array<std::size_t, Rank> dimensions{};
+    bool empty = false;
+    for (std::size_t dimension = 0; dimension < Rank; ++dimension) {
+        if (strides[dimension] == 0) {
+            return false;
+        }
+        empty = empty || extents[dimension] == 0;
+        dimensions[dimension] = dimension;
+    }
+    if (empty) {
+        return true;
+    }
+    for (std::size_t position = 1; position < Rank; ++position) {
+        auto dimension = dimensions[position];
+        auto previous = position;
+        while (previous > 0 && strides[dimensions[previous - 1]] > strides[dimension]) {
+            dimensions[previous] = dimensions[previous - 1];
+            --previous;
+        }
+        dimensions[previous] = dimension;
+    }
+    std::size_t previous_stride = 1;
+    std::size_t previous_extent = 1;
+    for (auto dimension : dimensions) {
+        if (extents[dimension] > 1) {
+            if (strides[dimension] / previous_stride < previous_extent) {
+                return false;
+            }
+            previous_stride = strides[dimension];
+            previous_extent = extents[dimension];
+        }
+    }
+    return true;
+}
+
+template <typename View, std::size_t... Dimensions>
+bool has_valid_layout_stride(const View& view, std::index_sequence<Dimensions...>) {
+    if (!((get_stride(view, Dimensions) > 0) && ...)) {
+        return false;
+    }
+    return valid_layout_stride(
+        std::array<std::size_t, sizeof...(Dimensions)>{static_cast<std::size_t>(get_extent(view, Dimensions))...},
+        std::array<std::size_t, sizeof...(Dimensions)>{static_cast<std::size_t>(get_stride(view, Dimensions))...});
+}
+
+template <typename Layout, typename View, std::size_t... I>
+bool has_contiguous_layout_strides(const View& view, std::index_sequence<I...>) {
     constexpr std::size_t Rank = rank<View>();
     std::array<std::size_t, Rank> extents{static_cast<std::size_t>(get_extent(view, I))...};
     std::array<std::size_t, Rank> strides{static_cast<std::size_t>(get_stride(view, I))...};
 
-    if (strides[Rank - 1] != 1) {
-        return false;
+    for (auto extent : extents) {
+        if (extent == 0) {
+            return true;
+        }
     }
 
     std::size_t expected_stride{1};
-    for (std::size_t i = Rank - 1; i > 0; --i) {
-        expected_stride *= extents[i];
-        if (strides[i - 1] != expected_stride) {
+    for (std::size_t step = 0; step < Rank; ++step) {
+        const auto dimension = std::is_same_v<Layout, layout_left> ? step : Rank - 1 - step;
+        if (extents[dimension] > 1 && strides[dimension] != expected_stride) {
             return false;
         }
+        expected_stride *= extents[dimension];
     }
     return true;
 }

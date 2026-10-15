@@ -100,11 +100,31 @@ namespace atlas::array {
         if constexpr (std::is_same_v<introspection::layout_t<View>, layout_right>) {
             return true;
         }
+        else if constexpr (std::is_same_v<introspection::layout_t<View>, layout_left>) {
+            return false;
+        }
         else if constexpr (Rank == 0 || !introspection::has_rank<View>()) {
             return true;
         }
         else {
-            return introspection::has_layout_right_strides(view, std::make_index_sequence<Rank>{});
+            return introspection::has_contiguous_layout_strides<layout_right>(view, std::make_index_sequence<Rank>{});
+        }
+    }
+
+    template <typename View>
+    bool conforms_layout_left(const View& view) {
+        constexpr std::size_t Rank = rank<View>();
+        if constexpr (std::is_same_v<introspection::layout_t<View>, layout_left>) {
+            return true;
+        }
+        else if constexpr (std::is_same_v<introspection::layout_t<View>, layout_right>) {
+            return false;
+        }
+        else if constexpr (Rank == 0 || !introspection::has_rank<View>()) {
+            return true;
+        }
+        else {
+            return introspection::has_contiguous_layout_strides<layout_left>(view, std::make_index_sequence<Rank>{});
         }
     }
 
@@ -113,11 +133,19 @@ namespace atlas::array {
         if constexpr (std::is_same_v<Layout, layout_right>) {
             return conforms_layout_right(view);
         }
+        else if constexpr (std::is_same_v<Layout, layout_left>) {
+            return conforms_layout_left(view);
+        }
         else if constexpr (std::is_same_v<Layout, layout_stride>) {
-            return true;
+            if constexpr (!introspection::has_rank<View>() || rank<View>() == 0) {
+                return true;
+            }
+            else {
+                return introspection::has_valid_layout_stride(view, std::make_index_sequence<rank<View>()>{});
+            }
         }
         else {
-            static_assert(introspection::always_false_v<Layout>, "conforms_layout() is only implemented for layout_right and layout_stride");
+            static_assert(introspection::always_false_v<Layout>, "conforms_layout() is only implemented for layout_left, layout_right and layout_stride");
             return false;
         }
     }

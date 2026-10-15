@@ -92,6 +92,88 @@ struct RequiredOffsetAccessor : OffsetAccessor {
     explicit RequiredOffsetAccessor(std::size_t offset) { displacement = offset; }
 };
 
+CASE("test_make_mdspan_layout_compatibility") {
+    double data[8]{10., 20., 30., 40., 50., 60., 70., 80.};
+    using Extents = extents<std::size_t, 2, 3>;
+    using LeftSpan = mdspan<double, Extents, layout_left, OffsetAccessor>;
+    OffsetAccessor accessor;
+    accessor.displacement = 1;
+    LeftSpan source{data, typename LeftSpan::mapping_type{}, accessor};
+    auto preserved = make_mdspan(source);
+    auto shaped = make_mdspan(source, std::array<std::size_t, 2>{2, 3});
+    static_assert(std::is_same_v<decltype(preserved), LeftSpan>);
+    EXPECT(preserved.data_handle() == data);
+    EXPECT(preserved.accessor().displacement == 1);
+    EXPECT(preserved(1, 2) == source(1, 2));
+    EXPECT(shaped(1, 2) == source(1, 2));
+    auto strided = make_mdspan<layout_stride>(source);
+    EXPECT(conforms_layout<layout_left>(strided));
+    EXPECT(!conforms_layout<layout_right>(strided));
+    auto restored = make_mdspan<layout_left>(strided);
+    EXPECT(restored(1, 2) == source(1, 2));
+    auto to_right = [&] { return make_mdspan<layout_right>(source); };
+    EXPECT_THROWS_AS(to_right(), eckit::Exception);
+
+    mdspan<double, Extents, layout_right> right{data};
+    auto to_left = [&] { return make_mdspan<layout_left>(right); };
+    auto shaped_to_left = [&] { return make_mdspan<layout_left>(right, std::array<std::size_t, 2>{2, 3}); };
+    EXPECT_THROWS_AS(to_left(), eckit::Exception);
+    EXPECT_THROWS_AS(shaped_to_left(), eckit::Exception);
+    auto incompatible_shape = [&] { return make_mdspan<layout_right>(right, std::array<std::size_t, 2>{3, 2}); };
+    EXPECT_THROWS_AS(incompatible_shape(), eckit::Exception);
+    EXPECT(!conforms_layout<layout_left>(right));
+    EXPECT(!conforms_layout<layout_right>(source));
+
+    idx_t shape[2]{2, 3};
+    idx_t padded[2]{4, 1};
+    LocalView<double, 2> padded_view{data, shape, padded};
+    auto padded_right = [&] { return make_mdspan<layout_right>(padded_view); };
+    auto padded_left = [&] { return make_mdspan<layout_left>(padded_view); };
+    EXPECT_THROWS_AS(padded_right(), eckit::Exception);
+    EXPECT_THROWS_AS(padded_left(), eckit::Exception);
+    idx_t overlapping_strides[2]{1, 1};
+    LocalView<double, 2> overlapping{data, shape, overlapping_strides};
+    EXPECT(!conforms_layout<layout_stride>(overlapping));
+    auto overlapping_conversion = [&] { return make_mdspan(overlapping); };
+    EXPECT_THROWS_AS(overlapping_conversion(), eckit::Exception);
+    auto strided_right = make_mdspan<layout_stride>(right);
+    auto wrong_order = [&] { return make_mdspan<layout_left>(strided_right); };
+    EXPECT_THROWS_AS(wrong_order(), eckit::Exception);
+
+    idx_t singleton_shape[2]{1, 3};
+    idx_t singleton_strides[2]{99, 1};
+    LocalView<double, 2> singleton{data, singleton_shape, singleton_strides};
+    EXPECT(conforms_layout<layout_left>(singleton));
+    EXPECT(conforms_layout<layout_right>(singleton));
+    EXPECT(make_mdspan<layout_left>(singleton)(0, 2) == data[2]);
+    idx_t empty_shape[2]{2, 0};
+    LocalView<double, 2> empty{data, empty_shape, padded};
+    EXPECT(conforms_layout<layout_left>(empty));
+    EXPECT(make_mdspan<layout_left>(empty).size() == 0);
+
+    std::vector<double> values{1., 2., 3., 4., 5., 6.};
+    auto check_container = [](auto& container) {
+        auto left = make_mdspan<layout_left>(container, std::array<std::size_t, 2>{2, 3});
+        static_assert(std::is_same_v<typename decltype(left)::layout_type, layout_left>);
+        EXPECT(left.data_handle() == container.data());
+        EXPECT(left.stride(0) == 1);
+        EXPECT(left.stride(1) == 2);
+        EXPECT(left(1, 0) == 2.);
+        EXPECT(left(0, 2) == 5.);
+    };
+    check_container(values);
+    check_container(std::as_const(values));
+    std::array<double, 6> array_values{1., 2., 3., 4., 5., 6.};
+    check_container(array_values);
+    auto pointer = make_mdspan<layout_left>(values.data(), std::array<std::size_t, 2>{2, 3});
+    EXPECT(pointer(1, 0) == 2.);
+    std::vector<double> empty_values;
+    auto empty_left = make_mdspan<layout_left>(empty_values, std::array<std::size_t, 2>{0, 3});
+    EXPECT(empty_left.size() == 0);
+    EXPECT(empty_left.extent(0) == 0);
+    EXPECT(empty_left.extent(1) == 3);
+}
+
 CASE("test_make_mdspan_review_rank_one_strided_layout") {
     // A rank-1 view with stride two must not qualify for contiguous row-major conversion.
     double data[5]{1., 2., 3., 4., 5.};
@@ -103,6 +185,8 @@ CASE("test_make_mdspan_review_rank_one_strided_layout") {
     EXPECT(not conforms_layout_right(view));
     EXPECT(not conforms_layout_right(span));
     EXPECT(not conforms_layout<layout_right>(view));
+    auto incompatible_right = [&] { return make_mdspan<layout_right>(view); };
+    EXPECT_THROWS_AS(incompatible_right(), eckit::Exception);
 
     idx_t contiguous_strides[1]{1};
     auto contiguous_view = LocalView<double, 1>{data, shape, contiguous_strides};

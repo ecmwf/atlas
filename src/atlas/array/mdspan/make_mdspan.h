@@ -34,6 +34,17 @@ namespace atlas::array {
 /// layout_right unless another layout is requested. If no accessor is selected
 /// or declared by the source, conversions use default_accessor, matching mdspan.
 ///
+/// View conversions do not reorder data. Enforcing layout_left or layout_right
+/// requires compatible source strides for the requested shape; incompatible
+/// conversions throw. Declared layout_left and layout_right views cannot be
+/// converted directly to the opposite layout. A layout_stride view can become
+/// either contiguous layout when its indexing agrees. Singleton strides are
+/// ignored, and empty views have no stride-sensitive accesses.
+/// Shaped view conversions retain source strides, rather than reshaping a flat
+/// sequence. Containers and raw pointers have no declared multidimensional layout:
+/// their storage may be interpreted in either left or right order using the
+/// supplied shape. layout_stride requires positive, non-overlapping strides.
+///
 /// Views declaring element_type use mdspan-style shallow constness: a const
 /// view object does not make its elements const during conversion. Use a view
 /// with const element_type to produce read-only elements. Legacy const data()
@@ -50,7 +61,7 @@ namespace atlas::array {
 ///   `extents<std::size_t, dynamic_extent, 3>`.
 /// - **Layout**: let the input layout be preserved for views/mdspans, use the
 ///   contiguous layout_right default for containers and pointers, or specify a
-///   layout such as `layout_stride` or `layout_right` explicitly.
+///   layout such as `layout_stride`, `layout_left`, or `layout_right` explicitly.
 /// - **Accessor**: preserve the source accessor when declared, otherwise use
 ///   `default_accessor`; choose an accessor template such as `restrict_accessor`
 ///   or `aligned_accessor`, pass an accessor policy
