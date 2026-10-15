@@ -1446,6 +1446,10 @@ CASE("test_make_mdspan_from_mdspan_changes_accessor") {
     static_assert(std::is_same_v<typename decltype(preserved_shaped)::accessor_type, restrict_accessor<double>>);
 
     restrict_span(0, 2) = 37.;
+    EXPECT(preserved.data_handle() == restrict_span.data_handle());
+    EXPECT(preserved_shaped.data_handle() == restrict_span.data_handle());
+    EXPECT(preserved(0, 2) == 37.);
+    EXPECT(preserved_shaped(0, 2) == 37.);
     auto default_span = make_mdspan<layout_stride, default_accessor>(restrict_span);
 
     static_assert(std::is_same_v<typename decltype(default_span)::layout_type, layout_stride>);
