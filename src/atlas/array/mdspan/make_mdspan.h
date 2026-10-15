@@ -878,7 +878,8 @@ auto make_mdspan(View& view, InputExtents input_shape) {
 /// @brief Create a shaped mdspan from a view with a two-argument accessor template.
 ///
 /// @details Motivation: provide accessor-first shaped syntax for aligned-style
-/// accessors using the view value type and default alignment.
+/// accessors using the view value type and default alignment. Output extents
+/// are derived from the supplied shape, not the source view's static extents.
 ///
 /// @code
 /// auto span = make_mdspan<aligned_accessor>(view, shape);
@@ -891,7 +892,9 @@ template<
 >
 auto make_mdspan(View& view, InputExtents input_shape) {
     using namespace make_mdspan_helpers;
-    return make_mdspan<extents_t<View>, layout_t<View>, AccessorPolicy>(view, input_shape);
+    using Element = element_t<View>;
+    using Accessor = AccessorPolicy<Element, default_accessor_alignment_v<Element>>;
+    return make_mdspan_impl<layout_t<View>, Accessor>(view, input_shape);
 }
 
 //------------------------------------------------------------------------------

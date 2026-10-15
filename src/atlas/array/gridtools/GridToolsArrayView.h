@@ -45,6 +45,7 @@ public:
     // -- Type definitions
     using element_type                 = Value;
     using value_type                   = std::remove_cv_t<element_type>;
+    using data_handle_type             = element_type*;
     using non_const_value_type         = typename std::remove_const<Value>::type;
     static constexpr bool is_const     = std::is_const<Value>::value;
     static constexpr bool is_non_const = !std::is_const<Value>::value;
@@ -93,6 +94,11 @@ public:
     element_type* data() { return gt_data_view_.data(); }
     element_type const* data() const { return gt_data_view_.data(); }
 
+    /// Mdspan-style shallow constness: element_type determines handle mutability.
+    /// Legacy const data() and element access remain read-only.
+    ATLAS_HOST_DEVICE
+    data_handle_type data_handle() const { return gt_data_view_.data(); }
+
     template <typename... Ints, typename = typename std::enable_if<(sizeof...(Ints) == Rank), int>::type>
     ATLAS_HOST_DEVICE element_type& operator()(Ints... c) {
         assert(sizeof...(Ints) == Rank);
@@ -121,6 +127,16 @@ public:
     template <unsigned int Dim>
     ATLAS_HOST_DEVICE idx_t shape() const {
         return gt_data_view_.template length<Dim>();
+    }
+
+    template <unsigned int Dim>
+    ATLAS_HOST_DEVICE idx_t extent() const {
+        return shape<Dim>();
+    }
+
+    template <typename Int>
+    ATLAS_HOST_DEVICE idx_t extent(Int dimension) const {
+        return shape(dimension);
     }
 
     ATLAS_HOST_DEVICE

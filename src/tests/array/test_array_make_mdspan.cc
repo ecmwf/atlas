@@ -1029,6 +1029,37 @@ CASE("test_make_mdspan_accessor_first_explicit_alignment") {
     EXPECT(is_sufficiently_aligned<64>(data));
 }
 
+CASE("test_make_mdspan_shaped_accessor_uses_requested_extents") {
+    // Accessor-first shaping must replace source static extents with the requested output extents.
+    double data[6]{1., 2., 3., 4., 5., 6.};
+    using Source = mdspan<double, extents<std::size_t, 6>, layout_right>;
+    Source source{data};
+    std::array<std::size_t, 1> shape{3};
+    auto ordinary = make_mdspan(source, shape);
+    auto aligned = make_mdspan<aligned_accessor>(source, shape);
+    auto restrict_aligned = make_mdspan<restrict_aligned_accessor>(source, shape);
+    auto temporary = make_mdspan<aligned_accessor>(Source{data}, shape);
+    auto fixed = make_mdspan<aligned_accessor>(source, extents<std::size_t, 3>{});
+
+    static_assert(decltype(aligned)::extents_type::static_extent(0) == dynamic_extent);
+    static_assert(decltype(restrict_aligned)::extents_type::static_extent(0) == dynamic_extent);
+    static_assert(decltype(fixed)::extents_type::static_extent(0) == 3);
+    static_assert(std::is_same_v<typename decltype(aligned)::accessor_type,
+                                 aligned_accessor<double, alignof(double)>>);
+    EXPECT(source.extent(0) == 6);
+    EXPECT(ordinary.extent(0) == 3);
+    EXPECT(aligned.extent(0) == ordinary.extent(0));
+    EXPECT(restrict_aligned.extent(0) == 3);
+    EXPECT(temporary.extent(0) == 3);
+    EXPECT(fixed.extent(0) == 3);
+    EXPECT(aligned.data_handle() == data);
+    EXPECT(aligned.stride(0) == 1);
+    EXPECT(aligned(2) == ordinary(2));
+    EXPECT(restrict_aligned(2) == 3.);
+    EXPECT(temporary(2) == 3.);
+    EXPECT(fixed(2) == 3.);
+}
+
 CASE("test_make_mdspan_accessor_type") {
     // Bound accessor types work for views and pointers, including explicitly read-only elements.
     alignas(64) double data[6]{};

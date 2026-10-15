@@ -56,6 +56,7 @@ ecbuild_add_test( TARGET atlas_test_array_make_mdspan
   SOURCES  test_array_make_mdspan.cc
   LIBS     atlas
   ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT}
+  CONDITION NOT atlas_HAVE_GRIDTOOLS_STORAGE
 )
 
 ecbuild_add_test( TARGET atlas_test_array_indexview
