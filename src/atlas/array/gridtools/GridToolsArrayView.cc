@@ -82,7 +82,7 @@ ArrayView<Value, Rank>::ArrayView(const Array& array, bool _device_view):
         constexpr static unsigned int ndims = data_view_t::data_store_t::storage_info_t::ndims;
 
         using storage_info_ty = gridtools::storage_traits::storage_info_t<0, ndims>;
-        using data_store_t    = gridtools::storage_traits::data_store_t<value_type, storage_info_ty>;
+        using data_store_t    = gridtools::storage_traits::data_store_t<element_type, storage_info_ty>;
 
         auto storage_info_ =
             *((reinterpret_cast<data_store_t*>(const_cast<void*>(array.storage())))->get_storage_info_ptr());

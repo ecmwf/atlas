@@ -43,7 +43,9 @@ class ArrayView {
 
 public:
     // -- Type definitions
-    using value_type                   = Value;
+    using element_type                 = Value;
+    using value_type                   = std::remove_cv_t<element_type>;
+    using data_handle_type             = element_type*;
     using non_const_value_type         = typename std::remove_const<Value>::type;
     static constexpr bool is_const     = std::is_const<Value>::value;
     static constexpr bool is_non_const = !std::is_const<Value>::value;
@@ -73,8 +75,8 @@ public:
     ArrayView(const ArrayView& other);
     ArrayView(const Array& array, bool device_view);
 
-    ENABLE_IF_CONST_WITH_NON_CONST(value_type)
-    ArrayView(const ArrayView<value_type, Rank>& other):
+    ENABLE_IF_CONST_WITH_NON_CONST(element_type)
+    ArrayView(const ArrayView<element_type, Rank>& other):
         gt_data_view_(other.is_device_view_ ? gridtools::make_gt_device_view<Value, Rank>(*other.array_)
                                             : gridtools::make_gt_host_view<Value, Rank>(*other.array_)),
         data_store_orig_(other.data_store_orig_),
@@ -86,40 +88,55 @@ public:
         // TODO: check compatibility
     }
 
-    ENABLE_IF_CONST_WITH_NON_CONST(value_type)
-    operator const ArrayView<value_type, Rank>&() const { return *(const ArrayView<value_type, Rank>*)(this); }
+    ENABLE_IF_CONST_WITH_NON_CONST(element_type)
+    operator const ArrayView<element_type, Rank>&() const { return *(const ArrayView<element_type, Rank>*)(this); }
 
-    value_type* data() { return gt_data_view_.data(); }
-    value_type const* data() const { return gt_data_view_.data(); }
+    element_type* data() { return gt_data_view_.data(); }
+    element_type const* data() const { return gt_data_view_.data(); }
+
+    /// Mdspan-style shallow constness: element_type determines handle mutability.
+    /// Legacy const data() and element access remain read-only.
+    ATLAS_HOST_DEVICE
+    data_handle_type data_handle() const { return gt_data_view_.data(); }
 
     template <typename... Ints, typename = typename std::enable_if<(sizeof...(Ints) == Rank), int>::type>
-    ATLAS_HOST_DEVICE value_type& operator()(Ints... c) {
+    ATLAS_HOST_DEVICE element_type& operator()(Ints... c) {
         assert(sizeof...(Ints) == Rank);
         using common_type = typename std::common_type<Ints...>::type;
         return gt_data_view_(static_cast<common_type>(c)...);
     }
 
     template <typename... Ints, typename = typename std::enable_if<(sizeof...(Ints) == Rank), int>::type>
-    ATLAS_HOST_DEVICE value_type const& operator()(Ints... c) const {
+    ATLAS_HOST_DEVICE element_type const& operator()(Ints... c) const {
         assert(sizeof...(Ints) == Rank);
         using common_type = typename std::common_type<Ints...>::type;
         return gt_data_view_(static_cast<common_type>(c)...);
     }
 
     template <typename Int, bool EnableBool = true>
-    ATLAS_HOST_DEVICE typename std::enable_if<(Rank == 1 && EnableBool), const value_type&>::type operator[](
+    ATLAS_HOST_DEVICE typename std::enable_if<(Rank == 1 && EnableBool), const element_type&>::type operator[](
         Int idx) const {
         return gt_data_view_(idx);
     }
 
     template <typename Int, bool EnableBool = true>
-    ATLAS_HOST_DEVICE typename std::enable_if<(Rank == 1 && EnableBool), value_type&>::type operator[](Int idx) {
+    ATLAS_HOST_DEVICE typename std::enable_if<(Rank == 1 && EnableBool), element_type&>::type operator[](Int idx) {
         return gt_data_view_(idx);
     }
 
     template <unsigned int Dim>
     ATLAS_HOST_DEVICE idx_t shape() const {
         return gt_data_view_.template length<Dim>();
+    }
+
+    template <unsigned int Dim>
+    ATLAS_HOST_DEVICE idx_t extent() const {
+        return shape<Dim>();
+    }
+
+    template <typename Int>
+    ATLAS_HOST_DEVICE idx_t extent(Int dimension) const {
+        return shape(dimension);
     }
 
     ATLAS_HOST_DEVICE
