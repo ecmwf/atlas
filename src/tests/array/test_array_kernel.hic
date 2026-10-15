@@ -12,6 +12,7 @@
 #include "tests/AtlasTestEnvironment.h"
 #include "atlas/array.h"
 #include "atlas/array/MakeView.h"
+#include "atlas/array/LocalView.h"
 #include "atlas/runtime/Log.h"
 
 using namespace atlas::array;
@@ -65,6 +66,35 @@ void loop_kernel_ex(array::ArrayView<Value, RANK> dv)
 }
 
 // --------------------------------------------------------------------------------------------------------
+
+__global__
+void local_view_kernel(array::LocalView<double, 2> view)
+{
+  view(1, 2) = view.shape()[0] + view.extent(1) + view.strides()[0] + view.stride(1);
+}
+
+CASE("test_local_view_kernel")
+{
+  REQUIRE(get_device_count() > 0);
+
+  auto storage = std::unique_ptr<Array>(Array::create<double>(2, 4));
+  auto host = make_host_view<double, 2>(*storage);
+  host.assign(0.);
+  storage->updateDevice();
+  auto device = make_device_view<double, 2>(*storage);
+  idx_t shape[2]{2, 3};
+  idx_t strides[2]{device.stride(0), device.stride(1)};
+  LocalView<double, 2> view{device.data(), shape, strides};
+
+  local_view_kernel<<<1, 1>>>(view);
+  REQUIRE_HIC_SUCCESS("local_view_kernel");
+  REQUIRE(hicDeviceSynchronize() == hicSuccess);
+  storage->updateHost();
+  REQUIRE_HIC_SUCCESS("updateHost");
+
+  EXPECT(host(1, 2) == 2 + 3 + strides[0] + strides[1]);
+  EXPECT(host(1, 3) == 0.);
+}
 
 CASE( "test_array" )
 {
