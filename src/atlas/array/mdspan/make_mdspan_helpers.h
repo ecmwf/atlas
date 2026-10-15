@@ -189,9 +189,11 @@ Extents make_mdspan_extents(const View& view, std::index_sequence<I...>) {
 template <typename View, std::size_t Rank, std::size_t... I>
 std::array<std::size_t, Rank> make_mdspan_strides(const View& view, std::index_sequence<I...>) {
     [[maybe_unused]] auto checked_stride = [](std::size_t dimension, auto value) {
-        if (value < 0) {
-            throw std::invalid_argument("make_mdspan(): negative source stride at dimension " +
-                                        std::to_string(dimension) + ": " + std::to_string(value));
+        if constexpr (std::is_signed_v<decltype(value)>) {
+            if (value < 0) {
+                throw std::invalid_argument("make_mdspan(): negative source stride at dimension " +
+                                            std::to_string(dimension) + ": " + std::to_string(value));
+            }
         }
         return static_cast<std::size_t>(value);
     };
@@ -379,17 +381,17 @@ auto make_mdspan_pointer_impl(Value* data, Extents extents) {
     return make_mdspan_from_extents<Extents, Layout, Accessor>(
         data, extents,
         [&extents]() {
+            std::array<std::size_t, Extents::rank()> strides{};
             if constexpr (std::is_same_v<Layout, layout_left>) {
-                std::array<std::size_t, Extents::rank()> strides{};
                 typename layout_left::template mapping<Extents> mapping{extents};
                 for (std::size_t dimension = 0; dimension < Extents::rank(); ++dimension) {
                     strides[dimension] = mapping.stride(dimension);
                 }
-                return strides;
             }
             else {
-                return make_contiguous_strides(extents, std::make_index_sequence<Extents::rank()>{});
+                strides = make_contiguous_strides(extents, std::make_index_sequence<Extents::rank()>{});
             }
+            return strides;
         });
 }
 
