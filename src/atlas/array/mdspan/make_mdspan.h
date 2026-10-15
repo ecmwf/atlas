@@ -594,6 +594,12 @@ auto make_mdspan(const std::vector<std::array<T, N>>& vector) {
     return mdspan<const T, extents<std::size_t, dynamic_extent, N>>{reinterpret_cast<const T*>(vector.data()), vector.size()};
 }
 
+template <typename T, std::size_t N>
+void make_mdspan(std::vector<std::array<T, N>>&&) = delete;
+
+template <typename T, std::size_t N>
+void make_mdspan(const std::vector<std::array<T, N>>&&) = delete;
+
 //------------------------------------------------------------------------------
 /// @brief Create an mdspan over a container with a one-argument accessor policy.
 ///
