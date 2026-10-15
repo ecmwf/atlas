@@ -1,6 +1,8 @@
 #include <array>
 #include <cstddef>
 #include <memory>
+#include <stdexcept>
+#include <string>
 #include <type_traits>
 #include <vector>
 
@@ -137,6 +139,44 @@ CASE("test_make_mdspan_custom_view_preserves_accessor") {
     check(ViewWithAccessor<RequiredOffsetAccessor>{data, RequiredOffsetAccessor{1}});
 }
 
+CASE("test_make_mdspan_invalid_argument_details") {
+    double data[8]{};
+    idx_t shape[2]{2, 3};
+    auto check = [](auto operation, std::initializer_list<const char*> details) {
+        bool caught = false;
+        try {
+            operation();
+        }
+        catch (const std::invalid_argument& error) {
+            caught = true;
+            const std::string message = error.what();
+            for (const auto* detail : details) {
+                EXPECT(message.find(detail) != std::string::npos);
+            }
+        }
+        EXPECT(caught);
+    };
+    idx_t padded_strides[2]{4, 1};
+    LocalView<double, 2> padded{data, shape, padded_strides};
+    check([&] { (void)make_mdspan<layout_right>(padded); },
+          {"source strides are incompatible with layout_right",
+           "extents={2, 3}", "source strides={4, 1}", "required strides={3, 1}"});
+    check([&] { (void)make_mdspan<layout_left>(padded); },
+          {"source strides are incompatible with layout_left",
+           "extents={2, 3}", "source strides={4, 1}", "required strides={1, 2}"});
+    idx_t negative_strides[2]{-3, 1};
+    LocalView<double, 2> negative{data, shape, negative_strides};
+    check([&] { (void)make_mdspan(negative); }, {"negative source stride", "dimension 0", "-3"});
+    idx_t zero_strides[2]{0, 1};
+    LocalView<double, 2> zero{data, shape, zero_strides};
+    check([&] { (void)make_mdspan(zero); },
+          {"layout_stride", "positive, non-overlapping strides", "extents={2, 3}", "strides={0, 1}"});
+    idx_t overlapping_strides[2]{1, 1};
+    LocalView<double, 2> overlapping{data, shape, overlapping_strides};
+    check([&] { (void)make_mdspan(overlapping); },
+          {"layout_stride", "positive, non-overlapping strides", "extents={2, 3}", "strides={1, 1}"});
+}
+
 CASE("test_make_mdspan_layout_compatibility") {
     double data[8]{10., 20., 30., 40., 50., 60., 70., 80.};
     using Extents = extents<std::size_t, 2, 3>;
@@ -156,16 +196,10 @@ CASE("test_make_mdspan_layout_compatibility") {
     EXPECT(!conforms_layout<layout_right>(strided));
     auto restored = make_mdspan<layout_left>(strided);
     EXPECT(restored(1, 2) == source(1, 2));
-    auto to_right = [&] { return make_mdspan<layout_right>(source); };
-    EXPECT_THROWS_AS(to_right(), eckit::Exception);
 
     mdspan<double, Extents, layout_right> right{data};
-    auto to_left = [&] { return make_mdspan<layout_left>(right); };
-    auto shaped_to_left = [&] { return make_mdspan<layout_left>(right, std::array<std::size_t, 2>{2, 3}); };
-    EXPECT_THROWS_AS(to_left(), eckit::Exception);
-    EXPECT_THROWS_AS(shaped_to_left(), eckit::Exception);
     auto incompatible_shape = [&] { return make_mdspan<layout_right>(right, std::array<std::size_t, 2>{3, 2}); };
-    EXPECT_THROWS_AS(incompatible_shape(), eckit::Exception);
+    EXPECT_THROWS_AS(incompatible_shape(), std::invalid_argument);
     EXPECT(!conforms_layout<layout_left>(right));
     EXPECT(!conforms_layout<layout_right>(source));
 
@@ -174,16 +208,16 @@ CASE("test_make_mdspan_layout_compatibility") {
     LocalView<double, 2> padded_view{data, shape, padded};
     auto padded_right = [&] { return make_mdspan<layout_right>(padded_view); };
     auto padded_left = [&] { return make_mdspan<layout_left>(padded_view); };
-    EXPECT_THROWS_AS(padded_right(), eckit::Exception);
-    EXPECT_THROWS_AS(padded_left(), eckit::Exception);
+    EXPECT_THROWS_AS(padded_right(), std::invalid_argument);
+    EXPECT_THROWS_AS(padded_left(), std::invalid_argument);
     idx_t overlapping_strides[2]{1, 1};
     LocalView<double, 2> overlapping{data, shape, overlapping_strides};
     EXPECT(!conforms_layout<layout_stride>(overlapping));
     auto overlapping_conversion = [&] { return make_mdspan(overlapping); };
-    EXPECT_THROWS_AS(overlapping_conversion(), eckit::Exception);
+    EXPECT_THROWS_AS(overlapping_conversion(), std::invalid_argument);
     auto strided_right = make_mdspan<layout_stride>(right);
     auto wrong_order = [&] { return make_mdspan<layout_left>(strided_right); };
-    EXPECT_THROWS_AS(wrong_order(), eckit::Exception);
+    EXPECT_THROWS_AS(wrong_order(), std::invalid_argument);
 
     idx_t singleton_shape[2]{1, 3};
     idx_t singleton_strides[2]{99, 1};
@@ -231,7 +265,7 @@ CASE("test_make_mdspan_review_rank_one_strided_layout") {
     EXPECT(not conforms_layout_right(span));
     EXPECT(not conforms_layout<layout_right>(view));
     auto incompatible_right = [&] { return make_mdspan<layout_right>(view); };
-    EXPECT_THROWS_AS(incompatible_right(), eckit::Exception);
+    EXPECT_THROWS_AS(incompatible_right(), std::invalid_argument);
 
     idx_t contiguous_strides[1]{1};
     auto contiguous_view = LocalView<double, 1>{data, shape, contiguous_strides};

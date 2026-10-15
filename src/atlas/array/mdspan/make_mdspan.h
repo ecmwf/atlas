@@ -36,8 +36,11 @@ namespace atlas::array {
 ///
 /// View conversions do not reorder data. Enforcing layout_left or layout_right
 /// requires compatible source strides for the requested shape; incompatible
-/// conversions throw. Declared layout_left and layout_right views cannot be
-/// converted directly to the opposite layout. A layout_stride view can become
+/// strides cause std::invalid_argument with mapping details. Negative source
+/// strides and invalid layout_stride mappings also throw std::invalid_argument.
+/// Declared layout_left and layout_right views cannot
+/// be converted directly to the opposite layout: such conversions fail at compile
+/// time. A layout_stride view can become
 /// either contiguous layout when its indexing agrees. Singleton strides are
 /// ignored, and empty views have no stride-sensitive accesses.
 /// Shaped view conversions retain source strides, rather than reshaping a flat

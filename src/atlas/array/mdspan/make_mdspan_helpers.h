@@ -13,13 +13,15 @@
 #include <array>
 #include <cstddef>
 #include <cstdint>
+#include <sstream>
+#include <stdexcept>
+#include <string>
 #include <type_traits>
 #include <utility>
 #include <vector>
 
 #include "atlas/array/mdspan/mdspan.h"
 #include "atlas/array/introspection.h"
-#include "atlas/runtime/Exception.h"
 
 namespace atlas::array {
 template <typename ElementType, int Rank> class ArrayView;
@@ -186,8 +188,14 @@ Extents make_mdspan_extents(const View& view, std::index_sequence<I...>) {
 
 template <typename View, std::size_t Rank, std::size_t... I>
 std::array<std::size_t, Rank> make_mdspan_strides(const View& view, std::index_sequence<I...>) {
-    ATLAS_ASSERT(((stride<I>(view) >= 0) && ...), "make_mdspan(): negative strides are unsupported");
-    return std::array<std::size_t, Rank>{static_cast<std::size_t>(stride<I>(view))...};
+    [[maybe_unused]] auto checked_stride = [](std::size_t dimension, auto value) {
+        if (value < 0) {
+            throw std::invalid_argument("make_mdspan(): negative source stride at dimension " +
+                                        std::to_string(dimension) + ": " + std::to_string(value));
+        }
+        return static_cast<std::size_t>(value);
+    };
+    return std::array<std::size_t, Rank>{checked_stride(I, stride<I>(view))...};
 }
 
 template <typename Extents, std::size_t... I>
@@ -253,21 +261,33 @@ struct accessor_or_policy<AccessorPolicy, Value, true> {
 template <typename AccessorOrPolicy, typename Value>
 using accessor_or_policy_t = typename accessor_or_policy<AccessorOrPolicy, Value>::type;
 
+template <typename ValueAt>
+std::string format_dimensions(std::size_t rank, ValueAt value_at) {
+    std::ostringstream result;
+    result << "{";
+    for (std::size_t dimension = 0; dimension < rank; ++dimension) {
+        result << (dimension == 0 ? "" : ", ") << value_at(dimension);
+    }
+    result << "}";
+    return result.str();
+}
+
 template<typename Extents, typename Layout, typename Accessor, typename DataHandle, typename StridesFactory>
 auto make_mdspan_from_extents(DataHandle data, Extents extents, StridesFactory strides_factory,
                              Accessor accessor = Accessor{}) {
     if constexpr (std::is_same_v<Layout, layout_right> || std::is_same_v<Layout, layout_left>) {
         typename Layout::template mapping<Extents> mapping{extents};
         const auto strides = strides_factory();
-        bool empty = false;
-        for (std::size_t dimension = 0; dimension < Extents::rank(); ++dimension) {
-            empty = empty || extents.extent(dimension) == 0;
-        }
-        if (!empty) {
-            for (std::size_t dimension = 0; dimension < Extents::rank(); ++dimension) {
-                ATLAS_ASSERT(extents.extent(dimension) <= 1 || strides[dimension] == static_cast<std::size_t>(mapping.stride(dimension)),
-                             "make_mdspan(): source strides are incompatible with the requested layout");
-            }
+        if (!introspection::valid_contiguous_layout(mapping, strides)) {
+            const auto layout_name = std::is_same_v<Layout, layout_left> ? "layout_left" : "layout_right";
+            std::ostringstream message;
+            message << "make_mdspan(): source strides are incompatible with " << layout_name << "; extents="
+                << format_dimensions(Extents::rank(), [&](auto index) { return extents.extent(index); })
+                << ", source strides="
+                << format_dimensions(Extents::rank(), [&](auto index) { return strides[index]; })
+                << ", required strides="
+                << format_dimensions(Extents::rank(), [&](auto index) { return mapping.stride(index); });
+            throw std::invalid_argument(message.str());
         }
         using Mdspan = mdspan<typename Accessor::element_type, Extents, Layout, Accessor>;
         return Mdspan{data, mapping, accessor};
@@ -278,8 +298,14 @@ auto make_mdspan_from_extents(DataHandle data, Extents extents, StridesFactory s
         for (std::size_t dimension = 0; dimension < Extents::rank(); ++dimension) {
             shape[dimension] = extents.extent(dimension);
         }
-        ATLAS_ASSERT(introspection::valid_layout_stride(shape, strides),
-                     "make_mdspan(): layout_stride requires positive, non-overlapping strides");
+        if (!introspection::valid_layout_stride(shape, strides)) {
+            std::ostringstream message;
+            message << "make_mdspan(): layout_stride requires positive, non-overlapping strides; extents="
+                    << format_dimensions(Extents::rank(), [&](auto dimension) { return shape[dimension]; })
+                    << ", strides="
+                    << format_dimensions(Extents::rank(), [&](auto dimension) { return strides[dimension]; });
+            throw std::invalid_argument(message.str());
+        }
         typename layout_stride::template mapping<Extents> mapping{extents, strides};
         using Mdspan = mdspan<typename Accessor::element_type, Extents, layout_stride, Accessor>;
         return Mdspan{data, mapping, accessor};
@@ -315,7 +341,7 @@ auto make_view_accessor(const View& view) {
 template<typename Extents, typename Layout, typename Accessor, typename View>
 auto make_mdspan_impl(View& view) {
     using SourceLayout = layout_t<View>;
-    ATLAS_ASSERT((!(std::is_same_v<SourceLayout, layout_right> && std::is_same_v<Layout, layout_left>) &&
+    static_assert((!(std::is_same_v<SourceLayout, layout_right> && std::is_same_v<Layout, layout_left>) &&
                   !(std::is_same_v<SourceLayout, layout_left> && std::is_same_v<Layout, layout_right>)),
                  "make_mdspan(): cannot convert between declared left and right layouts");
     constexpr std::size_t Rank = rank<View>();
@@ -333,7 +359,7 @@ auto make_mdspan_impl(View& view) {
 template<typename Layout, typename Accessor, typename InputExtents, typename View>
 auto make_mdspan_impl(View& view, InputExtents input_shape) {
     using SourceLayout = layout_t<View>;
-    ATLAS_ASSERT((!(std::is_same_v<SourceLayout, layout_right> && std::is_same_v<Layout, layout_left>) &&
+    static_assert((!(std::is_same_v<SourceLayout, layout_right> && std::is_same_v<Layout, layout_left>) &&
                   !(std::is_same_v<SourceLayout, layout_left> && std::is_same_v<Layout, layout_right>)),
                  "make_mdspan(): cannot convert between declared left and right layouts");
     constexpr std::size_t Rank = rank<View>();

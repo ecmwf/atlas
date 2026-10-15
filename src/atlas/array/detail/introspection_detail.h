@@ -236,27 +236,32 @@ bool has_valid_layout_stride(const View& view, std::index_sequence<Dimensions...
         std::array<std::size_t, sizeof...(Dimensions)>{static_cast<std::size_t>(get_stride(view, Dimensions))...});
 }
 
-template <typename Layout, typename View, std::size_t... I>
-bool has_contiguous_layout_strides(const View& view, std::index_sequence<I...>) {
-    constexpr std::size_t Rank = rank<View>();
-    std::array<std::size_t, Rank> extents{static_cast<std::size_t>(get_extent(view, I))...};
-    std::array<std::size_t, Rank> strides{static_cast<std::size_t>(get_stride(view, I))...};
-
-    for (auto extent : extents) {
-        if (extent == 0) {
+template <typename Mapping, std::size_t Rank>
+bool valid_contiguous_layout(const Mapping& mapping,
+                             const std::array<std::size_t, Rank>& strides) {
+    static_assert(Mapping::extents_type::rank() == Rank);
+    for (std::size_t dimension = 0; dimension < Rank; ++dimension) {
+        if (mapping.extents().extent(dimension) == 0) {
             return true;
         }
     }
-
-    std::size_t expected_stride{1};
-    for (std::size_t step = 0; step < Rank; ++step) {
-        const auto dimension = std::is_same_v<Layout, layout_left> ? step : Rank - 1 - step;
-        if (extents[dimension] > 1 && strides[dimension] != expected_stride) {
+    for (std::size_t dimension = 0; dimension < Rank; ++dimension) {
+        if (mapping.extents().extent(dimension) > 1 &&
+            strides[dimension] != static_cast<std::size_t>(mapping.stride(dimension))) {
             return false;
         }
-        expected_stride *= extents[dimension];
     }
     return true;
+}
+
+template <typename Layout, typename View, std::size_t... I>
+bool has_contiguous_layout_strides(const View& view, std::index_sequence<I...>) {
+    constexpr std::size_t Rank = rank<View>();
+    using Extents = dextents<std::size_t, Rank>;
+    const Extents extents{static_cast<std::size_t>(get_extent(view, I))...};
+    const std::array<std::size_t, Rank> strides{static_cast<std::size_t>(get_stride(view, I))...};
+    const typename Layout::template mapping<Extents> mapping{extents};
+    return valid_contiguous_layout(mapping, strides);
 }
 
 }  // namespace atlas::array::introspection
