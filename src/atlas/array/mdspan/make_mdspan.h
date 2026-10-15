@@ -116,7 +116,7 @@ namespace atlas::array {
 ///
 /// @details Motivation: use this overload when the extents type is already known
 /// and should be part of the resulting mdspan type, while preserving the view data
-/// handle and deriving the accessor element type from the view.
+/// handle and accessor instance unless an accessor is explicitly selected.
 ///
 /// @code
 /// auto span = make_mdspan<extents<std::size_t, 2, 3>, layout_stride>(view);
@@ -124,7 +124,18 @@ namespace atlas::array {
 template<
     typename Extents,
     typename Layout = layout_stride,
-    template <typename> typename AccessorPolicy = restrict_accessor,
+    typename View,
+    typename std::enable_if_t<make_mdspan_helpers::is_extent_like_v<Extents>, int> = 0
+>
+auto make_mdspan(View& view) {
+    using namespace make_mdspan_helpers;
+    return make_mdspan_impl<Extents, Layout, accessor_t<View>>(view);
+}
+
+template<
+    typename Extents,
+    typename Layout,
+    template <typename> typename AccessorPolicy,
     typename View,
     typename std::enable_if_t<make_mdspan_helpers::is_extent_like_v<Extents>, int> = 0
 >
@@ -190,6 +201,7 @@ auto make_mdspan(View& view) {
 /// @details Motivation: let callers override the runtime shape while fixing the
 /// mdspan extents type. This is useful when the view storage is valid but the
 /// logical shape should be supplied by the caller.
+/// The source accessor instance is preserved unless an accessor is explicitly selected.
 ///
 /// @code
 /// auto span = make_mdspan<dextents<std::size_t, 2>, layout_right>(view, shape);
@@ -197,7 +209,19 @@ auto make_mdspan(View& view) {
 template<
     typename Extents,
     typename Layout = layout_stride,
-    template <typename> typename AccessorPolicy = restrict_accessor,
+    typename InputExtents,
+    typename View,
+    typename std::enable_if_t<make_mdspan_helpers::is_extent_like_v<Extents> && !make_mdspan_helpers::is_container_like_v<View>, int> = 0
+>
+auto make_mdspan(View& view, InputExtents input_shape) {
+    using namespace make_mdspan_helpers;
+    return make_mdspan_impl<Layout, accessor_t<View>>(view, Extents{input_shape});
+}
+
+template<
+    typename Extents,
+    typename Layout,
+    template <typename> typename AccessorPolicy,
     typename InputExtents,
     typename View,
     typename std::enable_if_t<make_mdspan_helpers::is_extent_like_v<Extents> && !make_mdspan_helpers::is_container_like_v<View>, int> = 0
@@ -523,10 +547,11 @@ auto make_mdspan(View& view) {
 }
 
 //------------------------------------------------------------------------------
-/// @brief Create a rank-1 mdspan over a container with optional layout/accessor policy.
+/// @brief Create an mdspan over a container with optional layout/accessor policy.
 ///
 /// @details Motivation: adapt contiguous container-like objects, such as
 /// std::vector, to mdspan without requiring the caller to provide a shape.
+/// Vectors of fixed-size arrays retain rank 2 and their fixed inner extent.
 ///
 /// @code
 /// std::vector<double> values(6);
@@ -541,10 +566,11 @@ template<
 >
 auto make_mdspan(Container& container) {
     using namespace make_mdspan_helpers;
-    using Value = std::remove_pointer_t<std::remove_reference_t<decltype(container.data())>>;
-    using Extents = dextents<std::size_t, 1>;
+    using Descriptor = container_descriptor_t<Container>;
+    using Value = container_element_t<Container>;
+    using Extents = typename Descriptor::extents_type;
     using Accessor = AccessorPolicy<Value>;
-    return make_mdspan_container_impl<Extents, Layout, Accessor>(container, Extents{container.size()});
+    return make_mdspan_pointer_impl<Extents, Layout, Accessor>(Descriptor::data(container), Descriptor::extents(container));
 }
 
 //------------------------------------------------------------------------------
@@ -569,7 +595,7 @@ auto make_mdspan(const std::vector<std::array<T, N>>& vector) {
 }
 
 //------------------------------------------------------------------------------
-/// @brief Create a rank-1 mdspan over a container with a one-argument accessor policy.
+/// @brief Create an mdspan over a container with a one-argument accessor policy.
 ///
 /// @details Motivation: keep the convenient container syntax while letting the
 /// caller choose an accessor family.
@@ -587,10 +613,10 @@ auto make_mdspan(Container& container) {
 }
 
 //------------------------------------------------------------------------------
-/// @brief Create a rank-1 mdspan over a container with a two-argument accessor template.
+/// @brief Create an mdspan over a container with a two-argument accessor template.
 ///
 /// @details Motivation: use aligned-style accessor templates for containers while
-/// deriving the element type and default alignment from container.data().
+/// deriving the scalar element type and its default alignment from the container.
 ///
 /// @code
 /// auto span = make_mdspan<aligned_accessor>(values);
@@ -602,14 +628,15 @@ template<
 >
 auto make_mdspan(Container& container) {
     using namespace make_mdspan_helpers;
-    using Value = std::remove_pointer_t<std::remove_reference_t<decltype(container.data())>>;
-    using Extents = dextents<std::size_t, 1>;
+    using Descriptor = container_descriptor_t<Container>;
+    using Value = container_element_t<Container>;
+    using Extents = typename Descriptor::extents_type;
     using Accessor = AccessorPolicy<Value, default_accessor_alignment_v<Value>>;
-    return make_mdspan_container_impl<Extents, layout_right, Accessor>(container, Extents{container.size()});
+    return make_mdspan_pointer_impl<Extents, layout_right, Accessor>(Descriptor::data(container), Descriptor::extents(container));
 }
 
 //------------------------------------------------------------------------------
-/// @brief Create a rank-1 mdspan over a container with a bound accessor or accessor policy.
+/// @brief Create an mdspan over a container with a bound accessor or accessor policy.
 ///
 /// @details Motivation: allow concrete accessor types and policy wrappers with
 /// explicit compile-time parameters for container-backed mdspans.
@@ -625,14 +652,15 @@ template<
 >
 auto make_mdspan(Container& container) {
     using namespace make_mdspan_helpers;
-    using Value = std::remove_pointer_t<std::remove_reference_t<decltype(container.data())>>;
-    using Extents = dextents<std::size_t, 1>;
+    using Descriptor = container_descriptor_t<Container>;
+    using Value = container_element_t<Container>;
+    using Extents = typename Descriptor::extents_type;
     using Accessor = accessor_or_policy_t<AccessorOrPolicy, Value>;
-    return make_mdspan_container_impl<Extents, layout_right, Accessor>(container, Extents{container.size()});
+    return make_mdspan_pointer_impl<Extents, layout_right, Accessor>(Descriptor::data(container), Descriptor::extents(container));
 }
 
 //------------------------------------------------------------------------------
-/// @brief Create a rank-1 mdspan over a container with explicit layout and bound accessor or policy.
+/// @brief Create an mdspan over a container with explicit layout and bound accessor or policy.
 ///
 /// @details Motivation: combine a layout override with a concrete accessor choice
 /// for contiguous container data.
@@ -650,10 +678,11 @@ template<
 >
 auto make_mdspan(Container& container) {
     using namespace make_mdspan_helpers;
-    using Value = std::remove_pointer_t<std::remove_reference_t<decltype(container.data())>>;
-    using Extents = dextents<std::size_t, 1>;
+    using Descriptor = container_descriptor_t<Container>;
+    using Value = container_element_t<Container>;
+    using Extents = typename Descriptor::extents_type;
     using Accessor = accessor_or_policy_t<AccessorOrPolicy, Value>;
-    return make_mdspan_container_impl<Extents, Layout, Accessor>(container, Extents{container.size()});
+    return make_mdspan_pointer_impl<Extents, Layout, Accessor>(Descriptor::data(container), Descriptor::extents(container));
 }
 
 //------------------------------------------------------------------------------

@@ -15,6 +15,7 @@
 #include <cstdint>
 #include <type_traits>
 #include <utility>
+#include <vector>
 
 #include "atlas/array/mdspan/mdspan.h"
 #include "atlas/array/introspection.h"
@@ -70,6 +71,33 @@ struct is_container_like<Container, std::void_t<
 
 template <typename Container>
 static constexpr bool is_container_like_v = is_container_like<Container>::value;
+
+template <typename Container>
+struct container_descriptor {
+    using extents_type = dextents<std::size_t, 1>;
+
+    template <typename Source>
+    static auto data(Source& source) { return source.data(); }
+
+    static extents_type extents(const Container& source) { return extents_type{source.size()}; }
+};
+
+template <typename Element, std::size_t N, typename Allocator>
+struct container_descriptor<std::vector<std::array<Element, N>, Allocator>> {
+    using container_type = std::vector<std::array<Element, N>, Allocator>;
+    using extents_type = atlas::array::extents<std::size_t, dynamic_extent, N>;
+
+    static Element* data(container_type& source) { return reinterpret_cast<Element*>(source.data()); }
+    static const Element* data(const container_type& source) { return reinterpret_cast<const Element*>(source.data()); }
+
+    static extents_type extents(const container_type& source) { return extents_type{source.size()}; }
+};
+
+template <typename Container>
+using container_descriptor_t = container_descriptor<std::remove_cv_t<Container>>;
+
+template <typename Container>
+using container_element_t = std::remove_pointer_t<decltype(container_descriptor_t<Container>::data(std::declval<Container&>()))>;
 
 template <typename Container>
 using enable_rvalue_container_t = std::enable_if_t<

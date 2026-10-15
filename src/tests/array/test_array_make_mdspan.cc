@@ -125,21 +125,35 @@ CASE("test_make_mdspan_review_preserve_accessor_state") {
     auto converted = make_mdspan(source);
     auto strided = make_mdspan<layout_stride>(source);
     auto shaped = make_mdspan(source, typename Span::extents_type{});
+    auto explicit_extents = make_mdspan<dims<1>>(source);
+    auto explicit_shaped = make_mdspan<dims<1>, layout_right>(source, std::array<std::size_t, 1>{2});
     EXPECT(converted.accessor().displacement == 1);
     EXPECT(converted(0) == source(0));
     EXPECT(strided(0) == source(0));
     EXPECT(shaped(0) == source(0));
+    EXPECT(explicit_extents.accessor().displacement == 1);
+    EXPECT(explicit_extents(0) == source(0));
+    EXPECT(explicit_shaped.accessor().displacement == 1);
+    EXPECT(explicit_shaped(0) == source(0));
     auto replaced = make_mdspan<default_accessor>(source);
     EXPECT(replaced(0) == data[0]);
+    auto explicit_replaced = make_mdspan<dims<1>, layout_right, default_accessor>(source);
+    auto explicit_shaped_replaced = make_mdspan<dims<1>, layout_right, default_accessor>(source, std::array<std::size_t, 1>{2});
+    EXPECT(explicit_replaced(0) == data[0]);
+    EXPECT(explicit_shaped_replaced(0) == data[0]);
 
     using RequiredSpan = mdspan<double, extents<std::size_t, 2>, layout_right, RequiredOffsetAccessor>;
     RequiredSpan required{data, typename RequiredSpan::mapping_type{}, RequiredOffsetAccessor{1}};
     auto required_copy = make_mdspan(std::as_const(required));
     auto required_strided = make_mdspan<layout_stride>(required);
     auto required_shaped = make_mdspan(required, typename RequiredSpan::extents_type{});
+    auto required_explicit = make_mdspan<dims<1>, layout_right>(required);
+    auto required_explicit_shaped = make_mdspan<dims<1>>(required, std::array<std::size_t, 1>{2});
     EXPECT(required_copy(0) == 20.);
     EXPECT(required_strided(0) == 20.);
     EXPECT(required_shaped(0) == 20.);
+    EXPECT(required_explicit(0) == 20.);
+    EXPECT(required_explicit_shaped(0) == 20.);
 }
 
 template <typename Source, typename = void>
@@ -157,6 +171,7 @@ struct CanMakeShapedMdspan<Source, std::void_t<decltype(
 
 CASE("test_make_mdspan_temporary_view_lifetime") {
     // Temporary non-owning views copy metadata safely; temporary owning containers are rejected.
+    static_assert(std::is_trivially_copyable_v<LocalView<double, 2>>);
     static_assert(!CanMakeMdspan<std::vector<double>&&>::value);
     static_assert(!CanMakeMdspan<const std::vector<double>&&>::value);
     static_assert(!CanMakeMdspan<std::array<double, 6>&&>::value);
@@ -165,6 +180,14 @@ CASE("test_make_mdspan_temporary_view_lifetime") {
     static_assert(CanMakeMdspan<LocalView<double, 2>&&>::value);
 
     double data[6]{1., 2., 3., 4., 5., 6.};
+    auto original = make_local_view(data);
+    auto copied = original;
+    EXPECT(copied.shape() != original.shape());
+    EXPECT(copied.strides() != original.strides());
+    EXPECT(copied(1, 2) == 6.);
+    copied = original;
+    EXPECT(copied.shape() != original.shape());
+    EXPECT(copied.strides() != original.strides());
     auto span = make_mdspan(make_local_view(data));
     EXPECT(span.data_handle() == data);
     EXPECT(span.extent(0) == 2);
@@ -238,6 +261,14 @@ CASE("test_make_mdspan_as_const_views") {
     EXPECT(readonly_index.stride(0) == index_view.stride(0));
     EXPECT(readonly_index(3) == 7);
     EXPECT(indices[6] == 7 + ATLAS_HAVE_FORTRAN);
+    auto explicit_index = make_mdspan<dims<1>>(index_view);
+    auto explicit_shaped_index = make_mdspan<dims<1>>(index_view, std::array<std::size_t, 1>{4});
+    static_assert(std::is_same_v<typename decltype(explicit_index)::accessor_type,
+                                index_accessor<int, ATLAS_HAVE_FORTRAN>>);
+    static_assert(std::is_same_v<typename decltype(explicit_shaped_index)::accessor_type,
+                                index_accessor<int, ATLAS_HAVE_FORTRAN>>);
+    EXPECT(explicit_index(3) == 7);
+    EXPECT(explicit_shaped_index(3) == 7);
     index_view(3) = 8;
     EXPECT(readonly_index_again(3) == 8);
 }
@@ -508,6 +539,32 @@ CASE("test_make_mdspan_vector_fixed_inner_extent_const") {
     std::vector<std::array<double, 3>> values{{1., 2., 3.}, {4., 5., 6.}};
     auto writable = make_mdspan(values);
     auto readonly = make_mdspan(std::as_const(values));
+
+    auto check_policies = [](auto& container) {
+        using Element = std::conditional_t<std::is_const_v<std::remove_reference_t<decltype(container)>>, const double, double>;
+        auto check = [&](auto span) {
+            using Span = decltype(span);
+            static_assert(Span::rank() == 2);
+            static_assert(Span::extents_type::static_extent(1) == 3);
+            static_assert(std::is_same_v<typename Span::element_type, Element>);
+            EXPECT(span.data_handle() == container.front().data());
+            EXPECT(span.extent(0) == 2);
+            EXPECT(span.extent(1) == 3);
+            EXPECT(span.stride(0) == 3);
+            EXPECT(span.stride(1) == 1);
+            EXPECT(span(1, 2) == 6.);
+        };
+        check(make_mdspan<layout_right>(container));
+        check(make_mdspan<layout_stride>(container));
+        check(make_mdspan<default_accessor>(container));
+        check(make_mdspan<aligned_accessor>(container));
+        check(make_mdspan<layout_stride, default_accessor>(container));
+        check(make_mdspan<default_accessor<Element>>(container));
+        check(make_mdspan<layout_stride, default_accessor<Element>>(container));
+        check(make_mdspan<aligned_accessor_policy<alignof(double)>>(container));
+    };
+    check_policies(values);
+    check_policies(std::as_const(values));
 
     static_assert(decltype(writable)::rank() == 2);
     static_assert(decltype(readonly)::rank() == 2);
