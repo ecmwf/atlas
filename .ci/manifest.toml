@@ -172,7 +172,7 @@ ntasks = 16
 
 [[matrix.build-hpc.include]]
 options = "mpi"
-cxx-compiler = "icpx"
+cxx-compiler = "icpx-2025.3.1"
 fortran-compiler = "ifx"
 platform = "hpc-atos-intel"
 modules = ["load prgenv/intel-llvm", "unload intel", "load intel/2025.3.1", "load cmake", "load ninja", "load python3/3.12.9-01", "load hpcx-openmpi/2.21.3"]
