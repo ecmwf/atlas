@@ -2,6 +2,7 @@
 name = "atlas"
 repo = "ecmwf/atlas"
 visibility = "public"
+fork-pull-requests = true
 compiler-inputs = ["cxx-compiler"]
 git-read = ["ecmwf/bindman"]
 
