@@ -9,6 +9,15 @@ export CUDAHOSTCXX=/usr/bin/g++
 export CUDAARCHS=80  # A100
 echo "CUDA: $CUDACXX, host $CUDAHOSTCXX ($("$CUDAHOSTCXX" -dumpfullversion)), arch $CUDAARCHS"
 {% endif %}
+{% if c_flags | default("") %}
+export CFLAGS={{ c_flags | sh }}
+{% endif %}
+{% if cxx_flags | default("") %}
+export CXXFLAGS={{ cxx_flags | sh }}
+{% endif %}
+{% if fortran_flags | default("") %}
+export FFLAGS={{ fortran_flags | sh }}
+{% endif %}
 {% endblock %}
 {% block cmake_args %}
 {% if execution == "hpc-atos" %}
