@@ -86,7 +86,7 @@ jobs:
       image: eccr.ecmwf.int/public-ci-images/ubuntu24.04-base:latest
     outputs:
       ref: ${{ steps.pick.outputs.ref }}
-      matrix-build: ${{ steps.r.outputs.matrix-build }}
+      matrix-build: ${{ toJSON(fromJSON(steps.r.outputs.json)['build']) }}
     steps:
     - name: Announce image
       uses: ecmwf/ci-infrastructure/actions/announce-image@main
@@ -108,6 +108,7 @@ jobs:
         repository: ecmwf/atlas
         ref: ${{ steps.pick.outputs.ref }}
         token: ${{ steps.mint.outputs.token }}
+        persist-credentials: false
     - id: r
       uses: ecmwf/ci-infrastructure/actions/resolve-deps@main
       with:
@@ -135,6 +136,9 @@ jobs:
         client-id: ${{ secrets.CI_PERMISSIONS_APP_CLIENT_ID }}
         private-key: ${{ secrets.CI_PERMISSIONS_APP_PRIVATE_KEY }}
         owner: ${{ github.repository_owner }}
+        permission-contents: read
+        permission-actions: read
+        permission-checks: write
     - id: check_start
       if: ${{ github.event_name == 'workflow_dispatch' && inputs.from-jobs != '[]' }}
       uses: ecmwf/ci-infrastructure/actions/report-check-run@main
@@ -152,6 +156,7 @@ jobs:
         repository: ecmwf/atlas
         ref: ${{ needs.resolve.outputs.ref }}
         token: ${{ steps.mint.outputs.token }}
+        persist-credentials: false
     - name: Decode matrix-leg
       id: m
       shell: bash
