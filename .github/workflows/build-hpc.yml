@@ -27,10 +27,11 @@ env:
   CTEST_PARALLEL_LEVEL: 1
   CACHE_SUFFIX: v1        # Increase to force new cache to be created
 
+# Every job is off: they run outside the Kubernetes runners, which may trust the compromised eMudhra CAs (Oct 2026).
 jobs:
   ci-hpc:
     name: ci-hpc
-    if: ${{ !github.event.pull_request.head.repo.fork && github.event.action != 'labeled' || github.event.label.name == 'approved-for-ci' }}
+    if: ${{ false && (!github.event.pull_request.head.repo.fork && github.event.action != 'labeled' || github.event.label.name == 'approved-for-ci') }}
 
     strategy:
       fail-fast: false    # false: try to complete all jobs
