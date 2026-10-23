@@ -28,6 +28,7 @@ env:
   CACHE_SUFFIX: v1        # Increase to force new cache to be created
 
 # Every job is off: they run outside the Kubernetes runners, which may trust the compromised eMudhra CAs (Oct 2026).
+# To switch them back on, grep for 'false &&' and 'if: false' and remove them.
 jobs:
   ci-hpc:
     name: ci-hpc
