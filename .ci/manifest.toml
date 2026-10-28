@@ -40,8 +40,7 @@ package = "fckit"
 ref = "develop"
 compiler-inputs = ["cxx-compiler"]
 options-input = "options"
-# ifort-2023.2 has no leg while the icpc-2023.2 legs are dropped (eckit::geo fails with ICC); kept for re-enabling them.
-when = { fortran-compiler = ["gfortran-8", "gfortran-10", "gfortran-11", "gfortran-12", "gfortran-13", "gfortran-14", "gfortran-15", "ifort-2023.2", "ifx", "nvfortran-26.1"] }
+when = { fortran-compiler = ["gfortran-8", "gfortran-10", "gfortran-11", "gfortran-12", "gfortran-13", "gfortran-14", "gfortran-15", "ifort-2023.2.0", "ifx-2025.3.1", "nvfortran-26.1"] }
 unless = { options = "mpi-gpu" }
 
 [[deps]]
@@ -172,13 +171,24 @@ ntasks = 16
 
 [[matrix.build-hpc.include]]
 options = "mpi"
-cxx-compiler = "icpx"
-fortran-compiler = "ifx"
+cxx-compiler = "icpx-2025.3.1"
+fortran-compiler = "ifx-2025.3.1"
 platform = "hpc-atos-intel"
 modules = ["load prgenv/intel-llvm", "unload intel", "load intel/2025.3.1", "load cmake", "load ninja", "load python3/3.12.9-01", "load hpcx-openmpi/2.21.3"]
 c-compiler-binary = "icx"
 cxx-compiler-binary = "icpx"
 fortran-compiler-binary = "ifx"
+ntasks = 16
+
+[[matrix.build-hpc.include]]
+options = "mpi"
+cxx-compiler = "icpc-2023.2.0"
+fortran-compiler = "ifort-2023.2.0"
+platform = "hpc-atos-intel"
+modules = ["load prgenv/intel", "unload intel", "load intel/2023.2.0", "load cmake", "load ninja", "load python3/3.12.9-01", "load hpcx-openmpi/2.21.3"]
+c-compiler-binary = "icc"
+cxx-compiler-binary = "icpc"
+fortran-compiler-binary = "ifort"
 ntasks = 16
 
 # The HPC-X bundled with nvhpc: ECMWF's hpcx-openmpi for nvidia/26.1 is not CUDA-aware.
