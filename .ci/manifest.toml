@@ -3,7 +3,6 @@ name = "atlas"
 repo = "ecmwf/atlas"
 visibility = "public"
 compiler-inputs = ["cxx-compiler"]
-git-read = ["ecmwf/bindman"]
 
 [[deps]]
 repo = "ecmwf/ecbuild"
@@ -225,7 +224,7 @@ container-credentials = true
 triggers = ["upstream-change", "rebuild-request"]
 
 [packages.atlas-rust]
-compiler-inputs = ["cxx-compiler"]
+compiler-inputs = ["cxx-compiler", "rust-compiler"]
 
 [[packages.atlas-rust.deps]]
 package = "atlas"
@@ -246,6 +245,24 @@ platform = "ubuntu-24.04"
 
 [[matrix.rust.include]]
 rust-compiler = "rust-1.90"
+
+# Publishing the crates, only from publish-crates.yml: no patches and the default features, as a
+# crates.io user gets them, so atlas-sys builds its C++ from the release tag.
+[packages.atlas-crates]
+compiler-inputs = ["cxx-compiler", "rust-compiler"]
+
+[matrix.rust-publish]
+packages = ["atlas-crates"]
+publishes = false
+
+[[matrix.rust-publish.include]]
+job-script = "./.ci/rust-publish.sh.j2"
+runs-on = "arc-runner-very-large"
+cxx-compiler = "g++-13"
+c-compiler = "gcc-13"
+rust-compiler = "rust-1.90"
+container = "eccr.ecmwf.int/public-ci-images/ubuntu24.04-gcc13-gfortran13-boost-qt6-rust1.90"
+platform = "ubuntu-24.04"
 
 [[trigger-downstream]]
 repo = "ecmwf/mir"
