@@ -41,6 +41,7 @@ jobs:
       ci-url: ${{ steps.ctx.outputs.ci-url }}
       ci-summary: ${{ steps.ctx.outputs.ci-summary }}
       pull-request: ${{ steps.ctx.outputs.pull-request }}
+      hpc-only: ${{ steps.ctx.outputs.hpc-only }}
     steps:
     - name: Resolve the commit under test
       id: ctx
@@ -64,6 +65,7 @@ jobs:
         sha: ${{ needs.context.outputs.head-sha }}
         pull-request: ${{ needs.context.outputs.pull-request }}
         level: ${{ inputs.level }}
+        require-label: run-hpc-ci
     needs:
     - ci-approval
     - context
