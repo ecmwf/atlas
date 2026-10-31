@@ -6,6 +6,8 @@ on:
   pull_request:
     types: [opened, reopened, synchronize]
   workflow_dispatch:
+  schedule:
+    - cron: "52 0 * * *"
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.run_id }}
