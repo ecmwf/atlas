@@ -53,7 +53,7 @@ when = { options = "mpi-gpu" }
 [matrix.build.defaults]
 job-script = "./.ci/build.sh.j2"
 build-type = "RelWithDebInfo"
-runs-on = "arc-runner-very-large"
+runs-on = "arc-runner-large"
 options = ""
 
 [[matrix.build.include]]
@@ -259,7 +259,7 @@ publishes = false
 
 [[matrix.rust-publish.include]]
 job-script = "./.ci/rust-publish.sh.j2"
-runs-on = "arc-runner-very-large"
+runs-on = "arc-runner-large"
 cxx-compiler = "g++-13"
 c-compiler = "gcc-13"
 rust-compiler = "rust-1.90"
