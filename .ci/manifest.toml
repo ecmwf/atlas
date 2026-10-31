@@ -3,6 +3,7 @@ name = "atlas"
 repo = "ecmwf/atlas"
 visibility = "public"
 compiler-inputs = ["cxx-compiler"]
+allow-stale-deps = true
 
 [[deps]]
 repo = "ecmwf/ecbuild"
