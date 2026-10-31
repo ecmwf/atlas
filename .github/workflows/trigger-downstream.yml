@@ -24,13 +24,13 @@ concurrency:
   cancel-in-progress: true
 jobs:
   ci-approval:
-    runs-on: ubuntu-slim
+    runs-on: ubuntu-latest
     permissions:
       pull-requests: write
     steps:
     - uses: ecmwf/ci-infrastructure/actions/require-ci-approval@main
   context:
-    runs-on: ubuntu-slim
+    runs-on: ubuntu-latest
     permissions:
       actions: read
       pull-requests: read
@@ -52,7 +52,7 @@ jobs:
     - ci-approval
   label-gate:
     if: needs.context.outputs.hpc-only != 'true'
-    runs-on: ubuntu-slim
+    runs-on: ubuntu-latest
     permissions:
       pull-requests: read
     outputs:
@@ -97,7 +97,7 @@ jobs:
     - label-gate
   report-start:
     if: ${{ (needs.context.outputs.ci-conclusion == 'success') && needs['label-gate'].outputs.run == 'true' }}
-    runs-on: ubuntu-slim
+    runs-on: ubuntu-latest
     permissions:
       statuses: write
     steps:
@@ -117,7 +117,7 @@ jobs:
     - label-gate
   report-ci-failure:
     if: ${{ (needs.context.outputs.ci-conclusion != 'success' && needs.context.outputs.ci-conclusion != '') && needs['label-gate'].outputs.run == 'true' }}
-    runs-on: ubuntu-slim
+    runs-on: ubuntu-latest
     permissions:
       statuses: write
     steps:
@@ -159,7 +159,7 @@ jobs:
     - validate
     - mir
     if: ${{ (always() && needs.context.outputs.ci-conclusion == 'success') && needs['label-gate'].outputs.run == 'true' }}
-    runs-on: ubuntu-slim
+    runs-on: ubuntu-latest
     permissions:
       statuses: write
     steps:
