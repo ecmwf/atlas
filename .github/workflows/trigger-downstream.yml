@@ -41,6 +41,7 @@ jobs:
       ci-url: ${{ steps.ctx.outputs.ci-url }}
       ci-summary: ${{ steps.ctx.outputs.ci-summary }}
       pull-request: ${{ steps.ctx.outputs.pull-request }}
+      hpc-only: ${{ steps.ctx.outputs.hpc-only }}
     steps:
     - name: Resolve the commit under test
       id: ctx
@@ -50,6 +51,7 @@ jobs:
     needs:
     - ci-approval
   label-gate:
+    if: needs.context.outputs.hpc-only != 'true'
     runs-on: ubuntu-slim
     permissions:
       pull-requests: read

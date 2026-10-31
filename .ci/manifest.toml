@@ -200,6 +200,7 @@ modules = ["load prgenv/nvidia", "unload nvidia", "load nvidia/26.1", "load cmak
 c-compiler-binary = "nvc"
 cxx-compiler-binary = "nvc++"
 fortran-compiler-binary = "nvfortran"
+sccache = false
 ntasks = 16
 
 # One full GPU node; the gpu partition has no ssdtmp.
@@ -212,6 +213,7 @@ modules = ["load prgenv/nvidia", "unload nvidia", "load nvidia/26.1", "load cmak
 c-compiler-binary = "nvc"
 cxx-compiler-binary = "nvc++"
 fortran-compiler-binary = "nvfortran"
+sccache = false
 qos = "ng"
 ntasks = 4
 cpus-per-task = 64
