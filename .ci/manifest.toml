@@ -219,6 +219,8 @@ qos = "ng"
 ntasks = 4
 cpus-per-task = 64
 gpus-per-task = 1
+# The build runs -j256 with its tree in /dev/shm; 64GB ran nvc++ out of memory.
+mem = "256GB"
 ssdtmp = ""
 
 [matrix.build-hpc]
