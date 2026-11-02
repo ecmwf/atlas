@@ -230,6 +230,7 @@ triggers = ["upstream-change", "rebuild-request"]
 
 [packages.atlas-rust]
 compiler-inputs = ["cxx-compiler", "rust-compiler"]
+allow-stale-deps = true
 
 [[packages.atlas-rust.deps]]
 package = "atlas"
@@ -255,6 +256,7 @@ rust-compiler = "rust-1.90"
 # crates.io user gets them, so atlas-sys builds its C++ from the release tag.
 [packages.atlas-crates]
 compiler-inputs = ["cxx-compiler", "rust-compiler"]
+allow-stale-deps = true
 
 [matrix.rust-publish]
 packages = ["atlas-crates"]
