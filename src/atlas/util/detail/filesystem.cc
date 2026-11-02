@@ -28,6 +28,11 @@ bool exists(const std::string& path) {
     return exists(path.c_str());
 }
 
+bool is_regular_file(const std::string& path) {
+    struct stat info;
+    return ::stat(path.c_str(), &info) == 0 && S_ISREG(info.st_mode);
+}
+
 static void remove_all(const char path[]) {
     size_t path_len;
     char *full_path;

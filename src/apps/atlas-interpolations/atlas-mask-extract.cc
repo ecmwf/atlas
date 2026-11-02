@@ -9,7 +9,6 @@
  */
 
 #include <algorithm>
-#include <filesystem>
 #include <memory>
 #include <sstream>
 #include <string>
@@ -23,6 +22,7 @@
 #include "atlas/runtime/Exception.h"
 #include "atlas/runtime/Log.h"
 #include "atlas/runtime/Trace.h"
+#include "atlas/util/detail/filesystem.h"
 
 #include "MaskIO.h"
 
@@ -30,10 +30,10 @@ namespace atlas {
 namespace {
 
 std::unique_ptr<netCDF::NcFile> open_netcdf(const std::string& path) {
-    if (!std::filesystem::exists(path)) {
+    if (!filesystem::exists(path)) {
         ATLAS_THROW_EXCEPTION("Input file does not exist: '" << path << "'");
     }
-    if (!std::filesystem::is_regular_file(path)) {
+    if (!filesystem::is_regular_file(path)) {
         ATLAS_THROW_EXCEPTION("Input path is not a regular file: '" << path << "'");
     }
 
@@ -271,7 +271,7 @@ MaskData extract_mask_atlas_field(const std::string& input_path, long field_inde
     if (field_index < 0) {
         ATLAS_THROW_EXCEPTION("--field-index must be non-negative");
     }
-    if (!std::filesystem::exists(input_path)) {
+    if (!filesystem::exists(input_path)) {
         ATLAS_THROW_EXCEPTION("Input file does not exist: '" << input_path << "'");
     }
 
