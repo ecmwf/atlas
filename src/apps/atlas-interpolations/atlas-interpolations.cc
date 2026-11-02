@@ -441,7 +441,7 @@ std::string get_mask_format(const std::string& mask) {
     ATLAS_NOTIMPLEMENTED;
 }
 
-void read_mask(const std::string& mask_name, mdspan<int, dims<1>> mask) {
+void read_mask(const std::string& mask_name, array::mdspan<int, array::dims<1>> mask) {
     if (get_mask_format(mask_name) == "scrip") {
         ScripIO::read_mask(mask_name, mask);
     }
@@ -460,7 +460,7 @@ void set_grid_mask(const std::string& mask_name, FunctionSpace& functionspace) {
 
     functionspace.setMask([&](int* mask, size_t size) {
         std::vector<int> grid_mask(functionspace.grid().size());
-        read_mask(mask_name, mdspan<int, dims<1>>(grid_mask.data(), grid_mask.size()));
+        read_mask(mask_name, array::mdspan<int, array::dims<1>>(grid_mask.data(), grid_mask.size()));
 
         auto global_index = array::make_view<gidx_t, 1>(global_indices);
         ATLAS_ASSERT(global_index.size() == size);
@@ -834,7 +834,7 @@ std::vector<int> load_grid_mask(const AtlasTool::Args& args, const std::string& 
     // Default: everything valid (mask==1). Masks are stored/read in global grid-point order.
     std::vector<int> mask(grid.size(), 1);
     if (args.has(mask_option)) {
-        read_mask(args.getString(mask_option), mdspan<int, dims<1>>(mask.data(), mask.size()));
+        read_mask(args.getString(mask_option), array::mdspan<int, array::dims<1>>(mask.data(), mask.size()));
     }
     return mask;
 }

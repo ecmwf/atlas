@@ -13,7 +13,7 @@
 #include <string>
 #include <vector>
 
-#include "atlas/mdspan.h"
+#include "atlas/array/mdspan.h"
 
 namespace atlas {
 
@@ -25,7 +25,7 @@ struct MaskData {
 class MaskIO {
 public:
     static MaskData read(const std::string& path);
-    static void read(const std::string& path, mdspan<int, dims<1>> values);
+    static void read(const std::string& path, array::mdspan<int, array::dims<1>> values);
     static void write(const std::string& path, const MaskData& data);
     static void validate(const std::string& source, const std::vector<int>& values);
 };

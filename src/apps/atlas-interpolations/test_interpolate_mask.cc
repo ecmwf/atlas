@@ -84,7 +84,7 @@ int main(int argc, char** argv) {
         }
 
         std::vector<int> mask(grid.size());
-        atlas::MaskIO::read(path, atlas::mdspan<int, atlas::dims<1>>(mask.data(), mask.size()));
+        atlas::MaskIO::read(path, atlas::array::mdspan<int, atlas::array::dims<1>>(mask.data(), mask.size()));
         for (size_t i = 0; i < mask.size(); ++i) {
             if (mask[i] != static_cast<int>(i % 2)) {
                 std::cerr << "Unexpected mask value at index " << i << ": " << mask[i] << std::endl;

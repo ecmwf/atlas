@@ -84,7 +84,7 @@ MaskData MaskIO::read(const std::string& path) {
     return data;
 }
 
-void MaskIO::read(const std::string& path, mdspan<int, dims<1>> values) {
+void MaskIO::read(const std::string& path, array::mdspan<int, array::dims<1>> values) {
     const MaskData data = read(path);
     if (values.size() != data.values.size()) {
         ATLAS_THROW_EXCEPTION("Mask record '" << path << "' contains " << data.values.size() << " values, expected "

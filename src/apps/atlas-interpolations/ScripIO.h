@@ -13,7 +13,7 @@
 
 #include "atlas/linalg/sparse.h"
 #include "atlas/util/Config.h"
-#include "atlas/mdspan.h"
+#include "atlas/array/mdspan.h"
 
 namespace atlas {
 
@@ -25,7 +25,7 @@ public:
     static atlas::linalg::SparseMatrixStorage read_matrix(const std::string&);
     static void write_matrix(const linalg::SparseMatrixStorage&, const std::string&);
 
-    static void read_mask(const std::string&, mdspan<int,dims<1>>);
+    static void read_mask(const std::string&, array::mdspan<int,array::dims<1>>);
 };
 
 }

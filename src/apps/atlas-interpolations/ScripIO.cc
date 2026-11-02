@@ -125,7 +125,7 @@ void ScripIO::write_matrix(const SparseMatrixStorage& matrix, const std::string&
 }
 
 
-void ScripIO::read_mask(const std::string& mask_name, mdspan<int,dims<1>> mask) {
+void ScripIO::read_mask(const std::string& mask_name, array::mdspan<int,array::dims<1>> mask) {
     ATLAS_DEBUG_VAR(mask_name);
     netCDF::NcFile f(mask_name, netCDF::NcFile::read);
     scrip_size grid_size = f.getDim("grid_size").getSize();
