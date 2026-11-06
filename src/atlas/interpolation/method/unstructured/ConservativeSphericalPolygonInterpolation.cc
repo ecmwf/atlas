@@ -1066,6 +1066,7 @@ build_source_kdtree(util::KDTree<idx_t>& kdt_search, double& max_srccell_rad, co
     const auto& src = sharable_data_->src_;
     const auto node_part  = array::make_view<int, 1>(src_mesh_.nodes().partition());
     const auto node_ridx  = array::make_indexview<idx_t, 1>(src_mesh_.nodes().remote_index());
+    const auto node_halo  = array::make_view<int, 1>(src_mesh_.nodes().halo());
     const auto node_ghost = array::make_view<int, 1>(src_mesh_.nodes().ghost());
     const auto cell_part  = array::make_view<int, 1>(src_mesh_.cells().partition());
     const auto cell_halo  = array::make_view<int, 1>(src_mesh_.cells().halo());
@@ -1087,7 +1088,7 @@ build_source_kdtree(util::KDTree<idx_t>& kdt_search, double& max_srccell_rad, co
             for (idx_t inode = 0; inode < src_mesh_.nodes().size(); ++inode) {
                 const auto& csp_ids = node2csp[inode];
                 if (!csp_ids.empty()) {
-                    if (consider_src(node_part(inode), node_ridx(inode), node_ghost(inode))) {
+                    if (consider_src(node_part(inode), node_ridx(inode), node_halo(inode) || node_ghost(inode))) {
                         for (const auto& csp_id : csp_ids) {
                             const auto& s_csp = src_csp[csp_id];
                             kdt_search.insert(s_csp.centroid(), csp_id);
