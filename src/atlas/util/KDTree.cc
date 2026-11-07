@@ -65,51 +65,61 @@ void atlas__IndexKDTree__build(IndexKDTree::Implementation* This) {
 }
 void atlas__IndexKDTree__closestPoints(const IndexKDTree::Implementation* This, const double plon, const double plat,
                                        const size_t k, double*& lons, double*& lats, idx_t*& indices,
-                                       double*& distances) {
+                                       double*& distances, int & returnLonLat) {
     ATLAS_ASSERT(This != nullptr, "Cannot access uninitialised atlas_IndexKDTree");
     IndexKDTree::ValueList vl(This->closestPoints(PointLonLat{plon, plat}, k));
-    lons      = new double[k];
-    lats      = new double[k];
+    if (returnLonLat == 1) {
+        lons      = new double[k];
+        lats      = new double[k];
+    }
     indices   = new idx_t[k];
     distances = new double[k];
     for (size_t i = 0; i < k; ++i) {
-        PointLonLat lonlat;
-        This->geometry().xyz2lonlat(vl[i].point(), lonlat);
-        lonlat.normalise();
-        lons[i]      = lonlat.lon();
-        lats[i]      = lonlat.lat();
+        if (returnLonLat == 1) {
+            PointLonLat lonlat;
+            This->geometry().xyz2lonlat(vl[i].point(), lonlat);
+            lonlat.normalise();
+            lons[i]      = lonlat.lon();
+            lats[i]      = lonlat.lat();
+        }
         indices[i]   = vl[i].payload();
         distances[i] = vl[i].distance();
     }
 }
 void atlas__IndexKDTree__closestPoint(const IndexKDTree::Implementation* This, const double plon, const double plat,
-                                      double& lon, double& lat, idx_t& index, double& distance) {
+                                      double& lon, double& lat, idx_t& index, double& distance, int & returnLonLat) {
     ATLAS_ASSERT(This != nullptr, "Cannot access uninitialised atlas_IndexKDTree");
     IndexKDTree::Value v(This->closestPoint(PointLonLat{plon, plat}));
-    PointLonLat lonlat;
-    This->geometry().xyz2lonlat(v.point(), lonlat);
-    lonlat.normalise();
-    lon      = lonlat.lon();
-    lat      = lonlat.lat();
+    if (returnLonLat == 1) {
+        PointLonLat lonlat;
+        This->geometry().xyz2lonlat(v.point(), lonlat);
+        lonlat.normalise();
+        lon      = lonlat.lon();
+        lat      = lonlat.lat();
+    }
     index    = v.payload();
     distance = v.distance();
 }
 void atlas__IndexKDTree__closestPointsWithinRadius(const IndexKDTree::Implementation* This, const double plon,
                                                    const double plat, double radius, size_t& k, double*& lons,
-                                                   double*& lats, idx_t*& indices, double*& distances) {
+                                                   double*& lats, idx_t*& indices, double*& distances, int & returnLonLat) {
     ATLAS_ASSERT(This != nullptr, "Cannot access uninitialised atlas_IndexKDTree");
     IndexKDTree::ValueList vl = This->closestPointsWithinRadius(PointLonLat{plon, plat}, radius);
     k                         = vl.size();
-    lons                      = new double[k];
-    lats                      = new double[k];
+    if (returnLonLat == 1) {
+        lons                      = new double[k];
+        lats                      = new double[k];
+    }
     indices                   = new idx_t[k];
     distances                 = new double[k];
     for (size_t i = 0; i < k; ++i) {
-        PointLonLat lonlat;
-        This->geometry().xyz2lonlat(vl[i].point(), lonlat);
-        lonlat.normalise();
-        lons[i]      = lonlat.lon();
-        lats[i]      = lonlat.lat();
+        if (returnLonLat == 1) {
+            PointLonLat lonlat;
+            This->geometry().xyz2lonlat(vl[i].point(), lonlat);
+            lonlat.normalise();
+            lons[i]      = lonlat.lon();
+            lats[i]      = lonlat.lat();
+        }
         indices[i]   = vl[i].payload();
         distances[i] = vl[i].distance();
     }
