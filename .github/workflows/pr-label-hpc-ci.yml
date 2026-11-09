@@ -10,6 +10,7 @@ on:
   workflow_run:
     workflows:
     - CI
+    - CI (fork)
     types:
     - completed
 permissions:
@@ -27,3 +28,4 @@ jobs:
       with:
         client-id: ${{ secrets.CI_PERMISSIONS_APP_CLIENT_ID }}
         app-private-key: ${{ secrets.CI_PERMISSIONS_APP_PRIVATE_KEY }}
+        fork-ci-workflow: ci-fork.yml
