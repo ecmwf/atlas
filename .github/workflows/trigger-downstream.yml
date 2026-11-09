@@ -6,6 +6,7 @@ on:
   workflow_run:
     workflows:
     - CI
+    - CI (fork)
     types:
     - completed
   workflow_dispatch:
@@ -20,7 +21,7 @@ on:
         default: '1'
         type: string
 concurrency:
-  group: trigger-downstream-runner-${{ github.event.workflow_run.head_sha || inputs.pull-request }}
+  group: trigger-downstream-runner-${{ (github.event.workflow_run.name == 'CI (fork)' && github.event.workflow_run.display_title) || github.event.workflow_run.head_sha || inputs.pull-request }}
   cancel-in-progress: true
 jobs:
   ci-approval:
@@ -48,6 +49,7 @@ jobs:
       uses: ecmwf/ci-infrastructure/actions/resolve-dispatch-context@main
       with:
         pull-request: ${{ inputs.pull-request }}
+        fork-ci-workflow: ci-fork.yml
     needs:
     - ci-approval
   label-gate:
