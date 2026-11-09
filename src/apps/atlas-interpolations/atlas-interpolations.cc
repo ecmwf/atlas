@@ -62,6 +62,11 @@ std::vector<double> tgt_ref;
 // 3) read in a stored global interpolation matrix from the disk:
 //      atlas-interpolations --s.grid=<sgrid> --t.grid=<tgrid> --i.type=<interp> --read-matrix --matrix.format=<fmt>
 //
+// 4) convert a stored interpolation matrix from SCRIP to eckit binary format or vice versa:
+//      atlas-interpolations --convert=<file.nc>    [--matrix.name=<name>]  ->  <name>.eckit
+//      atlas-interpolations --convert=<file.eckit> [--matrix.name=<name>]  ->  <name>.nc
+//    The input format is deduced from the file extension; <name> defaults to <file>.
+//
 // Formats <fmt> can be 'eckit' (binary) or 'scrip' (netcdf).
 //
 // This app hides configurations of meshes, function spaces, halo size, etc. from the user.
@@ -105,6 +110,10 @@ public:
         add_option(new eckit::option::Separator("Commands"));
         add_option(new SimpleOption<bool>("list",  "List available interpolation types"));
         add_option(new SimpleOption<bool>("interpolate", "Test an interpolation type"));
+        add_option(new SimpleOption<std::string>("convert", "Convert the given matrix file between SCRIP (*.nc) and eckit binary (*.eckit) "
+                                                            "formats, in the direction given by its extension. The output file is "
+                                                            "<matrix.name> if matrix.name is given, otherwise the input file name, "
+                                                            "with the extension of the other format"));
 
         // Configuration
         add_option(new eckit::option::Separator("Interpolation options"));
@@ -551,6 +560,37 @@ void test_matrix(const Grid& sgrid, const Grid& tgrid, const Matrix& matrix, con
 
 int AtlasInterpolations::execute(const AtlasTool::Args& args) {
     ATLAS_TRACE("main");
+    if (args.has("convert")) {
+        std::string input_file = args.getString("convert");
+        std::string ext = get_extension(input_file);
+        std::string input_format, output_format;
+        if (ext == "nc") {
+            input_format  = "scrip";
+            output_format = "eckit";
+        }
+        else if (ext == "eckit") {
+            input_format  = "eckit";
+            output_format = "scrip";
+        }
+        else {
+            ATLAS_THROW_EXCEPTION("Cannot deduce the format of matrix file '" << input_file
+                << "': expected extension '.nc' (SCRIP) or '.eckit' (eckit binary)");
+        }
+        std::string input_name  = get_basename(input_file);
+        std::string output_name = args.has("matrix.name") ? get_basename(args.getString("matrix.name"))
+                                                          : input_name;
+        if (mpi::comm().rank() == 0) {
+            if (!eckit::PathName(input_file).exists()) {
+                ATLAS_THROW_EXCEPTION("Matrix file '" << input_file << "' does not exist");
+            }
+            Log::info() << "Converting matrix from " << input_format << " to " << output_format << " format" << std::endl;
+            Matrix matrix = read_matrix(input_name, input_format);
+            print_matrix(matrix, Log::info());
+            write_matrix(matrix, output_name, output_format);
+        }
+        mpi::comm().barrier();
+        return success();
+    }
     if (args.has("list")) {
         Log::info() << "Usage: " << usage() << std::endl;
         Log::info() << "Available interpolators:" << std::endl;

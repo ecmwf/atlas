@@ -72,6 +72,12 @@ if(HAVE_WARNING_AS_ERROR)
   ecbuild_add_cxx_flags("-Werror" NO_FAIL NAME pluto_cxx_warning_as_error QUIET)
 endif()
 
+if( CMAKE_CXX_COMPILER_ID STREQUAL Intel )
+  ecbuild_add_cxx_flags("-diag-disable=11074" NO_FAIL)   # Inline limits
+  ecbuild_add_cxx_flags("-diag-disable=11076" NO_FAIL)   # Inline limits
+  ecbuild_add_cxx_flags("-diag-disable=10441" NO_FAIL)   # Deprecated classic compiler
+endif()
+
 ecbuild_add_option( FEATURE FORTRAN DESCRIPTION "Fortran API for pluto" )
 if( HAVE_FORTRAN )
     ecbuild_enable_fortran( REQUIRED MODULE_DIRECTORY ${PROJECT_BINARY_DIR}/module )

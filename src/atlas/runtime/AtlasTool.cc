@@ -10,6 +10,7 @@
 
 #include <algorithm>
 #include <chrono>
+#include <exception>
 #include <thread>
 
 #include "eckit/config/LibEcKit.h"

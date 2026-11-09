@@ -33,6 +33,11 @@ on:
         required: false
         type: string
         default: main
+      pin:
+        description: owner/repo@sha the dispatching consumer was pinned to; only with rebuild-request
+        required: false
+        default: ''
+        type: string
   workflow_dispatch:
     inputs:
       dispatch-id:
@@ -67,6 +72,11 @@ on:
         required: false
         type: string
         default: main
+      pin:
+        description: owner/repo@sha the dispatching consumer was pinned to; only with rebuild-request
+        required: false
+        default: ''
+        type: string
 concurrency:
   group: cross-repo-trigger-runner-atlas-${{ github.ref }}
   cancel-in-progress: false
@@ -80,16 +90,12 @@ env:
   AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
 jobs:
   resolve:
-    if: contains(fromJSON(inputs.from-jobs), 'ecbuild/build') || contains(fromJSON(inputs.from-jobs), 'eckit/build') || contains(fromJSON(inputs.from-jobs), 'stack-deps/build') || contains(fromJSON(inputs.from-jobs), 'fckit/build') || inputs.rebuild-request
-    runs-on: arc-runner-normal
-    container:
-      image: eccr.ecmwf.int/public-ci-images/ubuntu24.04-base:latest
+    if: contains(fromJSON(inputs.from-jobs), 'eckit/build') || contains(fromJSON(inputs.from-jobs), 'ecbuild/build') || contains(fromJSON(inputs.from-jobs), 'stack-deps/build') || contains(fromJSON(inputs.from-jobs), 'fckit/build') || inputs.rebuild-request
+    runs-on: ubuntu-latest
     outputs:
       ref: ${{ steps.pick.outputs.ref }}
-      matrix-build: ${{ steps.r.outputs.matrix-build }}
+      matrix-build: ${{ toJSON(fromJSON(steps.r.outputs.json)['build']) }}
     steps:
-    - name: Announce image
-      uses: ecmwf/ci-infrastructure/actions/announce-image@main
     - id: mint
       uses: actions/create-github-app-token@v3
       with:
@@ -108,11 +114,12 @@ jobs:
         repository: ecmwf/atlas
         ref: ${{ steps.pick.outputs.ref }}
         token: ${{ steps.mint.outputs.token }}
+        persist-credentials: false
     - id: r
       uses: ecmwf/ci-infrastructure/actions/resolve-deps@main
       with:
         current-branch: ${{ steps.pick.outputs.ref }}
-        pin: ${{ !inputs.rebuild-request && format('{0}@{1}', inputs.from-repo, inputs.from-sha) || '' }}
+        pin: ${{ !inputs.rebuild-request && format('{0}@{1}', inputs.from-repo, inputs.from-sha) || inputs.pin }}
         matrix: build
         token: ${{ steps.mint.outputs.token }}
         client-id: ${{ secrets.CI_PERMISSIONS_APP_CLIENT_ID }}
@@ -120,7 +127,7 @@ jobs:
   atlas__build:
     needs:
     - resolve
-    if: contains(fromJSON(inputs.from-jobs), 'ecbuild/build') || contains(fromJSON(inputs.from-jobs), 'eckit/build') || contains(fromJSON(inputs.from-jobs), 'stack-deps/build') || contains(fromJSON(inputs.from-jobs), 'fckit/build') || inputs.rebuild-request
+    if: contains(fromJSON(inputs.from-jobs), 'eckit/build') || contains(fromJSON(inputs.from-jobs), 'ecbuild/build') || contains(fromJSON(inputs.from-jobs), 'stack-deps/build') || contains(fromJSON(inputs.from-jobs), 'fckit/build') || inputs.rebuild-request
     name: atlas/build (${{ matrix._resolved['job-name'] }})
     runs-on: ${{ matrix['runs-on'] }}
     container:
@@ -135,6 +142,9 @@ jobs:
         client-id: ${{ secrets.CI_PERMISSIONS_APP_CLIENT_ID }}
         private-key: ${{ secrets.CI_PERMISSIONS_APP_PRIVATE_KEY }}
         owner: ${{ github.repository_owner }}
+        permission-contents: read
+        permission-actions: read
+        permission-checks: write
     - id: check_start
       if: ${{ github.event_name == 'workflow_dispatch' && inputs.from-jobs != '[]' }}
       uses: ecmwf/ci-infrastructure/actions/report-check-run@main
@@ -152,6 +162,7 @@ jobs:
         repository: ecmwf/atlas
         ref: ${{ needs.resolve.outputs.ref }}
         token: ${{ steps.mint.outputs.token }}
+        persist-credentials: false
     - name: Decode matrix-leg
       id: m
       shell: bash
@@ -186,14 +197,6 @@ jobs:
       with:
         deps-json: ${{ steps.m.outputs.deps-json }}
         token: ${{ steps.mint.outputs.token }}
-    - id: git-read
-      uses: actions/create-github-app-token@v3
-      with:
-        client-id: ${{ secrets.CI_PERMISSIONS_APP_CLIENT_ID }}
-        private-key: ${{ secrets.CI_PERMISSIONS_APP_PRIVATE_KEY }}
-        owner: ${{ github.repository_owner }}
-        repositories: bindman
-        permission-contents: read
     - name: Build
       id: build
       uses: ecmwf/ci-infrastructure/actions/run-job-script@main
@@ -202,7 +205,6 @@ jobs:
         matrix-leg: ${{ toJSON(matrix) }}
         package: atlas
         cmake-prefix-path: ${{ steps.deps.outputs.cmake-prefix-path }}
-        git-token: ${{ steps.git-read.outputs.token }}
     - name: Publish
       uses: ecmwf/ci-infrastructure/actions/publish-artifact@main
       with:

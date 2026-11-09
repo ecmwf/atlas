@@ -4,7 +4,7 @@ repo = "ecmwf/atlas"
 visibility = "public"
 fork-pull-requests = true
 compiler-inputs = ["cxx-compiler"]
-git-read = ["ecmwf/bindman"]
+allow-stale-deps = true
 
 [[deps]]
 repo = "ecmwf/ecbuild"
@@ -41,8 +41,7 @@ package = "fckit"
 ref = "develop"
 compiler-inputs = ["cxx-compiler"]
 options-input = "options"
-# ifort-2023.2 has no leg while the icpc-2023.2 legs are dropped (eckit::geo fails with ICC); kept for re-enabling them.
-when = { fortran-compiler = ["gfortran-8", "gfortran-10", "gfortran-11", "gfortran-12", "gfortran-13", "gfortran-14", "gfortran-15", "ifort-2023.2", "ifx", "nvfortran-26.1"] }
+when = { fortran-compiler = ["gfortran-8", "gfortran-10", "gfortran-11", "gfortran-12", "gfortran-13", "gfortran-14", "gfortran-15", "ifort-2023.2.0", "ifx-2025.3.1", "nvfortran-26.1"] }
 unless = { options = "mpi-gpu" }
 
 [[deps]]
@@ -56,7 +55,7 @@ when = { options = "mpi-gpu" }
 [matrix.build.defaults]
 job-script = "./.ci/build.sh.j2"
 build-type = "RelWithDebInfo"
-runs-on = "arc-runner-very-large"
+runs-on = "arc-runner-large"
 options = ""
 
 [[matrix.build.include]]
@@ -173,13 +172,24 @@ ntasks = 16
 
 [[matrix.build-hpc.include]]
 options = "mpi"
-cxx-compiler = "icpx"
-fortran-compiler = "ifx"
+cxx-compiler = "icpx-2025.3.1"
+fortran-compiler = "ifx-2025.3.1"
 platform = "hpc-atos-intel"
 modules = ["load prgenv/intel-llvm", "unload intel", "load intel/2025.3.1", "load cmake", "load ninja", "load python3/3.12.9-01", "load hpcx-openmpi/2.21.3"]
 c-compiler-binary = "icx"
 cxx-compiler-binary = "icpx"
 fortran-compiler-binary = "ifx"
+ntasks = 16
+
+[[matrix.build-hpc.include]]
+options = "mpi"
+cxx-compiler = "icpc-2023.2.0"
+fortran-compiler = "ifort-2023.2.0"
+platform = "hpc-atos-intel"
+modules = ["load prgenv/intel", "unload intel", "load intel/2023.2.0", "load cmake", "load ninja", "load python3/3.12.9-01", "load hpcx-openmpi/2.21.3"]
+c-compiler-binary = "icc"
+cxx-compiler-binary = "icpc"
+fortran-compiler-binary = "ifort"
 ntasks = 16
 
 # The HPC-X bundled with nvhpc: ECMWF's hpcx-openmpi for nvidia/26.1 is not CUDA-aware.
@@ -192,6 +202,7 @@ modules = ["load prgenv/nvidia", "unload nvidia", "load nvidia/26.1", "load cmak
 c-compiler-binary = "nvc"
 cxx-compiler-binary = "nvc++"
 fortran-compiler-binary = "nvfortran"
+sccache = false
 ntasks = 16
 
 # One full GPU node; the gpu partition has no ssdtmp.
@@ -204,10 +215,13 @@ modules = ["load prgenv/nvidia", "unload nvidia", "load nvidia/26.1", "load cmak
 c-compiler-binary = "nvc"
 cxx-compiler-binary = "nvc++"
 fortran-compiler-binary = "nvfortran"
+sccache = false
 qos = "ng"
 ntasks = 4
 cpus-per-task = 64
 gpus-per-task = 1
+# The build runs -j256 with its tree in /dev/shm; 64GB ran nvc++ out of memory.
+mem = "256GB"
 ssdtmp = ""
 
 [matrix.build-hpc]
@@ -216,7 +230,8 @@ container-credentials = true
 triggers = ["upstream-change", "rebuild-request"]
 
 [packages.atlas-rust]
-compiler-inputs = ["cxx-compiler"]
+compiler-inputs = ["cxx-compiler", "rust-compiler"]
+allow-stale-deps = true
 
 [[packages.atlas-rust.deps]]
 package = "atlas"
@@ -237,6 +252,25 @@ platform = "ubuntu-24.04"
 
 [[matrix.rust.include]]
 rust-compiler = "rust-1.90"
+
+# Publishing the crates, only from publish-crates.yml: no patches and the default features, as a
+# crates.io user gets them, so atlas-sys builds its C++ from the release tag.
+[packages.atlas-crates]
+compiler-inputs = ["cxx-compiler", "rust-compiler"]
+allow-stale-deps = true
+
+[matrix.rust-publish]
+packages = ["atlas-crates"]
+publishes = false
+
+[[matrix.rust-publish.include]]
+job-script = "./.ci/rust-publish.sh.j2"
+runs-on = "arc-runner-large"
+cxx-compiler = "g++-13"
+c-compiler = "gcc-13"
+rust-compiler = "rust-1.90"
+container = "eccr.ecmwf.int/public-ci-images/ubuntu24.04-gcc13-gfortran13-boost-qt6-rust1.90"
+platform = "ubuntu-24.04"
 
 [[trigger-downstream]]
 repo = "ecmwf/mir"

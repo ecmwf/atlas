@@ -8,38 +8,50 @@ on:
     - CI
     types:
     - completed
-  pull_request:
-    types:
-    - labeled
+  workflow_dispatch:
+    inputs:
+      pull-request:
+        description: Number of the pull request whose commit to run downstream CI for
+        required: true
+        type: string
+      level:
+        description: '''all'', or the highest consumer level to run (as the run-downstream-ci labels)'
+        required: true
+        default: '1'
+        type: string
 concurrency:
-  group: trigger-downstream-hpc-atos-${{ github.event.workflow_run.head_sha || github.event.pull_request.head.sha }}
+  group: trigger-downstream-hpc-atos-${{ github.event.workflow_run.head_sha || inputs.pull-request }}
   cancel-in-progress: true
 jobs:
   ci-approval:
-    runs-on: ubuntu-slim
+    runs-on: ubuntu-latest
     permissions:
       pull-requests: write
     steps:
     - uses: ecmwf/ci-infrastructure/actions/require-ci-approval@main
   context:
-    if: ${{ github.event_name != 'pull_request' || (startsWith(github.event.label.name, 'run-downstream-ci') && github.event.pull_request.head.repo.full_name == github.repository) }}
-    runs-on: ubuntu-slim
+    runs-on: ubuntu-latest
     permissions:
       actions: read
+      pull-requests: read
     outputs:
       head-sha: ${{ steps.ctx.outputs.head-sha }}
       head-branch: ${{ steps.ctx.outputs.head-branch }}
       ci-conclusion: ${{ steps.ctx.outputs.ci-conclusion }}
       ci-url: ${{ steps.ctx.outputs.ci-url }}
       ci-summary: ${{ steps.ctx.outputs.ci-summary }}
+      pull-request: ${{ steps.ctx.outputs.pull-request }}
+      hpc-only: ${{ steps.ctx.outputs.hpc-only }}
     steps:
     - name: Resolve the commit under test
       id: ctx
       uses: ecmwf/ci-infrastructure/actions/resolve-dispatch-context@main
+      with:
+        pull-request: ${{ inputs.pull-request }}
     needs:
     - ci-approval
   label-gate:
-    runs-on: ubuntu-slim
+    runs-on: ubuntu-latest
     permissions:
       pull-requests: read
     outputs:
@@ -51,17 +63,16 @@ jobs:
       uses: ecmwf/ci-infrastructure/actions/should-downstream-run@main
       with:
         sha: ${{ needs.context.outputs.head-sha }}
+        pull-request: ${{ needs.context.outputs.pull-request }}
+        level: ${{ inputs.level }}
+        require-label: run-hpc-ci
     needs:
     - ci-approval
     - context
   validate:
     if: ${{ (needs.context.outputs.ci-conclusion == 'success') && needs['label-gate'].outputs.run == 'true' }}
-    runs-on: arc-runner-normal
-    container:
-      image: eccr.ecmwf.int/public-ci-images/ubuntu24.04-base:latest
+    runs-on: ubuntu-latest
     steps:
-    - name: Announce image
-      uses: ecmwf/ci-infrastructure/actions/announce-image@main
     - id: mint
       uses: actions/create-github-app-token@v3
       with:
@@ -72,6 +83,8 @@ jobs:
       with:
         ref: ${{ needs.context.outputs.head-sha }}
         token: ${{ steps.mint.outputs.token }}
+        persist-credentials: false
+        allow-unsafe-pr-checkout: true
     - uses: ecmwf/ci-infrastructure/actions/validate-generated-workflows@main
       with:
         token: ${{ steps.mint.outputs.token }}
@@ -81,7 +94,7 @@ jobs:
     - label-gate
   report-start:
     if: ${{ (needs.context.outputs.ci-conclusion == 'success') && needs['label-gate'].outputs.run == 'true' }}
-    runs-on: ubuntu-slim
+    runs-on: ubuntu-latest
     permissions:
       statuses: write
     steps:
@@ -101,7 +114,7 @@ jobs:
     - label-gate
   report-ci-failure:
     if: ${{ (needs.context.outputs.ci-conclusion != 'success' && needs.context.outputs.ci-conclusion != '') && needs['label-gate'].outputs.run == 'true' }}
-    runs-on: ubuntu-slim
+    runs-on: ubuntu-latest
     permissions:
       statuses: write
     steps:
@@ -143,7 +156,7 @@ jobs:
     - validate
     - mir
     if: ${{ (always() && needs.context.outputs.ci-conclusion == 'success') && needs['label-gate'].outputs.run == 'true' }}
-    runs-on: ubuntu-slim
+    runs-on: ubuntu-latest
     permissions:
       statuses: write
     steps:
