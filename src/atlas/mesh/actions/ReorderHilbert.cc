@@ -8,14 +8,13 @@
  * nor does it submit to any jurisdiction.
  */
 
-#include <array>
-#include <bitset>
 #include <utility>
 #include <vector>
 
 #include "atlas/array.h"
 #include "atlas/domain/Domain.h"
 #include "atlas/grid/Grid.h"
+#include "atlas/grid/SpaceFillingCurve.h"
 #include "atlas/mesh/Elements.h"
 #include "atlas/mesh/HybridElements.h"
 #include "atlas/mesh/Mesh.h"
@@ -34,211 +33,10 @@ namespace actions {
 
 // -------------------------------------------------------------------------------------
 
-/// @brief Class to compute a global index given a coordinate, based on the
-/// Hilbert Spacefilling Curve.
-///
-/// This algorithm is based on:
-/// - John J. Bartholdi and Paul Goldsman "Vertex-Labeling Algorithms for the Hilbert Spacefilling Curve"\n
-/// It is adapted to return contiguous numbers of the gidx_t type, instead of a double [0,1]
-///
-/// Given a bounding box and number of hilbert recursions, the bounding box can be divided in
-/// 2^(dim*levels) equally spaced cells. A given coordinate falling inside one of these cells, is assigned
-/// the 1-dimensional Hilbert-index of this cell. To make sure that 1 coordinate corresponds to only 1
-/// Hilbert index, the number of levels have to be increased.
-/// In 2D, the recursion cannot be higher than 15, if you want the indices to fit in "unsigned int" type of 32bit.
-/// In 2D, the recursion cannot be higher than 30, if you want the indices to fit in "unsigned int" type of 64bit.
-///
-///
-/// No attempt is made to provide the most efficient algorithm. There exist other open-source
-/// libraries with more efficient algorithms, such as libhilbert, but its LGPL license
-/// is not compatible with this licence.
-///
-/// @author Willem Deconinck
-class Hilbert {
-public:
-    /// Constructor
-    /// Initializes the hilbert space filling curve with a given "space" and "levels"
-    Hilbert(const Domain& domain, idx_t levels);
-
-    /// Compute the hilbert code for a given point in 2D
-    gidx_t operator()(const PointXY& point);
-
-    /// Compute the hilbert code for a given point in 2D
-    /// @param [out] relative_tolerance  cell-size of smallest level divided by bounding-box size
-    gidx_t operator()(const PointXY& point, double& relative_tolerance);
-
-    /// Return the maximum hilbert code possible with the initialized levels
-    ///
-    /// Care has to be taken that this number is not larger than the precision of the type storing
-    /// the hilbert codes.
-    gidx_t nb_keys() const { return nb_keys_; }
-
-private:  // functions
-    using box_t = std::array<PointXY, 4>;
-
-    /// @brief Recursive algorithm
-    gidx_t recursive_algorithm(const PointXY& p, const box_t& box, idx_t level);
-
-private:  // data
-    /// Vertex label type (4 vertices in 2D)
-    enum VertexLabel
-    {
-        A = 0,
-        B = 1,
-        C = 2,
-        D = 3
-    };
-
-    /// Bounding box, defining the space to be filled
-    const RectangularDomain domain_;
-
-    /// maximum recursion level of the Hilbert space filling curve
-    idx_t max_level_;
-
-    /// maximum number of unique codes, computed by max_level
-    gidx_t nb_keys_;
-    gidx_t nb_keys_2_;
-};
-
-// -------------------------------------------------------------------------------------
-
-Hilbert::Hilbert(const Domain& domain, idx_t levels): domain_{domain}, max_level_(levels) {
-    nb_keys_2_ = gidx_t(std::pow(gidx_t(4), gidx_t(max_level_)));
-    nb_keys_   = nb_keys_2_ * 2;
-}
-
-
-gidx_t Hilbert::operator()(const PointXY& point) {
-    box_t box;
-    box[A]            = {domain_.xmin(), domain_.ymax()};
-    box[B]            = {domain_.xmin(), domain_.ymin()};
-    box[C]            = {domain_.xmax(), domain_.ymin()};
-    box[D]            = {domain_.xmax(), domain_.ymax()};
-    const double xmid = (domain_.xmin() + domain_.xmax()) * 0.5;
-    if (point.x() < xmid) {
-        box[C].x() = xmid;
-        box[D].x() = xmid;
-        return recursive_algorithm(point, box, 0);
-    }
-    else {
-        box[A].x() = xmid;
-        box[B].x() = xmid;
-        return recursive_algorithm(point, box, 0) + nb_keys_2_;
-    }
-}
-
-gidx_t Hilbert::recursive_algorithm(const PointXY& p, const box_t& box, idx_t level) {
-    if (level == max_level_) {
-        return 0;
-    }
-
-    double min_distance = std::numeric_limits<double>::max();
-
-    auto compute_distance2 = [](const PointXY& p1, const PointXY& p2) {
-        // workaround because of eckit 1.3.2 issue with constness in KPoint
-        double d = 0;
-        for (size_t i = 0; i < 2; i++) {
-            double dx = p1[i] - p2[i];
-            d += dx * dx;
-        }
-        return d;
-    };
-
-    auto compute_average = [](const PointXY& p1, const PointXY& p2) {
-        // workaround because of eckit 1.3.2 issue with constness in KPoint
-        PointXY avg;
-        avg.x() = p1.x() + p2.x();
-        avg.x() *= 0.5;
-        avg.y() = p1.y() + p2.y();
-        avg.y() *= 0.5;
-        return avg;
-    };
-
-    idx_t quadrant{0};
-    for (idx_t idx = 0; idx < 4; ++idx) {
-        // double distance = box[idx].distance2( p );  // does not compile with eckit 1.3.2
-        double distance = compute_distance2(p, box[idx]);  // workaround
-        if (distance < min_distance) {
-            quadrant     = idx;
-            min_distance = distance;
-        }
-    }
-
-    box_t box_quadrant;
-    switch (quadrant) {
-        case A:
-            box_quadrant[A] = box[A];
-            // box_quadrant[B] = ( box[A] + box[D] ) * 0.5;  // does not compile with eckit 1.3.2
-            // box_quadrant[C] = ( box[A] + box[C] ) * 0.5;  // does not compile with eckit 1.3.2
-            // box_quadrant[D] = ( box[A] + box[B] ) * 0.5;  // does not compile with eckit 1.3.2
-            box_quadrant[B] = compute_average(box[A], box[D]);  // workaround
-            box_quadrant[C] = compute_average(box[A], box[C]);  // workaround
-            box_quadrant[D] = compute_average(box[A], box[B]);  // workaround
-            break;
-        case B:
-            // box_quadrant[A] = ( box[B] + box[A] ) * 0.5;  // does not compile with eckit 1.3.2
-            box_quadrant[B] = box[B];
-            // box_quadrant[C] = ( box[B] + box[C] ) * 0.5;  // does not compile with eckit 1.3.2
-            // box_quadrant[D] = ( box[B] + box[D] ) * 0.5;  // does not compile with eckit 1.3.2
-            box_quadrant[A] = compute_average(box[B], box[A]);  // workaround
-            box_quadrant[C] = compute_average(box[B], box[C]);  // workaround
-            box_quadrant[D] = compute_average(box[B], box[D]);  // workaround
-            break;
-        case C:
-            // box_quadrant[A] = ( box[C] + box[A] ) * 0.5;  // does not compile with eckit 1.3.2
-            // box_quadrant[B] = ( box[C] + box[B] ) * 0.5;  // does not compile with eckit 1.3.2
-            box_quadrant[C] = box[C];
-            // box_quadrant[D] = ( box[C] + box[D] ) * 0.5;  // does not compile with eckit 1.3.2
-            box_quadrant[A] = compute_average(box[C], box[A]);  // workaround
-            box_quadrant[B] = compute_average(box[C], box[B]);  // workaround
-            box_quadrant[D] = compute_average(box[C], box[D]);  // workaround
-
-            break;
-        case D:
-            // box_quadrant[A] = ( box[D] + box[C] ) * 0.5;  // does not compile with eckit 1.3.2
-            // box_quadrant[B] = ( box[D] + box[B] ) * 0.5;  // does not compile with eckit 1.3.2
-            // box_quadrant[C] = ( box[D] + box[A] ) * 0.5;  // does not compile with eckit 1.3.2
-            box_quadrant[D] = box[D];
-            box_quadrant[A] = compute_average(box[D], box[C]);  // workaround
-            box_quadrant[B] = compute_average(box[D], box[B]);  // workaround
-            box_quadrant[C] = compute_average(box[D], box[A]);  // workaround
-
-            break;
-    }
-
-    // The key has 4 possible values per recursion (1 for each quadrant),
-    // which can be represented by 2 bits per recursion
-    //   A --> 00
-    //   B --> 01
-    //   C --> 10
-    //   D --> 11
-    // Trailing zero-bits are added depending on the level:
-    //   level max_level_-1 --> none
-    //   level max_level_-2 --> 00
-    //   level max_level_-2 --> 0000
-    //   level max_level_-3 --> 000000
-    gidx_t key = 0;
-    auto index = (max_level_ - level) * 2 - 1;
-    gidx_t mask;
-
-    // Create a mask value with all trailing bits for leftmost bit (of 2)
-    mask = gidx_t(1) << index;
-
-    // Add mask to key
-    if (quadrant == C || quadrant == D) {
-        key |= mask;
-    }
-
-    // Create a mask value with all trailing bits for rightmost bit (of 2)
-    mask = gidx_t(1) << (index - 1);
-
-    // Add mask to key
-    if (quadrant == B || quadrant == D) {
-        key |= mask;
-    }
-
-    return recursive_algorithm(p, box_quadrant, level + 1) + key;
-}
+// The Hilbert space-filling curve implementation has been moved to a reusable
+// component: atlas::grid::HilbertCurve (atlas/grid/SpaceFillingCurve.h), so that
+// it can be shared with the space-filling-curve grid partitioner.
+using Hilbert = grid::HilbertCurve;
 
 // ------------------------------------------------------------------
 
