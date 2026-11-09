@@ -8,7 +8,7 @@ repos:
       - id: mixed-line-ending
 
   - repo: https://github.com/ecmwf/ci-infrastructure
-    rev: 14dec406e9ac508e2024def1f8af59489d52cfd1
+    rev: 599ecf49c518a0100cb3ec0bab0531168ca75eaa
     hooks:
       - id: check-ci-approval
       - id: check-ci-result
