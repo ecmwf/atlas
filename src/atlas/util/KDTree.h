@@ -195,12 +195,13 @@ void atlas__IndexKDTree__insert(IndexKDTree::Implementation* This, const double 
                                 const idx_t index);
 void atlas__IndexKDTree__build(IndexKDTree::Implementation* This);
 void atlas__IndexKDTree__closestPoints(const IndexKDTree::Implementation* This, const double plon, const double plat,
-                                       const size_t k, double*& lon, double*& lat, idx_t*& indices, double*& distances, int & returnLonLat);
+                                       const size_t k, double*& lon, double*& lat, idx_t*& indices, double*& distances,
+                                       const int & returnLonLat);
 void atlas__IndexKDTree__closestPoint(const IndexKDTree::Implementation* This, const double plon, const double plat,
-                                      double& lon, double& lat, idx_t& index, double& distance, int & returnLonLat);
+                                      double& lon, double& lat, idx_t& index, double& distance, const int & returnLonLat);
 void atlas__IndexKDTree__closestPointsWithinRadius(const IndexKDTree::Implementation* This, const double plon,
                                                    const double plat, const double radius, size_t& k, double*& lon,
-                                                   double*& lat, idx_t*& indices, double*& distances, int & returnLonLat);
+                                                   double*& lat, idx_t*& indices, double*& distances, const int & returnLonLat);
 const Geometry::Implementation* atlas__IndexKDTree__geometry(const IndexKDTree::Implementation* This);
 int atlas__IndexKDTree__empty(const IndexKDTree::Implementation* This);
 idx_t atlas__IndexKDTree__size(const IndexKDTree::Implementation* This);
