@@ -228,9 +228,12 @@ subroutine IndexKDTree__closestPoints_separate_coords(this, plon, plat, k, indic
   real(c_double), pointer :: distances_fptr(:)
   real(c_double), pointer :: lons_fptr(:)
   real(c_double), pointer :: lats_fptr(:)
+  integer :: return_lonlat
   if ( k > 0 ) then
+    return_lonlat = 0
+    if (present(lons).or.present(lats)) return_lonlat = 1
     call atlas__IndexKDTree__closestPoints(this%c_ptr(), plon, plat, int(k, c_size_t), lons_cptr, lats_cptr, indices_cptr, &
-                                         & distances_cptr)
+                                         & distances_cptr, return_lonlat)
     call c_f_pointer(indices_cptr, indices_fptr, (/k/))
     indices(:) = indices_fptr(:)
     if (present(distances)) then
@@ -245,8 +248,10 @@ subroutine IndexKDTree__closestPoints_separate_coords(this, plon, plat, k, indic
       call c_f_pointer(lats_cptr, lats_fptr, (/k/))
       lats(:) = lats_fptr(:)
     end if
-    call c_ptr_free(lons_cptr)
-    call c_ptr_free(lats_cptr)
+    if (present(lons).or.present(lats)) then
+      call c_ptr_free(lons_cptr)
+      call c_ptr_free(lats_cptr)
+    end if
     call c_ptr_free(indices_cptr)
     call c_ptr_free(distances_cptr)
   end if
@@ -271,9 +276,12 @@ subroutine IndexKDTree__closestPoints_vectorized_coords(this, point, k, indices,
   real(c_double), pointer :: distances_fptr(:)
   real(c_double), pointer :: lons_fptr(:)
   real(c_double), pointer :: lats_fptr(:)
+  integer :: return_lonlat
   if ( k > 0 ) then
+    return_lonlat = 0
+    if (present(lonlats)) return_lonlat = 1
     call atlas__IndexKDTree__closestPoints(this%c_ptr(), point(1), point(2), int(k, c_size_t), lons_cptr, lats_cptr, &
-                                         & indices_cptr, distances_cptr)
+                                         & indices_cptr, distances_cptr, return_lonlat)
     call c_f_pointer(indices_cptr, indices_fptr, (/k/))
     indices(:) = indices_fptr(:)
     if (present(distances)) then
@@ -286,8 +294,10 @@ subroutine IndexKDTree__closestPoints_vectorized_coords(this, point, k, indices,
       lonlats(:,1) = lons_fptr(:)
       lonlats(:,2) = lats_fptr(:)
     end if
-    call c_ptr_free(lons_cptr)
-    call c_ptr_free(lats_cptr)
+    if (present(lonlats)) then
+      call c_ptr_free(lons_cptr)
+      call c_ptr_free(lats_cptr)
+    end if
     call c_ptr_free(indices_cptr)
     call c_ptr_free(distances_cptr)
   end if
@@ -305,7 +315,10 @@ subroutine IndexKDTree__closestPoint_separate_coords(this, plon, plat, index, di
   real(c_double), intent(out), optional :: lon
   real(c_double), intent(out), optional :: lat
   real(c_double) :: distance_tmp, lon_tmp, lat_tmp
-  call atlas__IndexKDTree__closestPoint(this%c_ptr(), plon, plat, lon_tmp, lat_tmp, index, distance_tmp)
+  integer :: return_lonlat
+  return_lonlat = 0
+  if (present(lon).or.present(lat)) return_lonlat = 1
+  call atlas__IndexKDTree__closestPoint(this%c_ptr(), plon, plat, lon_tmp, lat_tmp, index, distance_tmp, return_lonlat)
   if (present(distance)) distance = distance_tmp
   if (present(lon)) lon = lon_tmp
   if (present(lat)) lat = lat_tmp
@@ -321,7 +334,10 @@ subroutine IndexKDTree__closestPoint_vectorized_coords(this, point, index, dista
   real(c_double), intent(out), optional :: distance
   real(c_double), intent(out), optional :: lonlat(2)
   real(c_double) :: distance_tmp, lon_tmp, lat_tmp
-  call atlas__IndexKDTree__closestPoint(this%c_ptr(), point(1), point(2), lon_tmp, lat_tmp, index, distance_tmp)
+  integer :: return_lonlat
+  return_lonlat = 0
+  if (present(lonlat)) return_lonlat = 1
+  call atlas__IndexKDTree__closestPoint(this%c_ptr(), point(1), point(2), lon_tmp, lat_tmp, index, distance_tmp, return_lonlat)
   if (present(distance)) distance = distance_tmp
   if (present(lonlat)) then
      lonlat(1) = lon_tmp
@@ -352,8 +368,11 @@ subroutine IndexKDTree__closestPointsWithinRadius_separate_coords(this, plon, pl
   real(c_double), pointer :: lats_fptr(:)
   integer(ATLAS_KIND_IDX), pointer :: indices_fptr(:)
   real(c_double), pointer :: distances_fptr(:)
+  integer :: return_lonlat
+  return_lonlat = 0
+  if (present(lons).or.present(lats)) return_lonlat = 1
   call atlas__IndexKDTree__closestPointsWithinRadius(this%c_ptr(), plon, plat, radius, &
-                                                   & k_tmp, lons_cptr, lats_cptr, indices_cptr, distances_cptr)
+                                                   & k_tmp, lons_cptr, lats_cptr, indices_cptr, distances_cptr, return_lonlat)
   k = int(k_tmp, c_int)
   if (present(indices)) then
     if (allocated(indices)) deallocate(indices)
@@ -389,8 +408,10 @@ subroutine IndexKDTree__closestPointsWithinRadius_separate_coords(this, plon, pl
       lats(:) = lats_fptr(:)
     end if
   end if
-  call c_ptr_free(lons_cptr)
-  call c_ptr_free(lats_cptr)
+  if (present(lons).or.present(lats)) then
+    call c_ptr_free(lons_cptr)
+    call c_ptr_free(lats_cptr)
+  end if
   call c_ptr_free(indices_cptr)
   call c_ptr_free(distances_cptr)
 end subroutine IndexKDTree__closestPointsWithinRadius_separate_coords
@@ -416,8 +437,11 @@ subroutine IndexKDTree__closestPointsWithinRadius_vectorized_coords(this, point,
   real(c_double), pointer :: lats_fptr(:)
   integer(ATLAS_KIND_IDX), pointer :: indices_fptr(:)
   real(c_double), pointer :: distances_fptr(:)
+  integer :: return_lonlat
+  return_lonlat = 0
+  if (present(lonlats)) return_lonlat = 1
   call atlas__IndexKDTree__closestPointsWithinRadius(this%c_ptr(), point(1), point(2), radius, &
-                                                   & k_tmp, lons_cptr, lats_cptr, indices_cptr, distances_cptr)
+                                                   & k_tmp, lons_cptr, lats_cptr, indices_cptr, distances_cptr, return_lonlat)
   k = int(k_tmp, c_int)
   if (present(indices)) then
     if (allocated(indices)) deallocate(indices)
@@ -447,8 +471,10 @@ subroutine IndexKDTree__closestPointsWithinRadius_vectorized_coords(this, point,
       lonlats(:,2) = lats_fptr(:)
     end if
   end if
-  call c_ptr_free(lons_cptr)
-  call c_ptr_free(lats_cptr)
+  if (present(lonlats)) then
+    call c_ptr_free(lons_cptr)
+    call c_ptr_free(lats_cptr)
+  end if
   call c_ptr_free(indices_cptr)
   call c_ptr_free(distances_cptr)
 end subroutine IndexKDTree__closestPointsWithinRadius_vectorized_coords
