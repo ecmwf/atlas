@@ -2,26 +2,24 @@
 # Regenerate via the ci-infrastructure-generate CLI.
 # Source of truth: each repo's .ci/manifest.toml.
 name: CI
+
 on:
   push:
-    branches:
-    - develop
-    - master
-    - main
+    branches: [develop, master, main]
   pull_request:
-    types:
-    - opened
-    - reopened
-    - synchronize
-  workflow_dispatch: null
-  workflow_call: null
+    types: [opened, reopened, synchronize]
+  workflow_dispatch:
+  workflow_call:
   schedule:
-  - cron: 52 0 * * *
+    - cron: "52 0 * * *"
+
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.run_id }}
   cancel-in-progress: true
+
 permissions:
   contents: read
+
 env:
   ARTIFACT_POLL_INTERVAL: ${{ vars.ARTIFACT_POLL_INTERVAL || '60' }}
   ARTIFACT_WAIT_TIMEOUT: ${{ vars.ARTIFACT_WAIT_TIMEOUT || '1800' }}
@@ -30,6 +28,7 @@ env:
   SCCACHE_BUCKET: ${{ secrets.SCCACHE_BUCKET }}
   AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
   AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+
 jobs:
   ci-approval:
     runs-on: ubuntu-latest
@@ -38,20 +37,22 @@ jobs:
       contents: read
     if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
     steps:
-    - uses: ecmwf/ci-infrastructure/actions/require-ci-approval@main
-      with:
-        check-workflows: 'true'
+      - uses: ecmwf/ci-infrastructure/actions/require-ci-approval@main
+        with:
+          check-workflows: 'true'
+
   pre-commit:
     needs: ci-approval
     runs-on: ubuntu-latest
     env:
       FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
     steps:
-    - uses: ecmwf/ci-infrastructure/actions/checkout-under-test@main
-      with:
-        persist-credentials: false
-        allow-unsafe-pr-checkout: ${{ github.event_name == 'pull_request_target' }}
-    - uses: ecmwf/ci-infrastructure/actions/pre-commit@main
+      - uses: ecmwf/ci-infrastructure/actions/checkout-under-test@main
+        with:
+          persist-credentials: false
+          allow-unsafe-pr-checkout: ${{ github.event_name == 'pull_request_target' }}
+      - uses: ecmwf/ci-infrastructure/actions/pre-commit@main
+
   resolve:
     needs: ci-approval
     runs-on: ubuntu-latest
@@ -61,43 +62,44 @@ jobs:
       rust-matrix: ${{ toJSON(fromJSON(steps.r.outputs.json)['rust']) }}
       dispatch-plans: ${{ steps.r.outputs.dispatch-plans }}
     steps:
-    - id: mint
-      uses: ecmwf/ci-infrastructure/actions/mint-token@main
-      with:
-        app: reader
-        client-id: ${{ secrets.CI_READER_APP_CLIENT_ID }}
-        private-key: ${{ secrets.CI_READER_APP_PRIVATE_KEY }}
-        repositories: atlas,ecbuild,eckit,fckit,stack-dependencies
-        permissions: contents:read actions:read
-    - uses: ecmwf/ci-infrastructure/actions/checkout-under-test@main
-      with:
-        persist-credentials: false
-        allow-unsafe-pr-checkout: ${{ github.event_name == 'pull_request_target' }}
-    - id: r
-      uses: ecmwf/ci-infrastructure/actions/resolve-deps@main
-      with:
-        matrix: build,build-hpc,rust
-        token: ${{ steps.mint.outputs.token }}
-        rebuild-missing: 'true'
-    - name: Wait for the deps of build
-      if: steps.r.outputs.dispatch-plans == '[]'
-      uses: ecmwf/ci-infrastructure/actions/wait-for-deps@main
-      with:
-        matrix: ${{ toJSON(fromJSON(steps.r.outputs.json)['build']) }}
-        token: ${{ steps.mint.outputs.token }}
+      - id: mint
+        uses: ecmwf/ci-infrastructure/actions/mint-token@main
+        with:
+          app: reader
+          client-id: ${{ secrets.CI_READER_APP_CLIENT_ID }}
+          private-key: ${{ secrets.CI_READER_APP_PRIVATE_KEY }}
+          repositories: atlas,ecbuild,eckit,fckit,stack-dependencies
+          permissions: contents:read actions:read
+      - uses: ecmwf/ci-infrastructure/actions/checkout-under-test@main
+        with:
+          persist-credentials: false
+          allow-unsafe-pr-checkout: ${{ github.event_name == 'pull_request_target' }}
+      - id: r
+        uses: ecmwf/ci-infrastructure/actions/resolve-deps@main
+        with:
+          matrix: build,build-hpc,rust
+          token: ${{ steps.mint.outputs.token }}
+          rebuild-missing: 'true'
+      - name: Wait for the deps of build
+        if: steps.r.outputs.dispatch-plans == '[]'
+        uses: ecmwf/ci-infrastructure/actions/wait-for-deps@main
+        with:
+          matrix: ${{ toJSON(fromJSON(steps.r.outputs.json)['build']) }}
+          token: ${{ steps.mint.outputs.token }}
+    name: resolve + wait-build
+
   rebuild-producers:
-    needs:
-    - ci-approval
-    - resolve
+    needs: [ci-approval, resolve]
     if: ${{ needs.resolve.outputs.dispatch-plans != '' && needs.resolve.outputs.dispatch-plans != '[]' }}
     runs-on: ubuntu-latest
     steps:
-    - uses: ecmwf/ci-infrastructure/actions/dispatch-producers@main
-      with:
-        dispatch-plans: ${{ needs.resolve.outputs.dispatch-plans }}
-        repositories: atlas,ecbuild,eckit,fckit,stack-dependencies
-        client-id: ${{ secrets.CI_DISPATCHER_APP_CLIENT_ID }}
-        app-private-key: ${{ secrets.CI_DISPATCHER_APP_PRIVATE_KEY }}
+      - uses: ecmwf/ci-infrastructure/actions/dispatch-producers@main
+        with:
+          dispatch-plans: ${{ needs.resolve.outputs.dispatch-plans }}
+          repositories: atlas,ecbuild,eckit,fckit,stack-dependencies
+          client-id: ${{ secrets.CI_DISPATCHER_APP_CLIENT_ID }}
+          app-private-key: ${{ secrets.CI_DISPATCHER_APP_PRIVATE_KEY }}
+
   hpc-gate:
     needs: ci-approval
     runs-on: ubuntu-latest
@@ -106,36 +108,30 @@ jobs:
     outputs:
       run: ${{ steps.gate.outputs.run }}
     steps:
-    - id: gate
-      uses: ecmwf/ci-infrastructure/actions/hpc-gate@main
+      - id: gate
+        uses: ecmwf/ci-infrastructure/actions/hpc-gate@main
+
   wait-build-hpc:
-    needs:
-    - ci-approval
-    - resolve
-    - rebuild-producers
-    - hpc-gate
+    needs: [ci-approval, resolve, rebuild-producers, hpc-gate]
     if: ${{ !cancelled() && needs['ci-approval'].result == 'success' && needs['resolve'].result == 'success' && needs['rebuild-producers'].result != 'failure' && needs['hpc-gate'].result == 'success' && needs['hpc-gate'].outputs.run == 'true' }}
     runs-on: ubuntu-latest
     steps:
-    - id: mint
-      uses: ecmwf/ci-infrastructure/actions/mint-token@main
-      with:
-        app: reader
-        client-id: ${{ secrets.CI_READER_APP_CLIENT_ID }}
-        private-key: ${{ secrets.CI_READER_APP_PRIVATE_KEY }}
-        repositories: atlas,ecbuild,eckit,fckit,stack-dependencies
-        permissions: contents:read actions:read
-    - name: Wait for the deps of build-hpc
-      uses: ecmwf/ci-infrastructure/actions/wait-for-deps@main
-      with:
-        matrix: ${{ needs.resolve.outputs['build-hpc-matrix'] }}
-        token: ${{ steps.mint.outputs.token }}
+      - id: mint
+        uses: ecmwf/ci-infrastructure/actions/mint-token@main
+        with:
+          app: reader
+          client-id: ${{ secrets.CI_READER_APP_CLIENT_ID }}
+          private-key: ${{ secrets.CI_READER_APP_PRIVATE_KEY }}
+          repositories: atlas,ecbuild,eckit,fckit,stack-dependencies
+          permissions: contents:read actions:read
+      - name: Wait for the deps of build-hpc
+        uses: ecmwf/ci-infrastructure/actions/wait-for-deps@main
+        with:
+          matrix: ${{ needs.resolve.outputs.build-hpc-matrix }}
+          token: ${{ steps.mint.outputs.token }}
+
   build:
-    needs:
-    - ci-approval
-    - resolve
-    - rebuild-producers
-    - pre-commit
+    needs: [ci-approval, resolve, rebuild-producers, pre-commit]
     if: ${{ !cancelled() && needs['ci-approval'].result == 'success' && needs['resolve'].result == 'success' && needs['rebuild-producers'].result != 'failure' && needs['pre-commit'].result == 'success' }}
     name: build+test (${{ matrix._resolved['job-name'] }})
     runs-on: ${{ matrix['runs-on'] }}
@@ -143,82 +139,49 @@ jobs:
       image: ${{ matrix.container || '' }}
     strategy:
       fail-fast: false
-      matrix: ${{ fromJSON(needs.resolve.outputs['build-matrix']) }}
+      matrix: ${{ fromJSON(needs.resolve.outputs.build-matrix) }}
     steps:
-    - name: Announce image
-      uses: ecmwf/ci-infrastructure/actions/announce-image@main
-    - id: mint
-      uses: ecmwf/ci-infrastructure/actions/mint-token@main
-      with:
-        app: reader
-        client-id: ${{ secrets.CI_READER_APP_CLIENT_ID }}
-        private-key: ${{ secrets.CI_READER_APP_PRIVATE_KEY }}
-        repositories: atlas,ecbuild,eckit,fckit,stack-dependencies
-        permissions: contents:read actions:read
-    - uses: ecmwf/ci-infrastructure/actions/checkout-under-test@main
-      with:
-        persist-credentials: false
-        allow-unsafe-pr-checkout: ${{ github.event_name == 'pull_request_target' }}
-    - name: Decode matrix-leg
-      id: m
-      shell: bash
-      env:
-        MATRIX_LEG: ${{ toJSON(matrix) }}
-      run: |
-        set -euo pipefail
-        shopt -s inherit_errexit 2>/dev/null || true
-        command -v jq >/dev/null || {
-          echo "::error::jq is required but not installed in this runner/image." >&2
-          exit 1
-        }
-        leg="$MATRIX_LEG"
-        require() {
-          local val
-          val=$(jq -r "$1" <<<"$leg")
-          if [ -z "$val" ] || [ "$val" = "null" ]; then
-            echo "::error::matrix-leg field '$2' empty or null (jq -r '$1' returned '$val')." >&2
-            exit 1
-          fi
-          printf '%s' "$val"
-        }
-        deps_json=$(require '._resolved.deps | tojson' '_resolved.deps')
-        own_artifact_name=$(require '._resolved."own-artifact-name"' '_resolved.own-artifact-name')
-        {
-          echo "deps-json=${deps_json}"
-          echo "own-artifact-name=${own_artifact_name}"
-        } >> "$GITHUB_OUTPUT"
-    - name: Fetch resolved deps
-      id: deps
-      uses: ecmwf/ci-infrastructure/actions/fetch-deps@main
-      with:
-        deps-json: ${{ steps.m.outputs.deps-json }}
-        token: ${{ steps.mint.outputs.token }}
-    - name: Build
-      id: build
-      uses: ecmwf/ci-infrastructure/actions/run-job-script@main
-      with:
-        job-script: ${{ matrix.job-script }}
-        matrix-leg: ${{ toJSON(matrix) }}
-        package: atlas
-        cmake-prefix-path: ${{ steps.deps.outputs.cmake-prefix-path }}
-    - name: Publish
-      uses: ecmwf/ci-infrastructure/actions/publish-artifact@main
-      with:
-        install-path: ${{ steps.build.outputs.install-path }}
-        artifact-name: ${{ steps.m.outputs.own-artifact-name }}
-    - name: Print dependency table
-      if: always()
-      uses: ecmwf/ci-infrastructure/actions/print-dep-table@main
-      with:
-        resolved: ${{ toJSON(matrix._resolved) }}
+      - name: Announce image
+        uses: ecmwf/ci-infrastructure/actions/announce-image@main
+      - id: mint
+        uses: ecmwf/ci-infrastructure/actions/mint-token@main
+        with:
+          app: reader
+          client-id: ${{ secrets.CI_READER_APP_CLIENT_ID }}
+          private-key: ${{ secrets.CI_READER_APP_PRIVATE_KEY }}
+          repositories: atlas,ecbuild,eckit,fckit,stack-dependencies
+          permissions: contents:read actions:read
+      - uses: ecmwf/ci-infrastructure/actions/checkout-under-test@main
+        with:
+          persist-credentials: false
+          allow-unsafe-pr-checkout: ${{ github.event_name == 'pull_request_target' }}
+      - name: Fetch resolved deps
+        id: deps
+        uses: ecmwf/ci-infrastructure/actions/fetch-deps@main
+        with:
+          deps-json: ${{ toJSON(matrix._resolved.deps) }}
+          token: ${{ steps.mint.outputs.token }}
+      - name: Build
+        id: build
+        uses: ecmwf/ci-infrastructure/actions/run-job-script@main
+        with:
+          job-script: ${{ matrix.job-script }}
+          matrix-leg: ${{ toJSON(matrix) }}
+          package: atlas
+          cmake-prefix-path: ${{ steps.deps.outputs.cmake-prefix-path }}
+      - name: Publish
+        uses: ecmwf/ci-infrastructure/actions/publish-artifact@main
+        with:
+          install-path: ${{ steps.build.outputs.install-path }}
+          artifact-name: ${{ matrix._resolved['own-artifact-name'] }}
+      - name: Print dependency table
+        if: always()
+        uses: ecmwf/ci-infrastructure/actions/print-dep-table@main
+        with:
+          resolved: ${{ toJSON(matrix._resolved) }}
+
   build-hpc:
-    needs:
-    - ci-approval
-    - resolve
-    - rebuild-producers
-    - pre-commit
-    - hpc-gate
-    - wait-build-hpc
+    needs: [ci-approval, resolve, rebuild-producers, pre-commit, hpc-gate, wait-build-hpc]
     if: ${{ !cancelled() && needs['ci-approval'].result == 'success' && needs['resolve'].result == 'success' && needs['rebuild-producers'].result != 'failure' && needs['pre-commit'].result == 'success' && needs['hpc-gate'].result == 'success' && needs['wait-build-hpc'].result == 'success' && needs['hpc-gate'].outputs.run == 'true' }}
     name: build-hpc (${{ matrix._resolved['job-name'] }})
     runs-on: ${{ matrix['runs-on'] }}
@@ -229,81 +192,50 @@ jobs:
         password: ${{ secrets.ECCR_PULL_ROBOT_TOKEN }}
     strategy:
       fail-fast: false
-      matrix: ${{ fromJSON(needs.resolve.outputs['build-hpc-matrix']) }}
+      matrix: ${{ fromJSON(needs.resolve.outputs.build-hpc-matrix) }}
     steps:
-    - name: Announce image
-      uses: ecmwf/ci-infrastructure/actions/announce-image@main
-    - id: mint
-      uses: ecmwf/ci-infrastructure/actions/mint-token@main
-      with:
-        app: reader
-        client-id: ${{ secrets.CI_READER_APP_CLIENT_ID }}
-        private-key: ${{ secrets.CI_READER_APP_PRIVATE_KEY }}
-        repositories: atlas,ecbuild,eckit,fckit,stack-dependencies
-        permissions: contents:read actions:read
-    - uses: ecmwf/ci-infrastructure/actions/checkout-under-test@main
-      with:
-        persist-credentials: false
-        allow-unsafe-pr-checkout: ${{ github.event_name == 'pull_request_target' }}
-    - name: Decode matrix-leg
-      id: m
-      shell: bash
-      env:
-        MATRIX_LEG: ${{ toJSON(matrix) }}
-      run: |
-        set -euo pipefail
-        shopt -s inherit_errexit 2>/dev/null || true
-        command -v jq >/dev/null || {
-          echo "::error::jq is required but not installed in this runner/image." >&2
-          exit 1
-        }
-        leg="$MATRIX_LEG"
-        require() {
-          local val
-          val=$(jq -r "$1" <<<"$leg")
-          if [ -z "$val" ] || [ "$val" = "null" ]; then
-            echo "::error::matrix-leg field '$2' empty or null (jq -r '$1' returned '$val')." >&2
-            exit 1
-          fi
-          printf '%s' "$val"
-        }
-        deps_json=$(require '._resolved.deps | tojson' '_resolved.deps')
-        own_artifact_name=$(require '._resolved."own-artifact-name"' '_resolved.own-artifact-name')
-        {
-          echo "deps-json=${deps_json}"
-          echo "own-artifact-name=${own_artifact_name}"
-        } >> "$GITHUB_OUTPUT"
-    - name: Fetch resolved deps
-      id: deps
-      uses: ecmwf/ci-infrastructure/actions/fetch-deps@main
-      with:
-        deps-json: ${{ steps.m.outputs.deps-json }}
-        token: ${{ steps.mint.outputs.token }}
-        stage-only: 'true'
-    - name: Build on HPC
-      id: build
-      uses: ecmwf/ci-infrastructure/actions/build-on-hpc@main
-      with:
-        site: ${{ matrix.site }}
-        job-script: ${{ matrix.job-script }}
-        matrix-leg: ${{ toJSON(matrix) }}
-        artifact-name: ${{ steps.m.outputs.own-artifact-name }}
-        cmake-prefix-path: ${{ steps.deps.outputs.cmake-prefix-path }}
-        work-dir: ${{ vars.HPC_CI_WORK_DIR }}
-        remote-work-dir: ${{ vars.HPC_CI_REMOTE_WORK_DIR }}
-        troika-user: ${{ secrets.HPC_CI_SSH_USER }}
-    - name: Print dependency table
-      if: always()
-      uses: ecmwf/ci-infrastructure/actions/print-dep-table@main
-      with:
-        resolved: ${{ toJSON(matrix._resolved) }}
-        own-source: ${{ steps.build.outputs.cache-hit == 'true' && 'artifact' || 'built' }}
+      - name: Announce image
+        uses: ecmwf/ci-infrastructure/actions/announce-image@main
+      - id: mint
+        uses: ecmwf/ci-infrastructure/actions/mint-token@main
+        with:
+          app: reader
+          client-id: ${{ secrets.CI_READER_APP_CLIENT_ID }}
+          private-key: ${{ secrets.CI_READER_APP_PRIVATE_KEY }}
+          repositories: atlas,ecbuild,eckit,fckit,stack-dependencies
+          permissions: contents:read actions:read
+      - uses: ecmwf/ci-infrastructure/actions/checkout-under-test@main
+        with:
+          persist-credentials: false
+          allow-unsafe-pr-checkout: ${{ github.event_name == 'pull_request_target' }}
+      - name: Fetch resolved deps
+        id: deps
+        uses: ecmwf/ci-infrastructure/actions/fetch-deps@main
+        with:
+          deps-json: ${{ toJSON(matrix._resolved.deps) }}
+          token: ${{ steps.mint.outputs.token }}
+          stage-only: 'true'
+      - name: Build on HPC
+        id: build
+        uses: ecmwf/ci-infrastructure/actions/build-on-hpc@main
+        with:
+          site: ${{ matrix.site }}
+          job-script: ${{ matrix.job-script }}
+          matrix-leg: ${{ toJSON(matrix) }}
+          artifact-name: ${{ matrix._resolved['own-artifact-name'] }}
+          cmake-prefix-path: ${{ steps.deps.outputs.cmake-prefix-path }}
+          work-dir: ${{ vars.HPC_CI_WORK_DIR }}
+          remote-work-dir: ${{ vars.HPC_CI_REMOTE_WORK_DIR }}
+          troika-user: ${{ secrets.HPC_CI_SSH_USER }}
+      - name: Print dependency table
+        if: always()
+        uses: ecmwf/ci-infrastructure/actions/print-dep-table@main
+        with:
+          resolved: ${{ toJSON(matrix._resolved) }}
+          own-source: ${{ steps.build.outputs.cache-hit == 'true' && 'artifact' || 'built' }}
+
   rust:
-    needs:
-    - ci-approval
-    - resolve
-    - rebuild-producers
-    - build
+    needs: [ci-approval, resolve, rebuild-producers, build]
     if: ${{ !cancelled() && needs['ci-approval'].result == 'success' && needs['resolve'].result == 'success' && needs['rebuild-producers'].result != 'failure' && needs['build'].result == 'success' }}
     name: rust (${{ matrix._resolved['job-name'] }})
     runs-on: ${{ matrix['runs-on'] }}
@@ -311,99 +243,63 @@ jobs:
       image: ${{ matrix.container || '' }}
     strategy:
       fail-fast: false
-      matrix: ${{ fromJSON(needs.resolve.outputs['rust-matrix']) }}
+      matrix: ${{ fromJSON(needs.resolve.outputs.rust-matrix) }}
     steps:
-    - name: Announce image
-      uses: ecmwf/ci-infrastructure/actions/announce-image@main
-    - id: mint
-      uses: ecmwf/ci-infrastructure/actions/mint-token@main
-      with:
-        app: reader
-        client-id: ${{ secrets.CI_READER_APP_CLIENT_ID }}
-        private-key: ${{ secrets.CI_READER_APP_PRIVATE_KEY }}
-        repositories: atlas,ecbuild,eckit,fckit,stack-dependencies
-        permissions: contents:read actions:read
-    - uses: ecmwf/ci-infrastructure/actions/checkout-under-test@main
-      with:
-        persist-credentials: false
-        allow-unsafe-pr-checkout: ${{ github.event_name == 'pull_request_target' }}
-    - name: Decode matrix-leg
-      id: m
-      shell: bash
-      env:
-        MATRIX_LEG: ${{ toJSON(matrix) }}
-      run: |
-        set -euo pipefail
-        shopt -s inherit_errexit 2>/dev/null || true
-        command -v jq >/dev/null || {
-          echo "::error::jq is required but not installed in this runner/image." >&2
-          exit 1
-        }
-        leg="$MATRIX_LEG"
-        require() {
-          local val
-          val=$(jq -r "$1" <<<"$leg")
-          if [ -z "$val" ] || [ "$val" = "null" ]; then
-            echo "::error::matrix-leg field '$2' empty or null (jq -r '$1' returned '$val')." >&2
-            exit 1
-          fi
-          printf '%s' "$val"
-        }
-        deps_json=$(require '._resolved.deps | tojson' '_resolved.deps')
-        own_artifact_name=$(require '._resolved."own-artifact-name"' '_resolved.own-artifact-name')
-        {
-          echo "deps-json=${deps_json}"
-          echo "own-artifact-name=${own_artifact_name}"
-        } >> "$GITHUB_OUTPUT"
-    - name: Fetch resolved deps
-      id: deps
-      uses: ecmwf/ci-infrastructure/actions/fetch-deps@main
-      with:
-        deps-json: ${{ steps.m.outputs.deps-json }}
-        token: ${{ steps.mint.outputs.token }}
-    - name: Run
-      id: build
-      uses: ecmwf/ci-infrastructure/actions/run-job-script@main
-      with:
-        job-script: ${{ matrix.job-script }}
-        matrix-leg: ${{ toJSON(matrix) }}
-        package: atlas
-        cmake-prefix-path: ${{ steps.deps.outputs.cmake-prefix-path }}
-    - name: Print dependency table
-      if: always()
-      uses: ecmwf/ci-infrastructure/actions/print-dep-table@main
-      with:
-        resolved: ${{ toJSON(matrix._resolved) }}
+      - name: Announce image
+        uses: ecmwf/ci-infrastructure/actions/announce-image@main
+      - id: mint
+        uses: ecmwf/ci-infrastructure/actions/mint-token@main
+        with:
+          app: reader
+          client-id: ${{ secrets.CI_READER_APP_CLIENT_ID }}
+          private-key: ${{ secrets.CI_READER_APP_PRIVATE_KEY }}
+          repositories: atlas,ecbuild,eckit,fckit,stack-dependencies
+          permissions: contents:read actions:read
+      - uses: ecmwf/ci-infrastructure/actions/checkout-under-test@main
+        with:
+          persist-credentials: false
+          allow-unsafe-pr-checkout: ${{ github.event_name == 'pull_request_target' }}
+      - name: Fetch resolved deps
+        id: deps
+        uses: ecmwf/ci-infrastructure/actions/fetch-deps@main
+        with:
+          deps-json: ${{ toJSON(matrix._resolved.deps) }}
+          token: ${{ steps.mint.outputs.token }}
+      - name: Run
+        id: build
+        uses: ecmwf/ci-infrastructure/actions/run-job-script@main
+        with:
+          job-script: ${{ matrix.job-script }}
+          matrix-leg: ${{ toJSON(matrix) }}
+          package: atlas
+          cmake-prefix-path: ${{ steps.deps.outputs.cmake-prefix-path }}
+      - name: Print dependency table
+        if: always()
+        uses: ecmwf/ci-infrastructure/actions/print-dep-table@main
+        with:
+          resolved: ${{ toJSON(matrix._resolved) }}
+
   collect-result-hpc:
     name: collect HPC results
     if: always() && needs['hpc-gate'].outputs.run == 'true'
-    needs:
-    - ci-approval
-    - hpc-gate
-    - wait-build-hpc
-    - build-hpc
+    needs: [ci-approval, hpc-gate, wait-build-hpc, build-hpc]
     runs-on: ubuntu-latest
     permissions:
       statuses: write
     steps:
-    - uses: ecmwf/ci-infrastructure/actions/ci-result@main
-      with:
-        needs: ${{ toJSON(needs) }}
-        context: ci-result/hpc-atos
+      - uses: ecmwf/ci-infrastructure/actions/ci-result@main
+        with:
+          needs: ${{ toJSON(needs) }}
+          context: ci-result/hpc-atos
+
   ci-result:
     name: collect results
     if: always()
-    needs:
-    - ci-approval
-    - hpc-gate
-    - pre-commit
-    - resolve
-    - build
-    - rust
+    needs: [ci-approval, hpc-gate, pre-commit, resolve, build, rust]
     runs-on: ubuntu-latest
     permissions:
       statuses: write
     steps:
-    - uses: ecmwf/ci-infrastructure/actions/ci-result@main
-      with:
-        needs: ${{ toJSON(needs) }}
+      - uses: ecmwf/ci-infrastructure/actions/ci-result@main
+        with:
+          needs: ${{ toJSON(needs) }}
