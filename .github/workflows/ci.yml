@@ -57,9 +57,7 @@ jobs:
     needs: ci-approval
     runs-on: ubuntu-latest
     outputs:
-      build-matrix: ${{ toJSON(fromJSON(steps.r.outputs.json)['build']) }}
-      build-hpc-matrix: ${{ toJSON(fromJSON(steps.r.outputs.json)['build-hpc']) }}
-      rust-matrix: ${{ toJSON(fromJSON(steps.r.outputs.json)['rust']) }}
+      matrices: ${{ steps.r.outputs.json }}
       dispatch-plans: ${{ steps.r.outputs.dispatch-plans }}
     steps:
       - id: mint
@@ -88,7 +86,8 @@ jobs:
         if: steps.r.outputs.dispatch-plans == '[]'
         uses: ecmwf/ci-infrastructure/actions/wait-for-deps@main
         with:
-          matrix: ${{ toJSON(fromJSON(steps.r.outputs.json)['build']) }}
+          matrix: ${{ steps.r.outputs.json }}
+          kinds: build
           token: ${{ steps.mint.outputs.token }}
     name: resolve + wait-build
 
@@ -131,7 +130,8 @@ jobs:
       - name: Wait for the deps of build-hpc
         uses: ecmwf/ci-infrastructure/actions/wait-for-deps@main
         with:
-          matrix: ${{ needs.resolve.outputs.build-hpc-matrix }}
+          matrix: ${{ needs.resolve.outputs.matrices }}
+          kinds: build-hpc
           token: ${{ steps.mint.outputs.token }}
 
   build:
@@ -142,7 +142,7 @@ jobs:
       image: ${{ matrix.container || '' }}
     strategy:
       fail-fast: false
-      matrix: ${{ fromJSON(needs.resolve.outputs.build-matrix) }}
+      matrix: ${{ fromJSON(needs.resolve.outputs.matrices).build }}
     steps:
       - name: Announce image
         uses: ecmwf/ci-infrastructure/actions/announce-image@main
@@ -190,7 +190,7 @@ jobs:
         password: ${{ secrets.ECCR_PULL_ROBOT_TOKEN }}
     strategy:
       fail-fast: false
-      matrix: ${{ fromJSON(needs.resolve.outputs.build-hpc-matrix) }}
+      matrix: ${{ fromJSON(needs.resolve.outputs.matrices).build-hpc }}
     steps:
       - name: Announce image
         uses: ecmwf/ci-infrastructure/actions/announce-image@main
@@ -234,7 +234,7 @@ jobs:
       image: ${{ matrix.container || '' }}
     strategy:
       fail-fast: false
-      matrix: ${{ fromJSON(needs.resolve.outputs.rust-matrix) }}
+      matrix: ${{ fromJSON(needs.resolve.outputs.matrices).rust }}
     steps:
       - name: Announce image
         uses: ecmwf/ci-infrastructure/actions/announce-image@main
