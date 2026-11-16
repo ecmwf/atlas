@@ -80,6 +80,10 @@ jobs:
           matrix: build,build-hpc,rust
           token: ${{ steps.mint.outputs.token }}
           rebuild-missing: 'true'
+      - name: Print dependency tables
+        uses: ecmwf/ci-infrastructure/actions/print-dep-table@main
+        with:
+          matrices: ${{ steps.r.outputs.json }}
       - name: Wait for the deps of build
         if: steps.r.outputs.dispatch-plans == '[]'
         uses: ecmwf/ci-infrastructure/actions/wait-for-deps@main
@@ -173,11 +177,6 @@ jobs:
         with:
           install-path: ${{ steps.build.outputs.install-path }}
           artifact-name: ${{ matrix._resolved['own-artifact-name'] }}
-      - name: Print dependency table
-        if: always()
-        uses: ecmwf/ci-infrastructure/actions/print-dep-table@main
-        with:
-          resolved: ${{ toJSON(matrix._resolved) }}
 
   build-hpc:
     needs: [ci-approval, resolve, rebuild-producers, pre-commit, hpc-gate, wait-build-hpc]
@@ -226,12 +225,6 @@ jobs:
           work-dir: ${{ vars.HPC_CI_WORK_DIR }}
           remote-work-dir: ${{ vars.HPC_CI_REMOTE_WORK_DIR }}
           troika-user: ${{ secrets.HPC_CI_SSH_USER }}
-      - name: Print dependency table
-        if: always()
-        uses: ecmwf/ci-infrastructure/actions/print-dep-table@main
-        with:
-          resolved: ${{ toJSON(matrix._resolved) }}
-          own-source: ${{ steps.build.outputs.cache-hit == 'true' && 'artifact' || 'built' }}
 
   rust:
     needs: [ci-approval, resolve, rebuild-producers, build]
@@ -271,11 +264,6 @@ jobs:
           matrix-leg: ${{ toJSON(matrix) }}
           package: atlas
           cmake-prefix-path: ${{ steps.deps.outputs.cmake-prefix-path }}
-      - name: Print dependency table
-        if: always()
-        uses: ecmwf/ci-infrastructure/actions/print-dep-table@main
-        with:
-          resolved: ${{ toJSON(matrix._resolved) }}
 
   collect-result-hpc:
     name: collect HPC results
