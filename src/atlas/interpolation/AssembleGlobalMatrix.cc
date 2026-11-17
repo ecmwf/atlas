@@ -270,6 +270,22 @@ void distribute_global_matrix_as_triplets(
     distribute_global_matrix_as_triplets(tgt_partition, global_matrix, rows, cols, vals, mpi_root);
 }
 
+void distribute_global_matrix_as_triplets(const int* tgt_partition, const linalg::SparseMatrixStorage& gmatrix,
+    std::vector<eckit::linalg::Index>& rows, std::vector<eckit::linalg::Index>& cols,
+    std::vector<eckit::linalg::Scalar>& vals, int mpi_root) {
+    using Index = eckit::linalg::Index;
+    using Value = eckit::linalg::Scalar;
+    distribute_global_matrix_as_triplets(tgt_partition, atlas::linalg::make_host_view<Value, Index>(gmatrix), rows, cols, vals, mpi_root);
+}
+
+void distribute_global_matrix_as_triplets(const grid::Distribution& tgt_distribution, const linalg::SparseMatrixStorage& gmatrix,
+    std::vector<eckit::linalg::Index>& rows, std::vector<eckit::linalg::Index>& cols,
+    std::vector<eckit::linalg::Scalar>& vals, int mpi_root) {
+    using Index = eckit::linalg::Index;
+    using Value = eckit::linalg::Scalar;
+    distribute_global_matrix_as_triplets(tgt_distribution, atlas::linalg::make_host_view<Value, Index>(gmatrix), rows, cols, vals, mpi_root);
+}
+
 template<typename partition_t>
 linalg::SparseMatrixStorage distribute_global_matrix(partition_t tgt_partition, const FunctionSpace& src_fs, const FunctionSpace& tgt_fs, const linalg::SparseMatrixStorage& gmatrix, int mpi_root) {
     ATLAS_TRACE("distribute_global_matrix <typename partition_t>");

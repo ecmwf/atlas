@@ -8,6 +8,8 @@
  * nor does it submit to any jurisdiction.
  */
 
+#include <unordered_map>
+
 #include "atlas/array.h"
 #include "atlas/field/Field.h"
 #include "atlas/field/FieldSet.h"
@@ -20,10 +22,10 @@
 #include "atlas/grid/Iterator.h"
 #include "atlas/interpolation.h"
 #include "atlas/interpolation/AssembleGlobalMatrix.h"
-#include "atlas/interpolation/AssembleGlobalMatrix.cc"
 #include "atlas/interpolation/NonLinear.h"
 #include "atlas/linalg/sparse.h"
 #include "atlas/linalg/sparse/MakeEckitSparseMatrix.h"
+#include "atlas/linalg/sparse/SparseMatrixToTriplets.h"
 #include "atlas/mesh/Mesh.h"
 #include "atlas/meshgenerator.h"
 #include "atlas/output/Gmsh.h"
@@ -210,8 +212,7 @@ private:
         std::vector<Value> vals;
         interpolation::distribute_global_matrix_as_triplets(
             // array::make_view<int,1>(field_fs_part_glb).data(), 
-            tgt_distribution_,
-            atlas::linalg::make_host_view<Value, Index>(gmat_), rows, cols, vals, mpi_root);
+            tgt_distribution_, gmat_, rows, cols, vals, mpi_root);
 
         // Log::info() << " rows: " << rows << std::endl;
         // Log::info() << " cols: " << cols << std::endl;
