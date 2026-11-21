@@ -7,12 +7,6 @@ compiler-inputs = ["cxx-compiler"]
 allow-stale-deps = true
 
 [[deps]]
-repo = "ecmwf/ecbuild"
-package = "ecbuild"
-ref = "develop"
-compiler-inputs = []
-
-[[deps]]
 repo = "ecmwf/stack-dependencies"
 package = ["qhull", "fftw", "eigen"]
 ref = "master"
@@ -26,14 +20,6 @@ ref = "develop"
 compiler-inputs = ["cxx-compiler"]
 options-input = "options"
 unless = { options = "mpi-gpu" }
-
-[[deps]]
-repo = "ecmwf/eckit"
-package = "eckit"
-ref = "develop"
-compiler-inputs = ["cxx-compiler"]
-options = "mpi"
-when = { options = "mpi-gpu" }
 
 [[deps]]
 repo = "ecmwf/fckit"
