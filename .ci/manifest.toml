@@ -260,6 +260,7 @@ compiler-inputs = ["cxx-compiler", "rust-compiler"]
 allow-stale-deps = true
 
 [matrix.rust-publish]
+ci = false
 packages = ["atlas-crates"]
 publishes = false
 
