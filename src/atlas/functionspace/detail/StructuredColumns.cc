@@ -123,6 +123,7 @@ void update_lane_checksums_with_field_contiguous(const StructuredColumns& fs, co
 
 template <typename T>
 void update_lane_checksums_with_field(const StructuredColumns& fs, const Field& f, ChecksumData& checksum_data) {
+    if (f.size() == 0) return;
     auto local_lane_checksums_view = array::make_view<util::checksum_t, 1>(checksum_data.local_lane_checksums);
     const auto* data = f.array().host_data<T>();
     if (f.contiguous()) {
@@ -139,6 +140,8 @@ void update_lane_checksums_with_field(const StructuredColumns& fs, const Field& 
 }
 
 void update_lane_checksums_with_field_dynamic(const StructuredColumns& fs, const Field& f, ChecksumData& checksum_data) {
+    ATLAS_ASSERT(f.rank() >= 1 && f.shape(0) >= fs.sizeOwned(),
+                 "StructuredColumns checksum requires a field covering the owned columns");
     switch (f.datatype().kind()) {
         case array::DataType::kind<int>():
             return update_lane_checksums_with_field<int>(fs, f, checksum_data);

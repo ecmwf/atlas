@@ -17,6 +17,7 @@
 #include "atlas/field/Field.h"
 #include "atlas/field/FieldSet.h"
 #include "atlas/functionspace/BlockStructuredColumns.h"
+#include "atlas/functionspace/StructuredColumns.h"
 #include "atlas/grid/StructuredGrid.h"
 #include "atlas/parallel/mpi/mpi.h"
 #include "atlas/util/Checksum.h"
@@ -293,6 +294,25 @@ util::checksum_t fill_global_field_and_expected_checksum(Field& global) {
 
 namespace atlas {
 namespace test {
+
+CASE("blocked checksum checks bounds for each field in a field set") {
+    mpi::Scope scope("self");
+    const BlockStructuredColumns fs(StructuredGrid("O8"), option::halo(0) | util::Config("nproma", 4));
+    FieldSet fields;
+    fields.add(Field("short block", array::DataType::real64(), array::make_shape(fs.nblks(), fs.nproma() - 1)));
+    EXPECT_THROWS(fs.checksum(fields));
+    const Field empty_field("empty", array::DataType::real64(), array::make_shape(fs.nblks(), 0, fs.nproma()));
+    EXPECT_EQ(fs.checksum(empty_field), fs.checksum(FieldSet{}));
+}
+
+CASE("structured checksum rejects a short field and ignores an empty field") {
+    mpi::Scope scope("self");
+    const StructuredColumns fs(StructuredGrid("O8"), option::halo(0));
+    const Field short_field("short", array::DataType::real64(), array::make_shape(fs.sizeOwned() - 1));
+    const Field empty_field("empty", array::DataType::real64(), array::make_shape(fs.sizeOwned(), 0));
+    EXPECT_THROWS(fs.checksum(short_field));
+    EXPECT_EQ(fs.checksum(empty_field), fs.checksum(FieldSet{}));
+}
 
 CASE("test_BlockStructuredColumns checksum includes partial last block (mpi-serial)") {
     using Value = double;

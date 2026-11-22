@@ -449,6 +449,7 @@ void update_lane_checksums_with_field_contiguous(const BlockStructuredColumns& f
 template <typename T>
 void update_lane_checksums_with_field(const BlockStructuredColumns& fs, const Field& f,
                                       ChecksumData& checksum_data) {
+    if (f.size() == 0) return;
     auto local_lane_checksums_view = array::make_view<util::checksum_t, 2>(checksum_data.local_lane_checksums);
     const auto* data = f.array().host_data<T>();
     if (block_slice_contiguous(f)) {
@@ -488,6 +489,8 @@ void update_lane_checksums_with_field(const BlockStructuredColumns& fs, const Fi
 
 void update_lane_checksums_with_field_dynamic(const BlockStructuredColumns& fs, const Field& f,
                                               ChecksumData& checksum_data) {
+    ATLAS_ASSERT(f.rank() >= 2 && f.shape(0) == fs.nblks() && f.shape(f.rank() - 1) == fs.nproma(),
+                 "BlockStructuredColumns checksum requires matching block and lane extents");
     switch (f.datatype().kind()) {
         case array::DataType::kind<int>():    return update_lane_checksums_with_field<int>(fs, f, checksum_data);
         case array::DataType::kind<long>():   return update_lane_checksums_with_field<long>(fs, f, checksum_data);
@@ -543,7 +546,6 @@ util::checksum_t checksum_from_lane_states(const BlockStructuredColumns& fs, Che
 }
 
 util::checksum_t field_checksum(const BlockStructuredColumns& fs, const Field& f) {
-    ATLAS_ASSERT(f.rank() > 1);
     auto checksum_data = get_checksum_data(fs);
     update_lane_checksums_with_field_dynamic(fs, f, checksum_data);
     return checksum_from_lane_states(fs, checksum_data);

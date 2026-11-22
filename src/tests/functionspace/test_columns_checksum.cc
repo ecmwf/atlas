@@ -225,6 +225,15 @@ void expect_checksum_matches_global_fieldset(const char* expected_checksum) {
 namespace atlas {
 namespace test {
 
+CASE("column checksum rejects a short field and ignores an empty field") {
+    mpi::Scope scope("self");
+    const NodeColumns fs(generate_mesh(), option::halo(1));
+    const Field short_field("short", array::DataType::real64(), array::make_shape(fs.size() - 1));
+    const Field empty_field("empty", array::DataType::real64(), array::make_shape(fs.size(), 0));
+    EXPECT_THROWS(fs.checksum(short_field));
+    EXPECT_EQ(fs.checksum(empty_field), fs.checksum(FieldSet{}));
+}
+
 CASE("test_nodecolumns_checksum_matches_global_field") {
     expect_checksum_matches_global_field<NodeColumns>("7290");
 }

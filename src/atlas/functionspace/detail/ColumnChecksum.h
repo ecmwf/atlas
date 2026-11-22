@@ -108,14 +108,15 @@ private:
     template <typename Value>
     void update_lane_checksums_with_field(const Field& field, const array::ArrayView<int, 1>& ghost,
                                           util::checksum_t lane_checksums[], size_t lane_checksums_size) const {
-        const idx_t npts = std::min(functionspace_.size(), field.shape(0));
+        if (field.size() == 0) return;
+        const idx_t npts = functionspace_.size();
         ATLAS_ASSERT(lane_checksums_size >= static_cast<size_t>(npts));
 
         const auto* data = field.array().host_data<Value>();
 
         if (field.contiguous()) {
             const auto point_stride     = field.stride(0);
-            const idx_t contiguous_npts = owned_contiguous_prefix_size(ghost, functionspace_.size());
+            const idx_t contiguous_npts = owned_contiguous_prefix_size(ghost, npts);
             if (contiguous_npts >= 0) {
                 atlas_omp_parallel_for(idx_t index = 0; index < contiguous_npts; ++index) {
                     util::checksum_update(lane_checksums[index], data + index * point_stride, point_stride);
@@ -142,6 +143,8 @@ private:
 
     void update_lane_checksums_with_field_dynamic(const Field& field, const array::ArrayView<int, 1>& ghost,
                                                   util::checksum_t lane_checksums[], size_t lane_checksums_size) const {
+        ATLAS_ASSERT(field.rank() >= 1 && field.shape(0) >= functionspace_.size(),
+                     "Column checksum requires a field covering the local columns");
         switch (field.datatype().kind()) {
             case array::DataType::kind<int>():
                 return update_lane_checksums_with_field<int>(field, ghost, lane_checksums, lane_checksums_size);
