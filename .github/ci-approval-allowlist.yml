@@ -8,3 +8,7 @@ exempt:
     reason: "atlas' own compiler matrix, predating the rollout"
   - workflow: build-hpc.yml
     reason: "atlas' own HPC matrix, predating the rollout"
+credentials:
+  - workflow: publish-crates.yml
+    jobs: [publish]
+    reason: "runs only on tags and manual dispatch; the crates.io token cannot be split from the build"
