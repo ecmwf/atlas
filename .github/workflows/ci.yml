@@ -74,7 +74,7 @@ jobs:
       - id: r
         uses: ecmwf/ci-infrastructure/actions/resolve-deps@main
         with:
-          matrix: build,build-hpc,rust
+          matrix: build,rust
           token: ${{ steps.mint.outputs.token }}
           rebuild-missing: 'true'
       - name: Wait for the deps of build
@@ -97,36 +97,6 @@ jobs:
           repositories: atlas,ecbuild,eckit,fckit,stack-dependencies
           client-id: ${{ secrets.CI_DISPATCHER_APP_CLIENT_ID }}
           app-private-key: ${{ secrets.CI_DISPATCHER_APP_PRIVATE_KEY }}
-
-  hpc-gate:
-    needs: ci-approval
-    runs-on: ubuntu-latest
-    permissions:
-      pull-requests: read
-    outputs:
-      run: ${{ steps.gate.outputs.run }}
-    steps:
-      - id: gate
-        uses: ecmwf/ci-infrastructure/actions/hpc-gate@main
-
-  wait-build-hpc:
-    needs: [ci-approval, resolve, rebuild-producers, hpc-gate]
-    if: needs.hpc-gate.outputs.run == 'true'
-    runs-on: ubuntu-latest
-    steps:
-      - id: mint
-        uses: ecmwf/ci-infrastructure/actions/mint-token@main
-        with:
-          client-id: ${{ secrets.CI_READER_APP_CLIENT_ID }}
-          private-key: ${{ secrets.CI_READER_APP_PRIVATE_KEY }}
-          repositories: atlas,ecbuild,eckit,fckit,stack-dependencies
-          permissions: contents:read actions:read
-      - name: Wait for the deps of build-hpc
-        uses: ecmwf/ci-infrastructure/actions/wait-for-deps@main
-        with:
-          matrix: ${{ needs.resolve.outputs.matrices }}
-          kinds: build-hpc
-          token: ${{ steps.mint.outputs.token }}
 
   build:
     needs: [ci-approval, resolve, rebuild-producers, pre-commit]
@@ -175,58 +145,6 @@ jobs:
           install-path: ${{ steps.build.outputs.install-path }}
           artifact-name: ${{ matrix._resolved['own-artifact-name'] }}
 
-  build-hpc:
-    needs: [ci-approval, resolve, rebuild-producers, pre-commit, hpc-gate, wait-build-hpc]
-    if: needs.hpc-gate.outputs.run == 'true'
-    name: build-hpc (${{ matrix._resolved['job-name'] }})
-    runs-on: ${{ matrix['runs-on'] }}
-    container:
-      image: ${{ matrix.container || '' }}
-      credentials:
-        username: ${{ secrets.ECCR_PULL_ROBOT_NAME }}
-        password: ${{ secrets.ECCR_PULL_ROBOT_TOKEN }}
-    strategy:
-      fail-fast: false
-      matrix: ${{ fromJSON(needs.resolve.outputs.matrices).build-hpc }}
-    steps:
-      - name: Announce image
-        uses: ecmwf/ci-infrastructure/actions/announce-image@main
-      - id: mint
-        uses: ecmwf/ci-infrastructure/actions/mint-token@main
-        with:
-          client-id: ${{ secrets.CI_READER_APP_CLIENT_ID }}
-          private-key: ${{ secrets.CI_READER_APP_PRIVATE_KEY }}
-          repositories: atlas,ecbuild,eckit,fckit,stack-dependencies
-          permissions: contents:read actions:read
-      - uses: ecmwf/ci-infrastructure/actions/checkout-under-test@main
-        with:
-          persist-credentials: false
-          allow-unsafe-pr-checkout: ${{ github.event_name == 'pull_request_target' }}
-      - name: Fetch resolved deps
-        id: deps
-        uses: ecmwf/ci-infrastructure/actions/fetch-deps@main
-        with:
-          deps-json: ${{ toJSON(matrix._resolved.deps) }}
-          token: ${{ steps.mint.outputs.token }}
-          stage-only: 'true'
-      - name: Print dependency table
-        uses: ecmwf/ci-infrastructure/actions/print-dep-table@main
-        with:
-          resolved: ${{ toJSON(matrix._resolved) }}
-          own-source: ''
-      - name: Build on HPC
-        id: build
-        uses: ecmwf/ci-infrastructure/actions/build-on-hpc@main
-        with:
-          site: ${{ matrix.site }}
-          job-script: ${{ matrix.job-script }}
-          matrix-leg: ${{ toJSON(matrix) }}
-          artifact-name: ${{ matrix._resolved['own-artifact-name'] }}
-          cmake-prefix-path: ${{ steps.deps.outputs.cmake-prefix-path }}
-          work-dir: ${{ vars.HPC_CI_WORK_DIR }}
-          remote-work-dir: ${{ vars.HPC_CI_REMOTE_WORK_DIR }}
-          troika-user: ${{ secrets.HPC_CI_SSH_USER }}
-
   rust:
     needs: [ci-approval, resolve, rebuild-producers, build]
     name: rust (${{ matrix._resolved['job-name'] }})
@@ -269,23 +187,10 @@ jobs:
           package: atlas
           cmake-prefix-path: ${{ steps.deps.outputs.cmake-prefix-path }}
 
-  collect-result-hpc:
-    name: collect HPC results
-    if: always() && needs['hpc-gate'].outputs.run == 'true'
-    needs: [ci-approval, hpc-gate, wait-build-hpc, build-hpc]
-    runs-on: ubuntu-latest
-    permissions:
-      statuses: write
-    steps:
-      - uses: ecmwf/ci-infrastructure/actions/ci-result@main
-        with:
-          needs: ${{ toJSON(needs) }}
-          context: ci-result/hpc-atos
-
   ci-result:
     name: collect results
     if: always()
-    needs: [ci-approval, hpc-gate, pre-commit, resolve, build, rust]
+    needs: [ci-approval, pre-commit, resolve, build, rust]
     runs-on: ubuntu-latest
     permissions:
       statuses: write
