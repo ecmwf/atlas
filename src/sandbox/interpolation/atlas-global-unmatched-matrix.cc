@@ -211,8 +211,8 @@ private:
         std::vector<Index> rows, cols;
         std::vector<Value> vals;
         interpolation::distribute_global_matrix_as_triplets(
-            // array::make_view<int,1>(field_fs_part_glb).data(), 
-            tgt_distribution_, gmat_, rows, cols, vals, mpi_root);
+            // array::make_view<int,1>(field_fs_part_glb).data(), tgt_distribution_,
+            atlas::linalg::make_host_view<Value, Index>(gmat_), rows, cols, vals, mpi_root);
 
         // Log::info() << " rows: " << rows << std::endl;
         // Log::info() << " cols: " << cols << std::endl;
