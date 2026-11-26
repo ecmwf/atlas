@@ -64,6 +64,7 @@ jobs:
     outputs:
       run: ${{ steps.gate.outputs.run }}
       depth: ${{ steps.gate.outputs.depth }}
+      quarantined: ${{ steps.gate.outputs.quarantined }}
     steps:
       - name: Check the downstream-CI label
         id: gate
@@ -151,7 +152,7 @@ jobs:
           current-branch: ${{ steps.pick-mir.outputs.ref }}
           pin: ${{ env.PINS }}
           expected-artifacts: ${{ env.EXPECTED }}
-          matrix: build
+          matrix: build,python
           token: ${{ steps.mint.outputs.token }}
           rebuild-missing: 'true'
       - name: Carry mir's commits to the next consumer
@@ -223,7 +224,7 @@ jobs:
   mir:
     name: mir
     needs: [ci-approval, context, label-gate, validate, resolve, rebuild-producers]
-    if: ${{ (!cancelled() && !failure() && needs['validate'].result == 'success' && needs['resolve'].result == 'success') && needs['label-gate'].outputs.run == 'true' && (needs['label-gate'].outputs.depth == 'all' || needs['label-gate'].outputs.depth >= 1) }}
+    if: ${{ (!cancelled() && !failure() && needs['validate'].result == 'success' && needs['resolve'].result == 'success') && needs['label-gate'].outputs.run == 'true' && (needs['label-gate'].outputs.depth == 'all' || needs['label-gate'].outputs.depth >= 1) && !contains(needs['label-gate'].outputs.quarantined, ',mir,') }}
     uses: ecmwf/mir/.github/workflows/cross-repo-trigger.yml@develop
     with:
       from-repo: ${{ github.repository }}
