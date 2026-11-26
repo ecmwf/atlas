@@ -31,6 +31,7 @@ foreach(test
         test_spacing
         test_largegrid
         test_grid_hash
+        test_partitioner_spacefilling
         )
     ecbuild_add_test( TARGET atlas_${test} SOURCES ${test}.cc LIBS atlas ENVIRONMENT ${ATLAS_TEST_ENVIRONMENT} )
 endforeach()
